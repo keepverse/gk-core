@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FusionRpg.Tools.RpgSim</RootNamespace>
+    <AssemblyName>RpgSim</AssemblyName>
+    <!-- The entry point is named explicitly so this assembly never declares a global-namespace
+         `Program`. A top-level-statements Program would collide with `FusionRpg.Server.Program` in
+         every host that references both (the E2E project's `WebApplicationFactory<Program>`), which
+         is exactly the host this tool is tested from. -->
+    <StartupObject>FusionRpg.Tools.RpgSim.RpgSimCli</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The format contract (RS2.1) is pure JSON: no domain reference, no store, no HTTP. The runner
+         (RS2.3) adds what it drives; the contract stays the piece a test project can reference for
+         free. "This tool contains no domain math" (tools/CombatSim/README.md:8), one layer up. -->
+  </ItemGroup>
+</Project>

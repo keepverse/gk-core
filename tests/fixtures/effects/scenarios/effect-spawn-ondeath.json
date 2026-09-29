@@ -1,0 +1,18 @@
+{
+  "id": "effect-spawn-ondeath",
+  "seed": 42,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "golden-death",
+        "effectId": "fx.spawn_zombie_ondeath",
+        "ownerKey": "match",
+        "overlay": { "icd_ms": 0 }
+      }
+    },
+    { "op": "die", "side": "zombie", "ptr": "0xZ", "typeId": 0 },
+    { "op": "expectPlan", "golden": "spawn_ondeath.plan.json" }
+  ]
+}

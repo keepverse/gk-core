@@ -1,0 +1,1127 @@
+{
+  "scenarioId": "first-session-forward",
+  "seed": 20260922,
+  "clock": "ambient — No server clock seam exists yet (RS3 is gated on world-continuity's hibernation-clock), so the server's clock is whatever the host machine's is. Every verdict says so, and every `*Utc`/`*At` field is excluded from the digest by name for exactly this reason — a timestamp reading here measures the machine, not the feature. [moved mid-run to machine+1860s at 1 clock.set step(s)]",
+  "host": "inproc",
+  "ok": true,
+  "refused": false,
+  "steps": [
+    {
+      "index": 0,
+      "op": "api.player.create",
+      "route": "POST /api/players",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 1,
+      "op": "test.seed.souls",
+      "route": "POST /api/test/seed-souls-demo?playerId=2&amount=2000",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 2,
+      "op": "read.souls.balance",
+      "route": "GET /api/souls/2",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 3,
+      "op": "expect.souls.funded",
+      "route": "read.souls.balance",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 4,
+      "op": "expect.souls.attributed",
+      "route": "read.souls.balance",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 5,
+      "op": "api.creature.summon",
+      "route": "POST /api/creatures/summon",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 6,
+      "op": "read.roster",
+      "route": "GET /api/creatures/2",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 7,
+      "op": "expect.roster.held",
+      "route": "read.roster",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 8,
+      "op": "api.expedition.dispatch",
+      "route": "POST /api/expeditions/dispatch",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 9,
+      "op": "clock.set",
+      "route": "(clock)",
+      "outcome": "ok",
+      "detail": "the host now believes the clock is machine+1860s"
+    },
+    {
+      "index": 10,
+      "op": "api.expedition.collect",
+      "route": "POST /api/expeditions/1/collect",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 11,
+      "op": "read.expeditions",
+      "route": "GET /api/expeditions/2",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 12,
+      "op": "expect.expedition.collected",
+      "route": "read.expeditions",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 13,
+      "op": "expect.expedition.tier",
+      "route": "read.expeditions",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 14,
+      "op": "expect.expedition.squad.held",
+      "route": "read.expeditions",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 15,
+      "op": "expect.expedition.squad",
+      "route": "read.expeditions",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 16,
+      "op": "expect.expedition.squad.from.roster",
+      "route": "read.expeditions",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 17,
+      "op": "read.runs",
+      "route": "GET /api/runs?playerId=2",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 18,
+      "op": "expect.runs.held",
+      "route": "read.runs",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 19,
+      "op": "expect.runs.key",
+      "route": "read.runs",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 20,
+      "op": "expect.runs.game",
+      "route": "read.runs",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 21,
+      "op": "expect.runs.result",
+      "route": "read.runs",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 22,
+      "op": "expect.runs.ids",
+      "route": "read.runs",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 23,
+      "op": "read.progression.summary",
+      "route": "GET /api/rpg/progression/2/summary",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 24,
+      "op": "expect.progression.summary.player",
+      "route": "read.progression.summary",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 25,
+      "op": "read.progression.ledger",
+      "route": "GET /api/rpg/progression/2/ledger",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 26,
+      "op": "expect.progression.kind",
+      "route": "read.progression.ledger",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 27,
+      "op": "expect.progression.player",
+      "route": "read.progression.ledger",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 28,
+      "op": "expect.progression.run",
+      "route": "read.progression.ledger",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 29,
+      "op": "expect.progression.reason",
+      "route": "read.progression.ledger",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 30,
+      "op": "read.souls.ledger",
+      "route": "GET /api/souls/2/ledger",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 31,
+      "op": "expect.souls.ledger.player",
+      "route": "read.souls.ledger",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 32,
+      "op": "expect.souls.ledger.seed",
+      "route": "read.souls.ledger",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 33,
+      "op": "expect.souls.ledger.reasons",
+      "route": "read.souls.ledger",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 34,
+      "op": "expect.souls.ledger.deltas",
+      "route": "read.souls.ledger",
+      "outcome": "ok",
+      "detail": null
+    },
+    {
+      "index": 35,
+      "op": "digest",
+      "route": "(digest)",
+      "outcome": "ok",
+      "detail": null
+    }
+  ],
+  "captures": [
+    {
+      "name": "playerId",
+      "path": "$.id",
+      "source": "POST /api/players",
+      "value": 2
+    },
+    {
+      "name": "rosterIds",
+      "path": "$.items[*].actor.instanceId",
+      "source": "GET /api/creatures/2",
+      "value": [
+        "a11065d18f0b48beb0dd806006a1e833",
+        "9a56cb1b81bb4afab824bc1f469ee4e8",
+        "8cf60d467e2042e29122417b7c9c0010",
+        "df904a6084a4412c955860d32dc58327",
+        "6e264b631c004dc989b580ce0c46d60d",
+        "93c8a752e9ea4035b58b48b0ca687164",
+        "b4769842a8654ea6a3494d482178c79b",
+        "934e60f8f72f4d48ba7fd4928ef8e62e",
+        "a70056bb1b2c41b3b6b6c8cc520dcf66",
+        "7f1ac83a377641f0b059a029bf1cb3d7"
+      ]
+    },
+    {
+      "name": "squadIds",
+      "path": "$.items[0:2].actor.instanceId",
+      "source": "GET /api/creatures/2",
+      "value": [
+        "a11065d18f0b48beb0dd806006a1e833",
+        "9a56cb1b81bb4afab824bc1f469ee4e8"
+      ]
+    },
+    {
+      "name": "expeditionId",
+      "path": "$.expedition.id",
+      "source": "POST /api/expeditions/dispatch",
+      "value": 1
+    },
+    {
+      "name": "runIds",
+      "path": "$.battles[*].runId",
+      "source": "POST /api/expeditions/1/collect",
+      "value": [
+        1
+      ]
+    }
+  ],
+  "readings": [
+    {
+      "name": "read.souls.balance",
+      "source": "GET /api/souls/2",
+      "method": "GET",
+      "value": {
+        "playerId": 2,
+        "balance": 2000,
+        "earnedTotal": 2000,
+        "spentTotal": 0,
+        "revision": 1,
+        "updatedUtc": "2026-09-23T14:01:37.1458274Z"
+      }
+    },
+    {
+      "name": "read.roster",
+      "source": "GET /api/creatures/2",
+      "method": "GET",
+      "value": {
+        "playerId": 2,
+        "items": [
+          {
+            "actor": {
+              "instanceId": "a11065d18f0b48beb0dd806006a1e833",
+              "playerId": 2,
+              "empireId": "dave",
+              "side": "plant",
+              "typeId": 32,
+              "phase": "Roster",
+              "level": 1,
+              "xp": 0,
+              "matchKey": null,
+              "lastPtr": null,
+              "deployCorrelationId": null,
+              "revision": 0,
+              "createdAt": "2026-09-23T14:01:37.1552142Z",
+              "updatedAt": "2026-09-23T14:01:37.1552142Z"
+            },
+            "profile": {
+              "instanceId": "a11065d18f0b48beb0dd806006a1e833",
+              "speciesId": "melonpult",
+              "rarity": "sprout",
+              "variant": "normal",
+              "elementPrimary": "earth",
+              "elementSecondary": null,
+              "traitIds": [
+                "soul-eater"
+              ],
+              "origin": "summon",
+              "nickname": null,
+              "locked": false,
+              "star": 0,
+              "promoted": false,
+              "createdUtc": "2026-09-23T14:01:37.1552142Z",
+              "revision": 0
+            }
+          },
+          {
+            "actor": {
+              "instanceId": "9a56cb1b81bb4afab824bc1f469ee4e8",
+              "playerId": 2,
+              "empireId": "dave",
+              "side": "zombie",
+              "typeId": 2,
+              "phase": "Roster",
+              "level": 1,
+              "xp": 0,
+              "matchKey": null,
+              "lastPtr": null,
+              "deployCorrelationId": null,
+              "revision": 0,
+              "createdAt": "2026-09-23T14:01:37.1552142Z",
+              "updatedAt": "2026-09-23T14:01:37.1552142Z"
+            },
+            "profile": {
+              "instanceId": "9a56cb1b81bb4afab824bc1f469ee4e8",
+              "speciesId": "conezombie",
+              "rarity": "chaff",
+              "variant": "normal",
+              "elementPrimary": "earth",
+              "elementSecondary": null,
+              "traitIds": [
+                "genius"
+              ],
+              "origin": "summon",
+              "nickname": null,
+              "locked": false,
+              "star": 0,
+              "promoted": false,
+              "createdUtc": "2026-09-23T14:01:37.1552142Z",
+              "revision": 0
+            }
+          },
+          {
+            "actor": {
+              "instanceId": "8cf60d467e2042e29122417b7c9c0010",
+              "playerId": 2,
+              "empireId": "dave",
+              "side": "zombie",
+              "typeId": 71,
+              "phase": "Roster",
+              "level": 1,
+              "xp": 0,
+              "matchKey": null,
+              "lastPtr": null,
+              "deployCorrelationId": null,
+              "revision": 0,
+              "createdAt": "2026-09-23T14:01:37.1552142Z",
+              "updatedAt": "2026-09-23T14:01:37.1552142Z"
+            },
+            "profile": {
+              "instanceId": "8cf60d467e2042e29122417b7c9c0010",
+              "speciesId": "boatimp",
+              "rarity": "chaff",
+              "variant": "normal",
+              "elementPrimary": "fire",
+              "elementSecondary": null,
+              "traitIds": [
+                "soul-eater"
+              ],
+              "origin": "summon",
+              "nickname": null,
+              "locked": false,
+              "star": 0,
+              "promoted": false,
+              "createdUtc": "2026-09-23T14:01:37.1552142Z",
+              "revision": 0
+            }
+          },
+          {
+            "actor": {
+              "instanceId": "df904a6084a4412c955860d32dc58327",
+              "playerId": 2,
+              "empireId": "dave",
+              "side": "plant",
+              "typeId": 14,
+              "phase": "Roster",
+              "level": 1,
+              "xp": 0,
+              "matchKey": null,
+              "lastPtr": null,
+              "deployCorrelationId": null,
+              "revision": 0,
+              "createdAt": "2026-09-23T14:01:37.1552142Z",
+              "updatedAt": "2026-09-23T14:01:37.1552142Z"
+            },
+            "profile": {
+              "instanceId": "df904a6084a4412c955860d32dc58327",
+              "speciesId": "threepeater",
+              "rarity": "sprout",
+              "variant": "normal",
+              "elementPrimary": "earth",
+              "elementSecondary": null,
+              "traitIds": [
+                "soul-eater"
+              ],
+              "origin": "summon",
+              "nickname": null,
+              "locked": false,
+              "star": 0,
+              "promoted": false,
+              "createdUtc": "2026-09-23T14:01:37.1552142Z",
+              "revision": 0
+            }
+          },
+          {
+            "actor": {
+              "instanceId": "6e264b631c004dc989b580ce0c46d60d",
+              "playerId": 2,
+              "empireId": "dave",
+              "side": "plant",
+              "typeId": 28,
+              "phase": "Roster",
+              "level": 1,
+              "xp": 0,
+              "matchKey": null,
+              "lastPtr": null,
+              "deployCorrelationId": null,
+              "revision": 0,
+              "createdAt": "2026-09-23T14:01:37.1552142Z",
+              "updatedAt": "2026-09-23T14:01:37.1552142Z"
+            },
+            "profile": {
+              "instanceId": "6e264b631c004dc989b580ce0c46d60d",
+              "speciesId": "cornpult",
+              "rarity": "sprout",
+              "variant": "normal",
+              "elementPrimary": "earth",
+              "elementSecondary": null,
+              "traitIds": [
+                "soul-eater"
+              ],
+              "origin": "summon",
+              "nickname": null,
+              "locked": false,
+              "star": 0,
+              "promoted": false,
+              "createdUtc": "2026-09-23T14:01:37.1552142Z",
+              "revision": 0
+            }
+          },
+          {
+            "actor": {
+              "instanceId": "93c8a752e9ea4035b58b48b0ca687164",
+              "playerId": 2,
+              "empireId": "dave",
+              "side": "zombie",
+              "typeId": 108,
+              "phase": "Roster",
+              "level": 1,
+              "xp": 0,
+              "matchKey": null,
+              "lastPtr": null,
+              "deployCorrelationId": null,
+              "revision": 0,
+              "createdAt": "2026-09-23T14:01:37.1552142Z",
+              "updatedAt": "2026-09-23T14:01:37.1552142Z"
+            },
+            "profile": {
+              "instanceId": "93c8a752e9ea4035b58b48b0ca687164",
+              "speciesId": "ironpeazombie",
+              "rarity": "heirloom",
+              "variant": "normal",
+              "elementPrimary": "earth",
+              "elementSecondary": null,
+              "traitIds": [
+                "critical-hunter",
+                "regenerator"
+              ],
+              "origin": "summon",
+              "nickname": null,
+              "locked": false,
+              "star": 0,
+              "promoted": false,
+              "createdUtc": "2026-09-23T14:01:37.1552142Z",
+              "revision": 0
+            }
+          },
+          {
+            "actor": {
+              "instanceId": "b4769842a8654ea6a3494d482178c79b",
+              "playerId": 2,
+              "empireId": "dave",
+              "side": "zombie",
+              "typeId": 82,
+              "phase": "Roster",
+              "level": 1,
+              "xp": 0,
+              "matchKey": null,
+              "lastPtr": null,
+              "deployCorrelationId": null,
+              "revision": 0,
+              "createdAt": "2026-09-23T14:01:37.1552142Z",
+              "updatedAt": "2026-09-23T14:01:37.1552142Z"
+            },
+            "profile": {
+              "instanceId": "b4769842a8654ea6a3494d482178c79b",
+              "speciesId": "bucketpaper",
+              "rarity": "cultivated",
+              "variant": "normal",
+              "elementPrimary": "earth",
+              "elementSecondary": null,
+              "traitIds": [
+                "critical-hunter",
+                "regenerator"
+              ],
+              "origin": "summon",
+              "nickname": null,
+              "locked": false,
+              "star": 0,
+              "promoted": false,
+              "createdUtc": "2026-09-23T14:01:37.1552142Z",
+              "revision": 0
+            }
+          },
+          {
+            "actor": {
+              "instanceId": "934e60f8f72f4d48ba7fd4928ef8e62e",
+              "playerId": 2,
+              "empireId": "dave",
+              "side": "plant",
+              "typeId": 1422,
+              "phase": "Roster",
+              "level": 1,
+              "xp": 0,
+              "matchKey": null,
+              "lastPtr": null,
+              "deployCorrelationId": null,
+              "revision": 0,
+              "createdAt": "2026-09-23T14:01:37.1552142Z",
+              "updatedAt": "2026-09-23T14:01:37.1552142Z"
+            },
+            "profile": {
+              "instanceId": "934e60f8f72f4d48ba7fd4928ef8e62e",
+              "speciesId": "firemine",
+              "rarity": "chaff",
+              "variant": "normal",
+              "elementPrimary": "earth",
+              "elementSecondary": null,
+              "traitIds": [
+                "greedy"
+              ],
+              "origin": "summon",
+              "nickname": null,
+              "locked": false,
+              "star": 0,
+              "promoted": false,
+              "createdUtc": "2026-09-23T14:01:37.1552142Z",
+              "revision": 0
+            }
+          },
+          {
+            "actor": {
+              "instanceId": "a70056bb1b2c41b3b6b6c8cc520dcf66",
+              "playerId": 2,
+              "empireId": "dave",
+              "side": "plant",
+              "typeId": 233,
+              "phase": "Roster",
+              "level": 1,
+              "xp": 0,
+              "matchKey": null,
+              "lastPtr": null,
+              "deployCorrelationId": null,
+              "revision": 0,
+              "createdAt": "2026-09-23T14:01:37.1552142Z",
+              "updatedAt": "2026-09-23T14:01:37.1552142Z"
+            },
+            "profile": {
+              "instanceId": "a70056bb1b2c41b3b6b6c8cc520dcf66",
+              "speciesId": "snowpresent",
+              "rarity": "chaff",
+              "variant": "normal",
+              "elementPrimary": "ice",
+              "elementSecondary": null,
+              "traitIds": [
+                "coward"
+              ],
+              "origin": "summon",
+              "nickname": null,
+              "locked": false,
+              "star": 0,
+              "promoted": false,
+              "createdUtc": "2026-09-23T14:01:37.1552142Z",
+              "revision": 0
+            }
+          },
+          {
+            "actor": {
+              "instanceId": "7f1ac83a377641f0b059a029bf1cb3d7",
+              "playerId": 2,
+              "empireId": "dave",
+              "side": "zombie",
+              "typeId": 54,
+              "phase": "Roster",
+              "level": 1,
+              "xp": 0,
+              "matchKey": null,
+              "lastPtr": null,
+              "deployCorrelationId": null,
+              "revision": 0,
+              "createdAt": "2026-09-23T14:01:37.1552142Z",
+              "updatedAt": "2026-09-23T14:01:37.1552142Z"
+            },
+            "profile": {
+              "instanceId": "7f1ac83a377641f0b059a029bf1cb3d7",
+              "speciesId": "trainingdummy",
+              "rarity": "chaff",
+              "variant": "normal",
+              "elementPrimary": "earth",
+              "elementSecondary": null,
+              "traitIds": [
+                "regenerator"
+              ],
+              "origin": "summon",
+              "nickname": null,
+              "locked": false,
+              "star": 0,
+              "promoted": false,
+              "createdUtc": "2026-09-23T14:01:37.1552142Z",
+              "revision": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "read.expeditions",
+      "source": "GET /api/expeditions/2",
+      "method": "GET",
+      "value": {
+        "serverUtc": "2026-09-23T14:32:37.7898438Z",
+        "tiers": [
+          {
+            "tierId": "scout-30m",
+            "name": "Scouting Sortie",
+            "durationMinutes": 30,
+            "tickCount": 6,
+            "battleCount": 1,
+            "squadSlots": 2,
+            "dangerBand": 1,
+            "hasBossWave": false,
+            "tickMinutes": 5
+          },
+          {
+            "tierId": "forage-4h",
+            "name": "Soul Foraging",
+            "durationMinutes": 240,
+            "tickCount": 8,
+            "battleCount": 2,
+            "squadSlots": 3,
+            "dangerBand": 2,
+            "hasBossWave": false,
+            "tickMinutes": 30
+          },
+          {
+            "tierId": "hunt-8h",
+            "name": "Rift Hunt",
+            "durationMinutes": 480,
+            "tickCount": 8,
+            "battleCount": 3,
+            "squadSlots": 4,
+            "dangerBand": 3,
+            "hasBossWave": false,
+            "tickMinutes": 60
+          },
+          {
+            "tierId": "warpath-20h",
+            "name": "Warpath",
+            "durationMinutes": 1200,
+            "tickCount": 10,
+            "battleCount": 4,
+            "squadSlots": 5,
+            "dangerBand": 4,
+            "hasBossWave": true,
+            "tickMinutes": 120
+          }
+        ],
+        "items": [
+          {
+            "id": 1,
+            "state": "Collected",
+            "tierId": "scout-30m",
+            "squadInstanceIds": [
+              "a11065d18f0b48beb0dd806006a1e833",
+              "9a56cb1b81bb4afab824bc1f469ee4e8"
+            ],
+            "dispatchedUtc": "2026-09-23T14:01:37.1724195Z",
+            "dueUtc": "2026-09-23T14:31:37.1724195Z",
+            "collectedUtc": "2026-09-23T14:32:37.7824175Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "read.runs",
+      "source": "GET /api/runs?playerId=2",
+      "method": "GET",
+      "value": {
+        "items": [
+          {
+            "id": 1,
+            "playerId": 2,
+            "matchKey": "exp-1-0",
+            "startedUtc": "2026-09-23T14:01:37.7268871Z",
+            "endedUtc": "2026-09-23T14:01:37.7368871Z",
+            "levelName": "rift-skirmish",
+            "result": "defeat",
+            "mowersUsed": 0,
+            "plantsPlanted": 0,
+            "plantsDied": 2,
+            "zombiesKilled": 0,
+            "summary": {
+              "rounds": 2,
+              "outcome": "Defeat",
+              "soulLootMilli": 1000,
+              "actors": [
+                {
+                  "ptr": "web:exp-1-0:0",
+                  "type": 60032,
+                  "typeName": "melonpult",
+                  "source": "web",
+                  "key": "squad:0",
+                  "side": "squad",
+                  "hpRemaining": 0,
+                  "damageDealt": 18,
+                  "kills": 0,
+                  "survived": false,
+                  "retreated": false,
+                  "xpMilli": 1000,
+                  "shieldAbsorbed": 0
+                },
+                {
+                  "ptr": "web:exp-1-0:1",
+                  "type": 10002,
+                  "typeName": "conezombie",
+                  "source": "web",
+                  "key": "squad:1",
+                  "side": "squad",
+                  "hpRemaining": 0,
+                  "damageDealt": 54,
+                  "kills": 0,
+                  "survived": false,
+                  "retreated": false,
+                  "xpMilli": 1250,
+                  "shieldAbsorbed": 0
+                },
+                {
+                  "ptr": "web:exp-1-0:2",
+                  "type": 10326,
+                  "typeName": "jackbox_c",
+                  "source": "web",
+                  "key": "wave:0",
+                  "side": "wave",
+                  "hpRemaining": 88,
+                  "damageDealt": 54,
+                  "kills": 0,
+                  "survived": true,
+                  "retreated": false,
+                  "xpMilli": 1250,
+                  "shieldAbsorbed": 0
+                },
+                {
+                  "ptr": "web:exp-1-0:3",
+                  "type": 60032,
+                  "typeName": "melonpult",
+                  "source": "web",
+                  "key": "wave:1",
+                  "side": "wave",
+                  "hpRemaining": 14,
+                  "damageDealt": 69,
+                  "kills": 0,
+                  "survived": true,
+                  "retreated": false,
+                  "xpMilli": 1000,
+                  "shieldAbsorbed": 0
+                },
+                {
+                  "ptr": "web:exp-1-0:4",
+                  "type": 61283,
+                  "typeName": "torchfirenut",
+                  "source": "web",
+                  "key": "wave:2",
+                  "side": "wave",
+                  "hpRemaining": 106,
+                  "damageDealt": 48,
+                  "kills": 1,
+                  "survived": true,
+                  "retreated": false,
+                  "xpMilli": 1000,
+                  "shieldAbsorbed": 0
+                },
+                {
+                  "ptr": "web:exp-1-0:5",
+                  "type": 61197,
+                  "typeName": "startorch",
+                  "source": "web",
+                  "key": "wave:3",
+                  "side": "wave",
+                  "hpRemaining": 106,
+                  "damageDealt": 36,
+                  "kills": 1,
+                  "survived": true,
+                  "retreated": false,
+                  "xpMilli": 1000,
+                  "shieldAbsorbed": 0
+                }
+              ]
+            },
+            "levelType": "web-battle",
+            "boardLevel": null,
+            "modifiers": null,
+            "archiveUri": null,
+            "game": "webrpg-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "read.progression.summary",
+      "source": "GET /api/rpg/progression/2/summary",
+      "method": "GET",
+      "value": {
+        "playerId": 2,
+        "player": {
+          "playerId": 2,
+          "kind": "player",
+          "typeId": 0,
+          "typeName": "Player",
+          "displayName": null,
+          "almanacInfo": null,
+          "almanacIntroduce": null,
+          "almanacCost": null,
+          "level": 1,
+          "xp": 0,
+          "xpToNext": 100,
+          "highestLevel": 1,
+          "demotionCount": 0,
+          "revision": 1,
+          "updatedAt": "2026-09-23T14:32:37.7613422Z",
+          "curveFirst": 100,
+          "curveStep": 45
+        },
+        "plantActorCount": 0,
+        "zombieActorCount": 0,
+        "highestPlantLevel": 0,
+        "highestZombieLevel": 0,
+        "topPlants": [],
+        "topZombies": []
+      }
+    },
+    {
+      "name": "read.progression.ledger",
+      "source": "GET /api/rpg/progression/2/ledger",
+      "method": "GET",
+      "value": {
+        "playerId": 2,
+        "items": [
+          {
+            "id": 1,
+            "playerId": 2,
+            "kind": "player",
+            "typeId": 0,
+            "typeName": "Player",
+            "runId": 1,
+            "t": "2026-09-23T14:01:37.7358871Z",
+            "delta": -100,
+            "reason": "defeat",
+            "activityFactId": 8,
+            "levelBefore": 1,
+            "xpBefore": 0,
+            "levelAfter": 1,
+            "xpAfter": 0,
+            "demotionBefore": 0,
+            "demotionAfter": 0,
+            "payloadJson": "{\"result\":\"defeat\"}"
+          }
+        ],
+        "limit": 100,
+        "nextAfterId": null
+      }
+    },
+    {
+      "name": "read.souls.ledger",
+      "source": "GET /api/souls/2/ledger",
+      "method": "GET",
+      "value": {
+        "playerId": 2,
+        "items": [
+          {
+            "id": 14,
+            "runId": 0,
+            "delta": 14,
+            "reason": "expedition",
+            "refKind": null,
+            "refId": null,
+            "t": "2026-09-23T14:32:37.7824175Z"
+          },
+          {
+            "id": 13,
+            "runId": 1,
+            "delta": 25,
+            "reason": "defeat",
+            "refKind": "activity_fact",
+            "refId": "8",
+            "t": "2026-09-23T14:01:37.7358871Z"
+          },
+          {
+            "id": 12,
+            "runId": 0,
+            "delta": 25,
+            "reason": "discovery",
+            "refKind": "species",
+            "refId": "trainingdummy",
+            "t": "2026-09-23T14:01:37.1552142Z"
+          },
+          {
+            "id": 11,
+            "runId": 0,
+            "delta": 25,
+            "reason": "discovery",
+            "refKind": "species",
+            "refId": "snowpresent",
+            "t": "2026-09-23T14:01:37.1552142Z"
+          },
+          {
+            "id": 10,
+            "runId": 0,
+            "delta": 25,
+            "reason": "discovery",
+            "refKind": "species",
+            "refId": "firemine",
+            "t": "2026-09-23T14:01:37.1552142Z"
+          },
+          {
+            "id": 9,
+            "runId": 0,
+            "delta": 75,
+            "reason": "discovery",
+            "refKind": "species",
+            "refId": "bucketpaper",
+            "t": "2026-09-23T14:01:37.1552142Z"
+          },
+          {
+            "id": 8,
+            "runId": 0,
+            "delta": 200,
+            "reason": "discovery",
+            "refKind": "species",
+            "refId": "ironpeazombie",
+            "t": "2026-09-23T14:01:37.1552142Z"
+          },
+          {
+            "id": 7,
+            "runId": 0,
+            "delta": 42,
+            "reason": "discovery",
+            "refKind": "species",
+            "refId": "cornpult",
+            "t": "2026-09-23T14:01:37.1552142Z"
+          },
+          {
+            "id": 6,
+            "runId": 0,
+            "delta": 42,
+            "reason": "discovery",
+            "refKind": "species",
+            "refId": "threepeater",
+            "t": "2026-09-23T14:01:37.1552142Z"
+          },
+          {
+            "id": 5,
+            "runId": 0,
+            "delta": 25,
+            "reason": "discovery",
+            "refKind": "species",
+            "refId": "boatimp",
+            "t": "2026-09-23T14:01:37.1552142Z"
+          },
+          {
+            "id": 4,
+            "runId": 0,
+            "delta": 25,
+            "reason": "discovery",
+            "refKind": "species",
+            "refId": "conezombie",
+            "t": "2026-09-23T14:01:37.1552142Z"
+          },
+          {
+            "id": 3,
+            "runId": 0,
+            "delta": 42,
+            "reason": "discovery",
+            "refKind": "species",
+            "refId": "melonpult",
+            "t": "2026-09-23T14:01:37.1552142Z"
+          },
+          {
+            "id": 2,
+            "runId": 0,
+            "delta": -900,
+            "reason": "summon",
+            "refKind": "spend",
+            "refId": "sim-20260922-5",
+            "t": "2026-09-23T14:01:37.1552142Z"
+          },
+          {
+            "id": 1,
+            "runId": 0,
+            "delta": 2000,
+            "reason": "seed",
+            "refKind": null,
+            "refId": null,
+            "t": "2026-09-23T14:01:37.1458274Z"
+          }
+        ]
+      }
+    }
+  ],
+  "failures": [],
+  "digest": "daa9df408054f32e762eae9abdd5ea5c98312170e175abdb295e2c210cf9db3e",
+  "digestExclusions": [
+    {
+      "field": "*Utc",
+      "reason": "Ambient wall clock: the server now reads it through the ONE seam (FusionRpg.Core.Time.ServerClock, rpg-simulator RS3), but the shipped corpus declares clock.mode: ambient, so two runs an hour apart still legitimately differ and folding one in makes the digest move for a reason that is not a determinism break. A scenario that declares an offset makes these stable and may then digest them; until one does, they stay excluded by name. Suffix-matched because the payloads name the same clock differently per family (dispatchedUtc, dueUtc, collectedUtc, createdUtc, serverUtc, lastHeartbeatUtc)."
+    },
+    {
+      "field": "*At",
+      "reason": "Same ambient clock, written as a past-tense suffix by the newer routes (startedAt, finishedAt)."
+    },
+    {
+      "field": "instanceId",
+      "reason": "Identity minted per run (Guid.NewGuid on summon), not a value the run produced. The squad's identities are still ASSERTED (equalSet against the roster read-back); they are simply not digested, because no two runs can have the same ones."
+    },
+    {
+      "field": "correlationId",
+      "reason": "Caller-supplied idempotency key. The runner derives it from the scenario seed, so it is stable in practice — excluded anyway because a digest over an identifier the runner chose tests the runner, not the server."
+    },
+    {
+      "field": "revision",
+      "reason": "Monotonic per-player counter: its VALUE is a run's write count, which is a legitimate reading but a different question from 'did the same sequence produce the same state'. Asserted where a scenario cares; never digested."
+    },
+    {
+      "field": "activityFactId",
+      "reason": "A per-row id minted in insert order (the XP ledger's own counter). Named by the RS2.4 double-run measurement, not guessed: two runs on fresh hosts move it by construction, for the same reason `revision` moves. The ROW SET is asserted by `expect.*`; the id is not a state reading."
+    },
+    {
+      "field": "generatedAt",
+      "reason": "The verdict's own write time, should a host add one; folding it in would make the artifact self-invalidating."
+    }
+  ],
+  "settle": {
+    "settled": true,
+    "polls": 2,
+    "elapsedMs": 108,
+    "reason": null
+  }
+}

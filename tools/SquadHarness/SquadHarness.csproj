@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FusionRpg.Tools.SquadHarness</RootNamespace>
+    <AssemblyName>SquadHarness</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Core only. This tool builds actor setups IN MEMORY and resolves every pair through the
+         shipped BattleEngine.Resolve: no RpgStore, no SQL, so scripts\guard-dal.ps1 (which only
+         scans src/) never needs to know about it (spec-squad-harness.md "Never" list). -->
+    <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
+  </ItemGroup>
+</Project>

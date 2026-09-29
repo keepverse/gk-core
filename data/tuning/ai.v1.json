@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/world/spec-ai-commander.md",
+    "note": "Extracted byte-identical from FrontierRulesPolicy.cs, ThreatMap.cs and ValueMap.cs (tunables-ssot.md M.10, 2026-08-24). ThreatMap.FalloffReach stays computed (1000 / proximityFalloffPerHop) rather than duplicated as its own key.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py ai <dotted.key>=<value> [...] writes ai.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "frontierRules": {
+    "recoverAtMilli": 400,
+    "exploreTurns": 3,
+    "severanceThresholdCost": 10000
+  },
+  "threatMap": {
+    "staleDecayPerTurn": 150,
+    "maxSpreadHops": 4,
+    "proximityFalloffPerHop": 400
+  },
+  "valueMap": {
+    "optimismMilli": 700,
+    "overextensionPenaltyMilli": 1400,
+    "habitabilityPenaltyMilli": 1400,
+    "defaultWeights": {
+      "yield": 1000,
+      "strategic": 800,
+      "defensibility": 500,
+      "cost": 700,
+      "risk": 900,
+      "curiosity": 600
+    }
+  }
+}

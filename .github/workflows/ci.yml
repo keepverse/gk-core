@@ -1,0 +1,737 @@
+name: CI
+
+on:
+  # Release calls this workflow as a required superset job. The same checked-in definition is the
+  # only place the complete gate list lives; release does not infer coverage from a partial copy.
+  workflow_call:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# VERIFICATION_GATE:native-tests
+# VERIFICATION_GATE:content-generators
+# VERIFICATION_GATE:python-tooling
+# VERIFICATION_GATE:web-unit
+# VERIFICATION_GATE:web-build
+# VERIFICATION_GATE:web-e2e
+# VERIFICATION_GATE:server
+# VERIFICATION_GATE:importer
+# VERIFICATION_GATE:guards
+# VERIFICATION_GATE:generated-seed
+# VERIFICATION_GATE:session-boundary
+# VERIFICATION_GATE:packaging
+jobs:
+  test:
+    runs-on: windows-latest
+    # 2026-09-06: a real, reproduced .NET process-redirection deadlock (fixed the same day in
+    # CreatureSpeciesImportCliTests.cs/RealColdProcessTests.cs) hung a local test run for 17+ minutes
+    # with no diagnostic naming the stuck test. GitHub Actions' own default job timeout is 6 hours —
+    # a future hang of this shape would silently burn most of a day's CI minutes before failing.
+    # This bound is generous for the real runtime (normally well under it) and only exists to fail
+    # fast with SOME signal rather than run to the platform default.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history is required: a push may contain several commits, and the generated-seed
+          # guard must inspect the complete event range rather than only the last commit.
+          fetch-depth: 0
+
+      - name: Resolve complete verification range
+        id: verification-range
+        shell: pwsh
+        run: |
+          $event = Get-Content $env:GITHUB_EVENT_PATH -Raw | ConvertFrom-Json
+          $head = if ($event.pull_request) { [string]$event.pull_request.head.sha } else { [string]$event.after }
+          if ([string]::IsNullOrWhiteSpace($head) -or $head -match '^0+$') { $head = $env:GITHUB_SHA }
+          if ([string]::IsNullOrWhiteSpace($head) -or $head -match '^0+$') { throw "CI cannot resolve the checked-out head SHA" }
+
+          $base = if ($event.pull_request) { [string]$event.pull_request.base.sha } else { [string]$event.before }
+          if ([string]::IsNullOrWhiteSpace($base) -or $base -match '^0+$') {
+            $defaultBranch = [string]$event.repository.default_branch
+            if ([string]::IsNullOrWhiteSpace($defaultBranch)) { $defaultBranch = 'main' }
+            $base = (git merge-base $head "origin/$defaultBranch").Trim()
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($base)) {
+              throw "CI cannot resolve an explicit verification base for $head"
+            }
+          }
+          $range = "$base..$head"
+          "range=$range" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "FUSIONRPG_VERIFICATION_RANGE=$range" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Verification range: $range"
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/fusion-rpg-web/package-lock.json
+
+      - name: Numeric-overflow guard (power-plan.md P0.6)
+        shell: pwsh
+        run: |
+          python scripts/audit-overflow.py
+          if ($LASTEXITCODE -ne 0) { throw "overflow audit found a critical finding — see output above" }
+
+      - name: Magic-number guard (power-todo.md M.6)
+        shell: pwsh
+        run: |
+          python scripts/audit-magic-numbers.py
+          if ($LASTEXITCODE -ne 0) { throw "magic-number audit found an M1/M2 finding — see output above" }
+
+      - name: resource-ownership drift guard (A-R1, spec-resource-ownership.md §5 test 3)
+        shell: pwsh
+        run: |
+          # Regenerates the 166 resource.* aptitude edges from gk-core/data/tuning/resource-ownership.v1.json
+          # in memory and diffs them against the shipped aptitudes.v{n}.json — catches a hand-edited
+          # resource edge or a table drifted out of sync with the shipped file.
+          python tools/tuning/resource_ownership.py --check
+          if ($LASTEXITCODE -ne 0) { throw "resource_ownership.py --check found drift — see output above" }
+
+      - name: species-generator staleness guard (seed-to-concrete T4.5/Checkpoint 4)
+        shell: pwsh
+        run: |
+          # species-generator (creature-seed module 12) commits its generated tree
+          # (gk-data/packs/fusion/data/generated/creatures/**) to the repo — --check regenerates every real classified
+          # anchor and fails if any file on disk differs, catching a hand-edited generated file or a
+          # tuning change nobody re-ran the generator for (spec-species-generator.md §7).
+          dotnet run --project tools/CreatureSpeciesGen -- --check
+          if ($LASTEXITCODE -ne 0) { throw "CreatureSpeciesGen --check found the generated tree stale — run 'dotnet run --project tools/CreatureSpeciesGen' and commit the result" }
+
+      - name: family-expand staleness guard (E43, spec-family-expand.md §3.1/§5 test 2)
+        shell: pwsh
+        run: |
+          # FamilyExpandGen commits its generated tree (gk-data/packs/fusion/data/seed/atoms/generated/**) to the repo,
+          # same CreatureSpeciesGen --check pattern above — --check regenerates every atom row from the
+          # 98 authored affix families + tier-bands.v1.json and fails if any generated file on disk
+          # differs, or if a generated file's source family no longer exists.
+          dotnet run --project tools/FamilyExpandGen -- --check
+          if ($LASTEXITCODE -ne 0) { throw "FamilyExpandGen --check found the generated tree stale — run 'dotnet run --project tools/FamilyExpandGen' and commit the result" }
+
+      - name: species-build plan staleness guard (T1.8, spec-redistribution-plan.md §"Commands")
+        shell: pwsh
+        run: |
+          # redistribution-plan (species-build module 4) commits its generated plan
+          # (gk-data/packs/fusion/data/generated/creatures/_species-build-plan.json) to the repo, same CreatureSpeciesGen
+          # --check pattern above — --check replans the whole real corpus and fails if the committed
+          # file differs, OR if the replanned corpus falls outside the shipped parity band (Phase 3's
+          # own refusal, exit 1) — a near-miss never ships silently.
+          dotnet run --project tools/CreatureBuildPlanGen -- --check
+          if ($LASTEXITCODE -ne 0) { throw "CreatureBuildPlanGen --check found the plan stale or out of band — run 'dotnet run --project tools/CreatureBuildPlanGen' and commit the result" }
+
+      - name: passive-tree catalog staleness guard (H9, spec-tree-binder.md §"Commands")
+        shell: pwsh
+        run: |
+          # gk-forge/tools/TreeBinder commits its generated catalog (gk-data/packs/fusion/data/generated/passive-tree/**) to the
+          # repo, same CreatureSpeciesGen/FamilyExpandGen --check pattern above — --check rebinds every
+          # committed plan+seed pair and fails if any generated file on disk differs. Distinct from
+          # `seedsmith trees plan --check` (the PLAN's own byte-identity check, Python side, not yet
+          # wired into this workflow either) — this is the CATALOG half, C# side, one step lower in
+          # the pipeline (tree-plan -> tree-language -> tree-binder).
+          dotnet run --project tools/TreeBinder -- --check
+          if ($LASTEXITCODE -ne 0) { throw "TreeBinder --check found the generated catalog stale — run 'dotnet run --project tools/TreeBinder -- --seed data/seed/passive-tree --out data/generated/passive-tree' and commit the result" }
+
+      - name: Balance guard (class-system-todo.md P5.3 — termination HARD, dominance-mechanism HARD, dominance-verdict SOFT)
+        shell: pwsh
+        run: |
+          # `--blame-hang-timeout 10min` (raised from 5min 2026-09-12): the slowest legitimate
+          # single test measured here is ~107s (Data.Tests ActionUnlockGrantWiringTests; Core.Tests
+          # also has a ~105s case), so 10min leaves ~5x headroom. It was briefly raised to cover a
+          # 3 x 120s retry loop in two cold-process tests; that retry was removed 2026-09-12 (those
+          # tests now launch a prebuilt apphost in ~0.7s), but the cap stays for the 107s cases.
+          # Keep this aligned with the test.runsettings TestTimeout so local and CI behave the same.
+          #
+          # Deliberately its OWN step, not folded into "Restore / test (.NET)" below: that step runs
+          # ten `dotnet test` calls in one script with no exit-code check between them, so only the
+          # LAST one determines the step's pass/fail (confirmed against a real CI run, 2026-08-24 —
+          # Core.Tests and Guard.Tests both failed and were silently swallowed because E2E.Tests, the
+          # last call, also happened to fail that day) — a guard whose whole job is "fail the build"
+          # cannot share that step. See docs/architecture/class-system/spec-balance-guard.md §2/§5.
+          #
+          # Filters to `Category=BalanceGuard` only, NOT the wider `Category=BalanceGuardBaseline` --
+          # that second trait marks the one DominanceGuardTests case that asserts a fact about TODAY'S
+          # TUNING DATA (no dominant corner), not the guard's own mechanism. spec-balance-guard.md §2 is
+          # explicit a dominance verdict must never fail the build; blocking on it here would silently
+          # reintroduce exactly that violation the day the data legitimately goes red (e.g. a deliberate
+          # Phase 8 residual-fit trade-off). `Category=BalanceGuard` covers TerminationGuard's own tests
+          # (HARD by design — a violation SHOULD fail CI) and DominanceGuard's MECHANISM tests only
+          # (returns without throwing, coverage populated, no clock applied — code regressions, safe to
+          # block on regardless of what the verdict itself says).
+          dotnet test tests/FusionRpg.Core.Balance.Tests/FusionRpg.Core.Balance.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min --filter "Category=BalanceGuard"
+          if ($LASTEXITCODE -ne 0) { throw "balance-guard: a termination invariant or dominance-guard-mechanism test failed — see output above" }
+
+      - name: Restore / test (.NET)
+        shell: pwsh
+        run: |
+          # Fixed 2026-09-01 (`seed-to-concrete` T0.8). This step used to run all ten `dotnet test`
+          # calls with no exit-code check between them, so only the LAST call determined the step's
+          # pass/fail — the exact defect the Balance-guard step's own comment above already documents
+          # from a real CI run (2026-08-24: Core.Tests and Guard.Tests both failed and were silently
+          # swallowed because E2E.Tests, the last call, also happened to fail that day). Every call
+          # below now checks its own exit code and throws immediately, matching every other step in
+          # this file — a failure in project #3 no longer waits to be masked by project #10.
+          #
+          # core-split-wiring E5 (TVB5.7): after the Core split each Core test project gets its own
+          # line and exit check, in manifest order with the residual LAST. `WorkflowExitCheckTests`
+          # holds the exit-check rule over every line; `CoreTestProjectPolicyTests` W5 fails the Guard
+          # suite if a Core project on disk is missing from this file or from release.yml.
+          dotnet test tests/FusionRpg.Core.AchievementTitlesTuningTests.Tests/FusionRpg.Core.AchievementTitlesTuningTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.AchievementTitlesTuningTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.ActorHub.Tests/FusionRpg.Core.ActorHub.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.ActorHub.Tests failed" }
+          dotnet test tests/FusionRpg.Core.ActorSurface.Tests/FusionRpg.Core.ActorSurface.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.ActorSurface.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Atoms.Tests/FusionRpg.Core.Atoms.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Atoms.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Aura.Tests/FusionRpg.Core.Aura.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Aura.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Balance.Tests/FusionRpg.Core.Balance.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Balance.Tests failed" }
+          dotnet test tests/FusionRpg.Core.BoardProjectionTests.Tests/FusionRpg.Core.BoardProjectionTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.BoardProjectionTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.CapPolicyTests.Tests/FusionRpg.Core.CapPolicyTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.CapPolicyTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.ClassSystem.Tests/FusionRpg.Core.ClassSystem.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.ClassSystem.Tests failed" }
+          dotnet test tests/FusionRpg.Core.CombatCounterTests.Tests/FusionRpg.Core.CombatCounterTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.CombatCounterTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.CombatDotTests.Tests/FusionRpg.Core.CombatDotTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.CombatDotTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.CombatFanoutTests.Tests/FusionRpg.Core.CombatFanoutTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.CombatFanoutTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.CombatHitEmitPolicyTests.Tests/FusionRpg.Core.CombatHitEmitPolicyTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.CombatHitEmitPolicyTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Commanders.Tests/FusionRpg.Core.Commanders.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Commanders.Tests failed" }
+          dotnet test tests/FusionRpg.Core.DamageFxPaletteTests.Tests/FusionRpg.Core.DamageFxPaletteTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.DamageFxPaletteTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Diagnostics.Tests/FusionRpg.Core.Diagnostics.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Diagnostics.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Dungeon.Tests/FusionRpg.Core.Dungeon.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Dungeon.Tests failed" }
+          dotnet test tests/FusionRpg.Core.EffectClock.Tests/FusionRpg.Core.EffectClock.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.EffectClock.Tests failed" }
+          dotnet test tests/FusionRpg.Core.EffectEventAdapterCoreTests.Tests/FusionRpg.Core.EffectEventAdapterCoreTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.EffectEventAdapterCoreTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.EffectGrantSessionRecorderTests.Tests/FusionRpg.Core.EffectGrantSessionRecorderTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.EffectGrantSessionRecorderTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.EffectGrantSessionTests.Tests/FusionRpg.Core.EffectGrantSessionTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.EffectGrantSessionTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.EffectOfflineKitTests.Tests/FusionRpg.Core.EffectOfflineKitTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.EffectOfflineKitTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.EffectPluginHostTests.Tests/FusionRpg.Core.EffectPluginHostTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.EffectPluginHostTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.EffectPluginLifecycleTests.Tests/FusionRpg.Core.EffectPluginLifecycleTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.EffectPluginLifecycleTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.EffectScenarioRunnerTests.Tests/FusionRpg.Core.EffectScenarioRunnerTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.EffectScenarioRunnerTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Effects.Tests/FusionRpg.Core.Effects.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Effects.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Events.Tests/FusionRpg.Core.Events.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Events.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Expeditions.Tests/FusionRpg.Core.Expeditions.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Expeditions.Tests failed" }
+          dotnet test tests/FusionRpg.Core.GameProfileConstantsTests.Tests/FusionRpg.Core.GameProfileConstantsTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.GameProfileConstantsTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Hud.Tests/FusionRpg.Core.Hud.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Hud.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Items.Tests/FusionRpg.Core.Items.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Items.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Lawn.Tests/FusionRpg.Core.Lawn.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Lawn.Tests failed" }
+          dotnet test tests/FusionRpg.Core.LawnCoordMathTests.Tests/FusionRpg.Core.LawnCoordMathTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.LawnCoordMathTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Match.Tests/FusionRpg.Core.Match.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Match.Tests failed" }
+          dotnet test tests/FusionRpg.Core.MatchAdmitTests.Tests/FusionRpg.Core.MatchAdmitTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.MatchAdmitTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.MatchInjectContractTests.Tests/FusionRpg.Core.MatchInjectContractTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.MatchInjectContractTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.MatchRuntimeTests.Tests/FusionRpg.Core.MatchRuntimeTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.MatchRuntimeTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.MatchValidatorTests.Tests/FusionRpg.Core.MatchValidatorTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.MatchValidatorTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Notify.Tests/FusionRpg.Core.Notify.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Notify.Tests failed" }
+          dotnet test tests/FusionRpg.Core.OnboardingCheckpointEvaluatorTests.Tests/FusionRpg.Core.OnboardingCheckpointEvaluatorTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.OnboardingCheckpointEvaluatorTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Overlay.Tests/FusionRpg.Core.Overlay.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Overlay.Tests failed" }
+          dotnet test tests/FusionRpg.Core.OverlayApplyGuardTests.Tests/FusionRpg.Core.OverlayApplyGuardTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.OverlayApplyGuardTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.OverlayProcTests.Tests/FusionRpg.Core.OverlayProcTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.OverlayProcTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.PassiveTree.Tests/FusionRpg.Core.PassiveTree.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.PassiveTree.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Power.Tests/FusionRpg.Core.Power.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Power.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Progression.Tests/FusionRpg.Core.Progression.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Progression.Tests failed" }
+          dotnet test tests/FusionRpg.Core.PvzActivityRollupBuilderTests.Tests/FusionRpg.Core.PvzActivityRollupBuilderTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.PvzActivityRollupBuilderTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.PvzStatsApplyGateTests.Tests/FusionRpg.Core.PvzStatsApplyGateTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.PvzStatsApplyGateTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.PvzStatsSheetComposerTests.Tests/FusionRpg.Core.PvzStatsSheetComposerTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.PvzStatsSheetComposerTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.RpgProgressionBalanceTests.Tests/FusionRpg.Core.RpgProgressionBalanceTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.RpgProgressionBalanceTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.RpgXpApplyTests.Tests/FusionRpg.Core.RpgXpApplyTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.RpgXpApplyTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.RpgXpAwardMapTests.Tests/FusionRpg.Core.RpgXpAwardMapTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.RpgXpAwardMapTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Saves.Tests/FusionRpg.Core.Saves.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Saves.Tests failed" }
+          dotnet test tests/FusionRpg.Core.SimEngineMatchIsolationTests.Tests/FusionRpg.Core.SimEngineMatchIsolationTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.SimEngineMatchIsolationTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.SimEngineMatchOverlayTests.Tests/FusionRpg.Core.SimEngineMatchOverlayTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.SimEngineMatchOverlayTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.SimEngineShieldTests.Tests/FusionRpg.Core.SimEngineShieldTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.SimEngineShieldTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.StatMathAndSimTests.Tests/FusionRpg.Core.StatMathAndSimTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.StatMathAndSimTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.StatSystemTests.Tests/FusionRpg.Core.StatSystemTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.StatSystemTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Stats.Tests/FusionRpg.Core.Stats.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Stats.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Status.Tests/FusionRpg.Core.Status.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Status.Tests failed" }
+          dotnet test tests/FusionRpg.Core.TargetResolverTests.Tests/FusionRpg.Core.TargetResolverTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.TargetResolverTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.TitleLifecyclePolicyTests.Tests/FusionRpg.Core.TitleLifecyclePolicyTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.TitleLifecyclePolicyTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.UniqueBindingsTests.Tests/FusionRpg.Core.UniqueBindingsTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.UniqueBindingsTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.UniqueEquipmentCatalogTests.Tests/FusionRpg.Core.UniqueEquipmentCatalogTests.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.UniqueEquipmentCatalogTests.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Vfx.Tests/FusionRpg.Core.Vfx.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Vfx.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Vocabulary.Tests/FusionRpg.Core.Vocabulary.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Vocabulary.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Workspace.Tests/FusionRpg.Core.Workspace.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Workspace.Tests failed" }
+          dotnet test tests/FusionRpg.Core.Tests/FusionRpg.Core.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Core.Tests failed" }
+          # data-tests-sharding H3 (TVB1.4): the process-global SQLite in-memory VFS mutex means one
+          # process cannot parallelise Data.Tests' stores at all; this runs the manifest's shards as
+          # separate dotnet test processes instead of a thread cap. The partition is complete by
+          # construction (the remainder shard's filter is the exact complement of the named ones), so
+          # this still runs every test, unfiltered, same as every other line in this step.
+          python scripts/test_sharded.py --project tests/FusionRpg.Data.Tests/FusionRpg.Data.Tests.csproj
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Data.Tests failed (sharded)" }
+          dotnet test tests/FusionRpg.CheatCore.Tests/FusionRpg.CheatCore.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.CheatCore.Tests failed" }
+          dotnet test tests/FusionRpg.Guard.Tests/FusionRpg.Guard.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Guard.Tests failed" }
+          dotnet test tests/FusionRpg.Launcher.Tests/FusionRpg.Launcher.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Launcher.Tests failed" }
+          dotnet test tests/FusionRpg.ItemSeedValidator.Tests/FusionRpg.ItemSeedValidator.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.ItemSeedValidator.Tests failed" }
+          dotnet test tests/FusionRpg.AtomImporter.Tests/FusionRpg.AtomImporter.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.AtomImporter.Tests failed" }
+          dotnet test tests/FusionRpg.ElementEnumGen.Tests/FusionRpg.ElementEnumGen.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.ElementEnumGen.Tests failed" }
+          # Wired in 2026-09-06 (seed-to-concrete) -- found never in CI via CiWiringGuardTests, verified
+          # green in isolation before adding (FusionRpg.PassiveTreeRosterGen.Tests held back: one
+          # pre-existing, unrelated content-drift failure at the time -- gk-data/packs/fusion/data/seed/statuses/roster.json
+          # is stale against a "nerve" status family another stream added; not this program's to fix).
+          dotnet test tests/FusionRpg.SquadHarness.Tests/FusionRpg.SquadHarness.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.SquadHarness.Tests failed" }
+          dotnet test tests/FusionRpg.TreeBinder.Tests/FusionRpg.TreeBinder.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.TreeBinder.Tests failed" }
+          # solid-remediation T5.5/T5.6 -- the file-move tool. Wired at introduction rather than found
+          # later by CiWiringGuardTests: a move tool that rewrites source and project files is exactly
+          # the kind whose tests must run somewhere nobody has to remember.
+          dotnet test tests/FusionRpg.FileMove.Tests/FusionRpg.FileMove.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.FileMove.Tests failed" }
+          # core-split-analyzer (TVB1.6): the read-only Roslyn report over FusionRpg.Core.Tests that
+          # feeds the split manifest checkpoint. Wired at introduction, same reasoning as FileMove
+          # above -- CiWiringGuardTests.cs fails the build without this line, so it cannot ship apart
+          # from the project.
+          dotnet test tests/FusionRpg.TestSplitAnalyzer.Tests/FusionRpg.TestSplitAnalyzer.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.TestSplitAnalyzer.Tests failed" }
+          # R24 (2026-09-18): both tool test trees ran in NO workflow and nothing reported it. They
+          # run here, beside the other product test projects, each with its own exit check; the W7
+          # case in CiWiringGuardTests keeps the next tools/*.Tests project from going unwired.
+          dotnet test tools/LawnCombatObserver.Tests/LawnCombatObserver.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "LawnCombatObserver.Tests failed" }
+          dotnet test tools/ProveLiveProbe.Tests/ProveLiveProbe.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "ProveLiveProbe.Tests failed" }
+          dotnet test tests/FusionRpg.Server.Tests/FusionRpg.Server.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Server.Tests failed" }
+          dotnet test tests/FusionRpg.E2E.Tests/FusionRpg.E2E.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
+          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.E2E.Tests failed" }
+
+      - name: Test-substrate leak alarm (disk-write-probe, T19b)
+        shell: pwsh
+        run: |
+          # The static gate above (`guard-test-substrate.py`) only refuses a bad SOURCE pattern.
+          # This wraps the Data suite (the one that accumulated 65.5 GB of temp dirs) so a run that
+          # ACTUALLY leaves a `fusionrpg-*` temp dir or an `rpg-*.sqlite` under a test output root is
+          # red too, even if the source pattern changed. Set-diff, never a count (`validation-ssot.md`):
+          # a pre-existing dir is not read as a leak and an equal count cannot pass while membership
+          # differs. `--no-build` reuses the Release build from the step above.
+          python scripts/test_substrate_leak_alarm.py --run dotnet test tests/FusionRpg.Data.Tests/FusionRpg.Data.Tests.csproj -c Release --verbosity minimal --no-build
+          if ($LASTEXITCODE -ne 0) { throw "test_substrate_leak_alarm.py failed — a test run left a temp dir or rpg-*.sqlite behind" }
+          # ANCHOR(T28): profiles wiring appends after this step. Do not reorder the steps above.
+
+      - name: Test profiles (T28 — CI is the `full` profile by construction)
+        shell: pwsh
+        run: |
+          # T28 added no filtering here on purpose: every `dotnet test` call above runs UNFILTERED,
+          # so CI already IS the `full` profile — the `DiskSemantics` (file-bound) and `Heavy` (>=20s)
+          # tests run here, which is exactly the point (ephemeral cloud disk, correctness costs
+          # nothing). `gk-core/scripts/test_fast.py` (`default`) is the LOCAL/agent loop only and is never
+          # used in CI, so CI cannot accidentally inherit the dev filter. The leak alarm step above
+          # also runs on `full` for the same reason.
+          #
+          # Guard (do not edit blindly): this assertion fails if someone later adds a --filter to a
+          # `dotnet test` call in this workflow, which would silently drop disk/heavy coverage.
+          $filters = Select-String -Path .github/workflows/ci.yml -Pattern 'dotnet test.*--filter' |
+              Where-Object {
+                  $_.Line.TrimStart().StartsWith('dotnet test') -and
+                  $_.Line -notmatch '--filter\s+"Category=BalanceGuard"'
+              }
+          if ($filters) {
+              $filters | ForEach-Object { Write-Host "$($_.LineNumber): $($_.Line.Trim())" }
+              throw "CI test step gained a --filter — CI must stay the unfiltered full profile (only the BalanceGuard step is filtered)"
+          }
+          Write-Host "CI test calls are unfiltered = full profile (DiskSemantics + Heavy included)."
+
+      - name: Session boundary (CI topology and optional reviewed diff)
+        shell: pwsh
+        env:
+          FUSIONRPG_REVIEW_SESSION: ${{ vars.FUSIONRPG_REVIEW_SESSION }}
+        run: |
+          $sessionArgs = @('--ci')
+          $reviewSession = $env:FUSIONRPG_REVIEW_SESSION
+          if (-not [string]::IsNullOrWhiteSpace($reviewSession)) {
+            if ($env:FUSIONRPG_VERIFICATION_RANGE -notmatch '^(.+)\.\.([^.]+)$') { throw "reviewed session enabled but verification range is malformed" }
+            $sessionArgs += @('--session', $reviewSession, '--diff-base-ref', $Matches[1], '--diff-head-ref', $Matches[2], '--require-diff-fence')
+          }
+          else {
+            Write-Host "No FUSIONRPG_REVIEW_SESSION configured; running the CI structural session-boundary check."
+          }
+          # The flags above are the Python tool's, so this step is one of the two places a
+          # -RepoRoot-shaped spelling would have failed as an unknown argument rather than as a
+          # verdict. The pwsh -> bash conversion is a later, separate change.
+          python .\scripts\session-boundary-check.py @sessionArgs
+          if ($LASTEXITCODE -ne 0) { throw "session-boundary check failed" }
+
+      - name: Boundary guards (AGENTS.md — combat writes, Secondary-Unity boundary, Funnel deltas, DAL)
+        shell: pwsh
+        run: |
+          # One call, one catalog (solid-enforcement `guard-runner`). run_guards.py reads
+          # gk-core/scripts/enforcement-registry.v1.json and runs every ci/gating guard in its own child
+          # process, printing a summary table before it fails. Wiring a guard is now a registry row,
+          # not another hand-written line here — the mechanism that once left nine guards unwired.
+          # The complete push range is supplied by the explicit range step above; no last-commit
+          # fallback exists in the runner. The generated-seed registry row invokes its guard with that range and
+          # --require-explicit-range.
+          python .\scripts\run_guards.py --tier ci --ci-range $env:FUSIONRPG_VERIFICATION_RANGE
+          if ($LASTEXITCODE -ne 0) { throw "run_guards.py --tier ci failed — a gating guard is red; see the summary table above" }
+
+      - name: Verification-boundary integrity
+        shell: pwsh
+        run: |
+          # This is intentionally its own step. Guard scripts use a non-zero exit to refuse, so putting
+          # it after another guard in a shared block could make it unreachable; this script's exit code
+          # directly gates the step.
+          python .\scripts\guard-verification-boundaries.py
+
+      - name: Content validation gate (E47)
+        shell: pwsh
+        run: |
+          # Closes E24's B4 half (spec-validate-gate-ci.md) — AtomImporter --validate existed with
+          # no CI caller, so ContentValidation.Lint/.Drift ran over the real shipped atom corpus in
+          # nobody's pipeline. Runs against the REAL gk-data/packs/fusion/data/seed/ tree, never a fixture (§3.1) — a
+          # gate over a fixture proves the gate works and nothing about the content.
+          #
+          # --db <scratch>: without it the tool resolves $FUSIONRPG_DATA, then walks up for
+          # dist/FusionRpg.Server/data; a fresh CI checkout has neither, so the tool would exit 2
+          # before reading a single seed file (Program.cs) — a gate that always exits 2 is a gate
+          # nobody reads. --check: dry-run import (rolled back in one transaction) so the gate reads
+          # the real corpus and writes nothing to a throwaway database.
+          #
+          # Finding policy (§3.2, decided 2026-09-03 — verified against ContentValidation's own
+          # Blocking flags, not restated as new policy): a structural defect (unparseable file,
+          # unknown kind, bad param, duplicate id) fails the import itself, upstream of --validate,
+          # so it already fails this step with no gate logic needed. `drift` without a `powerNote`
+          # is Blocking:true and fails. All seven lints (tier-gap, flat-tier, duplicate-affix,
+          # backwards-interval, lonely-group, orphan, orphan-affix) and a noted `drift` are
+          # Blocking:false by construction and only report. Budget checking stays out — no ceiling
+          # data exists in the schema yet (rarity table has no budget column); A-G1 is what
+          # introduces the first such data.
+          dotnet run --project tools/AtomImporter -c Release -- --check --validate --db "$env:RUNNER_TEMP/atom-validate-db"
+          if ($LASTEXITCODE -ne 0) { throw "content validation gate failed - see the lint / power drift lines above" }
+
+      - name: Creature corpus dump is self-consistent (seed-to-concrete T1.2)
+        shell: pwsh
+        run: |
+          # `--verify` is DB-free by design (spec-corpus-dump.md) — decisions.md rules out a real
+          # game/Harmony in CI, so there is no populated hot.sqlite to regenerate the dump from
+          # here. This re-hashes the committed payload files on disk and checks them against
+          # _manifest.json's declared hash and counts — it catches a hand-edit or a bad merge, not
+          # drift against the live game (that is the owner-run `--check` against a real database).
+          dotnet run --project tools/CreatureCorpusDump -c Release -- --verify data/seed/creatures/_dump
+          if ($LASTEXITCODE -ne 0) { throw "creature corpus dump under data/seed/creatures/_dump is not self-consistent with its own manifest — see output above" }
+
+      - name: Validate item seed corpus
+        shell: pwsh
+        run: |
+          dotnet run --project tools/ItemSeedValidator -c Release
+          if ($LASTEXITCODE -ne 0) { throw "item seed corpus failed validation" }
+
+      - name: Install seedsmith from the lockfile (reproducible env)
+        shell: pwsh
+        working-directory: tools/seedsmith
+        run: |
+          # G0.1 (spec-dependency-baseline.md): seedsmith declared ZERO dependencies until
+          # 2026-09-01, so this job ran against whatever the runner happened to have. `jieba` was
+          # imported by adapters/creatures/motifs.py and declared nowhere — a fresh clone failed
+          # test_motif_derive.py with ModuleNotFoundError. Installing from the committed lockfile
+          # makes the environment reproducible instead of ambient.
+          python -m pip install --upgrade pip
+          if ($LASTEXITCODE -ne 0) { throw "pip upgrade failed" }
+          python -m pip install -r requirements.lock
+          if ($LASTEXITCODE -ne 0) { throw "seedsmith lockfile install failed" }
+          python -m pip install -e . --no-deps
+          if ($LASTEXITCODE -ne 0) { throw "seedsmith editable install failed" }
+
+      - name: tools/tuning own tests (test-verification-boundary python-test-lane, R15)
+        shell: pwsh
+        working-directory: tools/tuning
+        run: |
+          # pytest is installed by the seedsmith lockfile step above; this step must stay after it.
+          python -m pytest . -q -p no:cacheprovider
+          if ($LASTEXITCODE -ne 0) { throw "tools/tuning's own test suite failed" }
+
+      # The `tools-audit-tests` pytest project (registry root `.`, tests `gk-core/tests/tools`) owns
+      # `gk-core/scripts/audit-program-pipeline.py` and `gk-core/scripts/fix-doc-citations.py` through the
+      # `pipeline-audit-scripts` boundary. It landed with its tests but with no CI step, so
+      # `CiPytestWiringTests.Every_pytest_project_has_a_ci_step_running_pytest_in_its_own_root` was red
+      # (`pytest project root(s) with no 'python -m pytest' CI step at that working-directory: .`). The
+      # step's `working-directory` must be exactly the project's `root` for that guard to count it.
+      - name: tools audit scripts' own tests (pipeline-audit-scripts)
+        shell: pwsh
+        working-directory: .
+        run: |
+          # Stdlib-only tests; pytest itself comes from the seedsmith lockfile step above.
+          python -m pytest tests/tools -q -p no:cacheprovider
+          if ($LASTEXITCODE -ne 0) { throw "tools-audit-tests' own test suite failed" }
+
+      - name: Fail-closed merge/acceptance regression
+        shell: pwsh
+        working-directory: .claude/cmdc-agents/scripts
+        run: |
+          python -m pytest test_fail_closed_pipeline.py -q -p no:cacheprovider
+          if ($LASTEXITCODE -ne 0) { throw "fail-closed merge/acceptance regression failed" }
+
+      # ip-censor T1 (wiring half 1). The tool is new code, so its suite is green from the first
+      # commit and needs no knownRed entry (spec-wiring.md §The lane depends on an unbuilt module).
+      # This step tests the TOOL, not the corpus: a red ip-censor suite is a code defect, never an
+      # IP finding. The advisory scan step (T11) and the release gate (T12) land separately, and
+      # neither blocks CI on a finding (owner ruling IC-3).
+      - name: tools/ip-censor own tests (ip-censor wiring, T1)
+        shell: pwsh
+        working-directory: tools/ip-censor
+        run: |
+          python -m pip install -r requirements.lock
+          if ($LASTEXITCODE -ne 0) { throw "ip-censor lockfile install failed" }
+          python -m pip install -e . --no-deps
+          if ($LASTEXITCODE -ne 0) { throw "ip-censor editable install failed" }
+          python -m pytest tests -q -p no:cacheprovider
+          if ($LASTEXITCODE -ne 0) { throw "ip-censor's own test suite failed" }
+
+      # ip-censor T11 (advisory CI scan, owner ruling IC-3). The scan is ADVISORY in CI: it exits 0
+      # on findings and merely records them, so a non-zero exit here is a tool crash (a code defect),
+      # never an IP finding — which is exactly why no `--fail-on` flag appears in this file. The
+      # release gate (release.yml, T12) is the only place a finding blocks anything.
+      # It runs from the REPOSITORY ROOT on purpose: `report` walks `git ls-files`, so a
+      # `working-directory: gk-core/tools/ip-censor` would enumerate only the tool and the scan would pass
+      # vacuously. The package is already installed by the step above; the plan is written to the
+      # runner only and never committed (`tasks/ip-censor/**` is self-excluded from the scan).
+      - name: IP advisory scan (ip-censor, IC-3)
+        shell: pwsh
+        run: |
+          python -m ipcensor.report scan --format json > tasks/ip-censor/ci-scan.json
+          if ($LASTEXITCODE -ne 0) { throw "ip-censor's advisory scan crashed (a code defect, not an IP finding)" }
+
+      - name: Upload the advisory IP scan
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ip-censor-advisory-scan
+          path: tasks/ip-censor/ci-scan.json
+          if-no-files-found: warn
+
+      - name: Item seed reachability (seedsmith)
+        shell: pwsh
+        run: |
+          # Cutover complete (tasks/seedsmith-todo.md, S10, 2026-08-23): `seedsmith` replaces
+          # `seed_graph` as the reachability gate. Parity was proven byte-identical across every
+          # distinct state this corpus has ever had — not one snapshot but all four: the current
+          # HEAD and three earlier commits reachable via `git log -- gk-data/packs/fusion/data/seed/items/`, spanning
+          # the corpus's growth from 102 files to its current size, extracted read-only via
+          # `git archive` and diffed with test_parity_seed_graph.py's own comparison. That is the
+          # evidence step 2's planned one-week soak period existed to gather — real drift the
+          # corpus had already produced, not a calendar wait for drift that might not occur.
+          #
+          # Only the seven Linkage/Registration metrics ported from `seed_graph` were promoted to
+          # gates=True for this cutover (`seedsmith/metrics/linkage.py`) — a verified
+          # byte-identical replacement for a check that already gated CI unconditionally, not a
+          # new, uncalibrated metric. Every other metric in the suite (Coverage, Distribution,
+          # Balance, Constraint, ExemplarConformance, SemanticDedup, Quality) still starts
+          # measure-only, per spec-metrics.md §4's normal calibration discipline.
+          python -m pytest tests -q
+          if ($LASTEXITCODE -ne 0) { throw "seedsmith's own test suite failed" }
+          python -m seedsmith check --adapter items --gate ../../data/seed/items
+          if ($LASTEXITCODE -ne 0) { throw "item seed corpus has reachability gaps" }
+        working-directory: tools/seedsmith
+
+      - name: Creature anchor contract audits clean (seed-to-concrete T1.7 / Checkpoint 1)
+        shell: pwsh
+        run: |
+          # Mechanical, per spec-anchor-contract.md §4: a numeric field anywhere in the resolved
+          # species-anchor schema poisons every downstream classification row, so this gates CI
+          # unconditionally rather than starting measure-only like a balance metric would.
+          python -m seedsmith creatures contract --audit
+          if ($LASTEXITCODE -ne 0) { throw "creature anchor contract has a numeric-smuggling finding — see output above" }
+        working-directory: tools/seedsmith
+
+      - name: Structure anchor contract audits clean (base-defense structure-schema, module 23)
+        shell: pwsh
+        run: |
+          # Mechanical, per spec-structure-schema.md §4: the module's whole point is that this audit
+          # fails the build rather than warning, so it gates CI unconditionally, the same way the
+          # creature anchor contract step above does for its own schema.
+          python -m seedsmith structures contract --audit
+          if ($LASTEXITCODE -ne 0) { throw "structure anchor contract has a numeric-smuggling finding — see output above" }
+        working-directory: tools/seedsmith
+
+      - name: Creature corpus-coverage metrics (seed-to-concrete T1.10)
+        shell: pwsh
+        run: |
+          # --creature-dump only (no --corpus): isolates the two creature-dump metrics from the item
+          # corpus's own EmptyPartition/Balance/Distribution families, which need a real --corpus
+          # to mean anything and would otherwise report noise here.
+          python -m seedsmith report --gate --creature-dump ../../data/seed/creatures/_dump
+          if ($LASTEXITCODE -ne 0) { throw "creature corpus-coverage metrics found a gated finding — see output above" }
+        working-directory: tools/seedsmith
+
+      - name: Creature roster metrics gate (seed-to-concrete T2.10/T2.12/Checkpoint 2)
+        shell: pwsh
+        run: |
+          # T2.12's own original note said this would "break CI with no anchor tree yet" — stale as
+          # of 2026-09-06: the real anchor tree (gk-data/packs/fusion/data/seed/creatures/species/**, 504 tracked files,
+          # 829-840 real classified species depending on which run) has been committed for a while
+          # now, and this command needs no model call and no network access, only the committed
+          # tree + gk-core/data/tuning/creature-roster-targets.v1.json. Verified directly before wiring it in,
+          # not assumed: run against the real committed tree, exits 0 (14 real GAP findings, all
+          # `gates=False` informational — none `gates=True`), so wiring it in cannot break the build
+          # today. If a future roster change ever DOES trip an armed gate, that is this step doing
+          # its job, not a regression in this step itself.
+          python -m seedsmith creatures metrics --gate
+          if ($LASTEXITCODE -ne 0) { throw "creature roster metrics found a gated finding — see output above" }
+        working-directory: tools/seedsmith
+
+      - name: Fusion-recipe seed staleness guard (creature-seed module 17/T8.3, spec-fusion-recipe-generator.md §3)
+        shell: pwsh
+        run: |
+          # Same CreatureSpeciesGen/CreatureBuildPlanGen --check pattern above, for the one link in this
+          # chain that did NOT have its own explicit gate until 2026-09-07: fusion-recipe-reconcile
+          # commits gk-data/packs/fusion/data/generated/creatures/_fusion-recipes.json to the repo, and growing the species
+          # corpus (a new anchor, a self-heal fallback resolving a field, a tuning change) can shift
+          # which species are eligible fusion outputs/inputs without anyone touching this file by
+          # hand. Found live the hard way: creature-corpus-self-heal Phase I's aptitudePrimary fallback
+          # (11 species) silently desynced this exact committed seed (709->713 eligible outputs,
+          # 695->699 deterministic recipes) until a full test run caught it by accident. `--check`
+          # re-runs the real deterministic pass AND reuses (never re-derives) every already-resolved
+          # gap-fill pick via its own per-deficit corpusContentHash freeze, so this never needs a
+          # live model call to stay green — a real drift always has a one-line fix: re-run
+          # `python -m seedsmith.adapters.creatures.fusion.reconcile` and commit the result.
+          python -m seedsmith.adapters.creatures.fusion.reconcile --check
+          if ($LASTEXITCODE -ne 0) { throw "fusion-recipe seed is stale — run 'python -m seedsmith.adapters.creatures.fusion.reconcile' (from tools/seedsmith) and commit the result" }
+        working-directory: tools/seedsmith
+
+      - name: Trophy id registry staleness guard (species-gear-chain T34, spec-species-materials.md § Design 4)
+        shell: pwsh
+        run: |
+          # gk-data/packs/fusion/data/seed/items/materials/trophy-registry.json is generated: the deterministic trophyplan
+          # module mints it from the species seed tree (skipping speciesKind: "excluded"),
+          # gk-data/packs/fusion/data/seed/actions/_generated/family-map.json, and gk-core/data/tuning/species-material-run.v1.json
+          # (perSpecies/perFamily). Same CreatureSpeciesGen/FamilyExpandGen --check pattern above:
+          # --check replans in memory (no model call) and fails if the committed registry is missing
+          # rows the current roster/tuning would mint — never on its own initiative removes a row,
+          # because issued trophy ids are append-only (player inventory).
+          python -m seedsmith.adapters.items.trophyplan.run --check
+          if ($LASTEXITCODE -ne 0) { throw "trophy registry is stale — run 'python -m seedsmith.adapters.items.trophyplan.run --write' (from tools/seedsmith) and commit the result" }
+        working-directory: tools/seedsmith
+
+      - name: Creature preflight, CI mode (seed-to-concrete T1.8 — checks 1-4/7-9, no local model)
+        shell: pwsh
+        run: |
+          # --skip-model is CI's own escape hatch (spec-dump-preflight.md's own Commands section)
+          # and is never legal before a real generation run — run-control (module 9) refuses a
+          # preflight record written with skipModel=true. This step only proves checks 1-4/7-9
+          # stay green; it never authorizes a run.
+          python -m seedsmith creatures preflight --skip-model
+          if ($LASTEXITCODE -ne 0) { throw "creature preflight (checks 1-4, 7-9) failed — see output above" }
+        working-directory: tools/seedsmith
+
+      - name: Web unit tests
+        working-directory: web/fusion-rpg-web
+        shell: pwsh
+        run: |
+          if (-not (Test-Path package-lock.json)) { throw "web package-lock.json is required; npm ci is the only supported install" }
+          npm ci
+          if ($LASTEXITCODE -ne 0) { throw "npm ci failed" }
+          if (Test-Path package.json) {
+            $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+            if ($pkg.scripts.test) { npm test; if ($LASTEXITCODE -ne 0) { throw "npm test failed" } }
+            else { Write-Host "No npm test script; skipping web tests." }
+          }
+
+      - name: Web build
+        working-directory: web/fusion-rpg-web
+        shell: pwsh
+        run: |
+          npm run build
+          if ($LASTEXITCODE -ne 0) { throw "npm run build failed" }
+
+      - name: Web bundle budget (GG-38 — Checkpoint G §19 check 13)
+        working-directory: web/fusion-rpg-web
+        shell: pwsh
+        run: |
+          npm run check:bundle
+          if ($LASTEXITCODE -ne 0) { throw "entry chunk is over budget, or Phaser/recharts leaked into it — see output above" }
+
+      - name: Web i18n catalog is current (Checkpoint G — lingui extract clean)
+        working-directory: web/fusion-rpg-web
+        shell: pwsh
+        run: |
+          npm run extract
+          if ($LASTEXITCODE -ne 0) { throw "lingui extract failed" }
+          $diff = git status --porcelain -- src/i18n/locales
+          if ($diff) {
+            Write-Host $diff
+            throw "extracted i18n catalog is out of date — run 'npm run extract' in web/fusion-rpg-web and commit the result"
+          }
+
+      - name: Web e2e tests (Checkpoint G §19 checks 3/7/11 — reachability, axe, viewport)
+        working-directory: web/fusion-rpg-web
+        shell: pwsh
+        run: |
+          npx playwright install --with-deps chromium
+          if ($LASTEXITCODE -ne 0) { throw "playwright browser install failed" }
+          npm run test:e2e
+          if ($LASTEXITCODE -ne 0) { throw "playwright e2e tests failed" }

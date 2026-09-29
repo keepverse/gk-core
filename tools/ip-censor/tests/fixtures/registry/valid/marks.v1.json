@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "groups": [
+    {
+      "mark": "examplemark",
+      "category": "franchise-mark",
+      "scope": ["player-name", "player-prose"],
+      "remediation": "authored",
+      "aliases": [
+        {"text": "examplemark"},
+        {"text": "exm", "scope": ["player-name"]},
+        {"text": "example mark"},
+        {"text": "Example Mark II"}
+      ],
+      "admission": {
+        "stage": "reconfirm",
+        "evidence": "census",
+        "source": "fixture census of 2026-09-19",
+        "confirmedBy": "fixture-owner",
+        "confirmedOn": "2026-09-19"
+      }
+    },
+    {
+      "mark": "zenith-blade",
+      "category": "company-brand",
+      "scope": ["generator-prompt"],
+      "remediation": "generator-owned",
+      "aliases": [
+        {"text": "zenith blade"},
+        {"text": "zenith-blade"}
+      ],
+      "admission": {
+        "stage": "import",
+        "evidence": "dataset",
+        "source": "fixture-dataset#42",
+        "confirmedBy": "fixture-owner",
+        "confirmedOn": "2026-09-19",
+        "reconfirmedOn": "2026-09-20"
+      }
+    }
+  ]
+}

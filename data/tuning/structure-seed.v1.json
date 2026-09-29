@@ -1,0 +1,26 @@
+{
+  "_note": "base-defense structure-corpus (module 24), spec-structure-corpus.md §3's own 'budget' tunable: per-role target counts checked, not hoped. Each target is a FLOOR (spec: 'a role with zero rows is a hole in the taxonomy, not an empty cell'), and every number here is exactly what tasks/base-defense-todo.md 24.2 authored -- so this file also works as a regression guard against a row silently disappearing, not a padded aspiration nobody built to. No numeric field this module itself introduces is a magnitude (hp/cost/etc.) -- these are seed-row counts, structural, not a P(Theta) input.",
+  "budget": {
+    "Extract": 4,
+    "Refine": 1,
+    "Multiply": 2,
+    "Store": 3,
+    "Move": 3,
+    "Bank": 2,
+    "Enable": 2,
+    "Defend": 2,
+    "See": 3,
+    "Deny": 3
+  },
+  "bands": {
+    "_note": "structure-catalog-import (module 25) reads this via Bands.MaterialTierOf; structure-planner (module 27) reads the SAME tierLadder to declare it ordered. One list, two readers -- never a second copy.",
+    "tierLadder": ["rubble", "timber", "stone"]
+  },
+  "metrics": {
+    "_note": "structure-metrics (module 29), spec-structure-metrics.md's own Tunables table. unresolvedCeilingMilli/collapseNgramThreshold are real, declared numbers even though every row today is AUTHORED (zero GENERATED rows exist until structure-pipeline, module 28, runs) -- 29.1's own rule is that EVERY metric declares its loop and target NOW, not once there is generated content to make the numbers feel earned.",
+    "unresolvedCeilingMilli": 50,
+    "roleCountTolerance": 1,
+    "densityBand": {"minMilli": 2400, "maxMilli": 4000},
+    "collapseNgramThreshold": 3
+  }
+}

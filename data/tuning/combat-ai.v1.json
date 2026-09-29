@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/combat-ai/spec-profile-schema.md",
+    "note": "combat-ai module 2 (CAI1.8): the ten siege AI weights, migrated from siege.v1.json's own ai block, at the same address for the first time -- a relocation, not a balance pass. Every other lever ships at its identity value. See docs/architecture/combat-ai/spec-profile-schema.md S6/S7 for the migration table and docs/research/combat-ai/ for the evidence this move was byte-identical."
+  },
+  "profiles": {
+    "*/default": {
+      "tierOverride": null,
+      "tierByActorClass": { "unique": "smart", "general": "performance" },
+      "rows": [
+        { "selector": "nearest", "condition": "always", "conditionArgMilli": 0, "conditionArgId": "", "census": "none", "censusArg": 0, "actions": {} }
+      ],
+      "scoring": {
+        "weightHitChance": 70, "weightObjective": 50, "weightKill": 15, "weightLowHp": 10,
+        "weightCannotCounter": 10, "weightRound": 1, "weightRisk": 120,
+        "aggressionRange": 2, "maxCandidatesScored": 32
+      },
+      "selection": { "mode": "argmax", "keepPctMilli": 1000, "rngStreamName": "ai.select" },
+      "reserves": [],
+      "guards": { "minTargetsForArea": 1, "killMarginMilli": 0, "fightEndingLiveCount": 0 },
+      "antiRepeat": { "retargetLatencyTicks": 0, "commitmentBonus": 0, "repeatDecayHalfLifeTicks": 0 },
+      "personality": { "bounds": { "aggression": 0, "recklessness": 0, "focus": 0, "thrift": 0 } }
+    },
+    "siege/default": {
+      "tierOverride": "smart",
+      "tierByActorClass": { "unique": "smart", "general": "performance" },
+      "rows": [
+        { "selector": "nearest", "condition": "always", "conditionArgMilli": 0, "conditionArgId": "", "census": "none", "censusArg": 0, "actions": {} }
+      ],
+      "scoring": {
+        "weightHitChance": 70, "weightObjective": 50, "weightKill": 15, "weightLowHp": 10,
+        "weightCannotCounter": 10, "weightRound": 1, "weightRisk": 120,
+        "aggressionRange": 2, "maxCandidatesScored": 32
+      },
+      "selection": { "mode": "argmax", "keepPctMilli": 1000, "rngStreamName": "ai.select" },
+      "reserves": [],
+      "guards": { "minTargetsForArea": 1, "killMarginMilli": 0, "fightEndingLiveCount": 0 },
+      "antiRepeat": { "retargetLatencyTicks": 0, "commitmentBonus": 0, "repeatDecayHalfLifeTicks": 0 },
+      "personality": { "bounds": { "aggression": 0, "recklessness": 0, "focus": 0, "thrift": 0 } }
+    }
+  },
+  "router": { "orderTimeoutTicks": 5000, "reactionsPerRoundExpected": 1000 }
+}

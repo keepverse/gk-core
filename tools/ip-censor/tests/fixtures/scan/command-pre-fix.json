@@ -1,0 +1,14 @@
+{
+  "_provenance": {
+    "promptVersion": "tree-language/3",
+    "model": "fixture-model"
+  },
+  "nodes": [
+    {
+      "id": "skill.command-def-t8-n0",
+      "name": "Overwatch Protocol",
+      "nameKey": "overwatch-protocol",
+      "promptVersion": "tree-language/3"
+    }
+  ]
+}

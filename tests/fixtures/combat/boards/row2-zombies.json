@@ -1,0 +1,10 @@
+{
+  "entities": [
+    { "ptr": "P1", "side": "plant", "typeId": 0, "col": 2, "row": 2 },
+    { "ptr": "Z1", "side": "zombie", "typeId": 0, "col": 7, "row": 2 },
+    { "ptr": "Z2", "side": "zombie", "typeId": 0, "col": 8, "row": 2 },
+    { "ptr": "Z3", "side": "zombie", "typeId": 1, "col": 9, "row": 2 },
+    { "ptr": "Z4", "side": "zombie", "typeId": 0, "col": 7, "row": 3 },
+    { "ptr": "Z5", "side": "zombie", "typeId": 0, "col": 4, "row": 2, "mindControlled": true }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/passive-tree-map.md",
+    "note": "The program's ONE tunable file (ruling R2). Every key carries its unit in its name (tunables-ssot T6). tree-plan, tree-binder, tree-state, tree-resolve and gate-counters each own a slice of this file; none of them get a second file. Superseded spellings that must never reappear: Fmax, w, Ws, concentration.fmax, concentration.w, ladder.kPoints, tierLadder.k, soulThetaWeight, mechanism.floorMilli, mechanism.capMilli, nodePotencyCeiling, unlockCost.first, unlockCost.step, passive-tree-gen.v1.json.",
+    "noteUnmeasured": "budget.treeTotalPoints and soulTrack.thetaPerSoulLevelMilli are UNMEASURED (D42) -- shipped as working placeholders so the arithmetic runs, per aptitudes.v5.json's own posture: 'shipping a guess is fine; calling it balance is not.' squad-harness F6/F7 (task F7, spec-squad-harness.md §4/§11 S4) is the one thing scoped to re-derive budget.treeTotalPoints; soulTrack.thetaPerSoulLevelMilli needs its own ssot-power-scale.md row before it ships for real (spec-tree-state.md §6.2). treeShareMilli is NO LONGER on this list -- CLOSED 2026-09-06 by D53: 1000 (100%), trees are the full power budget today, not a placeholder pending a competing system; the value below was already 1000 and needed no change, only this note.",
+    "noteBandEdges": "potency.bandEdgesMilli[] is an UNREVIEWED PLACEHOLDER (added 2026-09-06, task A1) -- no default is stated anywhere in spec-tree-plan.md §Tunables (Value column reads '—'). Quartile split of the 182‰-of-one-branch ceiling: 46/91/137/182. A balance pass may recalibrate once real generated content exists to bucket.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py passive-tree <dotted.key>=<value> [...] writes passive-tree.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "tierLadder": {
+    "reqScalePoints": 5
+  },
+  "budget": {
+    "treeTotalPoints": 1000,
+    "branchSplitMilli": 500
+  },
+  "treeShareMilli": 1000,
+  "treeBudgetMilli": 1000,
+  "potency": {
+    "maxNodeShareMilli": 182,
+    "minTerminalWidth": 1,
+    "bandEdgesMilli": [46, 91, 137, 182]
+  },
+  "mechanism": {
+    "rampStartMilli": 0,
+    "rampEndMilli": 1000
+  },
+  "archetype": {
+    "rewardSpreadMaxRatioMilli": 6000
+  },
+  "exclusion": {
+    "targetShareMilli": 20
+  },
+  "archetypeAssignment": "ordinal-round-robin",
+  "designTarget": {
+    "thetaAllIn": 92,
+    "_noteThetaAllIn": "The s=1 reading of req(tierCount)/3. D29's s=0.542 reading gives Theta ~= 170 -- the two conventions are never confused (A15); this key is the s=1 one."
+  },
+  "concentration": {
+    "fmaxMilli": 1200,
+    "wMilli": 500
+  },
+  "soulTrack": {
+    "thetaPerSoulLevelMilli": 1000,
+    "_noteUnmeasured": "UNMEASURED (D42/A1). Shipped at 1000 (Ws=1, one Theta per soul level) as the working placeholder -- squad-harness S3/S5 is scoped to re-derive this from real data."
+  },
+  "unlockCost": {
+    "firstPoints": 5,
+    "stepPoints": 2
+  },
+  "respec": {
+    "basePrice": 50,
+    "escalationPermille": 500,
+    "_noteUnmeasured": "UNMEASURED for the tree context specifically (task C10) -- mirrors species-build.v1.json's respecBasePrice=50/respecEscalationPermille=500 shape as the working placeholder, own counter per C10's stated default (spec-tree-state.md sec5.1's genuinely-open scoping question)."
+  },
+  "gateCounters": {
+    "masteryCurveFirstCount": 23,
+    "masteryCurveStepCount": 23,
+    "elementMasteryRatePoints": 4,
+    "statusMasteryRatePoints": 4,
+    "flushIntervalMs": 5000
+  }
+}

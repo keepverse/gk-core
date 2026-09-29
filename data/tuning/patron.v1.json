@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/creatures/spec-patron-creature.md, aura-skill-todo.md T22 (owner sign-off 2026-08-30)",
+    "note": "Extracted byte-identical from PatronPolicy.cs (tunables-ssot.md M.3, 2026-08-23). killSoulCap was removed by T3.6 (spec-caps-reconcile.md §2.3, SSOT §11.7, 2026-08-24) — the patron kill-earn bonus is uncapped now and scales by contentScale(Theta), same as the base earn path. pThetaKMilli (T22, 2026-08-30): patron.aura was hard-clamped at auraClampMilli forever, so a commander's own P(Theta)-scaled aura outscaled it once investment became meaningful (ssot-power-scale.md §10 row 16's own note that patron 'never reads PowerTuning' is corrected alongside this — a reviewed edit to that document, not a tuning tweak on its own). The OLD flat, clamped rarity/star/level part is UNCHANGED (still caps at auraClampMilli) and stays a small early-game floor; this NEW additive term reads P(Theta) through the SAME shared PowerLadder every other magnitude uses, so patron scales instead of being left behind. Starting value grounded in the shipped power-scale.v2.json pin (P(20)=680): pThetaKMilli=220 makes the new term land at ~150 (matching the OLD ceiling's own scale) at a Theta around 20 -- a continuity point, not a coincidence -- and grow from there as Theta grows, same shape as ssot-power-scale.md's own pin discipline. A later balance pass changes this ONE number, never PatronPolicy.cs. rarityBaseMilli widened 2026-09-01 (seed-to-concrete T4.1) from the old four-value CreatureRarity to the ten-rung ladder — staircase-interpolated starting values, not a validated balance decision. Corrected same day (caught by PatronPolicyTests.Rarity_bases_are_locked, which still pins the pre-migration Legendary value): the first widening pass slid the old Legendary=60 value onto Almanac (a brand-new, currently-unpopulated rung) instead of keeping it on Sunwoven (the rung Legendary species actually migrated to) — the same 'value should follow the renamed rung, not the renamed SLOT' bug already found and fixed in fusion.v1.json's recipeCost.shardRarity. sunwoven is now 60 (unchanged game-facing economics for every existing Legendary-turned-Sunwoven creature) and almanac is a fresh extrapolated starting value (70) for the still-empty top rung.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py patron <dotted.key>=<value> [...] writes patron.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "switchCostSouls": 100,
+  "auraClampMilli": 150,
+  "perStarMilli": 10,
+  "pThetaKMilli": 220,
+  "rarityBaseMilli": {
+    "chaff": 20,
+    "sprout": 24,
+    "grafted": 27,
+    "cultivated": 30,
+    "fused": 34,
+    "chimeric": 38,
+    "heirloom": 45,
+    "firstseed": 50,
+    "sunwoven": 60,
+    "almanac": 70
+  }
+}

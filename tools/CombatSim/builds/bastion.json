@@ -1,0 +1,14 @@
+{
+  "name": "BASTION",
+  "description": "BASTION posture \u2014 points are shares; Theta sets the absolute budget.",
+  "element": "fire",
+  "points": {
+    "Bulwark": 17.969565204115067,
+    "Fortitude": 16.955542304906217,
+    "Precision": 24.774440540019718,
+    "Ferocity": 40.30045195095898
+  },
+  "hpPerLadder": 15,
+  "damagePerLadder": 1.5,
+  "shieldPerLadder": 2
+}

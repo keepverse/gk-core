@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/action-enrich/spec-action-base.md (AE1.1)",
+    "note": "basicAttack.basePowerMilli is the base ActionBaseMath.BasePerHit multiplies by P(Theta) and divides by 1000 once: base(Theta) = basePowerMilli * P(Theta) / 1000. Calibrated so the basic attack reproduces the atk baseline it replaces at the golden actors own levels: BaseAtk(5)=30 / (P(5)=215 / 1000) = 139.5 -> 140. One scalar holds across the band (BaseAtk(20)/P(20)=135.3, BaseAtk(1)/P(1)=141.5) because the atk channel and the hp ladder are both projections of the same power curve; the goldens therefore move by the re-bless alone, not by a balance swing. Corrected at AE1.4: v1 held 44118, which divided a level-5 atk by P(20) and carried the quotient as per-mille a second time, making every hit about 1000x too large. v1 stays on disk for revert. See tasks/evidence-fragments/AE1.4.md.",
+    "rebalance": "Never hand-edit this file. A balance pass republishes action-base.v{n+1}.json; every prior version stays on disk for revert.",
+    "untuned": true,
+    "tunedBy": "the A20 synthetic-loadout sweep once the action program's holder wiring (T74) lands",
+    "rebalanceLabel": "AE1.4: calibration corrected (v1 basePowerMilli was 1000x too large and pinned to the wrong Theta)"
+  },
+  "basicAttack": {
+    "basePowerMilli": 140
+  }
+}

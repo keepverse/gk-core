@@ -1,0 +1,26 @@
+{
+  "id": "status-shatter-apply",
+  "seed": 42,
+  "board": [
+    { "ptr": "P1", "side": "plant", "typeId": 0, "col": 2, "row": 2, "derivedProfile": "neutral" },
+    { "ptr": "Z1", "side": "zombie", "typeId": 0, "col": 7, "row": 2, "derivedProfile": "glass" }
+  ],
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "shatter",
+        "effectId": "fx.overlay_damage",
+        "ownerKey": "match",
+        "overlay": {
+          "statusId": "shatter",
+          "icd_ms": 0,
+          "durationMs": 4000
+        }
+      }
+    },
+    { "op": "hit", "actorPtr": "P1", "targetPtr": "Z1", "typeId": 0, "targetTypeId": 0 },
+    { "op": "expectStatus", "hostPtr": "Z1", "statusId": "shatter", "present": true }
+  ]
+}

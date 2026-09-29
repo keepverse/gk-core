@@ -1,0 +1,294 @@
+{
+  "name": "H-split",
+  "description": "HYPOTHESIS C: the 16 split by what the formula compares them against. parry/block strength+shred are measured against baseLong (the hit itself) -> magnitude. Everything else feeds a bounded ratio through a small scale -> contest. Accuracy is sourced by all three postures (BASTION strongest): it gates every hit, so a posture with no source for it cannot land damage at all and its counter becomes absolute. power/defense are sourced by all three postures (FORCE strongest): they are the pair every actor needs, and a posture-exclusive universal is what makes a counter absolute rather than favourable. Every aptitude carries a general component: one that only pays off against a specific defence is a dead slot in the matchups where that defence is absent, which shrinks the build and makes the arrow absolute. Guard/reflect rates are sized to actually fire (~30%): a proc at 9% is not a defence, and its break zeroes it trivially, which makes the counter absolute. Mitigation moved to BASTION and Reflect to FORCE: a posture owning ONLY hard-counterable defences (linear rate contests clamp to exactly 0) can be zeroed by one enemy aptitude regardless of allocation. Every posture now holds one hard and one soft defence. Guard rate/strength out-scale their breaks slightly: a mechanism that is both rare AND hard-counterable is strictly worse than crit, and no allocation will take it. Sigmoid-fed contest k is sized so a max-share build does NOT saturate: a saturated sigmoid turns a graded contest into a binary one. Guard rate and strength are sized so neither saturates: neutralBase is already half the hit, so a large strength k reaches the 95% cap at trivial investment and removal stops responding to allocation entirely. crit/crit-resist are sourced by all three postures (BASTION strongest for crit, FINESSE for crit-denial): crit is a general damage mechanic, and making it exclusive left FINESSE with two defensive stats and two dead breaks in the BASTION matchup. Guard's parry+block rates are halved: they are ONE mechanism, and one aptitude granting both gave the posture a third defence. Sigmoid k sized so a realistic share gap lands near delta 100 -- below that the contest cannot move the outcome at all. Mitigation is sourced by all three postures (BASTION strongest). THE RULE this search converged on: every GENERAL mechanic -- power, defence, accuracy, crit, mitigation -- must be sourced by all three; only SPECIALISED mechanics (guard, dodge, shields, reflect) stay exclusive. A posture-exclusive general mechanic makes its owner's counter absolute rather than favourable.",
+  "edges": [
+    {
+      "channel": "combat.power.omni",
+      "source": "Might",
+      "k": 2.2,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.defense.omni",
+      "source": "Fortitude",
+      "k": 3.0,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.shield.capacity.omni",
+      "source": "Vigor",
+      "k": 40.0,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.shield.regen.omni",
+      "source": "Vigor",
+      "k": 0.5,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.shield.pen.omni",
+      "source": "Pierce",
+      "k": 2.0,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.shield.toughness.omni",
+      "source": "Vigor",
+      "k": 2.0,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Precision",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.dodge.omni",
+      "source": "Agility",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.rate.omni",
+      "source": "Ferocity",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.resist.omni",
+      "source": "Composure",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.damage.omni",
+      "source": "Ferocity",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.resist.damage.omni",
+      "source": "Composure",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.penetration.omni",
+      "source": "Onslaught",
+      "k": 1.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.absorption.omni",
+      "source": "Fortitude",
+      "k": 1.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.amplification.omni",
+      "source": "Onslaught",
+      "k": 0.3,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.reduction.omni",
+      "source": "Fortitude",
+      "k": 0.3,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.parry.rate.omni",
+      "source": "Bulwark",
+      "k": 4.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.parry.strength.omni",
+      "source": "Bulwark",
+      "k": 1.5,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.parry.break.omni",
+      "source": "Onslaught",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.parry.shred.omni",
+      "source": "Onslaught",
+      "k": 1.2,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.block.rate.omni",
+      "source": "Bulwark",
+      "k": 4.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.block.strength.omni",
+      "source": "Bulwark",
+      "k": 1.5,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.block.break.omni",
+      "source": "Onslaught",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.block.shred.omni",
+      "source": "Onslaught",
+      "k": 1.2,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.reflect.rate.omni",
+      "source": "Retribution",
+      "k": 0.22,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.reflect.damage.omni",
+      "source": "Retribution",
+      "k": 1.8,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.reflect.resist.rate.omni",
+      "source": "Pierce",
+      "k": 0.22,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.reflect.resist.damage.omni",
+      "source": "Pierce",
+      "k": 1.8,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Might",
+      "k": 1.4,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Pierce",
+      "k": 1.4,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.power.omni",
+      "source": "Pierce",
+      "k": 1.6,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.power.omni",
+      "source": "Ferocity",
+      "k": 1.6,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.defense.omni",
+      "source": "Composure",
+      "k": 1.6,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.defense.omni",
+      "source": "Bulwark",
+      "k": 1.6,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.power.omni",
+      "source": "Onslaught",
+      "k": 0.8,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Onslaught",
+      "k": 1.4,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.rate.omni",
+      "source": "Pierce",
+      "k": 1.4,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.damage.omni",
+      "source": "Pierce",
+      "k": 1.4,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.rate.omni",
+      "source": "Might",
+      "k": 1.4,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.damage.omni",
+      "source": "Might",
+      "k": 1.4,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.resist.omni",
+      "source": "Fortitude",
+      "k": 1.4,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.resist.damage.omni",
+      "source": "Fortitude",
+      "k": 1.4,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.resist.omni",
+      "source": "Vigor",
+      "k": 1.4,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.resist.damage.omni",
+      "source": "Vigor",
+      "k": 1.4,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.absorption.omni",
+      "source": "Composure",
+      "k": 0.5,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.reduction.omni",
+      "source": "Composure",
+      "k": 0.5,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.absorption.omni",
+      "source": "Vigor",
+      "k": 0.5,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.reduction.omni",
+      "source": "Vigor",
+      "k": 0.5,
+      "read": "contest"
+    }
+  ]
+}

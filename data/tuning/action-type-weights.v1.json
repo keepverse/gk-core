@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/action-corpus/spec-type-weights.md (A-T1)",
+    "note": "These weights are untuned placeholders, shipped at spec-type-weights.md SS2's own DECIDED defaults exactly -- base:1000/step:250 reproduce that section's rank-to-raw formula (ranks 2000/1750/1500/1250/1000 normalise by largest remainder to 267/233/200/167/133 per-mille -- the spec's own SS2 worked example states 400/350/300/250/200, which sums to 1500, not 1000, and does not survive its own formula; the shipped value here is the arithmetic the code actually runs, pinned by test_spec_own_400_350_300_250_200_per_mille_claim_does_not_hold); separationMilli:[0,250,500,750,1000] is the identity ramp for a REAL A-S0 separation 0..4 (0 collapses a genuine family-floor tie to flat -- the honest 'we did not differentiate' -- 1000 keeps base/step fully intact); nullSeparationMilli:500 is `separation: null`'s OWN row, added 2026-09-03 as an owner-decided fix to acceptance #5 -- spec SS3 step 2's literal text said null 'takes the same row as 0', but sharing exactly-0 with a true tie made every one of the 31 family-less (derived-nofloor) species print a flat 200/200/200/200/200 vector, directly contradicting AC5's own words ('a family-less species still gets a vector shaped by its own leanOrder'); 500 is real signal (a family-less species DOES have a genuine derivation, just no floor to measure distance from) without being the fully-intact 1000 a measured separation:4 carries; targetModeMilli ships uniform per row over all five lean heads (167/167/167/167/166/166 by largest remainder over the six declared target modes -- no category, mode or shape is zero at the default); areaShapeMilli ships uniform 250 each (trivially exact over the four declared shapes); primaryMilli:400/secondaryMilli:200 are the one deliberately non-flat default -- an element bias vector with no bias is a deleted feature, not a neutral value; familySecondaryScaleMilli:500 mirrors action-role-lean.v1.json's own elementSecondaryScaleMilli ('a secondary is half a primary'), restated here as this module's own row since step 6 never reads A-S0's tuning file. The first smoke batch's type-weights.json, read through A-S5's quota-drift and cell-occupancy findings, is the evidence these move on.",
+    "rebalance": "Re-tune by editing a row here, never in code -- a grep over adapters/actions/type_weights/ for a bare numeric literal other than structural indices and the 1000 per-mille scale must stay empty (spec acceptance #4). A new version bumps `version` and keeps this one on disk for revert.",
+    "separationRetune2026_09_11": "separationMilli row 0 was 0, which collapsed a REAL separation==0 (a species whose derived head matches its family floor) to a flat 200/200/200/200/200 vector. A genuine five-way score tie is already handled by its own leanSource=='floor' branch in raw_category_scores, so row 0 was flattening differentiated species for no reason: measured over the live 904-species roster, 459 of them printed flat. The ramp is now [200,400,600,800,1000] -- monotone, no row zero, and 'less differentiated -> flatter' still holds (row 0's spread is 36 per-mille, row 4's is 134). Measured after the closed-trait bridge (curation.py): 0 flat vectors, 170 distinct category vectors."
+  },
+  "base": 1000,
+  "step": 250,
+  "separationMilli": [200, 400, 600, 800, 1000],
+  "nullSeparationMilli": 500,
+  "targetModeMilli": {
+    "attack":   { "self": 167, "single": 167, "multi": 167, "rolledTarget": 167, "all": 166, "area": 166 },
+    "defense":  { "self": 167, "single": 167, "multi": 167, "rolledTarget": 167, "all": 166, "area": 166 },
+    "support":  { "self": 167, "single": 167, "multi": 167, "rolledTarget": 167, "all": 166, "area": 166 },
+    "movement": { "self": 167, "single": 167, "multi": 167, "rolledTarget": 167, "all": 166, "area": 166 },
+    "status":   { "self": 167, "single": 167, "multi": 167, "rolledTarget": 167, "all": 166, "area": 166 }
+  },
+  "areaShapeMilli": { "row": 250, "column": 250, "square": 250, "rectangle": 250 },
+  "primaryMilli": 400,
+  "secondaryMilli": 200,
+  "familySecondaryScaleMilli": 500
+}

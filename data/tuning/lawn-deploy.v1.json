@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/creature-lawn-deploy/spec-unique-deploy-cap.md, tasks/lawn-todo.md LW5.1",
+    "note": "STRUCTURAL per-frame concurrency limits, NOT progression ceilings. Owner ruling D6: 'Lawn deploy cap: at most 5 unique creatures per side, 10 on the board.' The class is stated in the ruling's own breath: it limits how many SMART-TIER actors run at once, it caps no magnitude and no roster size, and it protects the frame budget (KernelDriveHost runs the lawn clock against a 0.05-0.15 ms clamp per board, and combat-ai's lawn-cast-trigger adds a per-frame decision budget beside it). Register row: docs/architecture/power/ssot-power-scale.md section 11.3. Raising either number is a MEASURED PERF DECISION (the 300-zombie A/B that lawn-scale-live-proof owns), never a balance pass. `limits.maxConcurrentUniquesOnBoard` is not redundant with the per-empire row: the per-empire number is the fairness statement, the board number is the one that actually bounds the frame, and they coincide only while exactly two empires can deploy.",
+    "rebalance": "First version, authored by hand like every other tuning file's own v1. Later versions publish through tools/tuning/publish.py, never a hand edit: `python tools/tuning/publish.py lawn-deploy limits.maxConcurrentUniquesPerEmpire=<n>`. The loader refuses a file whose board limit is below its per-empire limit -- that file could never admit at the per-empire limit it states."
+  },
+  "limits": {
+    "maxConcurrentUniquesPerEmpire": 5,
+    "maxConcurrentUniquesOnBoard": 10
+  }
+}

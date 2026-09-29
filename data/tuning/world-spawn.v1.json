@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "sourceRef": "spec-wild-species-spawn.md (species-gear-chain T7). The per-sector species weight table: the same slot-table SHAPE as wave-species-roll, keyed on sector type instead of wave. offClimateMilli reuses the Delve selector's key name on purpose. fallbackSpeciesId is the named, documented fallback for sectors whose admissible pool is empty (never a crash, never a silent skip). members carries future per-species entries incl. non-recruitable neutrals (demons, void beasts) — UNPOPULATED today; the shape is the deliverable, the content is the void-raid program's.",
+  "offClimateMilli": 200,
+  "fallbackSpeciesId": "NormalZombie",
+  "sectors": {
+    "barren": {
+      "rarityFrom": "chaff", "rarityTo": "fused", "sameSpeciesMaxMilli": 0,
+      "weights": { "chaff": 100, "sprout": 100, "grafted": 100, "cultivated": 100, "fused": 100 },
+      "members": []
+    },
+    "rich": {
+      "rarityFrom": "chaff", "rarityTo": "chimeric", "sameSpeciesMaxMilli": 0,
+      "weights": { "chaff": 100, "sprout": 100, "grafted": 100, "cultivated": 100, "fused": 100, "chimeric": 100 },
+      "members": []
+    },
+    "stable": {
+      "rarityFrom": "chaff", "rarityTo": "cultivated", "sameSpeciesMaxMilli": 0,
+      "weights": { "chaff": 100, "sprout": 100, "grafted": 100, "cultivated": 100 },
+      "members": []
+    },
+    "homeworld": {
+      "rarityFrom": "chaff", "rarityTo": "sprout", "sameSpeciesMaxMilli": 0,
+      "weights": { "chaff": 100, "sprout": 100 },
+      "members": []
+    }
+  }
+}

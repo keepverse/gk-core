@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 2,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/battle/spec-timeline-tunables.md",
+    "note": "Extracted byte-identical from TraitBattleCatalog.cs, BattleModels.cs (BattleRuleset) and BattleStatComposer.cs (tunables-ssot.md M.7, 2026-08-24). Trait ids/mechanisms and the record shape stay in C# (schema, not balance) — only each trait's Milli/Charges magnitudes moved, same split M.2 used for the world catalogs. critical-hunter carries no magnitudes (its ChannelMods moved to an atom in E12).",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py battle <dotted.key>=<value> [...] writes battle.v{n+1}.json; the old version stays on disk for revert.",
+    "noteV2": "v2 adds the timeline.profiles section (battle-timeline T14/B29). Every value is EXTRACTED BYTE-IDENTICAL from BattleModeProfileCatalog.cs as it stood at 2026-09-04 -- classic-round w=1, galaxy-sync w=2, hybrid-atb w=4; wReact 0 and passQuantum 1 on all three (record defaults no profile overrode); hybrid-atb maxPoints 2. This module moves the numbers' home, it does not move a number: any value here differing from what the catalog held is a defect, not a rebalance. Structure stays in code on purpose -- advancePolicy, wScope, defaultCommitment, the economy TYPE and the profile ids are which mechanism runs, not how much of it. rendezvousEnabled is likewise absent: it is a boolean gate, not a magnitude. Per-wave W overrides are WaveCatalog's (T15/B33), never this file's.",
+    "noteHybrid": "hybrid.secondaryWeightMilli added by combat-unification Wave E3 (2026-09-04). It is the share of an attack's payload carried by the actor's SECONDARY element, per-mille; the primary carries the remainder. DEFAULT 0 = the shipped behaviour exactly: primary at full weight, secondary contributes nothing, every golden unmoved. The mechanism ships inert on purpose because combat-unification-todo.md marks this constant ASK-FIRST -- the map's own suggestion was 0.7/0.3, i.e. 300 here, but choosing it is a balance decision and it MOVES THE EXPEDITION GOLDENS, because wave creatures carry a real ElementSecondary (WaveCatalog.cs:115) even though the hand-built battle goldens do not. Raising it above 0 therefore requires a predicted-delta write-up and a RulesetVersion bump, per this program's own re-bless rule."
+  },
+  "ruleset": {
+    "roundDurationMs": 1000,
+    "maxRounds": 50,
+    "loopGuardRoundMultiple": 4000
+  },
+  "statComposer": {
+    "primaryAffinityDivisor": 4,
+    "secondaryAffinityDivisor": 8
+  },
+  "timeline": {
+    "profiles": {
+      "classic-round": {
+        "w": 1,
+        "wReact": 0,
+        "passQuantum": 1
+      },
+      "galaxy-sync": {
+        "w": 2,
+        "wReact": 0,
+        "passQuantum": 1
+      },
+      "hybrid-atb": {
+        "w": 4,
+        "wReact": 0,
+        "passQuantum": 1,
+        "maxPoints": 2
+      },
+      "siege": {
+        "w": 2,
+        "wReact": 0,
+        "passQuantum": 1
+      }
+    }
+  },
+  "hybrid": {
+    "secondaryWeightMilli": 0
+  },
+  "traits": {
+    "berserker": {
+      "berserkRampHalfMilli": 250,
+      "berserkRampQuarterMilli": 500
+    },
+    "regenerator": {
+      "regenPerRoundMilli": 20
+    },
+    "soul-eater": {
+      "onKillHealMilli": 100
+    },
+    "guardian": {
+      "guardShareMilli": 250
+    },
+    "swift": {
+      "initiativeBonusMilli": 1000
+    },
+    "immortal": {
+      "deathRefusalCharges": 1
+    },
+    "coward": {
+      "retreatBelowMilli": 250
+    },
+    "greedy": {
+      "soulLootBonusMilli": 250
+    },
+    "genius": {
+      "specimenXpBonusMilli": 250
+    },
+    "void-touched": {
+      "essenceProcMilli": 100,
+      "essenceRiderMilli": 150
+    },
+    "chaos-marked": {
+      "essenceProcMilli": 100,
+      "essenceRiderMilli": 150
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "_note": "species-build T1.1/T1.3 (module 3, species-xp). The curve reuses the SAME arithmetic shape RpgXpCurve already uses for player/plant/zombie (first + (level-1)*step) but with its OWN tunable pair -- a species' pace is this program's own balance surface, not plant/zombie type progression's. Awards: two terms, decided by the owner 2026-09-05 ('let's make a run more bonus and make place/spawn less bonus, tunable config, so the spawn bonus still have they variable') -- runCompletion fires once per resolved match a species was fielded in (the dominant term, kills the grind vector by ratio rather than by ban); placement fires per place/spawn as before (the smaller term, keeps the 'I used this species' signal and its variance alive). Sized so runCompletion (100) still exceeds even a heavy same-species spam match (20 placements x placement(4) = 80 < 100) -- 20 is this file's own documented 'plausible heavy match' assumption, asserted directly by T1.3's regression test. If a balance pass moves either number, that test says whether the ratio still holds.",
+  "schemaVersion": 1,
+  "version": 1,
+  "xpCurve": {
+    "first": 60,
+    "step": 24
+  },
+  "awards": {
+    "runCompletion": 100,
+    "placement": 4
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "effect-butter-filter",
+  "seed": 42,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "gt",
+        "effectId": "fx.butter_on_hit",
+        "ownerKey": "plant:7",
+        "overlay": { "icd_ms": 0 }
+      }
+    },
+    { "op": "hit", "typeId": 0 },
+    { "op": "expectEmpty" },
+    { "op": "hit", "typeId": 7 },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnDamageDealt",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "ApplyStatus",
+            "effectId": "fx.butter_on_hit",
+            "grantId": "gt",
+            "params": { "status": "butter" }
+          }
+        ]
+      }
+    }
+  ]
+}

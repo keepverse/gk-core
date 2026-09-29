@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "version": 4,
+  "_meta": {
+    "owner": "docs/architecture/loam/spec-loam-model.md, docs/architecture/world/spec-sector-development.md",
+    "note": "v4 (world-map W57): renames six `structures` keys off the misleading `*CostMilli` suffix — wellCostMilli/waystationCostMilli/granaryCostMilli/soulConduitCostMilli/extractorCostMilli/hatcheryCostMilli → wellCost/waystationCost/granaryCost/soulConduitCost/extractorCost/hatcheryCost. Every one of these six is a whole loam unit (compared directly against WorldEntity.CarriedLoam / WorldSector.LoamStock, never divided by 1000), never a per-mille — the `Milli` suffix lied. No value changed; published via `publish.py loam --rename-key` (order preserved), not hand-edited. v3's own note: adds three new `structures` rows' own cost/build/yield keys — soulConduit*, extractor*, hatchery* — for the new `StructureKind.Yield` catalog rows (soul conduit, extractor, hatchery). Every other key is byte-identical to v2. All nine new values are provisional placeholders, the identical sense every other structure cost/build/yield number in this file already carries — L9's economy harness, not this migration, picks the real numbers. `hatcheryYieldMultiplierMilli` (1500) is deliberately non-identity real content, not a placeholder shape-proof: a hatchery is meant to visibly matter the moment it is built.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py loam <dotted.key>=<value> [...] writes loam.v{n+1}.json; the old version stays on disk for revert.",
+    "rebalanceLabel": "W57: rename whole-loam-unit structure cost keys off the misleading Milli suffix"
+  },
+  "upkeep": {
+    "seepPerTurn": 50,
+    "loamCapacity": 300,
+    "baseUpkeepPerSector": 10,
+    "garrisonUpkeepPerMember": 2,
+    "developmentUpkeepPerLevel": 5,
+    "dangerUpkeepPerBand": 3
+  },
+  "development": {
+    "yieldPerLevel": 6
+  },
+  "fade": {
+    "recoveryMilli": 20,
+    "baseDecayMilli": 40,
+    "decayPerDeficitUnitMilli": 1,
+    "decayScaleDivisor": 5,
+    "maxDecayMilli": 300,
+    "abandonmentHorizonTurns": 3
+  },
+  "legionSupply": {
+    "carryPerBearer": 200,
+    "burnPerMember": 10,
+    "besiegedRationMilli": 1000
+  },
+  "structures": {
+    "wellYieldMultiplierMilli": 2000,
+    "wellCost": 200,
+    "waystationCost": 300,
+    "wellBuildTurns": 2,
+    "waystationBuildTurns": 4,
+    "waystationRangeHops": 3,
+    "granaryCost": 150,
+    "granaryCapacityBonus": 300,
+    "granaryBuildTurns": 2,
+    "soulConduitCost": 250,
+    "soulConduitFlatYieldPerTurn": 20,
+    "soulConduitBuildTurns": 3,
+    "extractorCost": 200,
+    "extractorFlatYieldPerTurn": 15,
+    "extractorBuildTurns": 2,
+    "hatcheryCost": 300,
+    "hatcheryYieldMultiplierMilli": 1500,
+    "hatcheryBuildTurns": 3
+  },
+  "texture": {
+    "contagionPressurePerTurn": 60,
+    "maxPressureMilli": 300,
+    "pressureDecayPerTurn": 40,
+    "surgeDecayMultiplierMilli": 1500,
+    "unmadeSpawnAfterTurns": 5,
+    "unmadeMemberHp": 120,
+    "unmadeMemberCount": 2
+  }
+}

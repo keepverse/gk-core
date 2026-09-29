@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/action-corpus/spec-resource-ownership.md",
+    "note": "24 declared (family, resource) rows across the 4 real resource families generate 166 aptitude edges -- verified 2026-09-04 against the shipped data/tuning/aptitudes.v5.json (166 of its 526 real edges start with 'resource.'). This supersedes the '18 rows -> 216 edges' estimate in action-corpus-ideal.md SS29/SS3.1 of this spec: that arithmetic assumed 3 DENSE families (18 = 3 families x 6 resources, 216 = 18 x 12 aptitudes) and predates two facts -- task 0.3 (2026-09-02) decided `resource.efficiency` is SPARSE, not dense, and SS33/task 0.8 later added a 4th family, `resource.restore` (generalised from `combat.heal.power`), which is sparse too. Only `max` and `regen` are dense (12 edges per resource, one per aptitude); `efficiency` and `restore` are owners-only with no floor row, per SS3.2's cap reasoning (`resource.efficiency` is `SumIncreased` capped at 1.0 by `DerivedStatPolicy.ResourceEfficiencyCap`, a bounded ratio exempt from the no-cap rule -- AGENTS.md). Real shape: 2 dense families x 6 resources x 12 aptitudes = 144 edges, plus 2 sparse families x 6 resources x (1-3 owners each) = 22 edges = 166 total. Adding a 7th resource id therefore yields 24 new edges (2 dense families x 12 aptitudes), not 36 -- the sparse families gain edges only where the table explicitly names an owner for the new resource, which is optional by design.",
+    "generator": "tools/tuning/resource_ownership.py --check regenerates this table's edges in memory and diffs them against the shipped aptitudes.v{n}.json's resource.* edges. Never hand-author an edge here or in aptitudes.v{n}.json -- extend this table (add a resource id, an owner override, or a new dense/sparse family) and re-run the generator. `density` is declared per family, never inferred from whether `floors` happens to be empty."
+  },
+  "families": {
+    "max": {
+      "density": "dense",
+      "floors": { "hp": 6000, "stamina": 8000, "hunger": 5000, "spirit": 3000, "qi": 6000, "poise": 5000 },
+      "owners": {
+        "hp":      { "Bulwark": 32000, "Might": 14000, "Fortitude": 10000, "Vigor": 12000, "Retribution": 12000 },
+        "stamina": { "Might": 18000, "Vigor": 26000, "Onslaught": 14000, "Agility": 16000, "Bulwark": 14000 },
+        "hunger":  { "Might": 9000, "Fortitude": 10000, "Vigor": 12000, "Bulwark": 18000, "Retribution": 26000 },
+        "spirit":  { "Agility": 8000, "Composure": 28000, "Focus": 14000, "Precision": 7000, "Ferocity": 6000 },
+        "qi":      { "Composure": 10000, "Pierce": 14000, "Focus": 30000, "Precision": 12000, "Ferocity": 9000 },
+        "poise":   { "Fortitude": 10000, "Bulwark": 28000, "Retribution": 8000 }
+      }
+    },
+    "regen": {
+      "density": "dense",
+      "floors": { "hp": 21, "stamina": 500, "hunger": 300, "spirit": 200, "qi": 400, "poise": 2 },
+      "owners": {
+        "hp":      { "Might": 300, "Vigor": 83, "Onslaught": 300, "Pierce": 300, "Retribution": 800, "Ferocity": 300 },
+        "stamina": { "Might": 900, "Vigor": 1063, "Agility": 990, "Bulwark": 900 },
+        "hunger":  { "Bulwark": 800, "Retribution": 1500 },
+        "spirit":  { "Composure": 1000, "Focus": 700 },
+        "qi":      { "Composure": 900, "Pierce": 800, "Focus": 1800, "Precision": 900 },
+        "poise":   { "Fortitude": 30, "Bulwark": 60 }
+      }
+    },
+    "efficiency": {
+      "density": "sparse",
+      "floors": { },
+      "owners": {
+        "hp":      { "Bulwark": 400, "Focus": 300 },
+        "stamina": { "Focus": 300, "Agility": 150, "Vigor": 400 },
+        "hunger":  { "Focus": 300, "Retribution": 400 },
+        "spirit":  { "Composure": 400, "Focus": 300 },
+        "qi":      { "Focus": 500 },
+        "poise":   { "Bulwark": 400, "Focus": 300 }
+      }
+    },
+    "restore": {
+      "density": "sparse",
+      "floors": { },
+      "owners": {
+        "hp":      { "Ferocity": 12000, "Composure": 8000, "Fortitude": 12000 },
+        "stamina": { "Vigor": 400 },
+        "hunger":  { "Retribution": 400 },
+        "spirit":  { "Composure": 400, "Focus": 300 },
+        "qi":      { "Focus": 500 },
+        "poise":   { "Bulwark": 400, "Focus": 300 }
+      }
+    }
+  }
+}

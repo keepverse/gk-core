@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "version": 3,
+  "_meta": {
+    "owner": "docs/architecture/notification-ssot/spec-notify-vocabulary.md",
+    "note": "cache-notify-source's category rows (spec-cache-notify-source.md \u00a72): cache.created and cache.decayed, domain corpse-cache. Never hand-edit; publish v{n+1} through tools/tuning/publish.py.",
+    "rebalance": "Never hand-edit this file. A change republishes notification-catalog.v{n+1}.json through tools/tuning/publish.py; every prior version stays on disk.",
+    "rebalanceLabel": "cache-notify-source: cache.created + cache.decayed, no promotion (both default to rail)"
+  },
+  "categories": [
+    {
+      "id": "loam.shortfall",
+      "domain": "world",
+      "displayName": "Loam shortfall",
+      "messageKeys": [
+        "world.turn-entry"
+      ]
+    },
+    {
+      "id": "loam.release",
+      "domain": "world",
+      "displayName": "Ground release",
+      "messageKeys": [
+        "world.release-forecast"
+      ]
+    },
+    {
+      "id": "legion.runway",
+      "domain": "world",
+      "displayName": "Legion runway",
+      "messageKeys": [
+        "world.turn-entry"
+      ]
+    },
+    {
+      "id": "battle.result",
+      "domain": "world",
+      "displayName": "Battle result",
+      "messageKeys": [
+        "world.turn-entry"
+      ]
+    },
+    {
+      "id": "supply.change",
+      "domain": "world",
+      "displayName": "Supply status",
+      "messageKeys": [
+        "world.turn-entry"
+      ]
+    },
+    {
+      "id": "growth",
+      "domain": "world",
+      "displayName": "Growth",
+      "messageKeys": [
+        "world.turn-entry"
+      ]
+    },
+    {
+      "id": "intel.new",
+      "domain": "world",
+      "displayName": "New intelligence",
+      "messageKeys": [
+        "world.turn-entry"
+      ]
+    },
+    {
+      "id": "command.dropped",
+      "domain": "world",
+      "displayName": "Order dropped",
+      "messageKeys": [
+        "world.turn-entry"
+      ]
+    },
+    {
+      "id": "territory.lost",
+      "domain": "world",
+      "displayName": "Territory lost",
+      "messageKeys": [
+        "world.turn-entry"
+      ]
+    },
+    {
+      "id": "cache.created",
+      "domain": "corpse-cache",
+      "displayName": "Cache created",
+      "messageKeys": [
+        "cache.created"
+      ]
+    },
+    {
+      "id": "cache.decayed",
+      "domain": "corpse-cache",
+      "displayName": "Cache decayed",
+      "messageKeys": [
+        "cache.decayed"
+      ]
+    }
+  ],
+  "promotions": {
+    "toast": [
+      "loam.shortfall",
+      "loam.release",
+      "legion.runway"
+    ],
+    "critical": []
+  }
+}

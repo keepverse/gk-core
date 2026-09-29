@@ -1,0 +1,18 @@
+{
+  "id": "effect-butter-hit",
+  "seed": 42,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "golden-butter",
+        "effectId": "fx.butter_on_hit",
+        "ownerKey": "match",
+        "overlay": { "icd_ms": 0 }
+      }
+    },
+    { "op": "hit", "typeId": 0, "targetTypeId": 0 },
+    { "op": "expectPlan", "golden": "butter_on_hit.plan.json" }
+  ]
+}

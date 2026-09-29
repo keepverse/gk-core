@@ -1,0 +1,16 @@
+{
+  "name": "tank-max",
+  "description": "Everything defensive at once: thorns, shield, reduction, defense, dodge, parry, block.",
+  "trials": 2000, "seed": 42, "maxRounds": 500,
+  "baseDamage": 1000, "elements": "singleRandom", "defenderElement": "ice",
+  "attackerHp": 100000, "defenderHp": 100000,
+  "attacker": { "combat.accuracy.omni": 300, "combat.power.omni": 2000 },
+  "defender": {
+    "combat.reflect.rate.omni": 10, "combat.reflect.damage.omni": 100,
+    "combat.defense.omni": 1500, "combat.reduction.omni": 40,
+    "combat.dodge.omni": 200, "combat.absorption.omni": 100,
+    "combat.parry.rate.omni": 200, "combat.parry.strength.omni": 400,
+    "combat.block.rate.omni": 200, "combat.block.strength.omni": 400
+  },
+  "shieldHp": 200000, "reflection": true
+}

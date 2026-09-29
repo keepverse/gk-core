@@ -1,0 +1,17 @@
+{
+  "contractVersion": 2,
+  "trigger": "OnDamageDealt",
+  "actions": [
+    {
+      "seq": 1,
+      "action": "ApplyStatus",
+      "effectId": "fx.butter_on_hit",
+      "grantId": "golden-butter",
+      "params": {
+        "status": "butter",
+        "duration": 4
+      }
+    }
+  ],
+  "skipped": []
+}

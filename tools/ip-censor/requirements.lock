@@ -1,0 +1,14 @@
+# Frozen environment for tools/ip-censor, installed first in CI and locally
+# (`python -m pip install -r requirements.lock; python -m pip install -e . --no-deps`).
+#
+# Every line is an exact pin. `tests/test_wiring.py` reads THIS file and asserts each installed
+# distribution is at the version its line names, so a drifting environment fails loudly instead of
+# silently matching with a different matcher.
+colorama==0.4.6
+iniconfig==2.3.0
+packaging==26.3
+pluggy==1.6.0
+Pygments==2.21.0
+pyahocorasick==2.3.1
+pytest==9.0.2
+regex==2026.3.32

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "version": 3,
+  "_meta": {
+    "owner": "docs/architecture/battle-tempo/spec-reaction-lane.md",
+    "note": "battle-tempo reaction-lane RL2 (2026-09-05). The counter's poise spend and the riposte share it converts at -- ReactionCounter.TryCounter's two magnitudes. WReact itself stays in battle.v{n}.json's timeline.profiles (it is a slot-width MECHANISM choice per profile, not a payoff number).",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py reaction-lane <dotted.key>=<value> [...] writes reaction-lane.v{n+1}.json; the old version stays on disk for revert.",
+    "balanceStatus": "RL3 SIZED 2026-09-06 against the landed Phase 2 sweep (battle-tempo-todo.md): poiseSpend=50 matches AptitudeGuardEconomy.flatCommitCost (aptitudes.v5.json guardEconomy.flatCommitCost=50), so a counter costs about what raising a guard costs from the same pool -- a real choice once guard-economy ships. riposteShareCapMilli=400 matches that block's own riposteShareCapPermille=400, so poise converts to damage identically whether spent on a counter or an absorb-riposte. Measured on CloseSetup (level 5, poise max=107, 240 seeds): 2 affordable counters per battle, delta +3.75% win rate vs lane-closed -- a real, moderate, non-flat effect, not validated balance.",
+    "rebalanceLabel": "RL3 evidence recorded in balanceStatus"
+  },
+  "poiseSpend": 50,
+  "riposteShareCapMilli": 400
+}

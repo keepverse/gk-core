@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FusionRpg.Tools.ProvePredictor</RootNamespace>
+    <AssemblyName>ProvePredictor</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- class-system-todo.md P4.6: cross-checks the REAL FusionRpg.Core.Balance.Analytic.Predictor
+         (the ported closed form) against tools/CombatSim's Analytic.Predict (the reference it was
+         ported from), on the SAME archetypes CombatSim resolves from tools/CombatSim/builds/*.json.
+         Referencing CombatSim here (not just Core) is deliberate and is the whole point of this tool:
+         a reimplementation of Archetype/Build resolution in this project would prove two copies of
+         MY OWN understanding agree with each other, not that the port matches the thing it ports. -->
+    <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
+    <ProjectReference Include="..\CombatSim\CombatSim.csproj" />
+  </ItemGroup>
+</Project>

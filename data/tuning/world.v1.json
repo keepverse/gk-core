@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/world-map-program.md",
+    "note": "Extracted byte-identical from LaneTypeCatalog.cs, WorldSizeCatalog.cs, StrengthBandCatalog.cs, PlaceholderBattleResolver.cs, TurnCalendar.cs (tunables-ssot.md M.2, 2026-08-23). Row ids/names/structural flags stay in the C# catalogs (schema, not balance); only their numeric fields moved here.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py world <dotted.key>=<value> [...] writes world.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "laneCostMultiplierMilli": {
+    "rift": 1000,
+    "corridor": 700,
+    "ley": 900,
+    "deep": 1600,
+    "one-way": 800,
+    "gated": 1000
+  },
+  "worldSizeNodes": {
+    "small":  { "min": 6,   "max": 10 },
+    "medium": { "min": 14,  "max": 18 },
+    "large":  { "min": 28,  "max": 36 },
+    "huge":   { "min": 56,  "max": 72 },
+    "giant":  { "min": 112, "max": 144 }
+  },
+  "strengthBands": [
+    { "floor": 0,     "ceiling": 0,     "midpoint": 0 },
+    { "floor": 1,     "ceiling": 499,   "midpoint": 250 },
+    { "floor": 500,   "ceiling": 1499,  "midpoint": 1000 },
+    { "floor": 1500,  "ceiling": 3999,  "midpoint": 2750 },
+    { "floor": 4000,  "ceiling": 9999,  "midpoint": 7000 },
+    { "floor": 10000, "ceiling": 20000, "midpoint": 20000 }
+  ],
+  "calendar": {
+    "daysPerWeek": 7,
+    "weeksPerMonth": 4,
+    "specialWeekChanceMilli": 250,
+    "specialMonthChanceMilli": 400,
+    "plagueChanceMilli": 100
+  }
+}

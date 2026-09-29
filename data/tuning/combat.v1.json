@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/combat-damage-ssot.md",
+    "note": "Extracted byte-identical from CombatPolicy.cs (tunables-ssot.md M.4, 2026-08-23). lastCol/lastRow are board geometry (Lawn.LawnCoordMath), not balance, and stay in code. pierceScale/ampScale added T5.1 (spec-mitigation-chain.md, 2026-08-25): shapes only, both factors are identity at delta 0 for any positive scale -- reused StatusPolicy.NetFactorScale's own shape (10.0) rather than a fresh, ungrounded number. A balance VALUE for either is a separate, later pass. blockCapPermille/parryCapPermille/avoidanceBandCapPermille added T5.3 (spec-evasion-chain.md SS2.1/SS3.1, 2026-08-25): bounded ratios, PS-8 exempt -- same 950 constant and 'mitigation may not reach total' reasoning as StatusPolicy.CategoryResistCap (0.95), in their own keys since they agree with it, not depend on it. reflectRateScale/reflectShareScale added T5.4 (spec-reflection.md SS3, 2026-08-25): shapes only, LINEAR from zero (max(0,delta)/scale, clamped [0,1]) rather than the spec's own sigmoid sketch, which would give 0.5 reflect chance at defaults -- reused the same 10.0 shape value again.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py combat <dotted.key>=<value> [...] writes combat.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "procDepthLimit": 6,
+  "defaultMaxTargets": 8,
+  "areaDefaultSquareSize": 3,
+  "areaDefaultRectangleWidth": 3,
+  "areaDefaultRectangleHeight": 3,
+  "dotDefaultPeriodMs": 1000,
+  "dotDefaultDurationMs": 5000,
+  "pierceScale": 10.0,
+  "ampScale": 10.0,
+  "blockCapPermille": 950,
+  "parryCapPermille": 950,
+  "avoidanceBandCapPermille": 950,
+  "reflectRateScale": 10.0,
+  "reflectShareScale": 100.0,
+  "parryNeutralShareKPm": 500,
+  "defenseShape": "divisive",
+  "defenseDivisorK": 0.45,
+  "reflectReadsPostShield": true,
+  "ampShape": "reciprocal"
+}

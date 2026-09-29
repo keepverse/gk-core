@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/story-scene/spec-scene-tunables.md",
+    "note": "story-scene's own presentation pacing (feel only). Nothing here is a balance number: a scene's content, its beats and its copy are authored data (sceneScript), and every structural consequence of the layout lives in web/fusion-rpg-web/src/ui/story-scene/storySceneTokens.ts instead. beatTransitionMs is the beat cross-fade; lineRevealPerCharMs is a per-character reveal where 0 means instant (the shipped default -- a typewriter is opt-in); autoAdvanceMs is null on purpose, because auto-advance steals reading time and is the cousin of the documented unskippable-cutscene failure mode, so enabling it must be a deliberate owner decision; maxBeatsPerScene bounds AUTHORED content so a scene needing more is two scenes -- it is not a population reading and must never be asserted as the shipped script's own beat count.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py story-scene-ui <dotted.key>=<value> [...] writes story-scene-ui.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "scene": {
+    "beatTransitionMs": 220,
+    "lineRevealPerCharMs": 0,
+    "autoAdvanceMs": null,
+    "maxBeatsPerScene": 6
+  }
+}

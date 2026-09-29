@@ -1,0 +1,25 @@
+{
+  "contractVersion": 2,
+  "trigger": "OnDamageDealt",
+  "actions": [
+    {
+      "action": "ApplyResourceDelta",
+      "effectId": "fx.overlay_damage",
+      "grantId": "area-row",
+      "params": { "channel": "hp", "amount": -50, "targetPtr": "Z1" }
+    },
+    {
+      "action": "ApplyResourceDelta",
+      "effectId": "fx.overlay_damage",
+      "grantId": "area-row",
+      "params": { "channel": "hp", "amount": -50, "targetPtr": "Z2" }
+    },
+    {
+      "action": "ApplyResourceDelta",
+      "effectId": "fx.overlay_damage",
+      "grantId": "area-row",
+      "params": { "channel": "hp", "amount": -50, "targetPtr": "Z3" }
+    }
+  ],
+  "skipped": []
+}

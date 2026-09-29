@@ -1,0 +1,35 @@
+{
+  "id": "effect-spawn-filter",
+  "seed": 42,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "live-spawn-ft",
+        "effectId": "fx.spawn_butter",
+        "ownerKey": "plant:0",
+        "overlay": { "icd_ms": 0 }
+      }
+    },
+    { "op": "spawn", "side": "zombie", "ptr": "0xZ", "typeId": 0 },
+    { "op": "expectEmpty" },
+    { "op": "spawn", "side": "plant", "ptr": "0xP", "typeId": 0 },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnSpawn",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "ApplyStatus",
+            "effectId": "fx.spawn_butter",
+            "grantId": "live-spawn-ft",
+            "params": { "status": "butter", "duration": 3 }
+          }
+        ]
+      }
+    }
+  ]
+}

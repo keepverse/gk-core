@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "tasks/seed-to-concrete-todo.md#T3.8",
+    "note": "First version of this domain — created 2026-09-06 closing T3.8's 'register with declared targets' half. ContentMetrics.cs's own doc comment is explicit that a richer numeric target (how many affixes SHOULD exist per family, what fill rate counts as healthy) is a balance judgement nobody has made yet, and this file does not invent one. The two gates below are structural floors already implied by the pure metric shapes themselves (FamilyCoverage/ContainerFillRate.MeetsBudget), not authored numbers: a family with atoms but zero referencing affixes, and a container pool that cannot fill its own declared roll budget. Both gates ship false (measure-only) — the same 'new metrics are measure-only until calibrated' rule seedsmith's own W1 registry already established (tools/seedsmith/seedsmith/report/cli.py) — so AffixMetricsGate --gate is clean today by construction, not because nothing was found; run it WITHOUT --gate to see the real findings.",
+    "rebalance": "Never hand-edit this file by hand once a v2 exists. python tools/tuning/publish.py affix-metrics <dotted.key>=<value> writes affix-metrics.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "familyCoverageGates": false,
+  "containerFillRateGates": false
+}

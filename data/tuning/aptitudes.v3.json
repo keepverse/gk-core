@@ -1,0 +1,2730 @@
+{
+  "schemaVersion": 1,
+  "version": 3,
+  "_meta": {
+    "owner": "docs/architecture/class-system/spec-aptitude-tuning.md",
+    "status": "SHIPPED 2026-08-26 (class-system P2.1) -- ported verbatim from tools/CombatSim/tuning/aptitudes.v1.json, this program's own POC, once residual-fit measurement and owner review of the coefficients (2026-08-25/26) were both done against it. That POC file is now frozen as a reference copy; this file is the one hosts load.",
+    "note": "The whole balance surface of the class system, in one file. Nothing here is a code constant. Four blocks: grant is the point ECONOMY, read is the two SCALE functions (PS-3), familyRead is the unitClass DECISION per family, edges is the DISTRIBUTION. Channels name their source rather than aptitudes listing their channels (class-system-ideal.md 7a.1).",
+    "coverage": "2026-08-25: extended from 48 combat-only edges to cover the RESOURCE, PROGRESSION, SKILL, STATUS, MOVEMENT and HEAL layers. The 48-edge version measured a fight in which hp was a flat constant no aptitude could buy - so defence-by-mitigation was the only survival lever and had no competitor. See class-system-ideal.md 5a.",
+    "measurable": "Only the COMBAT and hp/shield edges are measurable by the closed form / simulator today. resource.max/resource.regen now carry a reader at the FAMILY level too (Predictor.cs/TerminationGuard.cs read hp; ActorHub.cs's PerfProbe telemetry reads stamina) -- but only for hp and stamina specifically; hunger/qi/spirit still have none. skill.cooldown, skill.effectiveness, resource.efficiency, move.range, progression.xpRate and progression.breakthroughSuccess price actions, and the action layer is not built -- their coefficients here are DESIGNED, not measured, and must not be reported as balanced (reader census, class-system P1.5/P1.6 2026-08-26, refreshed by the re-runnable script P8.4 built 2026-08-27 -- scripts/audit-reader-census.py: 6 families with no shipped reader at all, 18 of 486 edges / 4%).",
+    "rebalance": "Never hand-edit. python tools/tuning/publish.py aptitudes <dotted.key>=<value> writes v{n+1}; the old version stays on disk for revert (tunables-ssot.md T4).",
+    "statusEdgesFrozen": "UNFROZEN 2026-08-25: the neutral-point blocker is built (applyShape/applyOffsetK) and the duration/intensity axes are now fed, so these are tunable. BUT the re-solved allocation FAILED its falsification (30.4% max residual, one arrow reversed) - see class-system-ideal.md 5c.13. Treat builds/*.json as UNVERIFIED, not as balance.",
+    "rebalanceLabel": "phase-0: six-resource coverage; poise regen solved for 0 unending (spec-guard-economy 4, r<1)"
+  },
+  "grant": {
+    "_note": "FREE BUILD (owner, 2026-08-25): the player has no class, so there is no class price and no posture surcharge - every point costs one point. The withdrawn price block is class-system-ideal.md 7a.3; what it was FOR now lives entirely in read.*.shareExponentMilli.",
+    "aptitudePointsPerTheta": 3,
+    "skillPointsPerTheta": 1
+  },
+  "pointEconomy": {
+    "_note": "class-system P6.1, spec-point-economy.md 2.2: 'the single number becomes a table' - four allocation-scope rates, additive to (not a replacement of) grant.aptitudePointsPerTheta above, which nothing in production reads today. A SEPARATE block on purpose, matching spec-point-economy.md 5's own project-structure listing.",
+    "_scopeSourcesWhy": "Each scope's rate multiplies a DIFFERENT source value the caller supplies (spec-point-economy.md 2's table) - commander x Theta_player, creatureType x almanac XP, aspect x element_mastery (owned by the creature program's aspect-scope, not built yet), uniqueCreature x specimen level. This module ships the RATE table only, never the sources.",
+    "_weightsWhy": "UNMEASURED - spec-point-economy.md 8 'Ask first: the four tier weights, before residual-fit has measured them. Shipping a guess is fine; calling it balance is not.' Ordered commander smallest, uniqueCreature largest per 2.1's decision (a dominant commander build replicates across the whole roster); creatureType and aspect are legally allowed to tie (spec-point-economy.md 7 test 3: 'commander < type <= aspect < unique'). residual-fit (Phase 8) owns the real values.",
+    "aptitudePointsPerThetaMilliByScope": {
+      "commander": 3,
+      "creatureType": 4,
+      "aspect": 4,
+      "uniqueCreature": 6
+    },
+    "_respecWhy": "class-system P6.3, spec-point-economy.md 3/8: UNMEASURED placeholder amount, resource choice (hunger) lives in code (RespecPolicy.cs) as a structural/mechanism decision, not here -- only the AMOUNT is a tunable. 'Ask first' per spec 8; shipped per spec's own 'shipping a guess is fine, calling it balance is not' escape hatch, matching this same block's own tier-weight placeholders above.",
+    "respecPrice": 10
+  },
+  "guardEconomy": {
+    "_note": "class-system P7.1-P7.3, spec-guard-economy.md 3/5/8: the three coefficients PoiseRuntime reads. Reading C (owner decision 2026-08-26): flatCommitCost pays on every guard commit regardless of outcome; absorbDrainSharePermille drains proportionally to what was actually stopped. All UNMEASURED placeholders -- spec 8 'Ask first: the riposte share, it is BASTION's whole offence' -- shipped per the same 'shipping a guess is fine, calling it balance is not' posture already applied to pointEconomy above.",
+    "flatCommitCost": 50,
+    "absorbDrainSharePermille": 300,
+    "riposteShareCapPermille": 400
+  },
+  "mitigation": {
+    "_note": "class-system-todo.md P8.3, recovery's own sibling dial. A 12x12 sweep of every corner pair (not just the one hand-picked Vigor-vs-Bulwark case) found 30 of 66 unordered pairs unending -- eight aptitudes share an identical, near-zero combat.power.omni floor and stalemate each other, and four of them (Fortitude/Agility/Composure/Bulwark) lean on combat.defense/dodge/parry/block/absorption/heal.power as their PRIMARY survival stat, not hp-regen, so recovery.scaleMilli's own families never reached them. Cutting recovery.scaleMilli alone far enough to close every violation creates an ABSOLUTE dominant corner (Might beats all eleven) instead -- measured, not assumed. This dial, sized independently, is what let both invariants close together without that tradeoff. Shipped at 1000 (no-op) here -- P8.3's own calibrated value (300, solved by direct 12x12 measurement, docs/research/class-residual-2026-08-27.md) ships via tools/tuning/publish.py, never a hand-edit (T4), same as every other value change in this file.",
+    "scaleMilli": 300,
+    "families": [
+      "combat.defense",
+      "combat.dodge",
+      "combat.parry",
+      "combat.block",
+      "combat.absorption",
+      "combat.heal"
+    ]
+  },
+  "read": {
+    "_note": "PS-3, made into two tunable FUNCTIONS rather than two hard-coded reads. Both take the aptitude share of the spent points; neither takes an absolute count. Share is bounded [0,1], which is what makes level cancel at parity (ssot-power-scale.md 2).",
+    "_naming": "The two modes are named for PS-3's own vocabulary, but the property that actually matters is SCALE BEHAVIOUR, not opposition: contest = Theta-FREE, magnitude = proportional to P(Theta). A bounded ratio with no opposing side (resource.efficiency, progression.breakthroughSuccess, skill.cooldown) takes the CONTEST read because it must be Theta-free, not because anything contests it.",
+    "contest": {
+      "_note": "value = kMilli/1000 * share^gamma * spanPoints. spanPoints is how many CONTEST POINTS one whole allocation is worth - a different concept from stats.accuracyScale, which is how many contest points move a probability. Both must exist; neither may be derived from the other.",
+      "spanPoints": 100.0,
+      "shareExponentMilli": 1000
+    },
+    "magnitude": {
+      "_note": "value = kMilli/1000 * share^gamma * P(Theta). The ladder supplies the scale; the player supplies the share.",
+      "shareExponentMilli": 1000
+    }
+  },
+  "recovery": {
+    "_note": "The TERMINATION INVARIANT dial (class-system-ideal.md 5d). Multiplies every edge whose channel starts with one of `families` below. Recovery is sized against PEER DAMAGE, never against the pool it refills: with r = recovery/peerDamage, a fight stretches by 1/(1-r) and r >= 1 means it never ends. Measured before this dial existed: r = 1.33 on a max-Vigor mirror, i.e. an unkillable pair.",
+    "scaleMilli": 374,
+    "_scaleWhy": "374 = 0.374x, SOLVED not inverted. Measured r without the dial was 1.33 (an unkillable pair). Target r = 0.670 -> a max-sustain build stretches a fight exactly 3x. r is NOT linear in the dial, because nerfing recovery also shortens the fight and so moves DAMAGE: 500 -> r 0.79, 424 -> 0.76, 374 -> 0.670. Three passes, each measured. Re-solve after any coefficient change that touches damage - the coupling means the dial does not hold still on its own.",
+    "targetRecoveryShareMilli": 670,
+    "_targetWhy": "The ACCEPTANCE CRITERION, not the dial - what balance-guard checks. 670 means a max-sustain build may stretch a fight 3x and no further. It is a share of peer damage, so it is Theta-free like every other ratio here.",
+    "families": [
+      "resource.regen",
+      "combat.shield.regen"
+    ]
+  },
+  "familyRead": {
+    "_note": "THE unitClass DECISION, as one reviewable block rather than a flag on every edge - because the read mode is a property of the CHANNEL (what the formula compares it against), never of the edge that feeds it. Rule (measured, class-rps-balance-2026-08-25.md 3.1): a family compared against a LADDER quantity is a magnitude; a family feeding a bounded ratio through a small scale is a contest.",
+    "combat.power": "magnitude",
+    "combat.defense": "magnitude",
+    "combat.shield.capacity": "magnitude",
+    "combat.shield.regen": "magnitude",
+    "combat.shield.pen": "magnitude",
+    "combat.shield.toughness": "magnitude",
+    "combat.parry.strength": "magnitude",
+    "combat.parry.shred": "magnitude",
+    "combat.block.strength": "magnitude",
+    "combat.block.shred": "magnitude",
+    "combat.heal.power": "magnitude",
+    "_resourceNote": "resource.max/regen are POOL SIZES and RATES measured against damage, which is P(Theta)-scaled - so they are magnitudes, and a Theta-free read would make every pool vanish relative to the hit that empties it. resource.efficiency is a bounded 0..1 cost ratio (cap 1.0) and must stay Theta-free.",
+    "resource.max": "magnitude",
+    "resource.regen": "magnitude",
+    "resource.efficiency": "contest",
+    "progression.bonus.maxHp": "magnitude",
+    "progression.bonus.atk": "magnitude",
+    "progression.bonus.defense": "magnitude",
+    "progression.bonus.arm1": "magnitude",
+    "progression.bonus.arm2": "magnitude",
+    "combat.accuracy": "contest",
+    "combat.dodge": "contest",
+    "combat.crit.rate": "contest",
+    "combat.crit.resist": "contest",
+    "combat.crit.damage": "contest",
+    "combat.crit.resist.damage": "contest",
+    "combat.penetration": "contest",
+    "combat.absorption": "contest",
+    "combat.amplification": "contest",
+    "combat.reduction": "contest",
+    "combat.parry.rate": "contest",
+    "combat.parry.break": "contest",
+    "combat.block.rate": "contest",
+    "combat.block.break": "contest",
+    "combat.reflect.rate": "contest",
+    "combat.reflect.damage": "contest",
+    "combat.reflect.resist.rate": "contest",
+    "combat.reflect.resist.damage": "contest",
+    "status.power": "contest",
+    "status.resist": "contest",
+    "status.duration": "contest",
+    "status.durationReduction": "contest",
+    "status.intensity": "contest",
+    "status.intensityReduction": "contest",
+    "skill.cooldown": "contest",
+    "skill.effectiveness": "contest",
+    "move.range": "contest",
+    "progression.xpRate": "contest",
+    "progression.breakthroughSuccess": "contest"
+  },
+  "edges": [
+    {
+      "_group": "=== COMBAT: the universal pair. Sourced by all three postures (rule 9) ==="
+    },
+    {
+      "channel": "combat.power.omni",
+      "source": "Might",
+      "kMilli": 2200
+    },
+    {
+      "channel": "combat.power.omni",
+      "source": "Pierce",
+      "kMilli": 1600
+    },
+    {
+      "channel": "combat.power.omni",
+      "source": "Ferocity",
+      "kMilli": 1600
+    },
+    {
+      "channel": "combat.power.omni",
+      "source": "Onslaught",
+      "kMilli": 800
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Precision",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Might",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Pierce",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Onslaught",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.dodge.omni",
+      "source": "Agility",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.crit.rate.omni",
+      "source": "Ferocity",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.crit.rate.omni",
+      "source": "Pierce",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.crit.rate.omni",
+      "source": "Might",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.crit.damage.omni",
+      "source": "Ferocity",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.crit.damage.omni",
+      "source": "Pierce",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.crit.damage.omni",
+      "source": "Might",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.penetration.omni",
+      "source": "Onslaught",
+      "kMilli": 300
+    },
+    {
+      "channel": "combat.amplification.omni",
+      "source": "Onslaught",
+      "kMilli": 90
+    },
+    {
+      "channel": "combat.parry.rate.omni",
+      "source": "Bulwark",
+      "kMilli": 4000
+    },
+    {
+      "channel": "combat.parry.strength.omni",
+      "source": "Bulwark",
+      "kMilli": 1500
+    },
+    {
+      "channel": "combat.parry.break.omni",
+      "source": "Onslaught",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.parry.shred.omni",
+      "source": "Onslaught",
+      "kMilli": 1200
+    },
+    {
+      "channel": "combat.block.rate.omni",
+      "source": "Bulwark",
+      "kMilli": 4000
+    },
+    {
+      "channel": "combat.block.strength.omni",
+      "source": "Bulwark",
+      "kMilli": 1500
+    },
+    {
+      "channel": "combat.block.break.omni",
+      "source": "Onslaught",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.block.shred.omni",
+      "source": "Onslaught",
+      "kMilli": 1200
+    },
+    {
+      "channel": "combat.reflect.rate.omni",
+      "source": "Retribution",
+      "kMilli": 220
+    },
+    {
+      "channel": "combat.reflect.damage.omni",
+      "source": "Retribution",
+      "kMilli": 1800
+    },
+    {
+      "channel": "combat.reflect.resist.rate.omni",
+      "source": "Pierce",
+      "kMilli": 220
+    },
+    {
+      "channel": "combat.reflect.resist.damage.omni",
+      "source": "Pierce",
+      "kMilli": 1800
+    },
+    {
+      "channel": "combat.shield.pen.omni",
+      "source": "Pierce",
+      "kMilli": 2000
+    },
+    {
+      "channel": "resource.efficiency.stamina",
+      "source": "Focus",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.efficiency.stamina",
+      "source": "Agility",
+      "kMilli": 150
+    },
+    {
+      "channel": "resource.efficiency.qi",
+      "source": "Focus",
+      "kMilli": 500
+    },
+    {
+      "channel": "resource.efficiency.hunger",
+      "source": "Focus",
+      "kMilli": 300
+    },
+    {
+      "channel": "progression.bonus.maxHp",
+      "source": "Vigor",
+      "kMilli": 12000
+    },
+    {
+      "channel": "progression.bonus.maxHp",
+      "source": "Fortitude",
+      "kMilli": 8000
+    },
+    {
+      "channel": "progression.bonus.atk",
+      "source": "Might",
+      "kMilli": 10000
+    },
+    {
+      "channel": "progression.bonus.atk",
+      "source": "Ferocity",
+      "kMilli": 6000
+    },
+    {
+      "channel": "progression.bonus.defense",
+      "source": "Fortitude",
+      "kMilli": 10000
+    },
+    {
+      "channel": "progression.bonus.defense",
+      "source": "Bulwark",
+      "kMilli": 6000
+    },
+    {
+      "channel": "progression.bonus.arm1",
+      "source": "Bulwark",
+      "kMilli": 8000
+    },
+    {
+      "channel": "progression.bonus.arm2",
+      "source": "Vigor",
+      "kMilli": 8000
+    },
+    {
+      "channel": "skill.cooldown.attack",
+      "source": "Focus",
+      "kMilli": 1500
+    },
+    {
+      "channel": "skill.cooldown.support",
+      "source": "Focus",
+      "kMilli": 1500
+    },
+    {
+      "channel": "skill.cooldown.status",
+      "source": "Focus",
+      "kMilli": 1500
+    },
+    {
+      "channel": "skill.cooldown.defense",
+      "source": "Bulwark",
+      "kMilli": 1500
+    },
+    {
+      "channel": "skill.cooldown.movement",
+      "source": "Agility",
+      "kMilli": 1500
+    },
+    {
+      "channel": "skill.effectiveness.attack",
+      "source": "Precision",
+      "kMilli": 1500
+    },
+    {
+      "channel": "skill.effectiveness.attack",
+      "source": "Might",
+      "kMilli": 800
+    },
+    {
+      "channel": "skill.effectiveness.defense",
+      "source": "Bulwark",
+      "kMilli": 1200
+    },
+    {
+      "channel": "skill.effectiveness.support",
+      "source": "Precision",
+      "kMilli": 1000
+    },
+    {
+      "channel": "skill.effectiveness.status",
+      "source": "Precision",
+      "kMilli": 1000
+    },
+    {
+      "channel": "skill.effectiveness.movement",
+      "source": "Agility",
+      "kMilli": 1000
+    },
+    {
+      "channel": "move.range",
+      "source": "Agility",
+      "kMilli": 1200
+    },
+    {
+      "channel": "combat.heal.power",
+      "source": "Ferocity",
+      "kMilli": 12000
+    },
+    {
+      "channel": "combat.heal.power",
+      "source": "Composure",
+      "kMilli": 8000
+    },
+    {
+      "channel": "progression.xpRate",
+      "source": "Focus",
+      "kMilli": 600
+    },
+    {
+      "channel": "progression.breakthroughSuccess",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "_group": "=== RESOURCE: every pool shared across ALL 12 aptitudes at different scales (owner, 2026-08-25). Tier 4 is a nonzero FLOOR: a build that can reach zero of a universal pool cannot act at all - measured, BASTION had zero stamina and qi regen and took 8,725 rounds to kill anything ==="
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Might",
+      "kMilli": 14000
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Fortitude",
+      "kMilli": 10000
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Vigor",
+      "kMilli": 12000
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Onslaught",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Agility",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Composure",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Pierce",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Focus",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Bulwark",
+      "kMilli": 32000
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Retribution",
+      "kMilli": 12000
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Precision",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.hp",
+      "source": "Ferocity",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Might",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Fortitude",
+      "kMilli": 21
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Vigor",
+      "kMilli": 83
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Onslaught",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Agility",
+      "kMilli": 21
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Composure",
+      "kMilli": 21
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Pierce",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Focus",
+      "kMilli": 21
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Bulwark",
+      "kMilli": 21
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Retribution",
+      "kMilli": 800
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Precision",
+      "kMilli": 21
+    },
+    {
+      "channel": "resource.regen.hp",
+      "source": "Ferocity",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Might",
+      "kMilli": 18000
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Fortitude",
+      "kMilli": 8000
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Vigor",
+      "kMilli": 26000
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Onslaught",
+      "kMilli": 14000
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Agility",
+      "kMilli": 16000
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Composure",
+      "kMilli": 8000
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Pierce",
+      "kMilli": 8000
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Focus",
+      "kMilli": 8000
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Bulwark",
+      "kMilli": 14000
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Retribution",
+      "kMilli": 8000
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Precision",
+      "kMilli": 8000
+    },
+    {
+      "channel": "resource.max.stamina",
+      "source": "Ferocity",
+      "kMilli": 8000
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Might",
+      "kMilli": 900
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Fortitude",
+      "kMilli": 500
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Vigor",
+      "kMilli": 1063
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Onslaught",
+      "kMilli": 500
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Agility",
+      "kMilli": 990
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Composure",
+      "kMilli": 500
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Pierce",
+      "kMilli": 500
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Focus",
+      "kMilli": 500
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Bulwark",
+      "kMilli": 900
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Retribution",
+      "kMilli": 500
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Precision",
+      "kMilli": 500
+    },
+    {
+      "channel": "resource.regen.stamina",
+      "source": "Ferocity",
+      "kMilli": 500
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Might",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Fortitude",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Vigor",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Onslaught",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Agility",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Composure",
+      "kMilli": 10000
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Pierce",
+      "kMilli": 14000
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Focus",
+      "kMilli": 30000
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Bulwark",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Retribution",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Precision",
+      "kMilli": 12000
+    },
+    {
+      "channel": "resource.max.qi",
+      "source": "Ferocity",
+      "kMilli": 9000
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Might",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Fortitude",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Composure",
+      "kMilli": 900
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Pierce",
+      "kMilli": 800
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Focus",
+      "kMilli": 1800
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Retribution",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Precision",
+      "kMilli": 900
+    },
+    {
+      "channel": "resource.regen.qi",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Might",
+      "kMilli": 9000
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Fortitude",
+      "kMilli": 10000
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Vigor",
+      "kMilli": 12000
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Onslaught",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Agility",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Composure",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Pierce",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Focus",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Bulwark",
+      "kMilli": 18000
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Retribution",
+      "kMilli": 26000
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Precision",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.hunger",
+      "source": "Ferocity",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Might",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Fortitude",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Vigor",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Onslaught",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Agility",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Composure",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Pierce",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Focus",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Bulwark",
+      "kMilli": 800
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Retribution",
+      "kMilli": 1500
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Precision",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.regen.hunger",
+      "source": "Ferocity",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Might",
+      "kMilli": 3000
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Fortitude",
+      "kMilli": 3000
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Vigor",
+      "kMilli": 3000
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Onslaught",
+      "kMilli": 3000
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Agility",
+      "kMilli": 8000
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Composure",
+      "kMilli": 28000
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Pierce",
+      "kMilli": 3000
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Focus",
+      "kMilli": 14000
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Bulwark",
+      "kMilli": 3000
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Retribution",
+      "kMilli": 3000
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Precision",
+      "kMilli": 7000
+    },
+    {
+      "channel": "resource.max.spirit",
+      "source": "Ferocity",
+      "kMilli": 6000
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Might",
+      "kMilli": 200
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Fortitude",
+      "kMilli": 200
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Vigor",
+      "kMilli": 200
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Onslaught",
+      "kMilli": 200
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Agility",
+      "kMilli": 200
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Composure",
+      "kMilli": 1000
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Pierce",
+      "kMilli": 200
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Focus",
+      "kMilli": 700
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Bulwark",
+      "kMilli": 200
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Retribution",
+      "kMilli": 200
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Precision",
+      "kMilli": 200
+    },
+    {
+      "channel": "resource.regen.spirit",
+      "source": "Ferocity",
+      "kMilli": 200
+    },
+    {
+      "_group": "=== STATUS: six families x (omni + category). Aptitudes reach a MECHANISM (dot/cc/contagion), never a FLAVOUR (the per-id tier is the skill layer, 5c.10). duration/intensity are fed so they CONTEST the shared base instead of inheriting it, which is what stops netFactor being quadratic (5c.11) ==="
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Might",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Fortitude",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Vigor",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Onslaught",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Agility",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Composure",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Pierce",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Focus",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Bulwark",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Retribution",
+      "kMilli": 250
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Precision",
+      "kMilli": 233
+    },
+    {
+      "channel": "status.power.omni",
+      "source": "Ferocity",
+      "kMilli": 250
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Might",
+      "kMilli": 600
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Fortitude",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Vigor",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Onslaught",
+      "kMilli": 900
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Agility",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Composure",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Pierce",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Focus",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Bulwark",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Retribution",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Precision",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.dot",
+      "source": "Ferocity",
+      "kMilli": 1500
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Might",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Fortitude",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Vigor",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Onslaught",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Agility",
+      "kMilli": 700
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Composure",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Pierce",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Focus",
+      "kMilli": 600
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Bulwark",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Retribution",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Precision",
+      "kMilli": 1400
+    },
+    {
+      "channel": "status.power.cc",
+      "source": "Ferocity",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Might",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Fortitude",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Vigor",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Onslaught",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Agility",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Composure",
+      "kMilli": 500
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Pierce",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Focus",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Bulwark",
+      "kMilli": 700
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Retribution",
+      "kMilli": 1500
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Precision",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.power.contagion",
+      "source": "Ferocity",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Might",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Fortitude",
+      "kMilli": 383
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Onslaught",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Agility",
+      "kMilli": 266
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Composure",
+      "kMilli": 250
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Pierce",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Focus",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Bulwark",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Retribution",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Precision",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.resist.omni",
+      "source": "Ferocity",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Might",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Fortitude",
+      "kMilli": 1600
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Vigor",
+      "kMilli": 900
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Onslaught",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Agility",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Composure",
+      "kMilli": 600
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Pierce",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Focus",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Bulwark",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Retribution",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Precision",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.dot",
+      "source": "Ferocity",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Might",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Fortitude",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Vigor",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Onslaught",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Agility",
+      "kMilli": 1600
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Composure",
+      "kMilli": 900
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Pierce",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Focus",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Bulwark",
+      "kMilli": 600
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Retribution",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Precision",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.cc",
+      "source": "Ferocity",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Might",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Fortitude",
+      "kMilli": 700
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Vigor",
+      "kMilli": 1500
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Onslaught",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Agility",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Composure",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Pierce",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Focus",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Bulwark",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Retribution",
+      "kMilli": 800
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Precision",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.resist.contagion",
+      "source": "Ferocity",
+      "kMilli": 300
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Might",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Fortitude",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Vigor",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Onslaught",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Agility",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Composure",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Pierce",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Focus",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Bulwark",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Retribution",
+      "kMilli": 800
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Precision",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.omni",
+      "source": "Ferocity",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Might",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Fortitude",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Composure",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Retribution",
+      "kMilli": 2400
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Precision",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.dot",
+      "source": "Ferocity",
+      "kMilli": 1200
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Might",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Fortitude",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Composure",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Focus",
+      "kMilli": 1200
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Retribution",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Precision",
+      "kMilli": 2400
+    },
+    {
+      "channel": "status.duration.cc",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Might",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Fortitude",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Composure",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Bulwark",
+      "kMilli": 1200
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Retribution",
+      "kMilli": 2400
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Precision",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.duration.contagion",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Might",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Fortitude",
+      "kMilli": 233
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Vigor",
+      "kMilli": 666
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Onslaught",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Agility",
+      "kMilli": 266
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Composure",
+      "kMilli": 900
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Pierce",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Focus",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Bulwark",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Retribution",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Precision",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.durationReduction.omni",
+      "source": "Ferocity",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Might",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Fortitude",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Vigor",
+      "kMilli": 1400
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Composure",
+      "kMilli": 2600
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Retribution",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Precision",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.dot",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Might",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Fortitude",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Agility",
+      "kMilli": 1600
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Composure",
+      "kMilli": 2800
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Retribution",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Precision",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.cc",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Might",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Fortitude",
+      "kMilli": 1400
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Vigor",
+      "kMilli": 2600
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Composure",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Retribution",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Precision",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.durationReduction.contagion",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Might",
+      "kMilli": 366
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Fortitude",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Vigor",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Onslaught",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Agility",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Composure",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Pierce",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Focus",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Bulwark",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Retribution",
+      "kMilli": 366
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Precision",
+      "kMilli": 333
+    },
+    {
+      "channel": "status.intensity.omni",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Might",
+      "kMilli": 1200
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Fortitude",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Composure",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Retribution",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Precision",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.dot",
+      "source": "Ferocity",
+      "kMilli": 2400
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Might",
+      "kMilli": 1000
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Fortitude",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Composure",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Retribution",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Precision",
+      "kMilli": 2000
+    },
+    {
+      "channel": "status.intensity.cc",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Might",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Fortitude",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Onslaught",
+      "kMilli": 1100
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Composure",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Retribution",
+      "kMilli": 2200
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Precision",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensity.contagion",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Might",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Fortitude",
+      "kMilli": 833
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Vigor",
+      "kMilli": 233
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Onslaught",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Agility",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Composure",
+      "kMilli": 233
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Pierce",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Focus",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Bulwark",
+      "kMilli": 633
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Retribution",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Precision",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensityReduction.omni",
+      "source": "Ferocity",
+      "kMilli": 200
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Might",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Fortitude",
+      "kMilli": 2600
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Composure",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Bulwark",
+      "kMilli": 1400
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Retribution",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Precision",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.dot",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Might",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Fortitude",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Composure",
+      "kMilli": 1400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Bulwark",
+      "kMilli": 2400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Retribution",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Precision",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.cc",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Might",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Fortitude",
+      "kMilli": 2400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Vigor",
+      "kMilli": 1400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Onslaught",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Agility",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Composure",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Pierce",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Focus",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Retribution",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Precision",
+      "kMilli": 400
+    },
+    {
+      "channel": "status.intensityReduction.contagion",
+      "source": "Ferocity",
+      "kMilli": 400
+    },
+    {
+      "_group": "=== MITIGATION CHAIN: one PRIMARY stage per aptitude. The chain is a product of four stages, so an aptitude holding several is superlinear in its own share - moving one stage moved dominance from Vigor to Fortitude in one edit (8.8) ==="
+    },
+    {
+      "channel": "combat.defense.omni",
+      "source": "Fortitude",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.defense.omni",
+      "source": "Bulwark",
+      "kMilli": 900
+    },
+    {
+      "channel": "combat.defense.omni",
+      "source": "Composure",
+      "kMilli": 700
+    },
+    {
+      "channel": "combat.absorption.omni",
+      "source": "Bulwark",
+      "kMilli": 1000
+    },
+    {
+      "channel": "combat.absorption.omni",
+      "source": "Vigor",
+      "kMilli": 300
+    },
+    {
+      "channel": "combat.absorption.omni",
+      "source": "Fortitude",
+      "kMilli": 250
+    },
+    {
+      "channel": "combat.reduction.omni",
+      "source": "Retribution",
+      "kMilli": 90
+    },
+    {
+      "channel": "combat.reduction.omni",
+      "source": "Composure",
+      "kMilli": 30
+    },
+    {
+      "channel": "combat.reduction.omni",
+      "source": "Fortitude",
+      "kMilli": 25
+    },
+    {
+      "channel": "combat.crit.resist.omni",
+      "source": "Composure",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.crit.resist.omni",
+      "source": "Agility",
+      "kMilli": 900
+    },
+    {
+      "channel": "combat.crit.resist.omni",
+      "source": "Vigor",
+      "kMilli": 700
+    },
+    {
+      "channel": "combat.crit.resist.damage.omni",
+      "source": "Composure",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.crit.resist.damage.omni",
+      "source": "Agility",
+      "kMilli": 900
+    },
+    {
+      "channel": "combat.crit.resist.damage.omni",
+      "source": "Vigor",
+      "kMilli": 700
+    },
+    {
+      "channel": "combat.shield.toughness.omni",
+      "source": "Vigor",
+      "kMilli": 2000
+    },
+    {
+      "channel": "combat.shield.toughness.omni",
+      "source": "Bulwark",
+      "kMilli": 600
+    },
+    {
+      "channel": "combat.shield.capacity.omni",
+      "source": "Vigor",
+      "kMilli": 55000
+    },
+    {
+      "channel": "combat.shield.capacity.omni",
+      "source": "Bulwark",
+      "kMilli": 9000
+    },
+    {
+      "channel": "combat.shield.regen.omni",
+      "source": "Vigor",
+      "kMilli": 900
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Might",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Fortitude",
+      "kMilli": 10000
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Vigor",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Onslaught",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Agility",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Composure",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Pierce",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Focus",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Bulwark",
+      "kMilli": 28000
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Retribution",
+      "kMilli": 8000
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Precision",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.max.poise",
+      "source": "Ferocity",
+      "kMilli": 5000
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Might",
+      "kMilli": 2
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Fortitude",
+      "kMilli": 30
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Vigor",
+      "kMilli": 2
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Onslaught",
+      "kMilli": 2
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Agility",
+      "kMilli": 2
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Composure",
+      "kMilli": 2
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Pierce",
+      "kMilli": 2
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Focus",
+      "kMilli": 2
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Bulwark",
+      "kMilli": 60
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Retribution",
+      "kMilli": 2
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Precision",
+      "kMilli": 2
+    },
+    {
+      "channel": "resource.regen.poise",
+      "source": "Ferocity",
+      "kMilli": 2
+    },
+    {
+      "channel": "resource.efficiency.hp",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.efficiency.hp",
+      "source": "Focus",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.efficiency.stamina",
+      "source": "Vigor",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.efficiency.hunger",
+      "source": "Retribution",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.efficiency.spirit",
+      "source": "Composure",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.efficiency.spirit",
+      "source": "Focus",
+      "kMilli": 300
+    },
+    {
+      "channel": "resource.efficiency.poise",
+      "source": "Bulwark",
+      "kMilli": 400
+    },
+    {
+      "channel": "resource.efficiency.poise",
+      "source": "Focus",
+      "kMilli": 300
+    }
+  ]
+}

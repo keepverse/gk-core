@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/notification-ssot/spec-notify-vocabulary.md",
+    "note": "The empty catalog. Rows arrive with the module that can render them (notify-vocabulary spec Design 1): world-notify-source publishes v2, cache-notify-source publishes v3. Never hand-edit; publish v{n+1} through tools/tuning/publish.py.",
+    "rebalance": "Never hand-edit this file. A change republishes notification-catalog.v{n+1}.json through tools/tuning/publish.py; every prior version stays on disk."
+  },
+  "categories": [],
+  "promotions": {
+    "toast": [],
+    "critical": []
+  }
+}

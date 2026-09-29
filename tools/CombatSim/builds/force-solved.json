@@ -1,0 +1,14 @@
+{
+  "name": "FORCE-SOLVED",
+  "description": "Allocation SOLVED in closed form (search --analytic, seed 307, 24 restarts x 220 iters, ~2.3s): arrows 64.8/64.7/65.1, spread 0.4%. Shield-free, because the closed form is single-phase.",
+  "element": "fire",
+  "points": {
+    "Might": 48.38949140954746,
+    "Vigor": 17.769257855368377,
+    "Onslaught": 15,
+    "Retribution": 18.841252142309415
+  },
+  "hpPerLadder": 15,
+  "damagePerLadder": 1.5,
+  "shieldPerLadder": 2
+}

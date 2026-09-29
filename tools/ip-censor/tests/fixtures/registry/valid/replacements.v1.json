@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "replacements": [
+    {
+      "match": "examplemark",
+      "replacement": "fusionmark",
+      "confirmedBy": "fixture-owner",
+      "confirmedOn": "2026-09-19"
+    },
+    {
+      "match": "example mark",
+      "replacement": "the garden keeper",
+      "confirmedBy": "fixture-owner",
+      "confirmedOn": "2026-09-19"
+    }
+  ]
+}

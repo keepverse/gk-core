@@ -1,0 +1,53 @@
+{
+  "id": "effect-icd-butter",
+  "seed": 1,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "g-icd",
+        "effectId": "fx.icd_butter",
+        "ownerKey": "match"
+      }
+    },
+    { "op": "hit" },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnDamageDealt",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "ApplyStatus",
+            "effectId": "fx.icd_butter",
+            "grantId": "g-icd",
+            "params": { "status": "butter", "duration": 2 }
+          }
+        ]
+      }
+    },
+    { "op": "hit" },
+    { "op": "expectEmpty" },
+    { "op": "expectSkippedContains", "contains": "icd" },
+    { "op": "advanceMs", "ms": 250 },
+    { "op": "hit" },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnDamageDealt",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "ApplyStatus",
+            "effectId": "fx.icd_butter",
+            "grantId": "g-icd",
+            "params": { "status": "butter" }
+          }
+        ]
+      }
+    }
+  ]
+}

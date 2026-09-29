@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/creatures/spec-creature-contracts.md",
+    "note": "Extracted byte-identical from ContractPolicy.cs (tunables-ssot.md M.1, 2026-08-23). Working values carried over as-is — not yet a validated balance decision. slots.maxSlots was removed by T3.6 (spec-caps-reconcile.md §2.3, SSOT §11.1/§11.1a, 2026-08-24) — the escalating price (slotPriceStep x n) was always the real scarcity control, so the hard 48-slot ceiling was redundant and is gone. baseUpkeepPerDay/ritualPriceSouls widened 2026-09-01 (seed-to-concrete T4.1) from the old four-value CreatureRarity to the ten-rung ladder. Corrected same day (caught by ContractPolicyTests' own pinned pre-migration values): the first widening pass slid the old Legendary value onto Almanac (a brand-new, currently-unpopulated rung) instead of keeping it on Sunwoven (the rung Legendary species actually migrated to) — the same bug already found and fixed in fusion.v1.json's recipeCost.shardRarity and patron.v1.json/souls.v1.json's own rarity-keyed tables. sunwoven now carries the unchanged legacy Legendary value in both tables; almanac gets a fresh extrapolated starting value for the still-empty top rung.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py contracts <dotted.key>=<value> [...] writes contracts.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "loyalty": {
+    "max": 1000,
+    "deployFloor": 200,
+    "bindLoyalty": 300,
+    "swornThreshold": 400,
+    "trustedThreshold": 600,
+    "devotedThreshold": 800,
+    "winGain": 15,
+    "lossPenalty": 10,
+    "dailyGainCap": 60,
+    "decayPerDay": 25,
+    "ritualGain": 100,
+    "rankBonusSwornMilli": 15,
+    "rankBonusTrustedMilli": 35,
+    "rankBonusDevotedMilli": 60
+  },
+  "slots": {
+    "baseSlots": 12,
+    "slotPriceStep": 300
+  },
+  "settlement": {
+    "maxSettleDays": 30
+  },
+  "personalityRates": {
+    "loyal":       { "gainPct": 120, "decayPct": 80,  "upkeepPct": 100 },
+    "stoic":       { "gainPct": 90,  "decayPct": 60,  "upkeepPct": 100 },
+    "proud":       { "gainPct": 100, "decayPct": 100, "upkeepPct": 130 },
+    "calculating": { "gainPct": 100, "decayPct": 90,  "upkeepPct": 110 },
+    "feral":       { "gainPct": 80,  "decayPct": 150, "upkeepPct": 70 }
+  },
+  "baseUpkeepPerDay": {
+    "chaff": 2,
+    "sprout": 3,
+    "grafted": 4,
+    "cultivated": 5,
+    "fused": 7,
+    "chimeric": 9,
+    "heirloom": 12,
+    "firstseed": 16,
+    "sunwoven": 25,
+    "almanac": 32
+  },
+  "ritualPriceSouls": {
+    "chaff": 50,
+    "sprout": 65,
+    "grafted": 80,
+    "cultivated": 100,
+    "fused": 130,
+    "chimeric": 160,
+    "heirloom": 200,
+    "firstseed": 260,
+    "sunwoven": 400,
+    "almanac": 500
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "baseline",
+  "description": "Every channel at its shipped default (0). The no-op control.",
+  "trials": 10000,
+  "seed": 42,
+  "baseDamage": 100,
+  "elements": "singleRandom",
+  "defenderElement": "ice",
+  "attacker": {},
+  "defender": {},
+  "shieldHp": 0,
+  "reflection": true
+}

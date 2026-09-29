@@ -1,0 +1,19 @@
+{
+  "contractVersion": 2,
+  "trigger": "OnDeath",
+  "actions": [
+    {
+      "seq": 1,
+      "action": "SpawnEntity",
+      "effectId": "fx.spawn_zombie_ondeath",
+      "grantId": "golden-death",
+      "params": {
+        "kind": "zombie",
+        "typeId": 0,
+        "hp": 100,
+        "maxHp": 100
+      }
+    }
+  ],
+  "skipped": []
+}

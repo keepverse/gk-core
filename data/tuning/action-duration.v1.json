@@ -1,0 +1,4 @@
+{
+  "maxVictimTurns": 5,
+  "intensityPerExcessTurnMilli": 100
+}

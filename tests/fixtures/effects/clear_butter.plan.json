@@ -1,0 +1,16 @@
+{
+  "contractVersion": 2,
+  "trigger": "OnDamageDealt",
+  "actions": [
+    {
+      "seq": 1,
+      "action": "ClearStatus",
+      "effectId": "fx.clear_butter",
+      "grantId": "live-clear",
+      "params": {
+        "status": "butter"
+      }
+    }
+  ],
+  "skipped": []
+}

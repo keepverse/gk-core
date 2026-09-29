@@ -1,0 +1,821 @@
+#!/usr/bin/env python3
+r"""Guard: the verification-boundary registry is structurally valid and maps what it must map.
+
+Replaces `guard-verification-boundaries.ps1`. All the pattern/level/project logic comes from
+`gk-core/scripts/lib/verification_boundaries.py`, which was already the Python twin of `lib/VerificationBoundaries.ps1`,
+so this port is the guard's own rules and not a second copy of the shared lib.
+
+`--report` prints how deep the registry maps `src/**` and which `VerificationId` traits no boundary
+selects. That is a READING, never an assertion: the numbers move whenever production code or the
+registry grows, so nothing in it is pinned (`docs/architecture/validation-ssot.md` — assert the
+contract, print the scale).
+
+`--skip-coverage-walk` skips the whole-repo COMPLETENESS invariant (every `src/**`, `tests/**/*.cs`,
+`tools/*.Tests/**/*.cs` file resolves to an owner; every `*.Tests.csproj` is registered). `verify-change.py`
+passes it on its own internal pre-check: that check exists to trust the registry enough to plan one or
+two specific paths and already resolves THOSE paths itself, so re-walking the whole repo on every local
+call duplicates CI's unfiltered guard run at a cost that scales with repo size rather than with the
+change being verified (measured: this walk, not process startup, is what made a 2-path `--plan-only`
+call take 415s under 22 concurrent dotnet.exe hosts — lane-b review, TVB4.3).
+
+WHY THE POWERSHELL FORM WAS RETIRED
+-----------------------------------
+* **The registry is a DATASET, and the guard is its only validator.** A validator that cannot be
+  unit-tested case by case is a validator that only gets exercised by whatever the registry happens to
+  contain today. Every rule below is now a test with a fixture, and the fixtures are generated from
+  the vocabulary the guard declares rather than copied out of the registry.
+* **`$failures | Select-Object -Unique`** deduplicated findings on the way out, so two rules firing on
+  one row produced one line. Preserved, and pinned: a dedupe that silently dropped a *different*
+  finding would hide it.
+* **The original's `$null -eq $doc.projects` test ran BEFORE the `projects` loop**, so a registry with
+  no `projects` key reported "requires projects and boundaries" and then also emitted a null-deref
+  shaped error per property. The port checks presence first and refuses by name.
+
+ALMOST EVERY COMPARISON FOLDS CASE
+----------------------------------
+`-notcontains` folds, so `Runner`/`PYTEST`/`Script` are accepted as `runner` values, and a `kind` of
+`OWNER` is a valid `owner`. The port folds on exactly the same comparisons. Two places where folding
+is easy to get wrong, and both are pinned by tests rather than by a fixture that happens to agree:
+  * `$cells[1] -eq 'red'` on the stub register is `-eq`, so it folds — a row whose status is `RED`
+    resolves a `debt` id. A `==` here would silently invalidate every `knownRed` entry.
+  * the `[Trait(...)]` scan uses `-match`, which folds, so its `[a-z]` ranges also match uppercase.
+    The port compiles the pattern with `re.IGNORECASE` to match, and a test proves an uppercase trait
+    value is still seen.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from collections import Counter, defaultdict
+from dataclasses import dataclass, field
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+import verification_boundaries as vb  # noqa: E402  (the lib lives beside this tool, not on sys.path)
+
+GUARD_ID = "verification-boundaries"
+EXIT_OK = 0
+EXIT_FAILED = 1
+
+REGISTRY_RELPATH = "scripts/verification-boundaries.v1.json"
+ENFORCEMENT_RELPATH = "scripts/enforcement-registry.v1.json"
+STUB_REGISTER_RELPATH = "docs/architecture/stub-register.md"
+
+REGISTRY_FIELDS = ("schemaVersion", "projects", "boundaries", "knownRed")
+BOUNDARY_FIELDS = ("id", "kind", "paths", "project", "verificationId", "guards", "level", "testFiles",
+                   "selfSelect")
+PYTEST_PROJECT_FIELDS = ("runner", "root", "tests")
+SCRIPT_PROJECT_FIELDS = ("runner", "script")
+# registry-contract C7 / python-test-lane D1. A closed vocabulary the code owns: a fourth runner is a
+# reviewed change to this list, never a data edit, because a runner with no code path would just defer
+# the failure to execution time with a worse error.
+VALID_RUNNERS = ("dotnet", "pytest", "script")
+BOUNDARY_KINDS = ("owner", "seam")
+EVIDENCE_LEVELS = ("focused", "module", "seam", "full")
+KNOWN_RED_FIELDS = ("project", "test", "debt")
+# A boundary naming neither a project nor a guard derives to `full`, which is legal ONLY here. Off
+# these roots, naming neither still means no evidence at all.
+FULL_ELIGIBLE_PREFIXES = ("data/", "tests/fixtures/")
+EXEMPT_TEST_PROJECTS = {
+    "tests/FusionRpg.Injector.Tests/FusionRpg.Injector.Tests.csproj":
+        "needs BepInEx interop to compile; see its csproj comment and map §6",
+}
+BUILD_ARTIFACT_DIRS = ("bin", "obj", "TestResults")
+PROJECT_ID = re.compile(r"^[a-z][a-z0-9-]*$")
+BOUNDARY_ID = re.compile(r"^[a-z][a-z0-9-]*$")
+VERIFICATION_ID = re.compile(r"^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$")
+TRAIT = re.compile(r'\[Trait\s*\(\s*"VerificationId"\s*,\s*"([a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+)"\s*\)\]',
+                    re.IGNORECASE)
+STUB_ID_CELL = re.compile(r"^(~~)?`(SR-\d+)`(~~)?$", re.IGNORECASE)
+
+
+class Refusal(Exception):
+    """A named precondition failure: the registry could not be read at all."""
+
+    def __init__(self, reason: str, detail: str = "") -> None:
+        super().__init__(f"{reason}: {detail}" if detail else reason)
+        self.reason = reason
+        self.detail = detail
+
+
+@dataclass
+class Report:
+    """The `--report` readings. A reading, never a contract."""
+
+    production_mapped: int = 0
+    verification_id_filtered: int = 0
+    whole_project_fallback: int = 0
+    broad_by_boundary: list[tuple[str, int]] = field(default_factory=list)
+    orphan_trait_ids: list[str] = field(default_factory=list)
+    orphan_traits_by_project: dict[str, list[str]] = field(default_factory=dict)
+    full_level: list[tuple[str, list[str]]] = field(default_factory=list)
+
+    def as_dict(self) -> dict:
+        return {
+            "productionMapped": self.production_mapped,
+            "verificationIdFiltered": self.verification_id_filtered,
+            "wholeProjectFallback": self.whole_project_fallback,
+            "wholeProjectByBoundary": [{"boundary": b, "files": n} for b, n in self.broad_by_boundary],
+            "orphanVerificationIdTraits": self.orphan_trait_ids,
+            "orphanTraitsByProject": self.orphan_traits_by_project,
+            "inputsWithNoLocalProof": [{"id": i, "paths": p} for i, p in self.full_level],
+        }
+
+
+def is_relative_registry_path(candidate: str) -> bool:
+    """`Is-RelativeRegistryPath`: relative, no `..` segment, no backslash, valid pattern grammar.
+
+    Every regex in the original is case-INsensitive, so `..` in any casing and a backslash in any
+    casing are both rejected.
+    """
+    if not candidate or not candidate.strip():
+        return False
+    # `[IO.Path]::IsPathRooted` is true for a drive-rooted path, a UNC path, OR a leading separator.
+    # `Path.is_absolute()` is NOT that test on Windows: `Path("/etc/**").is_absolute()` is False,
+    # because there is no drive. So the port accepted a ROOTED pattern that the original refused, and
+    # no differential on this repository could have shown it - no registry row uses a rooted path, so
+    # the two implementations agreed on every input the tree actually contains. A unit test varying the
+    # input is the only thing that sees it. `\` is already rejected by the backslash rule below, so
+    # the leading-separator case only has to cover `/` and the drive form.
+    if candidate[0] in "/\\" or re.match(r"^[A-Za-z]:", candidate):
+        return False
+    if re.search(r"(^|[\\/])\.\.([\\/]|$)", candidate, re.IGNORECASE):
+        return False
+    if "\\" in candidate:
+        return False
+    return vb.valid_pattern_grammar(candidate)
+
+
+def walk_files(start: Path, skip_dirs: tuple[str, ...] = BUILD_ARTIFACT_DIRS) -> list[Path]:
+    """`Get-FilesPruned`: one pass, never descending into a skipped directory name.
+
+    A plain `rglob` here was the measured cost the original's comment describes: it descends into every
+    `bin`/`obj`/`TestResults` before filtering, which is what made the `src` walk take 60-90s on this
+    tree. `os.walk` is given the same pruning via `dirs[:]` mutation.
+    """
+    if not start.exists():
+        return []
+    out: list[Path] = []
+    stack = [start]
+    skip = {d.casefold() for d in skip_dirs}
+    while stack:
+        directory = stack.pop()
+        try:
+            entries = list(directory.iterdir())
+        except OSError:
+            continue
+        for entry in entries:
+            if entry.is_dir():
+                if entry.name.casefold() not in skip:
+                    stack.append(entry)
+            else:
+                out.append(entry)
+    return out
+
+
+def ends_with_ci(value: str, suffix: str) -> bool:
+    """`EndsWith($s, OrdinalIgnoreCase)`. The comparison folds; the plain `.endswith` would not."""
+    return value.casefold().endswith(suffix.casefold())
+
+
+def starts_with_ci(value: str, prefix: str) -> bool:
+    """`StartsWith($p, OrdinalIgnoreCase)`."""
+    return value.casefold().startswith(prefix.casefold())
+
+
+def relative_to(root: Path, path: Path) -> str:
+    """`$file.Substring($Root.Length).TrimStart('\\','/').Replace('\\','/')`, done safely.
+
+    The original built the relative form by string surgery on the absolute path, which silently
+    produced a garbage path if `$Root` was ever not a prefix. `relative_to` REFUSES in that case
+    instead, and a root that does not contain the file is a broken `--root`, not a finding.
+    """
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError as exc:
+        raise Refusal("PATH-OUTSIDE-ROOT", f"{path} is not under {root}") from exc
+
+
+def load_json(path: Path, what: str) -> dict:
+    """Read a registry, or refuse BY NAME.
+
+    The original turned an unparseable boundary registry into
+    `VERIFICATION BOUNDARY GUARD FAILED: invalid registry` and exit 1 — one message for a missing file,
+    a directory, and a syntax error. Those are three faults and the caller cannot act on any of them,
+    so each gets its own refusal.
+    """
+    if not path.is_file():
+        raise Refusal("REGISTRY-MISSING", f"{what} is not a file: {path}")
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise Refusal("REGISTRY-UNREADABLE", f"{what}: {path}: {exc}") from exc
+    try:
+        doc = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise Refusal("REGISTRY-UNPARSEABLE", f"{what}: {path}: {exc}") from exc
+    if not isinstance(doc, dict):
+        raise Refusal("REGISTRY-NOT-AN-OBJECT",
+                      f"{what}: {path}: the document is a {type(doc).__name__}, not an object")
+    return doc
+
+
+# `load_json` is for the guard's SUBJECT. The enforcement registry is a CATALOG the guard consults, and
+# `load_catalog` handles it leniently, because losing a catalog must not suppress the twenty findings
+# the subject still has. Making both refusals is the mistake this pair exists to prevent.
+
+
+def only_fields(obj: object, allowed: tuple[str, ...], label: str, failures: list[str]) -> None:
+    if not isinstance(obj, dict):
+        return
+    for name in obj:
+        if name not in allowed:
+            failures.append(f"{label} has unknown field: {name}")
+
+
+def check_projects(root: Path, projects: dict, failures: list[str]) -> None:
+    """A `projects` value is one of three shapes: a path, an array of paths (a group), or an object
+    naming its `runner`. The group's members are all `.csproj` and all real; a `pytest`/`script`
+    project is never grouped."""
+    for pid, value in projects.items():
+        if not PROJECT_ID.match(pid):
+            failures.append(f"invalid project id: {pid}")
+            continue
+        if isinstance(value, list):
+            if not value:
+                failures.append(f"empty project group: {pid}")
+                continue
+            for member in value:
+                if not isinstance(member, str):
+                    failures.append(f"project group member is not a .csproj path: {pid}")
+                    continue
+                if not member.endswith(".csproj"):
+                    failures.append(
+                        f"project group member is not a .csproj path: {pid}: {member}")
+                    continue
+                if not is_relative_registry_path(member):
+                    failures.append(f"invalid project path: {pid}: {member}")
+                    continue
+                if not (root / member).is_file():
+                    failures.append(f"project file missing: {pid}: {member}")
+        elif isinstance(value, str):
+            if not is_relative_registry_path(value):
+                failures.append(f"invalid project path: {pid}")
+                continue
+            if not (root / value).is_file():
+                failures.append(f"project file missing: {pid}")
+        elif isinstance(value, dict):
+            # `-notcontains` FOLDS, so `Runner` and `PYTEST` are accepted spellings.
+            runner = str(value.get("runner", ""))
+            if runner.casefold() not in {r.casefold() for r in VALID_RUNNERS}:
+                failures.append(f"unsupported runner: {pid}: {runner}")
+                continue
+            if runner.casefold() == "pytest":
+                only_fields(value, PYTEST_PROJECT_FIELDS, f"project '{pid}'", failures)
+                pytest_root = str(value.get("root", ""))
+                if not is_relative_registry_path(pytest_root):
+                    failures.append(f"invalid pytest root: {pid}: {pytest_root}")
+                    continue
+                if not (root / pytest_root).is_dir():
+                    failures.append(f"pytest root missing: {pid}: {pytest_root}")
+                if not str(value.get("tests", "")).strip():
+                    failures.append(f"pytest project missing 'tests': {pid}")
+            elif runner.casefold() == "script":
+                only_fields(value, SCRIPT_PROJECT_FIELDS, f"project '{pid}'", failures)
+                script_path = str(value.get("script", ""))
+                if not is_relative_registry_path(script_path):
+                    failures.append(f"invalid script path: {pid}: {script_path}")
+                    continue
+                if not (root / script_path).is_file():
+                    failures.append(f"script file missing: {pid}: {script_path}")
+        else:
+            failures.append(f"invalid project value: {pid}")
+
+
+def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[str],
+                     owner_index: dict) -> list[dict]:
+    """The per-boundary rules, and the owner rows themselves for the coverage walk."""
+    boundaries = doc.get("boundaries")
+    if not isinstance(boundaries, list):
+        return []
+    seen_ids: set[str] = set()
+    owner_patterns: dict[str, str] = {}
+    owners: list[dict] = []
+    pytest_file_cache: dict[str, list[str]] = {}
+
+    def pytest_files(project_id: str) -> list[str]:
+        if project_id not in pytest_file_cache:
+            dirs = vb.pytest_project_dirs(doc.get("projects") or {}, project_id)
+            base = root / dirs.test_dir if dirs else None
+            pytest_file_cache[project_id] = (
+                [relative_to(root, p) for p in base.rglob("test_*.py") if p.is_file()]
+                if base and base.is_dir() else [])
+        return pytest_file_cache[project_id]
+
+    for boundary in boundaries:
+        if not isinstance(boundary, dict):
+            failures.append("boundary is not an object")
+            continue
+        bid = str(boundary.get("id", ""))
+        only_fields(boundary, BOUNDARY_FIELDS, f"boundary '{bid}'", failures)
+        if not BOUNDARY_ID.match(bid):
+            failures.append(f"invalid boundary id: {bid}")
+        if bid in seen_ids:
+            failures.append(f"duplicate boundary id: {bid}")
+        seen_ids.add(bid)
+        kind = str(boundary.get("kind", ""))
+        if kind.casefold() not in {k.casefold() for k in BOUNDARY_KINDS}:
+            failures.append(f"unsupported boundary kind: {bid}")
+        paths = boundary.get("paths") or []
+        if not paths:
+            failures.append(f"boundary has no paths: {bid}")
+        for pattern in paths:
+            if not is_relative_registry_path(str(pattern)):
+                failures.append(f"invalid boundary path: {bid}: {pattern}")
+            if kind == "owner":
+                # `ToLowerInvariant()`: the ambiguity key folds, so two owner rows differing only in
+                # case are the SAME pattern and one of them silently wins a directory.
+                key = str(pattern).lower()
+                if key in owner_patterns:
+                    failures.append(
+                        f"ambiguous owner pattern: {pattern} ({owner_patterns[key]}, {bid})")
+                owner_patterns[key] = bid
+            # C8: an exact pattern that names no file has silently dropped whatever it owned to a wider
+            # fallback, with nothing failing until now.
+            if vb.exact_pattern(str(pattern)) and not (root / str(pattern)).is_file():
+                failures.append(f"stale exact path: {bid}: {pattern}")
+
+        projects = doc.get("projects") or {}
+        project = boundary.get("project")
+        # C5: `project` is optional IFF `guards` is non-empty — a guard-only boundary's only honest
+        # proof is "it still runs", not a fake test mapping. Naming NEITHER derives to `full`, which is
+        # legal only under data/** or gk-core/tests/fixtures/**.
+        if project:
+            if project not in projects:
+                failures.append(f"unknown project: {project}")
+        elif not (boundary.get("guards") or []):
+            ineligible = [str(p) for p in paths
+                          if not any(starts_with_ci(str(p), pre)
+                                     for pre in FULL_ELIGIBLE_PREFIXES)]
+            if ineligible:
+                failures.append(f"boundary needs a project or at least one guard: {bid}")
+
+        level = boundary.get("level")
+        if level is None:
+            failures.append(f"invalid evidence level: {bid}")
+        elif str(level).casefold() not in {l.casefold() for l in EVIDENCE_LEVELS}:
+            failures.append(f"invalid evidence level: {bid}")
+        else:
+            derived = vb.derived_level(boundary)
+            if str(level) != derived:
+                failures.append(
+                    f"level mismatch: {bid}: registry says '{level}', derived '{derived}'")
+
+        for guard in (boundary.get("guards") or []):
+            if guard not in guard_catalog:
+                failures.append(f"unknown guard: {guard}")
+
+        vid = boundary.get("verificationId")
+        if vid:
+            if not VERIFICATION_ID.match(str(vid)):
+                failures.append(f"invalid VerificationId: {vid}")
+            else:
+                # C7: a group-level VerificationId needs only ONE member to carry the trait — that
+                # member is exactly the one the planner's focused selection will run.
+                members = vb.project_members(projects, project) if project else []
+                if members and not any(
+                        vb.project_has_trait(root, m, str(vid)) for m in members):
+                    failures.append(f"VerificationId has no matching test trait: {vid}")
+
+        # python-test-lane D2: file-selector pairing.
+        test_files = boundary.get("testFiles")
+        self_select = boundary.get("selfSelect")
+        if project:
+            runner = (vb.project_runner(projects, project) or "").casefold()
+            if test_files and runner != "pytest":
+                failures.append(f"testFiles only allowed on a pytest project: {bid}")
+            if vid and runner in ("pytest", "script"):
+                failures.append(f"verificationId not allowed on a {runner} project: {bid}")
+            if self_select:
+                if runner != "pytest":
+                    failures.append(f"selfSelect only allowed on a pytest project: {bid}")
+                else:
+                    dirs = vb.pytest_project_dirs(projects, project)
+                    test_dir = dirs.test_dir if dirs else ""
+                    for p in paths:
+                        if not starts_with_ci(str(p), f"{test_dir}/"):
+                            failures.append(
+                                "selfSelect boundary path outside its project's test directory: "
+                                f"{bid}: {p}")
+            if test_files and runner == "pytest":
+                actual = pytest_files(project)
+                for pattern in test_files:
+                    if not is_relative_registry_path(str(pattern)):
+                        failures.append(f"invalid testFiles pattern: {bid}: {pattern}")
+                        continue
+                    if not any(vb.pattern_match(f, str(pattern)) for f in actual):
+                        failures.append(
+                            f"testFiles pattern matches no test file: {bid}: {pattern}")
+        else:
+            if test_files:
+                failures.append(f"testFiles requires a project: {bid}")
+            if self_select:
+                failures.append(f"selfSelect requires a project: {bid}")
+        if kind == "owner":
+            owners.append(boundary)
+    owner_index.update(owner_patterns)
+    return owners
+
+
+def red_debt_ids(root: Path) -> set[str]:
+    r"""The `SR-\d+` ids whose stub-register row is `red`.
+
+    `$cells[1] -eq 'red'` FOLDS, so a `RED` row resolves a debt. `==` here would invalidate every
+    `knownRed` entry in a register that happened to use capitals.
+    """
+    path = root / STUB_REGISTER_RELPATH
+    if not path.is_file():
+        return set()
+    ids: set[str] = set()
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return ids
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        cells = [c.strip() for c in stripped.strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        found = STUB_ID_CELL.match(cells[0])
+        if not found:
+            continue
+        if cells[1].casefold() == "red":
+            ids.add(found.group(2))
+    return ids
+
+
+def check_known_red(root: Path, doc: dict, failures: list[str]) -> None:
+    """python-test-lane D6 rule 4: every `knownRed` entry's fields are exactly {project, test, debt};
+    its `project` exists; the test's own file exists under that project; its `debt` resolves to a
+    `red` row in the stub register. No test asserts how many entries exist — only that each is honest."""
+    entries = [e for e in (doc.get("knownRed") or []) if e]
+    if not entries:
+        return
+    projects = doc.get("projects") or {}
+    red_ids = red_debt_ids(root)
+    for entry in entries:
+        if not isinstance(entry, dict):
+            failures.append("knownRed entry is not an object")
+            continue
+        test = str(entry.get("test", ""))
+        only_fields(entry, KNOWN_RED_FIELDS, f"knownRed entry '{test}'", failures)
+        project_id = entry.get("project")
+        if project_id not in projects:
+            failures.append(f"knownRed entry names an unknown project: {project_id}: {test}")
+        test_file = test.split("::")[0]
+        node = projects.get(project_id)
+        base = str(node.get("root", "")) if isinstance(node, dict) else ""
+        rel = f"{base.rstrip('/')}/{test_file}" if base else test_file
+        if not (root / rel).is_file():
+            failures.append(f"knownRed entry's test file does not exist: {test}")
+        debt = str(entry.get("debt", "")).strip("`")
+        if debt not in red_ids:
+            failures.append(f"knownRed entry's debt does not resolve to a red row: "
+                            f"{entry.get('debt')}: {test}")
+
+
+@dataclass
+class Walk:
+    """What the completeness walk found. `resolutions` is BOTH src and test sources.
+
+    The original appends to one `$resolved` list from the src loop AND from the test loop, and every
+    report heading is computed over that list — including the one that reads "production files mapped",
+    which is a misnomer for "src + test sources". An earlier version of this port collected only `src/**`
+    for the report, so the fallback table listed a different set of owners and the file count was
+    roughly half the original's. A report that disagrees with the tool it reports on is worse than no
+    report, so the shape is carried explicitly rather than implied.
+    """
+
+    resolutions: list[tuple[str, str, str]] = field(default_factory=list)
+    src_files: list[Path] = field(default_factory=list)
+    test_source_files: list[Path] = field(default_factory=list)
+    tests_files: list[Path] = field(default_factory=list)
+    tools_test_files: list[Path] = field(default_factory=list)
+
+
+def coverage_walk(root: Path, owners: list[dict], failures: list[str]) -> Walk:
+    """The whole-repo COMPLETENESS invariant."""
+    walk = Walk()
+    walk.src_files = [f for f in walk_files(root / "src") if ends_with_ci(f.name, ".cs")]
+    walk.tests_files = walk_files(root / "tests")
+    tools_dir = root / "tools"
+    if tools_dir.is_dir():
+        for sub in sorted(tools_dir.iterdir()):
+            if sub.is_dir() and sub.name.endswith(".Tests"):
+                walk.tools_test_files += walk_files(sub)
+    walk.test_source_files = [f for f in walk.tests_files + walk.tools_test_files
+                              if ends_with_ci(f.name, ".cs")]
+
+    for file, label in [(f, "unmapped source") for f in walk.src_files] + \
+            [(f, "unmapped test source") for f in walk.test_source_files]:
+        rel = relative_to(root, file)
+        resolution = vb.resolve_owner(rel, owners)
+        if resolution is None:
+            failures.append(f"{label}: {rel}")
+            continue
+        if not resolution.owners:
+            continue
+        # `Resolution.owners` is a tuple of plain boundary DICTS, not objects. The original's
+        # `$resolution.Owners[0].verificationId` is PowerShell's property syntax on a PSCustomObject;
+        # the Python twin keeps the raw dicts, so it is subscripted. Reaching for `.id` here is the
+        # same mistake as `.Owners` - the shape has to be read, not recalled from the other language.
+        winner = resolution.owners[0]
+        walk.resolutions.append((rel, str(winner.get("id", "")),
+                                 str(winner.get("verificationId") or "")))
+
+    # seam-coverage S4: an ENFORCED root is already fully mapped by its own module, so an unmapped
+    # file under it is a real registry omission rather than the general Bazel-diff gap that keeps
+    # `data/**` and `gk-core/tests/fixtures/**` off the enforced list.
+    for enforced in vb.ENFORCED_ROOTS:
+        # `TrimEnd('/', '*')` on a char ARRAY here — distinct from the three-call chain in
+        # session-boundary-check, and it does strip an interleaved run.
+        base = str(enforced).rstrip("/*").rstrip("/")
+        for file in walk_files(root / base):
+            rel = relative_to(root, file)
+            if vb.resolve_owner(rel, owners) is None:
+                failures.append(f"unmapped enforced-root file: {rel}")
+
+    return walk
+
+
+def registered_project_paths(doc: dict) -> set[str]:
+    """Every path named by a `projects` value. An OBJECT value (a pytest/script project) contributes
+    nothing here, because C2 is about `.csproj` registration only — the original's `else` branch
+    stringified the whole object, which could never match a `.csproj` path."""
+    out: set[str] = set()
+    for value in (doc.get("projects") or {}).values():
+        if isinstance(value, list):
+            out |= {m for m in value if isinstance(m, str)}
+        elif isinstance(value, str):
+            out.add(value)
+    return out
+
+
+def check_test_projects(root: Path, doc: dict, tests_files: list[Path],
+                        tools_test_files: list[Path], failures: list[str]) -> None:
+    registered = registered_project_paths(doc)
+    candidates = [f for f in tests_files + tools_test_files
+                  if ends_with_ci(f.name, ".Tests.csproj")]
+    for file in candidates:
+        rel = relative_to(root, file)
+        if rel in registered or rel in EXEMPT_TEST_PROJECTS:
+            continue
+        failures.append(f"test project not in registry: {rel}")
+
+
+def build_report(root: Path, doc: dict, owners: list[dict], walk: Walk) -> Report:
+    resolutions = walk.resolutions
+    report = Report(production_mapped=len(resolutions))
+    focused = [r for r in resolutions if r[2]]
+    report.verification_id_filtered = len(focused)
+    report.whole_project_fallback = len(resolutions) - len(focused)
+    # The original is `Group-Object boundary | Sort-Object Count -Descending`, which does NOT
+    # secondary-sort the key, so the order within a count is whatever the grouping produced. A
+    # deterministic `(-count, name)` is a declared divergence rather than a silent reordering: the
+    # SETS and COUNTS are the reading, and the report is explicitly a reading.
+    broad = Counter(r[1] for r in resolutions if not r[2])
+    report.broad_by_boundary = sorted(broad.items(), key=lambda kv: (-kv[1], kv[0]))
+
+    # C6: every `[Trait("VerificationId", "...")]` value no boundary selects, grouped by the project
+    # whose directory the trait was found in. A READING, never a failure — an orphan trait can be
+    # deliberate or simply not wired up yet.
+    selected = {str(b["verificationId"]) for b in doc.get("boundaries") or []
+                if isinstance(b, dict) and b.get("verificationId")}
+    project_dirs: dict[str, str] = {}
+    for pid in (doc.get("projects") or {}):
+        for member in vb.project_members(doc.get("projects") or {}, pid):
+            parent = str(Path(member).parent).replace("\\", "/")
+            project_dirs[parent] = pid
+
+    def report_project(rel: str) -> str:
+        best = ""
+        for directory in project_dirs:
+            if starts_with_ci(rel, f"{directory}/") and len(directory) > len(best):
+                best = directory
+        return project_dirs[best] if best else "(unmapped)"
+
+    by_project: dict[str, set[str]] = defaultdict(set)
+    seen: set[Path] = set()
+    for file in walk.src_files + walk.test_source_files:
+        if file in seen:
+            continue
+        seen.add(file)
+        try:
+            text = file.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for found in TRAIT.finditer(text):
+            vid = found.group(1)
+            if vid in selected:
+                continue
+            by_project[report_project(relative_to(root, file))].add(vid)
+    report.orphan_traits_by_project = {p: sorted(v) for p, v in sorted(by_project.items())}
+    report.orphan_trait_ids = sorted({v for vs in by_project.values() for v in vs})
+
+    # seam-coverage S3: every `full`-level owner — the live Bazel-diff gap list. A reading, never a
+    # pinned count, since which domains land at `full` is a finding, not a decision.
+    report.full_level = sorted(
+        ((str(b.get("id", "")), [str(p) for p in (b.get("paths") or [])]) for b in owners
+         if vb.derived_level(b) == "full"),
+        key=lambda kv: kv[0])
+    return report
+
+
+def load_catalog(root: Path, failures: list[str]) -> dict[str, str]:
+    """The guard -> script catalog, LENIENTLY.
+
+    The original ACCUMULATED a missing or unparseable enforcement registry as one failure among all the
+    others and carried on with an empty catalog:
+
+        if (-not (Test-Path $enforcementPath)) { $failures += 'enforcement registry missing: ...' }
+        else { try { ... } catch { $failures += 'enforcement registry is not valid JSON' } }
+
+    The port made this a REFUSAL, which was over-closing in the direction that costs the most: it
+    suppressed every OTHER finding. A fixture holding a valid boundary registry and no enforcement
+    catalog received one refusal naming the catalog instead of the twenty boundary problems it actually
+    had, and sixteen C# tests that assert a specific boundary finding went red on it. A validator that
+    stops at the first missing input is not a validator.
+
+    So the distinction is by ROLE, not by severity: the guard's SUBJECT is a refusal when unreadable
+    (there is nothing to validate), and a CATALOG it consults is a finding. Both are reported, and the
+    guard still walks the whole registry.
+    """
+    path = root / ENFORCEMENT_RELPATH
+    if not path.is_file():
+        failures.append(f"enforcement registry missing: {ENFORCEMENT_RELPATH}")
+        return {}
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        failures.append("enforcement registry is not valid JSON")
+        return {}
+    if not isinstance(doc, dict):
+        failures.append("enforcement registry is not valid JSON")
+        return {}
+    return doc
+
+
+def check(root: Path, skip_coverage_walk: bool = False, want_report: bool = False) -> dict:
+    doc = load_json(root / REGISTRY_RELPATH, "the verification-boundary registry")
+
+    failures: list[str] = []
+    enforcement = load_catalog(root, failures)
+    only_fields(doc, REGISTRY_FIELDS, "registry", failures)
+    if doc.get("schemaVersion") != vb.ACCEPTED_VERIFICATION_SCHEMA_VERSION:
+        failures.append("unsupported schemaVersion")
+    if doc.get("projects") is None or doc.get("boundaries") is None:
+        # The original tested this BEFORE the projects loop and then went on to enumerate a null node,
+        # so a registry missing `projects` produced a shape error per property on top of the real
+        # finding. The port reports presence and stops: there is nothing to enumerate.
+        failures.append("registry requires projects and boundaries")
+        return {"guard": GUARD_ID, "verdict": "FAIL", "problems": _dedupe(failures),
+                "report": None, "owners": 0, "boundaries": 0, "walked": False}
+
+    # The `guards` map is gone (solid-enforcement `guard-runner`): guard ids resolve through ONE
+    # catalog. A map here would be a second id -> script source of truth.
+    if "guards" in doc:
+        failures.append(
+            "verification-boundaries.v1.json must not carry a 'guards' section - guard ids resolve "
+            "through scripts/enforcement-registry.v1.json")
+    guard_catalog: dict[str, str] = {}
+    if enforcement.get("schemaVersion") != 1:
+        failures.append("unsupported enforcement registry schemaVersion")
+    guards_node = enforcement.get("guards")
+    if not isinstance(guards_node, dict):
+        failures.append("enforcement registry carries no 'guards' object")
+    else:
+        for gid, entry in guards_node.items():
+            if isinstance(entry, dict):
+                guard_catalog[gid] = str(entry.get("script", ""))
+
+    projects = doc["projects"]
+    check_projects(root, projects, failures)
+
+    owner_index: dict[str, str] = {}
+    owners = check_boundaries(root, doc, guard_catalog, failures, owner_index)
+
+    walked = not skip_coverage_walk
+    walk = Walk()
+    if walked:
+        walk = coverage_walk(root, owners, failures)
+        check_test_projects(root, doc, walk.tests_files, walk.tools_test_files, failures)
+
+    check_known_red(root, doc, failures)
+
+    report = None
+    if want_report:
+        if not walked:
+            # `-Report` needs the walk; combining the two is not a real use and the original did not
+            # support it either. Saying so beats printing an empty report that reads as a clean run.
+            raise Refusal("REPORT-NEEDS-THE-WALK",
+                          "--report needs the coverage walk, so it cannot be combined with "
+                          "--skip-coverage-walk. The original silently printed an empty report here.")
+        report = build_report(root, doc, owners, walk).as_dict()
+
+    return {"guard": GUARD_ID, "verdict": "FAIL" if failures else "OK",
+            "problems": _dedupe(failures), "report": report, "owners": len(owners),
+            "boundaries": len(doc.get("boundaries") or []), "walked": walked}
+
+
+def _dedupe(failures: list[str]) -> list[str]:
+    """`$failures | Select-Object -Unique`: first-seen order, later duplicates dropped.
+
+    Two rules firing on one row produce one line. A dedupe that dropped a *different* finding would
+    hide it, so the key is the whole message and the order is stable — both pinned by tests.
+    """
+    seen: set[str] = set()
+    out: list[str] = []
+    for failure in failures:
+        if failure not in seen:
+            seen.add(failure)
+            out.append(failure)
+    return out
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Guard: the verification-boundary registry is valid and maps what it must map "
+                    "(replaces guard-verification-boundaries.ps1).")
+    parser.add_argument("--root", type=Path, default=None,
+                        help="the repository to check (default: this tool's own repository)")
+    parser.add_argument("--report", action="store_true",
+                        help="print how deep the registry maps src/** and which VerificationId "
+                             "traits no boundary selects. A reading, never an assertion.")
+    parser.add_argument("--skip-coverage-walk", action="store_true",
+                        help="skip the whole-repo completeness walk; keep the registry's own "
+                             "structural checks")
+    parser.add_argument("--json", action="store_true", help="emit the result as JSON")
+    args = parser.parse_args(argv)
+
+    root = args.root or Path(__file__).resolve().parent.parent
+    root = root.resolve()
+
+    try:
+        result = check(root, args.skip_coverage_walk, args.report)
+    except Refusal as refusal:
+        if args.json:
+            print(json.dumps({"guard": GUARD_ID, "verdict": "FAILED", "reason": refusal.reason,
+                              "detail": refusal.detail, "problems": [], "report": None,
+                              "owners": 0, "boundaries": 0, "walked": False}, indent=2))
+        else:
+            print(f"VERIFICATION BOUNDARY GUARD FAILED: {refusal.reason}", file=sys.stderr)
+            if refusal.detail:
+                print(f"  {refusal.detail}", file=sys.stderr)
+        return EXIT_FAILED
+
+    if args.json:
+        print(json.dumps(result, indent=2))
+        return EXIT_OK if result["verdict"] == "OK" else EXIT_FAILED
+
+    if result["verdict"] == "FAIL":
+        # Findings to stderr; the OK line is the only thing on stdout, so a caller reading stdout alone
+        # cannot mistake a finding for a verdict.
+        print("VERIFICATION BOUNDARY GUARD FAILED", file=sys.stderr)
+        for problem in result["problems"]:
+            print(f"  {problem}", file=sys.stderr)
+        return EXIT_FAILED
+    print("VERIFICATION BOUNDARY GUARD OK")
+
+    report = result.get("report")
+    if report:
+        print("")
+        print("Registry depth over src/** (a reading, not a contract):")
+        print(f"  production files mapped : {report['productionMapped']}")
+        print(f"  VerificationId-filtered : {report['verificationIdFiltered']}")
+        print(f"  whole-project fallback  : {report['wholeProjectFallback']}")
+        print("")
+        print("  Owners still running a whole project, widest first:")
+        for entry in report["wholeProjectByBoundary"]:
+            print(f"    {entry['files']:>6}  {entry['boundary']}")
+        print("")
+        print("  Orphan VerificationId traits (no boundary selects them): "
+              f"{len(report['orphanVerificationIdTraits'])}")
+        for project, vids in report["orphanTraitsByProject"].items():
+            print(f"    {project}:")
+            for vid in vids:
+                print(f"      {vid}")
+        print("")
+        print(f"  Inputs with no local proof (level 'full'): "
+              f"{len(report['inputsWithNoLocalProof'])}")
+        for entry in report["inputsWithNoLocalProof"]:
+            print(f"    {entry['id']}: {', '.join(entry['paths'])}")
+    return EXIT_OK
+
+
+if __name__ == "__main__":
+    sys.exit(main())

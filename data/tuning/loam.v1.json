@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/loam/spec-loam-model.md",
+    "note": "Extracted byte-identical from LoamPolicy.cs (tunables-ssot.md M.2, 2026-08-23). Every value here is explicitly a provisional placeholder per the source file's own class comment — L9's economy harness picks the real numbers, this migration only moves them out of code.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py loam <dotted.key>=<value> [...] writes loam.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "upkeep": {
+    "seepPerTurn": 50,
+    "loamCapacity": 300,
+    "baseUpkeepPerSector": 10,
+    "garrisonUpkeepPerMember": 2,
+    "developmentUpkeepPerLevel": 5,
+    "dangerUpkeepPerBand": 3
+  },
+  "fade": {
+    "recoveryMilli": 20,
+    "baseDecayMilli": 40,
+    "decayPerDeficitUnitMilli": 1,
+    "decayScaleDivisor": 5,
+    "maxDecayMilli": 300,
+    "abandonmentHorizonTurns": 3
+  },
+  "legionSupply": {
+    "carryPerBearer": 200,
+    "burnPerMember": 10
+  },
+  "structures": {
+    "wellYieldMultiplierMilli": 2000,
+    "wellCostMilli": 200,
+    "waystationCostMilli": 300,
+    "wellBuildTurns": 2,
+    "waystationBuildTurns": 4,
+    "waystationRangeHops": 3,
+    "granaryCostMilli": 150,
+    "granaryCapacityBonus": 300,
+    "granaryBuildTurns": 2
+  },
+  "texture": {
+    "contagionPressurePerTurn": 60,
+    "maxPressureMilli": 300,
+    "pressureDecayPerTurn": 40,
+    "surgeDecayMultiplierMilli": 1500,
+    "unmadeSpawnAfterTurns": 5,
+    "unmadeMemberHp": 120,
+    "unmadeMemberCount": 2
+  }
+}

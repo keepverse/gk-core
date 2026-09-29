@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 1,
+  "_meta": {
+    "owner": "docs/architecture/narrative-seed/spec-storylet-vocab.md#36",
+    "note": "Test fixture for npc-story-events NR1.2 (the real file is narrative-seed's)."
+  },
+  "roleTags": {
+    "roleKinds": {
+      "required": {
+        "description": "The role must cast, or the storylet leaves the pool.",
+        "negative": "Not a score; scoring over the save's facts is the runtime's casting."
+      },
+      "optional": {
+        "description": "The role is cast when it can be.",
+        "negative": "Not a requirement; an uncalled optional role never removes the storylet."
+      },
+      "forbidden": {
+        "description": "A character matching the tags must not be present.",
+        "negative": "Not a filter on who is offered; it removes the storylet."
+      },
+      "none": {
+        "description": "No role kind fits; the structure draft is refused and re-asked.",
+        "negative": "Not an empty role; it is the model's way to say no kind fits."
+      }
+    },
+    "requireFamilies": {
+      "source": {
+        "description": "Where the character comes from: the party, a named seed, or the wild.",
+        "negative": "Not a provenance the runtime stores; it is a casting filter.",
+        "values": ["party", "named", "wild", "any"]
+      },
+      "side": {
+        "description": "Which side the character stands on.",
+        "negative": "Not a species; a plant and a plant-type zombie are different sides.",
+        "values": ["plant", "zombie"]
+      },
+      "element": {
+        "description": "The character's element.",
+        "negative": "Not a damage type; it is the one element vocabulary.",
+        "values": ["fire", "ice", "air", "earth", "light", "dark"]
+      },
+      "characterRole": {
+        "description": "The character's role in the character registry.",
+        "negative": "Not a storylet-local role id; these are the shared registry's roles.",
+        "values": [],
+        "valuesFrom": "roles.v1.json"
+      }
+    }
+  }
+}

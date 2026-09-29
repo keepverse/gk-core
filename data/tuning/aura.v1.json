@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/aura-skill/spec-aura-magnitude.md §3.4/§6, spec-aura-action-shape.md §5.1",
+    "note": "rungMapping.k mirrors action-rungs.v1.json's own qPowerMilli values for rungs 7-10 verbatim (5359/7090/9379/12407) -- the aura program's own k(rung) axis reuses the shipped action-power ladder rather than authoring a second one (guard-power.py's closed-inventory rule: this composes an existing power-shaped scale, it does not add a row). Usable span is 7-10 only: `consumption` (a perTick-cost structural axis) first appears at rung 7 in action-rungs.v1.json, and every aura carries perTick upkeep, so no aura can exist below rung 7 -- and action-rungs.v1.json's own cap is 10 (no rung 11). maxActiveAuras: how many auras one commander may run at once -- owner decision (Q8, 2026-08-30): 1 by default, tunable so a later balance pass can raise it. Not blocking at 1 (oldest-first vs newest-first eviction are identical at N=1) -- raising it needs the owner's own pin/refuse-on-cap call first (spec-aura-action-shape.md §5.2), not a code change.",
+    "rebalance": "Rebalancing an aura's own level axis means editing these four numbers, never touching AuraMagnitude.cs -- that is the whole point of the rungMapping being a tunable (owner decision, 2026-08-30: \"tunable is requirement... game balance for future\")."
+  },
+  "rungMapping": {
+    "7": 5359,
+    "8": 7090,
+    "9": 9379,
+    "10": 12407
+  },
+  "maxActiveAuras": 1
+}

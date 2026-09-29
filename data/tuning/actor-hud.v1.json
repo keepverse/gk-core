@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/actor-hud/spec-actor-hud-core.md",
+    "note": "Band B per-unit HUD — sprite-bottom (Feet/bounds) + worldYOffset lift, bar geometry, row offsets, stack pips. worldYOffset=0.08 sits the resource row just above feet (Body+-0.35 left chrome mid-face).",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py actor-hud <dotted.key>=<value> [...] writes actor-hud.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "statusStripMax": 3,
+  "hpSliverEnabled": false,
+  "badgeMax": 99,
+  "anchorKind": "body",
+  "worldYOffset": 0.08,
+  "barWorldWidth": 0.95,
+  "barWorldHeight": 0.12,
+  "rowOffsetIdentity": 0.30,
+  "rowOffsetResources": 0.0,
+  "rowOffsetStatuses": 0.16,
+  "maxStackPips": 3,
+  "eliteTierThreshold": null,
+  "magnitudeMidThreshold": 10.0,
+  "magnitudeHighThreshold": 30.0
+}

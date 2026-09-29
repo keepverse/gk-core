@@ -1,0 +1,22 @@
+{
+  "name": "BigChomper",
+  "description": "Fused plant \u2014 theta=27 pTheta=928",
+  "hp": 5568,
+  "baseDamage": 1000,
+  "shieldHp": 0,
+  "element": "dark",
+  "stats": {
+    "combat.block.shred.omni": 1114,
+    "combat.parry.shred.omni": 1114,
+    "combat.power.omni": 742,
+    "resource.max.hunger": 4640,
+    "resource.max.qi": 5568,
+    "resource.max.spirit": 2784,
+    "resource.max.stamina": 12992,
+    "resource.regen.hp": 278,
+    "resource.regen.hunger": 278,
+    "resource.regen.qi": 371,
+    "resource.regen.spirit": 186,
+    "resource.regen.stamina": 464
+  }
+}

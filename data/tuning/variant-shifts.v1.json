@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/effect-pipeline/spec-resolution-order.md",
+    "note": "Working values, not a validated balance decision. A variant shifts a resolution PARAMETER — it never authors a new container or atom (Q12, ssot-rarity.md §3.6): rarity buys breadth and tier ceiling, never magnitude directly.",
+    "rebalance": "Never hand-edit by convention alone — this file has no publish tool yet (T3.3), so a direct edit here bumps `version` and stays a real diff."
+  },
+  "variants": {
+    "ancient": {
+      "tierWindowShift": 1,
+      "prefixRollShift": 0,
+      "suffixRollShift": 0,
+      "rerollsOneElementSlot": false
+    },
+    "mutated": {
+      "tierWindowShift": -1,
+      "prefixRollShift": 1,
+      "suffixRollShift": 0,
+      "rerollsOneElementSlot": false
+    },
+    "corrupted": {
+      "tierWindowShift": 0,
+      "prefixRollShift": 0,
+      "suffixRollShift": 0,
+      "rerollsOneElementSlot": true
+    },
+    "blessed": {
+      "tierWindowShift": 0,
+      "prefixRollShift": 1,
+      "suffixRollShift": 0,
+      "rerollsOneElementSlot": false
+    },
+    "cursed": {
+      "tierWindowShift": 0,
+      "prefixRollShift": -1,
+      "suffixRollShift": 1,
+      "rerollsOneElementSlot": false
+    },
+    "shiny": {
+      "tierWindowShift": 0,
+      "prefixRollShift": 0,
+      "suffixRollShift": 0,
+      "rerollsOneElementSlot": false
+    }
+  }
+}

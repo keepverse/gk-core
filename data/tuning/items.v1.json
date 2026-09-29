@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/tunables-ssot.md",
+    "note": "Items balance surface, module 2026-09-05 magic-number fix: ItemNameComposer.RareNameThreshold (affix count before an item gets a seeded two-word name instead of being named after specific affixes) and RoleFamilyTable.DefaultMaxTier (default tier ceiling for a role/family cell before per-role override or relocation reduction). Values unchanged from their prior C# consts (3, 5).",
+    "rebalance": "python tools/tuning/publish.py did not yet support a fresh 'items' domain at the time this file was hand-authored (no existing items.v*.json to version from) -- hand-write with a schemaVersion bump, or extend publish.py to cover this domain, per the same precedent as match.v1.json's waveHoldFloorSeconds (E36)."
+  },
+  "rareNameThreshold": 3,
+  "defaultMaxTier": 5
+}

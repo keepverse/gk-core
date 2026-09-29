@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "version": 3,
+  "_meta": {
+    "owner": "docs/architecture/software-architecture.md",
+    "note": "Extracted byte-identical from RpgProgression.cs (tunables-ssot.md M.11, 2026-08-24). POC-tuned XP curve/awards (RpgXpAwardMap, persisted via RpgStore.Progression) \u2014 kept live rather than migrated as dead code; RpgProgressionBalanceTests exercises it directly.",
+    "noteSpecimen": "Added 2026-09-05 (effort-power reconciliation M1). A specimen (unique creature) level fed the SAME quadratic P(Theta) as the player line while costing a flat, hardcoded 100 XP per level -- so specimen power was quadratic IN EFFORT where the player's is linear, and at level 1,000 a specimen level bought identical power for a fraction of the effort. It now reads this arithmetic ladder like every other kind. first=100 matches the old flat cost exactly at level 1, so early pace is unchanged and only the late-game divergence is corrected. Pace is a balance surface -- move it here, not in code.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py progression <dotted.key>=<value> [...] writes progression.v{n+1}.json; the old version stays on disk for revert.",
+    "rebalanceLabel": "empire-level (R19): xpCurve.empire + awards.speciesLevelUp"
+  },
+  "xpCurve": {
+    "plant": {
+      "first": 80.0,
+      "step": 32.0
+    },
+    "zombie": {
+      "first": 70.0,
+      "step": 28.0
+    },
+    "player": {
+      "first": 100.0,
+      "step": 45.0
+    },
+    "specimen": {
+      "first": 100.0,
+      "step": 45.0
+    },
+    "empire": {
+      "first": 10,
+      "step": 5
+    }
+  },
+  "awards": {
+    "kill": 12,
+    "defeat": -100,
+    "mower": -30,
+    "plantPlace": 8,
+    "zombieSpawn": 9,
+    "specimenLawnKill": 18,
+    "specimenBoundIntervalMs": 1000,
+    "specimenBoundIntervalXp": 2,
+    "zombossRunVictoryXp": 100,
+    "zombossRunDefeatXp": 25,
+    "speciesLevelUp": 1
+  }
+}

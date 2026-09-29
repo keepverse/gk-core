@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FusionRpg.Core</RootNamespace>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FusionRpg.Contracts\FusionRpg.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Timeline kernel instrumentation (EventQueue comparison/probe counters) is internal: it
+         lets tests assert complexity by counting rather than by stopwatch, without putting a
+         test-only counter in the public contract. Mirrors the data-layer project's setup.
+         NOTE: keep the other project's literal name out of this file - the Core/data separation
+         guard substring-scans this csproj and cannot tell a comment from a reference. -->
+    <InternalsVisibleTo Include="FusionRpg.Core.Tests" />
+    <!-- T8.5 (ds 18, fusion-recipe-runtime §3 success criteria): CreatureRecipeCatalog.BuildDeterministicOnly()
+         is the generator's own dependency, not a player-facing surface any more - these two CLI
+         tools are fusion-recipe-generator's (module 17) own seam and the only callers left. -->
+    <InternalsVisibleTo Include="CreatureRecipeDistributionIndex" />
+    <InternalsVisibleTo Include="CreatureRecipeReconcileInput" />
+    <!-- No further grants for the sibling test assemblies (data-layer/e2e) that also configure
+         CreatureRecipeCatalog - the Core/data separation guard above substring-scans this csproj and
+         cannot tell a comment from a reference, so their own bootstraps read the real committed
+         seed through the PUBLIC FusionRecipeSeedReader/Configure api instead, exactly like
+         Program.cs itself does, needing no internal access at all. -->
+  </ItemGroup>
+</Project>

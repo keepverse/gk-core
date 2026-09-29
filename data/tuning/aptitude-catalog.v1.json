@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "kind": "aptitude-catalog",
+  "version": 1,
+  "entries": [
+    {
+      "id": "Might",
+      "posture": "force",
+      "ordinal": 0,
+      "displayName": "Might",
+      "role": "universal offence \u2014 power",
+      "reading": "Hit harder.",
+      "icon": "swords"
+    },
+    {
+      "id": "Fortitude",
+      "posture": "force",
+      "ordinal": 1,
+      "displayName": "Fortitude",
+      "role": "mitigation \u2014 defense \u00b7 absorption \u00b7 reduction",
+      "reading": "Take less of everything.",
+      "icon": "shield"
+    },
+    {
+      "id": "Vigor",
+      "posture": "force",
+      "ordinal": 2,
+      "displayName": "Vigor",
+      "role": "shield \u2014 shield.capacity/regen/toughness",
+      "reading": "More to lose before you lose.",
+      "icon": "heart"
+    },
+    {
+      "id": "Onslaught",
+      "posture": "force",
+      "ordinal": 3,
+      "displayName": "Onslaught",
+      "role": "breaks guard + reflect",
+      "reading": "Their guard stops mattering.",
+      "icon": "flame"
+    },
+    {
+      "id": "Agility",
+      "posture": "finesse",
+      "ordinal": 4,
+      "displayName": "Agility",
+      "role": "dodge",
+      "reading": "Be somewhere else.",
+      "icon": "wind"
+    },
+    {
+      "id": "Composure",
+      "posture": "finesse",
+      "ordinal": 5,
+      "displayName": "Composure",
+      "role": "crit-denial",
+      "reading": "Nothing lands clean on you.",
+      "icon": "eye"
+    },
+    {
+      "id": "Pierce",
+      "posture": "finesse",
+      "ordinal": 6,
+      "displayName": "Pierce",
+      "role": "breaks mitigation + shield",
+      "reading": "Armour stops mattering.",
+      "icon": "target"
+    },
+    {
+      "id": "Focus",
+      "posture": "finesse",
+      "ordinal": 7,
+      "displayName": "Focus",
+      "role": "utility \u2014 qi, efficiency, cooldowns",
+      "reading": "Do it again, sooner, cheaper.",
+      "icon": "sparkles"
+    },
+    {
+      "id": "Bulwark",
+      "posture": "bastion",
+      "ordinal": 8,
+      "displayName": "Bulwark",
+      "role": "guard \u2014 parry/block rate and strength",
+      "reading": "Stop it outright, sometimes.",
+      "icon": "shield-check"
+    },
+    {
+      "id": "Retribution",
+      "posture": "bastion",
+      "ordinal": 9,
+      "displayName": "Retribution",
+      "role": "reflect",
+      "reading": "Hitting you costs them.",
+      "icon": "zap"
+    },
+    {
+      "id": "Precision",
+      "posture": "bastion",
+      "ordinal": 10,
+      "displayName": "Precision",
+      "role": "breaks dodge \u2014 accuracy",
+      "reading": "They cannot dodge.",
+      "icon": "crosshair"
+    },
+    {
+      "id": "Ferocity",
+      "posture": "bastion",
+      "ordinal": 11,
+      "displayName": "Ferocity",
+      "role": "breaks crit-denial \u2014 crit.rate/damage",
+      "reading": "Sometimes it is much worse.",
+      "icon": "flame"
+    }
+  ]
+}

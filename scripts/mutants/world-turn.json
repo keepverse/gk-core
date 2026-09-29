@@ -1,0 +1,21 @@
+[
+  { "file": "src/FusionRpg.Data/Sqlite/RpgStore.WorldTurns.cs",
+    "name": "a commit does not have to name the turn it ends",
+    "find": "if (expectedTurn != turn)",
+    "with": "if (expectedTurn != turn && false)" },
+
+  { "file": "src/FusionRpg.Data/Sqlite/RpgStore.WorldTurns.cs",
+    "name": "the AI fills for factions that already committed",
+    "find": "if (committed.Contains(faction.FactionId)) continue;",
+    "with": "" },
+
+  { "file": "src/FusionRpg.Data/Sqlite/RpgStore.WorldTurns.cs",
+    "name": "the human is filled for as well",
+    "find": "if (faction.PolicyId is not { } policyId) continue;",
+    "with": "var policyId = faction.PolicyId ?? \"stand-fast\";" },
+
+  { "file": "src/FusionRpg.Data/Sqlite/RpgStore.WorldTurns.cs",
+    "name": "a reason longer than the column is stored whole",
+    "find": "reason.Length <= MaxCommandReasonLength ? reason : reason[..MaxCommandReasonLength]",
+    "with": "reason" }
+]

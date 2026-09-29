@@ -1,0 +1,14 @@
+{
+  "name": "FORCE-ns",
+  "description": "FORCE posture \u2014 points are shares; Theta sets the absolute budget. | Shield-free copy of the simulated-search allocation. The closed form is single-phase, so a depleting pool is the one thing that makes rounds non-identical; keeping a shield-free twin is what separates \"the math is wrong\" from \"the math omits a phase\".",
+  "element": "fire",
+  "points": {
+    "Might": 40.28109329885851,
+    "Vigor": 15,
+    "Onslaught": 15,
+    "Retribution": 29.71906955469596
+  },
+  "hpPerLadder": 15,
+  "damagePerLadder": 1.5,
+  "shieldPerLadder": 2
+}

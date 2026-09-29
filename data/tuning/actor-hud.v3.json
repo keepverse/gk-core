@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "version": 3,
+  "_meta": {
+    "owner": "docs/architecture/actor-hud/spec-actor-hud-core.md",
+    "note": "Band B per-unit HUD \u2014 screen-space visual silhouette bottom-center plus pixel gap. The actor sprite union chooses the anchor; rows grow downward only. Legacy world fields stay only for backward parsing and are not consumed by the screen presenter.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py actor-hud <dotted.key>=<value> [...] writes actor-hud.v{n+1}.json; the old version stays on disk for revert.",
+    "rebalanceLabel": "screen silhouette bottom anchor"
+  },
+  "statusStripMax": 3,
+  "hpSliverEnabled": false,
+  "badgeMax": 99,
+  "anchorKind": "body",
+  "worldYOffset": -0.35,
+  "barWorldWidth": 0.95,
+  "barWorldHeight": 0.12,
+  "rowOffsetIdentity": 0.3,
+  "rowOffsetResources": 0.0,
+  "rowOffsetStatuses": 0.16,
+  "maxStackPips": 3,
+  "eliteTierThreshold": null,
+  "magnitudeMidThreshold": 10.0,
+  "magnitudeHighThreshold": 30.0,
+  "screenGapPixels": 8,
+  "screenWidthFactor": 0.8,
+  "screenMinWidthPixels": 32,
+  "screenMaxWidthPixels": 96,
+  "screenRowGapPixels": 3,
+  "screenResourceHeightPixels": 7
+}

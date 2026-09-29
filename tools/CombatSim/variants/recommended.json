@@ -1,0 +1,20 @@
+{
+  "name": "recommended",
+  "description": "Shipped v1 vs the full research-backed configuration. Each change is a shape fix, not a balance change: defenseDivisorK is calibrated so mean damage is unchanged.",
+  "scenario": "duel",
+  "variants": [
+    { "name": "shipped-v1", "note": "everything as it ships today", "set": [] },
+    {
+      "name": "recommended",
+      "note": "reciprocal amp + divisive defense k=0.45 + parry neutral 500 + post-shield reflect",
+      "set": [
+        "combat.ampShape=reciprocal",
+        "combat.defenseShape=divisive",
+        "combat.defenseDivisorK=0.45",
+        "combat.parryNeutralShareKPm=500",
+        "combat.reflectReadsPostShield=true",
+        "combat.reflectShareScale=100"
+      ]
+    }
+  ]
+}

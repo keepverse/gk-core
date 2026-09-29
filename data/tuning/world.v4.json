@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "version": 4,
+  "_meta": {
+    "owner": "docs/architecture/world-map-program.md",
+    "note": "Extracted byte-identical from LaneTypeCatalog.cs, WorldSizeCatalog.cs, StrengthBandCatalog.cs, PlaceholderBattleResolver.cs, TurnCalendar.cs (tunables-ssot.md M.2, 2026-08-23). Row ids/names/structural flags stay in the C# catalogs (schema, not balance); only their numeric fields moved here.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py world <dotted.key>=<value> [...] writes world.v{n+1}.json; the old version stays on disk for revert.",
+    "v2Note": "Adds movement.dowseBudgetMilli (world-stage W30). A dowser sees four lanes out (Prospecting.DowserSightLanes) against a scout's two, so it costs more of the march than Scout's own 500 (half a turn) -- 250 (a quarter) is a starting value, not a measured one: it is the number a balance pass moves first.",
+    "v3Note": "Adds growth and seasons (world-map W42, spec-sector-development.md). Schema-only: every growth pulse/multiplier ships at its identity value (seatPulsePerWeek 0, both multipliers 1000-per-mille) and every season multiplier ships at 1000-per-mille, so nothing downstream moves a hash -- W43-W49 wire the mechanism against these identity numbers, and W58 is the single later publish that turns them on (TurnEngine.RulesetVersion 5 -> 6, ask-first per the spec's own boundaries). growth.legionTarget is the one exception: it is the real, already-decided calibration target (world-stage-ideal.md SS8e.3), read only by the acceptance harness (W59), never by the engine -- a legion count the engine enforced would be a hard progression ceiling (AGENTS.md). raiseCostPoints and seasons.count/monthsPerSeason are provisional placeholders in the LoamPolicy sense (LoamPolicy.cs:5-9): they give the harness something to run against; picking them well is the harness's job, not this task's.",
+    "v4Note": "Adds growth.raiseMemberHp (world-map W51, spec-sector-development.md SS1). A raised legion is one Fighter member at level 1; its species comes from the sector's climate (CreatureSpeciesCatalog.ElementPrimary, filtered zombie-side, picked deterministically by SpeciesId), never a new selection mechanism. 110 matches the shipped templates' own per-member Hp (WorldTemplateCatalog.cs) -- a provisional placeholder in the same LoamPolicy sense as raiseCostPoints, not a harness-tuned number. This is a schema-only addition: RecruitStock stays 0 in every shipped scenario until W58 turns growth on, so no `raise` order can ever afford to resolve today and this value moves no golden."
+  },
+  "laneCostMultiplierMilli": {
+    "rift": 1000,
+    "corridor": 700,
+    "ley": 900,
+    "deep": 1600,
+    "one-way": 800,
+    "gated": 1000
+  },
+  "worldSizeNodes": {
+    "small":  { "min": 6,   "max": 10 },
+    "medium": { "min": 14,  "max": 18 },
+    "large":  { "min": 28,  "max": 36 },
+    "huge":   { "min": 56,  "max": 72 },
+    "giant":  { "min": 112, "max": 144 }
+  },
+  "strengthBands": [
+    { "floor": 0,     "ceiling": 0,     "midpoint": 0 },
+    { "floor": 1,     "ceiling": 499,   "midpoint": 250 },
+    { "floor": 500,   "ceiling": 1499,  "midpoint": 1000 },
+    { "floor": 1500,  "ceiling": 3999,  "midpoint": 2750 },
+    { "floor": 4000,  "ceiling": 9999,  "midpoint": 7000 },
+    { "floor": 10000, "ceiling": 20000, "midpoint": 20000 }
+  ],
+  "calendar": {
+    "daysPerWeek": 7,
+    "weeksPerMonth": 4,
+    "specialWeekChanceMilli": 250,
+    "specialMonthChanceMilli": 400,
+    "plagueChanceMilli": 100
+  },
+  "movement": {
+    "dowseBudgetMilli": 250
+  },
+  "growth": {
+    "seatPulsePerWeek": 0,
+    "lairMultiplierMilli": 1000,
+    "specialWeekMultiplierMilli": 1000,
+    "raiseCostPoints": 100,
+    "raiseMemberHp": 110,
+    "legionTarget": { "min": 6, "max": 10, "byTurn": 40 }
+  },
+  "seasons": {
+    "count": 4,
+    "monthsPerSeason": 3,
+    "yieldMilli": [1000, 1000, 1000, 1000],
+    "upkeepMilli": [1000, 1000, 1000, 1000],
+    "movementMilli": [1000, 1000, 1000, 1000]
+  }
+}

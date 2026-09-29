@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "_source": "docs/architecture/item/ssot-charms.md §3.3 (the limit mechanism), §4.1 (the binding shape) and §5 (the gate); docs/architecture/item/spec-threshold-grants.md, 'Charm carry runtime — the unowned capability'. Item module 22 `charm-carry`, split out of module 12 by D40 (2026-09-04). Module 12 deliberately did NOT create this file: 'data/tuning/charm-attunement.v1.json is ITS file' (tasks/item-todo.md, P3.2).",
+
+  "apCostDomain": [1, 2, 3, 5],
+  "_apCostDomainNote": "ssot-charms.md §3.3. A charm's size is authored on its BASE TYPE and is never rolled -- 'if it were, the whole game becomes rerolling for a 1-AP copy of a 5-AP charm, and every other decision in this lane collapses'. The gap between 3 and 5 is the point: at capacity 8 a signet plus 3 AP of small charms and four mid charms are visibly different builds, where a smooth 1/2/3/4 ladder makes every combination roughly equivalent -- a budget that does not budget. Measured against the shipped 60-charm corpus 2026-09-05: 1x21, 2x21, 3x11, 5x7, so every value in this domain is populated and no value outside it is used.",
+
+  "capacityLadder": [6, 8, 10, 12, 14, 16, 18, 20],
+  "_capacityLadderNote": "SOFT, AND THE LAST RUNG IS NOT A CEILING. ssot-charms.md §3.3 states '6 AP at start, 20 AP at cap'; AGENTS.md forbids a hard progression ceiling, so 20 is the last AUTHORED rung of a content ladder and nothing in code refuses a capacity above it. Appending rungs here is a file save and the gate takes whatever capacity it is handed -- CharmPouchGate.Explain never clamps, and CharmAttunementTuning exposes no maximum. Strictly ascending, and the first rung must be at least the largest apCostDomain value: a starting capacity below the largest charm would make signets dead content on day one (a signet is 5 of 6, ssot-charms.md §6.1 -- 62% of a starting player's whole capacity, which is what makes it a build rather than a stat stick).",
+
+  "axisCapPerSnapshot": 3,
+  "_axisCapPerSnapshotNote": "ssot-charms.md §3.3, and it is a REJECTION rather than a soft cap on purpose: 'a fourth same-axis charm contributing nothing is a silent no-op, which is exactly what this program exists to remove'. It refuses with CharmAxisOverflow, which the UI prints. This is a LOADOUT-COMPOSITION limit, not a limit on any magnitude -- nothing here caps how strong a charm may be, only how many of one axis fit one snapshot -- so it is a balance number a pass would move, which is why it lives here. It also bounds the packing search space against §7.2's other tetris: with 8 AP, a cap of 3 per axis and a copy cap of 2, the legal loadouts number in the dozens, not the thousands.",
+
+  "copyCapPerContainer": 2,
+  "_copyCapPerContainerNote": "ssot-charms.md §3.3. At most two instances of one container_id in one snapshot. Refuses with the EXISTING DuplicateKey code, not a new one.",
+
+  "uniqueCarryCopyCap": 1,
+  "_uniqueCarryCopyCapNote": "ssot-charms.md §3.3 / §3.4. A charm_def with unique_carry caps at 1, not 2 -- one gate, two limits, and the tighter one is per container_id. Must not exceed copyCapPerContainer, or 'unique' would be looser than ordinary, which the parser refuses by name. All 7 shipped signets carry uniqueCarry and no other class does (measured 2026-09-05).",
+
+  "bindingSource": "charm",
+  "_bindingSourceNote": "effect_binding.source. ssot-charms.md §3.8 / ssot-consumables.md §9 item 10: 'one snapshot mechanism, two sources -- whoever builds the run-start snapshot first owns it and the other adopts it'. Module 18 built it first (draughtBindingPriority in consumables.v1.json), so this module ADOPTS that lifecycle: snapshot at run start, withdraw at run end BY SOURCE. `source` is the difference on the withdrawal key; the owner kind below is the OTHER difference, and it is a ruling, not a drift.",
+
+  "bindingOwnerKind": "unique-actor",
+  "_bindingOwnerKindNote": "D33(a), 2026-09-04: 'Charms bind at ACTOR scope, not player:' (item-ideal.md D33). ssot-charms.md §3.1's banner reverses option C to option B -- one binding per deployed actor at unique-actor:{specimenId}. §3.8's prose still says player:{id} because it predates the ruling, and so does ssot-consumables.md §9 item 10's mirror of it; the RULING WINS. The reason is a correctness bug, not taste: StatApplyScope.Matches returns true unconditionally for a player: owner ('stub -> match-wide apply') and match matches BOTH sides before it looks at side, so a player:-scoped +atk charm buffs the zombies. CharmResonance.RefuseUnsupportedScope (module 12) already refuses player: and match: by reason code; the parser refuses either value here for the same reason, so the wrong scope cannot arrive through a balance edit.",
+
+  "bindingPriority": -100,
+  "_bindingPriorityNote": "ssot-charms.md §4.1, and MIRRORED value-for-value by data/tuning/consumables.v1.json's draughtBindingPriority -- a test reads both real files and asserts they agree, so the 'one snapshot mechanism' claim is checkable rather than a sentence. The actor effect list sorts priority DESC, container_id ASC, seq ASC (definitions §5), so -100 makes charm atoms resolve AFTER equipment (priority 0). For Flat-only atoms the arithmetic is order-independent; the ordering exists so any listing of an actor's sources reads its own gear first and the account layer second. Must stay below the item binding priority of 0, or a charm would pre-empt an item proc for no design reason -- the parser refuses a non-negative value by name."
+}

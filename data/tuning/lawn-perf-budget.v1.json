@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/lawn-playable/spec-rider-default-on.md, tasks/lawn-todo.md LW1.1",
+    "note": "The ceiling a lawn perf feature is measured against, moved out of a plan document and out of commit messages. LAWN-COMBAT-WIRE's L-N1 ruling shipped `LawnBasicAttackFeature` default-off after the RPG capture pipeline took 28.06% of wall at 300 zombies against a proposed <=6%, and the flip back on (owner decision 2026-09-16) was conditioned on that number. A number that decides whether a feature ships answers this repo's own balance-surface test -- would a pass ever want to change it? -- so it lives here, and the gates that read it read this file rather than a constant. `ceiling` is an object rather than three flat keys so a later lawn perf section (for example `lawn.ai.decide`, whose share the combat-ai program owes) is added beside these three keys, never as a second file.",
+    "ceiling": "pipelineSharePercent is the share of wall clock the measured perf section may take at the reference scenario (referenceZombies = 300, the scenario id family `_baseline-lcw-300z-*`). minFpsRatioOfOff is the on-arm's fps as a fraction of the same scenario's off-arm fps: both gates are required (owner ruling 2026-09-16), because share alone can pass while the board is unplayable for an unrelated reason and fps alone cannot attribute the cost to the feature. `null` means DECLARED BUT UNMEASURED, not 'no gate' -- the key must be present (the loader refuses a document that omits it) and a gate reading this file must treat null as 'cannot pass yet', never as a satisfied gate. It is null today because no clean A/B at the reference scenario has been taken on the current build; LW4.1's live proof measures it, and LW4.2 is the task that may act on a pass.",
+    "rebalance": "A perf pass edits the numbers in the LATEST version through tools/tuning/publish.py, never in place: `python tools/tuning/publish.py lawn-perf-budget ceiling.pipelineSharePercent=<n>`. A new section share (for example `ceiling.sections.lawn.ai.decide`) is added with `--add-key`, never by hand."
+  },
+  "ceiling": {
+    "pipelineSharePercent": 6,
+    "referenceZombies": 300,
+    "minFpsRatioOfOff": null
+  }
+}

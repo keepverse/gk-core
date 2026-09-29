@@ -1,0 +1,106 @@
+{
+  "version": 2,
+  "quotas": {
+    "aptitude": {
+      "weightScheme": "uniform",
+      "_note": "12 aptitudes (D9/D27's roster), read from data/seed/aptitudes/roster.json -- member names never listed here (a 13th aptitude changes the grid by construction, spec-tree-language.md \u00a74.3). Added 2026-09-06: named in \u00a74.3's 'no axis lists its own members' clause alongside element/status, but missing from spec-tree-plan.md's own quota-axis table -- a spec gap, not a deliberate sixth-axis-only design."
+    },
+    "nodeClass": {
+      "weightsMilli": [
+        500,
+        500
+      ],
+      "_order": [
+        "mechanism",
+        "magnitude"
+      ]
+    },
+    "trigger": {
+      "weightScheme": "uniform",
+      "_note": "11 authorable triggers, read from passive-tree/vocabulary.json (A3) -- member names never listed here (a 12th trigger changes the grid by construction)."
+    },
+    "element": {
+      "weightScheme": "uniform",
+      "_note": "omni + the roster elements, read from data/seed/elements/roster.json -- member names never listed here."
+    },
+    "status": {
+      "weightScheme": "uniform",
+      "_note": "the status roster, read from the status mirror (A3, data/seed/statuses/roster.json) -- member names never listed here."
+    },
+    "channelFamily": {
+      "weightScheme": "uniform",
+      "_note": "the derived-stat channel families -- member names never listed here."
+    },
+    "exclusionForm": {
+      "weightsMilli": [
+        450,
+        450,
+        100
+      ],
+      "_order": [
+        "reroute",
+        "precedence",
+        "nullification"
+      ],
+      "_note": "All three reachable (D40) -- nullification 0 is superseded. Ships small and non-zero (100 permille), calibrated on tree-review's pilot (H8)."
+    }
+  },
+  "legitimateSkew": {
+    "rows": []
+  },
+  "exclusion": {
+    "targetShareMilli": 20
+  },
+  "speciesUniqueAffixMin": 8,
+  "sampling": {
+    "tier2SampleSize": 60,
+    "tier3AdditionalSampleSize": 30,
+    "acceptanceLadder": [
+      {
+        "rejectsIn60": 0,
+        "upperBoundPermille95": 49,
+        "verdict": "accept"
+      },
+      {
+        "rejectsIn60": 1,
+        "upperBoundPermille95": 77,
+        "verdict": "accept-with-finding"
+      },
+      {
+        "rejectsIn60": 2,
+        "upperBoundPermille95": 101,
+        "verdict": "hold-draw-30-more"
+      },
+      {
+        "rejectsIn60": 3,
+        "upperBoundPermille95": 124,
+        "verdict": "batch-reject"
+      }
+    ]
+  },
+  "gates": {
+    "cellOccupancy": {
+      "medianMax": 2
+    },
+    "quotaDrift": {
+      "toleranceUnits": 1
+    },
+    "mechanismRamp": {
+      "deepestTierShareMilli": 1000
+    },
+    "exclusionRate": {
+      "maxSharePermille": 30
+    },
+    "nearDuplicateRate": {
+      "maxSharePermille": 5
+    },
+    "unresolvedCount": {
+      "maxSharePermille": 50
+    }
+  },
+  "_note": "Starting values, none measured against a real generated corpus yet (spec-tree-plan.md \u00a78, spec-tree-review.md \u00a76.3 -- 'these are starting values and must say so in the file that holds them', matching creature-roster-targets.v1.json's own posture). nodeClass 500/500 is a straw-man 50/50 split, not derived. exclusionForm's 450/450/100 keeps nullification 'small and non-zero' per spec-tree-language.md \u00a75.2 without a stated exact figure. The four uniform-scheme axes intentionally carry no per-member array -- member counts are read from their own registries at quota-computation time (tree-plan/tree-language, wave 1), so a roster addition changes the grid by construction with no edit here. sampling.acceptanceLadder's upperBoundPermille95 values are spec-tree-review.md \u00a76.3's exact Clopper-Pearson bounds (4.87%/7.66%/10.12%/12.42%) rounded to the nearest permille. gates.unresolvedCount.maxSharePermille=50 follows creature-roster-targets.v1.json's own unresolvedCount precedent (spec-tree-language.md does not state a number, only that this is the one gate promoted to gates=True, \u00a77.1) -- calibrate on H8's 20-tree pilot.",
+  "rebalance": "Never hand-edit this file. python tools/tuning/publish.py passive-tree-targets <dotted.key>=<value> [...] writes passive-tree-targets.v{n+1}.json; the old version stays on disk for revert.",
+  "_meta": {
+    "rebalanceLabel": "J2: correct acceptanceLadder rounding to match the file's own stated 'nearest permille' intent (48->49, 76->77; k=2/3 already correct)"
+  }
+}

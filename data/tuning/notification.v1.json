@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/notification-ssot/spec-notify-vocabulary.md",
+    "note": "Working values, not a validated balance decision (notify-vocabulary spec Design 2). retainPerCategory is R-N2's retention tail in rows per (save, category); repeatWindowWorldTurns is the non-Critical dedup suppression window, counted on the world clock only.",
+    "rebalance": "Never hand-edit this file. A balance pass republishes notification.v{n+1}.json through tools/tuning/publish.py; every prior version stays on disk for revert."
+  },
+  "retainPerCategory": 100,
+  "repeatWindowWorldTurns": 3
+}

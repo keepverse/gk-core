@@ -1,0 +1,284 @@
+{
+  "id": "first-session-forward",
+  "title": "First session, forward",
+  "program": "rpg-simulator",
+  "task": "RS1",
+  "description": "One forward pass over the four families an RPG session touches first — economy, roster, expeditions, progression — using only routes that already have E2E coverage, so a failure is the SHAPE under test and not an unrelated missing route. Every step names the HTTP route it will call; the runner refuses a step whose declared route is not the one it calls.",
+  "seed": 20260922,
+  "clock": {
+    "mode": "ambient",
+    "note": "No server clock seam exists yet (RS3 is gated on world-continuity's hibernation-clock), so the server's clock is whatever the host machine's is. Every verdict says so, and every `*Utc`/`*At` field is excluded from the digest by name for exactly this reason — a timestamp reading here measures the machine, not the feature."
+  },
+  "rules": [
+    "The runner may sequence and read; it may not compute. No domain math lives in the runner, and no scenario step computes a value.",
+    "Every verdict is a read-back through the same GET route the web FE calls (docs/contributing/live-probe-standard.md section 3). A call response body is captured for SEQUENCING only — an id a later step addresses — never as evidence.",
+    "Every subject is created by a real route a real player could have used; a scenario may skip tedium, never a service, a validation or a write.",
+    "The squad the expedition fights with must be asserted to be the roster this run built (the fabrication line: WebMatchService.BuildSquad falls back to a Synthetic squad on an empty roster, src/FusionRpg.Server/WebMatchService.cs:570-574)."
+  ],
+  "notes": [
+    "GET /api/souls/{playerId} and GET /api/souls/{playerId}/ledger are the only routes under /api/souls — there is NO player-facing award route (src/FusionRpg.Server/SoulEndpoints.cs:11). The award step therefore uses the sanctioned SIM seeding surface POST /api/test/seed-souls-demo, which performs the real RpgStore.AwardSouls write with reason 'seed'. Earning souls through a real match before a roster exists is not an option: an empty roster fields the Synthetic squad, which is exactly the fabrication this scenario must not inherit. Filed as RS-F1 in tasks/rpg-simulator-todo.md.",
+    "The expedition is made due by MOVING THE CLOCK, not by rewriting a row (RS3 increment 5b, owner ruling on RS-F16 candidate 2). The step below declares an absolute offset of 1860 s from the machine clock; the host applies it through the one seam (FusionRpg.Core.Time.ServerClock) — in-process in place, or by rebooting the real process on the same data dir — and the expedition dispatched at t with due = t + 30m is then due at t + 31m. The SIM-only timer rewind (POST /api/test/expedition-due -> RpgStore.ForceExpeditionDue's UPDATE of due_utc) is RETIRED by the same change: no store bypass replaces it, and the route no longer exists. A host that cannot be told the clock (the CLI's --base-url lane, or any host with no clock control) REFUSES this run by name rather than silently ignoring the declaration.",
+    "The digest names only readings this scenario believes are run-stable (a terminal state, a tier, a row id, the run game). The values that depend on the two server-minted RNG seeds — the summon roll (src/FusionRpg.Server/CreatureEndpoints.cs:96) and the expedition seed (src/FusionRpg.Server/ExpeditionEndpoints.cs:36) — are ASSERTED by expect.* rules (closed vocabularies, attribution, the fabrication line) and deliberately not digested, because no scenario can own those seeds yet. The double-run falsifier is what measures the remainder; see RS-F4 in tasks/rpg-simulator-todo.md.",
+    "The soul ledger's reasons are asserted as 'every row names one' (allNonEmpty), never as a membership list. Two attempts at a list failed for the same reason: the reasons are the server's own closed vocabulary (~24 members, SoulEarnPolicy.Reasons), so a corpus enumerating the ones it expects is asserting a POPULATION — and the battle's kill earn appeared under load, which the list did not carry. The expedition row's presence is not asserted either: RpgStore.Expeditions.cs:311 writes it only when EventSouls > 0, and that roll is server-minted (RS-F4). What is asserted: this player's rows, non-zero deltas, the seed award present, and the fabrication line on the squad.",
+    "RS-F27 policy (measured 2026-09-25): an empty read.progression.ledger is a legal outcome, so this scenario does not add an unconditional notEmpty guard. RpgXpAwardMap.FromActivity returns the player award for a normalized defeat and an empty award list for victory or stalemate; web-mode progression also skips the PvZ plant/zombie awards. A real defeat therefore has a conditional non-vacuity floor, checked from the normal GET read-backs by the focused RS-F27 in-process test; a victory or stalemate may legitimately read zero rows. The 20-run measurement and its exact outcome/ledger observations are recorded in tasks/reports/resume-13-rpg-simulator-rsf27-20260925.md. The current file has no outcome override, and the expedition seed is still minted by the server, so the sample did not cover the full result vocabulary; that limitation is reported rather than filled with fabricated rows."
+  ],
+  "steps": [
+    {
+      "op": "api.player.create",
+      "route": "POST /api/players",
+      "args": { "name": "ScenarioFirstSession" },
+      "capture": [{ "name": "playerId", "path": "$.id" }],
+      "why": "The subject of every later read-back. A player row IS a save, so its empires are seeded in the same transaction."
+    },
+    {
+      "op": "test.seed.souls",
+      "route": "POST /api/test/seed-souls-demo",
+      "args": { "amount": 2000 },
+      "why": "Funds the summon through the sanctioned SIM seeding surface — see the first note."
+    },
+    {
+      "op": "read.souls.balance",
+      "route": "GET /api/souls/{playerId}",
+      "why": "The balance route the web FE calls."
+    },
+    {
+      "op": "expect.souls.funded",
+      "reading": "read.souls.balance",
+      "path": "$.balance",
+      "check": "atLeast",
+      "value": 2000,
+      "why": "The award must be visible on the same GET the web FE calls."
+    },
+    {
+      "op": "expect.souls.attributed",
+      "reading": "read.souls.balance",
+      "path": "$.playerId",
+      "check": "equals",
+      "other": "{playerId}",
+      "why": "The balance read back is the balance of the player this run created, not the server's current-player fallback."
+    },
+    {
+      "op": "api.creature.summon",
+      "route": "POST /api/creatures/summon",
+      "args": { "count": 10 },
+      "why": "Builds the roster the expedition must later fight with — the real summon route, which spends souls through the one economy."
+    },
+    {
+      "op": "read.roster",
+      "route": "GET /api/creatures/{playerId}",
+      "capture": [
+        { "name": "rosterIds", "path": "$.items[*].actor.instanceId" },
+        { "name": "squadIds", "path": "$.items[0:2].actor.instanceId" }
+      ],
+      "why": "The roster read-back. Its instance ids become the squad, so 'the squad came from the roster' is checkable against a route a player uses."
+    },
+    {
+      "op": "expect.roster.held",
+      "reading": "read.roster",
+      "path": "$.items[9].actor.instanceId",
+      "check": "notEmpty",
+      "why": "The summon asked for TEN (`count: 10`, the only other legal value being 1 -- src/FusionRpg.Data/Sqlite/RpgStore.Summons.cs:34) and the roller produces exactly `count` results, one specimen minted each (src/FusionRpg.Core/Creatures/SummonRoller.cs:67-77, then the mint loop at src/FusionRpg.Data/Sqlite/RpgStore.Summons.cs:102-117). So the roster must hold at least ten, and this proves it: a pointer that selects nothing returns null and `notEmpty` fails, so an index at 9 is an existence proof for ten elements. `notEmpty` on `$.items` -- what this step used to assert -- would have passed if the route delivered ONE, and an empty roster is still the one input that would make BuildSquad fabricate a squad instead of reading this roster."
+    },
+    {
+      "op": "api.expedition.dispatch",
+      "route": "POST /api/expeditions/dispatch",
+      "args": { "tierId": "scout-30m" },
+      "capture": [{ "name": "expeditionId", "path": "$.expedition.id" }],
+      "why": "Seals the squad + seed. The store validates every id against the roster (squad.unknown-specimen) and the contract gate, so a successful dispatch is itself roster evidence."
+    },
+    {
+      "op": "clock.set",
+      "offsetSeconds": 1860,
+      "why": "The clock is an INPUT (RS3 increment 5b): scout-30m's due time is dispatch + 30 minutes, so declaring the host 31 minutes ahead makes the expedition due without touching due_utc. See the second note."
+    },
+    {
+      "op": "api.expedition.collect",
+      "route": "POST /api/expeditions/{id}/collect",
+      "capture": [{ "name": "runIds", "path": "$.battles[*].runId" }],
+      "why": "Resolves the real battles through WebMatchService.RunPlannedMatchAsync and the real BattleEngine, then applies rewards in one state-gated transaction. The captured run ids are what the read-backs below must find."
+    },
+    {
+      "op": "read.expeditions",
+      "route": "GET /api/expeditions/{playerId}",
+      "why": "The expedition row the web FE reads: terminal state, tier, and the squad that actually went out."
+    },
+    {
+      "op": "expect.expedition.collected",
+      "reading": "read.expeditions",
+      "path": "$.items[0].state",
+      "check": "equals",
+      "value": "Collected",
+      "why": "Collect is exactly-once and terminal."
+    },
+    {
+      "op": "expect.expedition.tier",
+      "reading": "read.expeditions",
+      "path": "$.items[0].tierId",
+      "check": "equals",
+      "value": "scout-30m",
+      "why": "The row the read-back found is the expedition this run dispatched, not another one."
+    },
+    {
+      "op": "expect.expedition.squad.held",
+      "reading": "read.expeditions",
+      "path": "$.items[0].squadInstanceIds",
+      "check": "notEmpty",
+      "why": "A persisted empty squad would make the fabrication assertion below pass vacuously."
+    },
+    {
+      "op": "expect.expedition.squad",
+      "reading": "read.expeditions",
+      "path": "$.items[0].squadInstanceIds",
+      "check": "equalSet",
+      "other": "{squadIds}",
+      "why": "THE FABRICATION LINE. The persisted squad must be exactly the roster ids this run read back and handed to dispatch — never a squad the server invented. Dispatch itself refuses an id the roster does not own (squad.unknown-specimen), and this compares the read-back row against the read-back roster rather than against what the runner sent."
+    },
+    {
+      "op": "expect.expedition.squad.from.roster",
+      "reading": "read.expeditions",
+      "path": "$.items[0].squadInstanceIds",
+      "check": "allIn",
+      "other": "{rosterIds}",
+      "why": "Every id the expedition fought with is still an id in the roster this run built."
+    },
+    {
+      "op": "read.runs",
+      "route": "GET /api/runs?playerId={playerId}",
+      "why": "The battles collect reported must be real webrpg runs, read back through the run list."
+    },
+    {
+      "op": "expect.runs.held",
+      "reading": "read.runs",
+      "path": "$.items",
+      "check": "notEmpty",
+      "why": "An expedition that resolved no battle is not the shape this scenario claims to exercise."
+    },
+    {
+      "op": "expect.runs.key",
+      "reading": "read.runs",
+      "path": "$.items[*].matchKey",
+      "check": "allStartWith",
+      "value": "exp-{expeditionId}-",
+      "why": "The runs in the list are THIS expedition's (correlation `exp:{id}:{n}`, src/FusionRpg.Server/ExpeditionEndpoints.cs)."
+    },
+    {
+      "op": "expect.runs.game",
+      "reading": "read.runs",
+      "path": "$.items[*].game",
+      "check": "memberOf",
+      "value": ["webrpg-1"],
+      "why": "The runs are webrpg runs — the one web-match pipeline, not a legacy engine path."
+    },
+    {
+      "op": "expect.runs.result",
+      "reading": "read.runs",
+      "path": "$.items[*].result",
+      "check": "memberOf",
+      "value": ["victory", "defeat", "stalemate"],
+      "why": "The emitter's closed outcome vocabulary (BattleReportEmitter's `match.result` mapping). The OUTCOME itself is RNG-dependent, so the rule is pinned, never a value."
+    },
+    {
+      "op": "expect.runs.ids",
+      "reading": "read.runs",
+      "path": "$.items[*].id",
+      "check": "equalSet",
+      "other": "{runIds}",
+      "why": "The run list holds exactly the runs collect reported — the write and the read agree."
+    },
+    {
+      "op": "read.progression.summary",
+      "route": "GET /api/rpg/progression/{playerId}/summary",
+      "why": "The progression summary the web FE reads."
+    },
+    {
+      "op": "expect.progression.summary.player",
+      "reading": "read.progression.summary",
+      "path": "$.playerId",
+      "check": "equals",
+      "other": "read.souls.balance#$.playerId",
+      "why": "Two read-backs, one subject — read-back compared to read-back, never to a constant the scenario wrote."
+    },
+    {
+      "op": "read.progression.ledger",
+      "route": "GET /api/rpg/progression/{playerId}/ledger",
+      "why": "The XP ledger the battle's spawn facts must have reached."
+    },
+    {
+      "op": "expect.progression.kind",
+      "reading": "read.progression.ledger",
+      "path": "$.items[*].kind",
+      "check": "memberOf",
+      "value": ["player", "species"],
+      "why": "Web-mode rule, read back: a webrpg run never levels a PvZ almanac TYPE row (RpgStore.Progression.cs:80 — `!pvzGame` skips every award that is not Player or Species). The ROW SET is outcome-dependent by design, so the rule and the attribution are pinned, never a count."
+    },
+    {
+      "op": "expect.progression.player",
+      "reading": "read.progression.ledger",
+      "path": "$.items[*].playerId",
+      "check": "allEqual",
+      "other": "read.souls.balance#$.playerId",
+      "why": "Every credited row belongs to this run's player."
+    },
+    {
+      "op": "expect.progression.run",
+      "reading": "read.progression.ledger",
+      "path": "$.items[*].runId",
+      "check": "allIn",
+      "other": "{runIds}",
+      "why": "Every credited row is attributed to a run this expedition actually produced."
+    },
+    {
+      "op": "expect.progression.reason",
+      "reading": "read.progression.ledger",
+      "path": "$.items[*].reason",
+      "check": "allNonEmpty",
+      "why": "A credit with no stated reason is an unattributable change to a save."
+    },
+    {
+      "op": "read.souls.ledger",
+      "route": "GET /api/souls/{playerId}/ledger",
+      "why": "The one soul ledger the award, the summon spend and the expedition reward all land in."
+    },
+    {
+      "op": "expect.souls.ledger.player",
+      "reading": "read.souls.ledger",
+      "path": "$.playerId",
+      "check": "equals",
+      "other": "read.souls.balance#$.playerId",
+      "why": "The ledger read back is this player's."
+    },
+    {
+      "op": "expect.souls.ledger.seed",
+      "reading": "read.souls.ledger",
+      "path": "$.items[*].reason",
+      "check": "contains",
+      "value": "seed",
+      "why": "The award is visible in the ledger, not only in the balance."
+    },
+    {
+      "op": "expect.souls.ledger.reasons",
+      "reading": "read.souls.ledger",
+      "path": "$.items[*].reason",
+      "check": "allNonEmpty",
+      "why": "EVERY ROW NAMES A REASON — the rule this corpus can hold still, and the same one it already applies to the XP ledger (`expect.progression.reason`). An enumeration of the reason set was tried first and is the wrong shape: the reasons are the server's own closed vocabulary (`SoulEarnPolicy.Reasons`, ~24 members with the PvZ-activity, contract, respec and run-completion families), so listing the ones a run 'should' produce is asserting a POPULATION (validation-ssot.md), and it was measured failing under load when the battle's own kill earn appeared — `$.items[*].reason is [\"expedition\",\"defeat\",\"kill\",\"discovery\"×10,\"summon\",\"seed\"]`, measured 2026-09-23 (full E2E project, 4 m in, `kill` from the activity-fact path `RpgStore.Souls.cs:139`). What IS asserted about these rows: they belong to this player (`expect.souls.ledger.player`), every delta is non-zero (`expect.souls.ledger.deltas`), and the seed award is present (`expect.souls.ledger.seed`). The expedition row's PRESENCE is deliberately not asserted either: the event-souls roll is server-minted (RS-F4) and RpgStore.Expeditions.cs:311 writes the row only when `EventSouls > 0`."
+    },
+    {
+      "op": "expect.souls.ledger.deltas",
+      "reading": "read.souls.ledger",
+      "path": "$.items[*].delta",
+      "check": "nonZero",
+      "why": "A zero-delta ledger row is a write that changed nothing."
+    },
+    {
+      "op": "digest",
+      "include": [
+        "read.expeditions#$.items[0].state",
+        "read.expeditions#$.items[0].tierId",
+        "read.souls.balance#$.playerId",
+        "read.progression.summary#$.playerId",
+        "read.runs#$.items[*].game"
+      ],
+      "why": "The readings this scenario believes are run-stable: a terminal state, a tier, a row id, and the run engine. Everything RNG-derived is asserted by the expect.* rules above and deliberately left out — see the third note."
+    }
+  ]
+}

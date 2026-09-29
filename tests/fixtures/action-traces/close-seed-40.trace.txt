@@ -1,0 +1,260 @@
+== digest ==
+phase 1 post-flush
+phase 1 initiative
+draw initiative 991
+draw initiative 934
+draw initiative 753
+draw initiative 843
+reaction squad:1 no-lane
+draw crit 706354
+draw crit 661555
+reaction squad:1 no-lane
+draw crit 169495
+draw crit 608676
+reaction wave:0 no-lane
+draw crit 114088
+draw crit 24325
+reaction wave:0 no-lane
+draw crit 820040
+draw crit 82322
+phase 1 shield-upkeep
+state 1 squad:0 hp=215 abs=0
+state 1 squad:1 hp=163 abs=0
+state 1 wave:0 hp=150 abs=0
+state 1 wave:1 hp=215 abs=0
+phase 2 post-flush
+phase 2 initiative
+draw initiative 391
+draw initiative 453
+draw initiative 598
+draw initiative 349
+reaction squad:1 no-lane
+draw crit 511423
+draw crit 947269
+reaction wave:0 no-lane
+draw crit 579067
+draw crit 445852
+reaction wave:0 no-lane
+draw crit 826247
+draw crit 94431
+reaction squad:1 no-lane
+draw crit 409081
+draw crit 575289
+phase 2 shield-upkeep
+state 2 squad:0 hp=215 abs=0
+state 2 squad:1 hp=111 abs=0
+state 2 wave:0 hp=98 abs=0
+state 2 wave:1 hp=215 abs=0
+phase 3 post-flush
+phase 3 initiative
+draw initiative 547
+draw initiative 739
+draw initiative 435
+draw initiative 798
+reaction squad:1 no-lane
+draw crit 198812
+draw crit 734735
+reaction wave:0 no-lane
+draw crit 496925
+draw crit 47687
+reaction wave:0 no-lane
+draw crit 227474
+draw crit 891102
+reaction squad:1 no-lane
+draw crit 527203
+draw crit 433377
+phase 3 shield-upkeep
+state 3 squad:0 hp=215 abs=0
+state 3 squad:1 hp=59 abs=0
+state 3 wave:0 hp=33 abs=0
+state 3 wave:1 hp=215 abs=0
+phase 4 post-flush
+phase 4 initiative
+draw initiative 104
+draw initiative 884
+draw initiative 952
+draw initiative 761
+reaction wave:0 no-lane
+draw crit 166066
+draw crit 235938
+reaction squad:1 no-lane
+draw crit 534915
+draw crit 158010
+reaction wave:0 no-lane
+draw crit 839434
+draw crit 630046
+phase 4 shield-upkeep
+state 4 squad:0 hp=215 abs=0
+state 4 squad:1 hp=33 abs=0
+state 4 wave:0 hp=0 abs=0
+state 4 wave:1 hp=215 abs=0
+phase 5 post-flush
+phase 5 initiative
+draw initiative 56
+draw initiative 468
+draw initiative 829
+reaction wave:1 no-lane
+draw crit 842742
+draw crit 623694
+reaction wave:1 no-lane
+draw crit 274319
+draw crit 861995
+reaction squad:1 no-lane
+draw crit 73546
+draw crit 467364
+phase 5 shield-upkeep
+state 5 squad:0 hp=215 abs=0
+state 5 squad:1 hp=7 abs=0
+state 5 wave:0 hp=0 abs=0
+state 5 wave:1 hp=158 abs=0
+phase 6 post-flush
+phase 6 initiative
+draw initiative 661
+draw initiative 263
+draw initiative 802
+reaction wave:1 no-lane
+draw crit 133831
+draw crit 606135
+reaction wave:1 no-lane
+draw crit 648069
+draw crit 23873
+reaction squad:1 no-lane
+draw crit 362757
+draw crit 436598
+phase 6 shield-upkeep
+state 6 squad:0 hp=215 abs=0
+state 6 squad:1 hp=0 abs=0
+state 6 wave:0 hp=0 abs=0
+state 6 wave:1 hp=106 abs=0
+phase 7 post-flush
+phase 7 initiative
+draw initiative 387
+draw initiative 446
+reaction wave:1 no-lane
+draw crit 25605
+draw crit 581160
+reaction squad:0 no-lane
+draw crit 432299
+draw crit 528594
+phase 7 shield-upkeep
+state 7 squad:0 hp=194 abs=0
+state 7 squad:1 hp=0 abs=0
+state 7 wave:0 hp=0 abs=0
+state 7 wave:1 hp=75 abs=0
+phase 8 post-flush
+phase 8 initiative
+draw initiative 907
+draw initiative 868
+reaction squad:0 no-lane
+draw crit 325481
+draw crit 926277
+reaction wave:1 no-lane
+draw crit 175484
+draw crit 102928
+phase 8 shield-upkeep
+state 8 squad:0 hp=177 abs=0
+state 8 squad:1 hp=0 abs=0
+state 8 wave:0 hp=0 abs=0
+state 8 wave:1 hp=44 abs=0
+phase 9 post-flush
+phase 9 initiative
+draw initiative 809
+draw initiative 533
+reaction squad:0 no-lane
+draw crit 665947
+draw crit 548926
+reaction wave:1 no-lane
+draw crit 918250
+phase 9 shield-upkeep
+state 9 squad:0 hp=160 abs=0
+state 9 squad:1 hp=0 abs=0
+state 9 wave:0 hp=0 abs=0
+state 9 wave:1 hp=44 abs=0
+phase 10 post-flush
+phase 10 initiative
+draw initiative 534
+draw initiative 538
+reaction wave:1 no-lane
+draw crit 719864
+draw crit 652000
+reaction squad:0 no-lane
+draw crit 63199
+draw crit 208931
+phase 10 shield-upkeep
+state 10 squad:0 hp=143 abs=0
+state 10 squad:1 hp=0 abs=0
+state 10 wave:0 hp=0 abs=0
+state 10 wave:1 hp=13 abs=0
+phase 11 post-flush
+phase 11 initiative
+draw initiative 88
+draw initiative 159
+reaction wave:1 no-lane
+draw crit 383703
+draw crit 76082
+phase 11 shield-upkeep
+state 11 squad:0 hp=147 abs=0
+state 11 squad:1 hp=0 abs=0
+state 11 wave:0 hp=0 abs=0
+state 11 wave:1 hp=0 abs=0
+== targets ==
+1 wave:0->squad:1
+1 wave:1->squad:1
+1 squad:1->wave:0
+1 squad:0->wave:0
+2 wave:1->squad:1
+2 squad:0->wave:0
+2 squad:1->wave:0
+2 wave:0->squad:1
+3 wave:0->squad:1
+3 squad:0->wave:0
+3 squad:1->wave:0
+3 wave:1->squad:1
+4 squad:0->wave:0
+4 wave:1->squad:1
+4 squad:1->wave:0
+5 squad:0->wave:1
+5 squad:1->wave:1
+5 wave:1->squad:1
+6 squad:1->wave:1
+6 squad:0->wave:1
+6 wave:1->squad:1
+7 squad:0->wave:1
+7 wave:1->squad:0
+8 wave:1->squad:0
+8 squad:0->wave:1
+9 wave:1->squad:0
+9 squad:0->wave:1
+10 squad:0->wave:1
+10 wave:1->squad:0
+11 squad:0->wave:1
+== applies ==
+1 squad:1 -26
+1 squad:1 -26
+1 wave:0 -39
+1 wave:0 -26
+2 squad:1 -26
+2 wave:0 -26
+2 wave:0 -26
+2 squad:1 -26
+3 squad:1 -26
+3 wave:0 -39
+3 wave:0 -26
+3 squad:1 -26
+4 wave:0 -26
+4 squad:1 -26
+4 wave:0 -26
+5 wave:1 -31
+5 wave:1 -26
+5 squad:1 -26
+6 wave:1 -26
+6 wave:1 -47
+6 squad:1 -26
+7 wave:1 -31
+7 squad:0 -21
+8 squad:0 -21
+8 wave:1 -31
+9 squad:0 -21
+10 wave:1 -31
+10 squad:0 -21
+11 wave:1 -31

@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "gridFill": {
+    "minCellsOccupiedPermille": 900
+  },
+  "singleElementShare": {
+    "maxSingleElementSharePermille": 500
+  },
+  "aptitudeDistribution": {
+    "minShareOfMeanPermille": 500
+  },
+  "threatBandOccupancy": {
+    "maxRungSharePermille": 250
+  },
+  "familySizeSpread": {
+    "maxFamilySharePermille": 100
+  },
+  "postureBalance": {
+    "minPostureSharePermille": 200,
+    "maxPostureSharePermille": 500
+  },
+  "unresolvedCount": {
+    "maxUnresolvedSharePermille": 50
+  },
+  "_note": "Starting values, tuned from play (ssot-power-scale.md §5.3's own precedent). gridFill's 900‰ (90% of 252 cells occupied) matches ideal §6.3's Genshin/FGO safe-band framing loosely, not a fitted number. singleElementShare 500‰ tracks the spec's own 'not the majority' rule literally. threatBandOccupancy's 250‰ matches spec §2's explicit '~25%' ceiling. familySizeSpread 100‰ matches spec §2's explicit '~10%' ceiling. postureBalance's band (20-50% each, three postures) keeps all three represented without demanding an exact 33/33/33 split. unresolvedCount 50‰ (5%) is a starting ceiling — spec §2 says a high rate 'means a weak description', so this is a review trigger, not a hard correctness bound. None are measured against real classified data yet — T2.11's real run has not happened; the metrics compute correctly against synthetic fixtures (test_roster_metrics.py) and against the real dump for basis/coverage-shaped inputs already proven in T1.10."
+}

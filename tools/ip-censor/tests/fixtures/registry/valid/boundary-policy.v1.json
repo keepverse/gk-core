@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "separators": [" ", "\t", "\n", "\r", "-", ".", "/", "\\", "_", ":", ";", ",", "(", ")", "[", "]", "{", "}", "\"", "'", "`", "!", "?"],
+  "scriptChangeBreaks": true,
+  "minAliasLength": 4
+}

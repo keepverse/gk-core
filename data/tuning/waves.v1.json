@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "sourceRef": "spec-wave-species-roll.md (species-gear-chain T6). ADDED in v1, not bumped: this file shipped with no version field at all, so the revision discipline starts here. Picks are rarity WINDOWS (rarityFrom/rarityTo) with relative rung weights and a same-species cap, drawn seeded without replacement.",
+  "waves": [
+    {
+      "waveId": "rift-skirmish",
+      "name": "Rift Skirmish",
+      "contentIndex": 1,
+      "profile": "hybrid-atb",
+      "picks": [
+        { "rarityFrom": "chaff", "rarityTo": "fused", "count": 4, "sameSpeciesMaxMilli": 0, "weights": { "chaff": 100, "sprout": 100, "grafted": 100, "cultivated": 100, "fused": 100 } }
+      ]
+    },
+    {
+      "waveId": "rift-warband",
+      "name": "Rift Warband",
+      "contentIndex": 3,
+      "profile": "hybrid-atb",
+      "picks": [
+        { "rarityFrom": "chaff", "rarityTo": "fused", "count": 4, "sameSpeciesMaxMilli": 0, "weights": { "chaff": 100, "sprout": 100, "grafted": 100, "cultivated": 100, "fused": 100 } },
+        { "rarityFrom": "cultivated", "rarityTo": "heirloom", "count": 2, "sameSpeciesMaxMilli": 0, "weights": { "cultivated": 100, "fused": 100, "chimeric": 100, "heirloom": 100 } }
+      ]
+    },
+    {
+      "waveId": "rift-onslaught",
+      "name": "Rift Onslaught",
+      "contentIndex": 6,
+      "profile": "hybrid-atb",
+      "picks": [
+        { "rarityFrom": "chaff", "rarityTo": "fused", "count": 3, "sameSpeciesMaxMilli": 0, "weights": { "chaff": 100, "sprout": 100, "grafted": 100, "cultivated": 100, "fused": 100 } },
+        { "rarityFrom": "cultivated", "rarityTo": "heirloom", "count": 3, "sameSpeciesMaxMilli": 0, "weights": { "cultivated": 100, "fused": 100, "chimeric": 100, "heirloom": 100 } },
+        { "rarityFrom": "heirloom", "rarityTo": "almanac", "count": 1, "sameSpeciesMaxMilli": 0, "weights": { "heirloom": 100, "firstseed": 100, "sunwoven": 100, "almanac": 100 } }
+      ]
+    },
+    {
+      "waveId": "rift-tyrant",
+      "name": "Rift Tyrant",
+      "contentIndex": 10,
+      "profile": "hybrid-atb",
+      "picks": [
+        { "rarityFrom": "cultivated", "rarityTo": "heirloom", "count": 3, "sameSpeciesMaxMilli": 0, "weights": { "cultivated": 100, "fused": 100, "chimeric": 100, "heirloom": 100 } },
+        { "rarityFrom": "heirloom", "rarityTo": "almanac", "count": 2, "sameSpeciesMaxMilli": 0, "weights": { "heirloom": 100, "firstseed": 100, "sunwoven": 100, "almanac": 100 } },
+        { "rarityFrom": "sunwoven", "rarityTo": "almanac", "count": 1, "sameSpeciesMaxMilli": 0, "weights": { "sunwoven": 100, "almanac": 100 } }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,299 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/class-system-ideal.md 7b.4",
+    "status": "DIAGNOSTIC, NOT A BALANCE PROPOSAL. Deliberately not named aptitudes.v2 - it is not a successor version and must never be published as one.",
+    "note": "Reciprocal-consumed contests (reduction, amplification, penetration) resized so a FULL allocation delivers a total effect comparable to a full allocation of a sigmoid-consumed contest (x1.9, not x4 / x11). Tests whether defensive dominance under free build is a coefficient-sizing error or a structural one. Result: best marginal +3.56% -> +1.67%, dead aptitudes 5 -> 4. Most of the cause, not all of it (ideal 8.7)."
+  },
+  "grant": {
+    "_note": "FREE BUILD (owner, 2026-08-25): the player has no class, so there is no class price and no posture surcharge - every point costs one point. The withdrawn price block is class-system-ideal.md 7a.3; what it was FOR now lives entirely in read.*.shareExponentMilli.",
+    "aptitudePointsPerTheta": 3,
+    "skillPointsPerTheta": 1
+  },
+  "read": {
+    "_note": "PS-3, made into two tunable FUNCTIONS rather than two hard-coded reads. Both take the aptitude share of the spent points; neither takes an absolute count. Share is bounded [0,1], which is what makes level cancel at parity (ssot-power-scale.md 2) - an absolute read grows the gap between two builds proportional to Theta and saturates every sigmoid by Theta=300 (measured: class-rps-balance-2026-08-25.md 3.1).",
+    "contest": {
+      "_note": "value = kMilli/1000 * share^gamma * spanPoints. spanPoints is how many CONTEST POINTS one whole allocation is worth - a different concept from stats.accuracyScale, which is how many contest points move a probability. Both must exist; neither may be derived from the other.",
+      "spanPoints": 100.0,
+      "shareExponentMilli": 1000
+    },
+    "magnitude": {
+      "_note": "value = kMilli/1000 * share^gamma * P(Theta). The ladder supplies the scale; the player supplies the share.",
+      "shareExponentMilli": 1000
+    }
+  },
+  "familyRead": {
+    "_note": "THE unitClass DECISION, as one reviewable block rather than 48 per-edge flags - because the read mode is a property of the CHANNEL (what the formula compares it against), never of the edge that feeds it. Rule (measured, class-rps-balance-2026-08-25.md 3.1): a family compared against baseLong - the hit itself - is a magnitude; a family feeding a bounded ratio through a small scale is a contest.",
+    "combat.power": "magnitude",
+    "combat.defense": "magnitude",
+    "combat.shield.capacity": "magnitude",
+    "combat.shield.regen": "magnitude",
+    "combat.shield.pen": "magnitude",
+    "combat.shield.toughness": "magnitude",
+    "combat.parry.strength": "magnitude",
+    "combat.parry.shred": "magnitude",
+    "combat.block.strength": "magnitude",
+    "combat.block.shred": "magnitude",
+    "combat.accuracy": "contest",
+    "combat.dodge": "contest",
+    "combat.crit.rate": "contest",
+    "combat.crit.resist": "contest",
+    "combat.crit.damage": "contest",
+    "combat.crit.resist.damage": "contest",
+    "combat.penetration": "contest",
+    "combat.absorption": "contest",
+    "combat.amplification": "contest",
+    "combat.reduction": "contest",
+    "combat.parry.rate": "contest",
+    "combat.parry.break": "contest",
+    "combat.block.rate": "contest",
+    "combat.block.break": "contest",
+    "combat.reflect.rate": "contest",
+    "combat.reflect.damage": "contest",
+    "combat.reflect.resist.rate": "contest",
+    "combat.reflect.resist.damage": "contest"
+  },
+  "edges": [
+    {
+      "channel": "combat.power.omni",
+      "source": "Might",
+      "kMilli": 2200
+    },
+    {
+      "channel": "combat.power.omni",
+      "source": "Pierce",
+      "kMilli": 1600
+    },
+    {
+      "channel": "combat.power.omni",
+      "source": "Ferocity",
+      "kMilli": 1600
+    },
+    {
+      "channel": "combat.power.omni",
+      "source": "Onslaught",
+      "kMilli": 800
+    },
+    {
+      "channel": "combat.defense.omni",
+      "source": "Fortitude",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.defense.omni",
+      "source": "Composure",
+      "kMilli": 1600
+    },
+    {
+      "channel": "combat.defense.omni",
+      "source": "Bulwark",
+      "kMilli": 1600
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Precision",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Might",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Pierce",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Onslaught",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.dodge.omni",
+      "source": "Agility",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.crit.rate.omni",
+      "source": "Ferocity",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.crit.rate.omni",
+      "source": "Pierce",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.crit.rate.omni",
+      "source": "Might",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.crit.damage.omni",
+      "source": "Ferocity",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.crit.damage.omni",
+      "source": "Pierce",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.crit.damage.omni",
+      "source": "Might",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.crit.resist.omni",
+      "source": "Composure",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.crit.resist.omni",
+      "source": "Fortitude",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.crit.resist.omni",
+      "source": "Vigor",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.crit.resist.damage.omni",
+      "source": "Composure",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.crit.resist.damage.omni",
+      "source": "Fortitude",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.crit.resist.damage.omni",
+      "source": "Vigor",
+      "kMilli": 1400
+    },
+    {
+      "channel": "combat.penetration.omni",
+      "source": "Onslaught",
+      "kMilli": 90
+    },
+    {
+      "channel": "combat.absorption.omni",
+      "source": "Fortitude",
+      "kMilli": 1000
+    },
+    {
+      "channel": "combat.absorption.omni",
+      "source": "Composure",
+      "kMilli": 500
+    },
+    {
+      "channel": "combat.absorption.omni",
+      "source": "Vigor",
+      "kMilli": 500
+    },
+    {
+      "channel": "combat.amplification.omni",
+      "source": "Onslaught",
+      "kMilli": 90
+    },
+    {
+      "channel": "combat.reduction.omni",
+      "source": "Fortitude",
+      "kMilli": 90
+    },
+    {
+      "channel": "combat.reduction.omni",
+      "source": "Composure",
+      "kMilli": 90
+    },
+    {
+      "channel": "combat.reduction.omni",
+      "source": "Vigor",
+      "kMilli": 90
+    },
+    {
+      "channel": "combat.parry.rate.omni",
+      "source": "Bulwark",
+      "kMilli": 4000
+    },
+    {
+      "channel": "combat.parry.strength.omni",
+      "source": "Bulwark",
+      "kMilli": 1500
+    },
+    {
+      "channel": "combat.parry.break.omni",
+      "source": "Onslaught",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.parry.shred.omni",
+      "source": "Onslaught",
+      "kMilli": 1200
+    },
+    {
+      "channel": "combat.block.rate.omni",
+      "source": "Bulwark",
+      "kMilli": 4000
+    },
+    {
+      "channel": "combat.block.strength.omni",
+      "source": "Bulwark",
+      "kMilli": 1500
+    },
+    {
+      "channel": "combat.block.break.omni",
+      "source": "Onslaught",
+      "kMilli": 3000
+    },
+    {
+      "channel": "combat.block.shred.omni",
+      "source": "Onslaught",
+      "kMilli": 1200
+    },
+    {
+      "channel": "combat.reflect.rate.omni",
+      "source": "Retribution",
+      "kMilli": 220
+    },
+    {
+      "channel": "combat.reflect.damage.omni",
+      "source": "Retribution",
+      "kMilli": 1800
+    },
+    {
+      "channel": "combat.reflect.resist.rate.omni",
+      "source": "Pierce",
+      "kMilli": 220
+    },
+    {
+      "channel": "combat.reflect.resist.damage.omni",
+      "source": "Pierce",
+      "kMilli": 1800
+    },
+    {
+      "channel": "combat.shield.capacity.omni",
+      "source": "Vigor",
+      "kMilli": 40000
+    },
+    {
+      "channel": "combat.shield.regen.omni",
+      "source": "Vigor",
+      "kMilli": 500
+    },
+    {
+      "channel": "combat.shield.toughness.omni",
+      "source": "Vigor",
+      "kMilli": 2000
+    },
+    {
+      "channel": "combat.shield.pen.omni",
+      "source": "Pierce",
+      "kMilli": 2000
+    }
+  ]
+}

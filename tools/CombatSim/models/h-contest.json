@@ -1,0 +1,174 @@
+{
+  "name": "H-contest",
+  "description": "HYPOTHESIS A: the 16 unitClass-null families are Theta-scale (contest). Their value grows linearly with level, like accuracy/dodge.",
+  "edges": [
+    {
+      "channel": "combat.power.omni",
+      "source": "Might",
+      "k": 3.0,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.defense.omni",
+      "source": "Fortitude",
+      "k": 3.0,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.shield.capacity.omni",
+      "source": "Vigor",
+      "k": 40.0,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.shield.regen.omni",
+      "source": "Vigor",
+      "k": 0.5,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.shield.pen.omni",
+      "source": "Pierce",
+      "k": 2.0,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.shield.toughness.omni",
+      "source": "Vigor",
+      "k": 2.0,
+      "read": "magnitude"
+    },
+    {
+      "channel": "combat.accuracy.omni",
+      "source": "Precision",
+      "k": 4.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.dodge.omni",
+      "source": "Agility",
+      "k": 4.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.rate.omni",
+      "source": "Ferocity",
+      "k": 4.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.resist.omni",
+      "source": "Composure",
+      "k": 4.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.damage.omni",
+      "source": "Ferocity",
+      "k": 4.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.crit.resist.damage.omni",
+      "source": "Composure",
+      "k": 4.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.penetration.omni",
+      "source": "Pierce",
+      "k": 1.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.absorption.omni",
+      "source": "Fortitude",
+      "k": 1.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.amplification.omni",
+      "source": "Pierce",
+      "k": 0.3,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.reduction.omni",
+      "source": "Fortitude",
+      "k": 0.3,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.parry.rate.omni",
+      "source": "Bulwark",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.parry.strength.omni",
+      "source": "Bulwark",
+      "k": 8.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.parry.break.omni",
+      "source": "Onslaught",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.parry.shred.omni",
+      "source": "Onslaught",
+      "k": 8.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.block.rate.omni",
+      "source": "Bulwark",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.block.strength.omni",
+      "source": "Bulwark",
+      "k": 8.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.block.break.omni",
+      "source": "Onslaught",
+      "k": 3.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.block.shred.omni",
+      "source": "Onslaught",
+      "k": 8.0,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.reflect.rate.omni",
+      "source": "Retribution",
+      "k": 0.1,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.reflect.damage.omni",
+      "source": "Retribution",
+      "k": 0.6,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.reflect.resist.rate.omni",
+      "source": "Onslaught",
+      "k": 0.08,
+      "read": "contest"
+    },
+    {
+      "channel": "combat.reflect.resist.damage.omni",
+      "source": "Onslaught",
+      "k": 0.5,
+      "read": "contest"
+    }
+  ]
+}

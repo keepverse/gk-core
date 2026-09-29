@@ -1,0 +1,14 @@
+{
+  "name": "EQ-BULWARK",
+  "description": "Fixed point found by the trinity test (best-response iteration). Not a designed build.",
+  "element": "fire",
+  "points": {
+    "Bulwark": 55,
+    "Fortitude": 15,
+    "Precision": 15,
+    "Ferocity": 15
+  },
+  "hpPerLadder": 15,
+  "damagePerLadder": 1.5,
+  "shieldPerLadder": 2
+}

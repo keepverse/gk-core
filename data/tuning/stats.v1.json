@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/actor-hub-ssot.md",
+    "note": "Extracted byte-identical from ModifierOp.cs (StatChannels.MinimumInterval) and CombatPolicies.cs (ElementMatchupPolicy, CombatProbabilityPolicy) — tunables-ssot.md M.4, 2026-08-23. IProgressionPowerProvider.cs's MaxExponent is deliberately excluded: it is the retired POC power curve's constant, provably unreachable (SetLevel has zero callers), and power-plan.md T3.2/T3.3 deletes the whole class once Phase 3 is authorized.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py stats <dotted.key>=<value> [...] writes stats.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "minimumInterval": 0.01,
+  "matchupShareK": 0.25,
+  "accuracyScale": 100.0,
+  "critRateScale": 100.0,
+  "critDamageScale": 100.0,
+  "steepness": 1.0
+}

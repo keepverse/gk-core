@@ -1,0 +1,33 @@
+{
+  "id": "effect-freeze-hit",
+  "seed": 42,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "g-freeze",
+        "effectId": "fx.freeze_on_hit",
+        "ownerKey": "match",
+        "overlay": { "icd_ms": 0 }
+      }
+    },
+    { "op": "hit" },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnDamageDealt",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "ApplyStatus",
+            "effectId": "fx.freeze_on_hit",
+            "grantId": "g-freeze",
+            "params": { "status": "freeze", "duration": 3 }
+          }
+        ]
+      }
+    }
+  ]
+}

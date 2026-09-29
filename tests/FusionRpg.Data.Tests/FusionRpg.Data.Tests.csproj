@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>FusionRpg.Data.Tests</RootNamespace>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FusionRpg.Data\FusionRpg.Data.csproj" />
+    <ProjectReference Include="..\..\src\FusionRpg.Contracts\FusionRpg.Contracts.csproj" />
+    <!-- CreatureSpeciesImportCliTests launches this tool's apphost as a genuinely separate process.
+         Referencing it makes the test host's own build produce that apphost next to the test dll —
+         without it the test relied on a prebuilt bin/ that nothing in the build (or CI) created, so
+         it only passed where the tool happened to have been built by hand. -->
+    <ProjectReference Include="$(GkForgeRoot)tools\CreatureSpeciesImport\CreatureSpeciesImport.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/action/spec-unlock-ladder.md (A11)",
+    "note": "chance(n) = max(floorMilli, p1Milli * deltaMilli^n / 1000^n), n = earnCount at roll time. Table: earn 1 -> 500 (50%), earn 10 -> 158 (15.8%), earn 11 -> 139 (13.9%), earn 20 -> 44 (4.4%), earn 25 -> 23 (2.3%), earn 40 -> 3.4/10 (0.34%, rounds to 3 milli-of-milli -- kept at integer per-mille precision so this table entry is illustrative, not asserted to the tenth), earn 50 -> 1 (0.1%, AT the floor).",
+    "heldCapVsRungCap": "A-U1 (spec-rung-semantics.md S3.3), 2026-09-03: SPLIT from a single 'cap' field, which served two unrelated meanings at once ('cap 10 is both the max held count and the rung ceiling -- one number, two uses'). heldCap = the max simultaneously held unlocks (A11/T19's own faucet). rungCap = the ladder's ceiling, min(earnCount, rungCap). Same starting value (10) so the split is behaviour-neutral by construction; raising rungCap alone no longer hands every player more held unlocks as a side effect.",
+    "rebalance": "0.88 cannot independently pin \"meaningful at 40\" and \"floored at 50\" (spec S1) -- a future two-segment curve is a content change here, not a code change.",
+    "discardTaxCoeffMilli": "T20, REVISED 2026-08-28: spec-unlock-ladder.md S3 says a FLAT tax was chosen ('a rung-scaled tax was considered and retracted -- the farm it priced against does not exist'). Owner overrode that live: cost scales with the actor's power, cost(Th) = discardTaxCoeffMilli * P(Th) / 1000, reading the SAME P(Th) SSOT every other level-derived magnitude uses (PS-3), never a private f(level). 100 (0.1x P(Th)) is an authored PLACEHOLDER coefficient ('pick 0.01, 0.1, or any number, rebalance later' -- owner's own words) -- the rule is decided, the number is not. Ask first before treating 100 as balanced."
+  },
+  "p1Milli": 500,
+  "deltaMilli": 880,
+  "floorMilli": 1,
+  "heldCap": 10,
+  "rungCap": 10,
+  "discardTaxCoeffMilli": 100
+}

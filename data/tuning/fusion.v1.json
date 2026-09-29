@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/creatures/spec-creature-fusion.md",
+    "note": "Extracted byte-identical from StarPolicy.cs (tunables-ssot.md M.4, 2026-08-23). SacrificesForStar's 1..5 bound and StarCap's rarity->cap shape stay structural (the star system's own range), only the numbers a balance pass would tune moved. Widened 2026-09-01 (seed-to-concrete T4.1, owner Q4/Q24) from the old four-value CreatureRarity to the ten-rung ladder — starCap/recipeCost/slotsByRarity are starting values, staircase-interpolated from the old four points, not a validated balance decision (ssot-power-scale.md §5.3's own precedent for 'pick numbers now, tune from play'). recipeCost now covers Cultivated..Almanac (7 rungs) matching CreatureRecipeCatalog.OutputEligibilityFloor, not the old rare/epic/legendary (3 rungs) — the eligibility floor is the one source of truth, read at load time. Corrected 2026-09-01 (same day, caught by FusionE2ETests.Legendary_chain_from_commons): the initial staircase-interpolation set every recipeCost.shardRarity to the LITERAL one-rung-below id (e.g. cultivated->grafted), but today's catalog only populates Chaff/Cultivated/Heirloom/Sunwoven — nobody ever holds a shard.grafted/fused/chimeric/firstseed. shardRarity now names the nearest POPULATED rung below, matching CreatureRecipeCatalog.InputPoolBelow's own walk-down search exactly (cultivated/fused/chimeric/heirloom -> chaff or cultivated; firstseed/sunwoven -> heirloom; almanac -> sunwoven, still literal since Sunwoven is populated).",
+    "noteStars2026_09_05": "Owner decision 2026-09-05, from the effort-power reconciliation. (a) MaxStar 5 -> 10; starCap doubled per rung (3->6, 4->8, 5->10), preserving the existing rarity shape exactly. (b) The per-star REWARD is now indexed on the triangular sacrifice cost instead of being flat per star -- cumulative sacrifices are n(n+3)/2 while the reward was perStar*n, so reward-per-sacrifice was 60/(n+3) and star 5 was an exactly 2x worse deal than star 1. StarPolicy.StarPowerMilli anchors the curve at star 5, so no creature at or below the old cap changes value. perStarPowerMilli/perStarDefenseMilli are now the ANCHOR at star 5, not a flat per-star rate. (c) promotionCostByRarity replaces the flat 200 souls, shaped like recipeCost's own 150->1000 escalation; the flat promotionCost row stays as the fallback for a rung the table does not name.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py fusion <dotted.key>=<value> [...] writes fusion.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "perStarPowerMilli": 30,
+  "perStarDefenseMilli": 30,
+  "starCap": {
+    "chaff": 6,
+    "sprout": 6,
+    "grafted": 6,
+    "cultivated": 8,
+    "fused": 8,
+    "chimeric": 8,
+    "heirloom": 10,
+    "firstseed": 10,
+    "sunwoven": 10,
+    "almanac": 10
+  },
+  "starMergeCost": { "souls": 50, "shardCount": 1, "essenceCount": 1 },
+  "promotionCost": { "souls": 200, "shardCount": 3, "essenceCount": 3 },
+  "promotionCostByRarity": {
+    "chaff":      { "souls": 150,  "shardCount": 2, "essenceCount": 2 },
+    "sprout":     { "souls": 185,  "shardCount": 2, "essenceCount": 2 },
+    "grafted":    { "souls": 220,  "shardCount": 2, "essenceCount": 3 },
+    "cultivated": { "souls": 320,  "shardCount": 3, "essenceCount": 4 },
+    "fused":      { "souls": 450,  "shardCount": 3, "essenceCount": 5 },
+    "chimeric":   { "souls": 620,  "shardCount": 4, "essenceCount": 6 },
+    "heirloom":   { "souls": 820,  "shardCount": 4, "essenceCount": 7 },
+    "firstseed":  { "souls": 1000, "shardCount": 5, "essenceCount": 8 },
+    "sunwoven":   { "souls": 1000, "shardCount": 5, "essenceCount": 8 },
+    "almanac":    { "souls": 1000, "shardCount": 5, "essenceCount": 8 }
+  },
+  "recipeCost": {
+    "cultivated": { "souls": 150,  "shardRarity": "chaff",      "shardCount": 2, "essenceCount": 2 },
+    "fused":      { "souls": 220,  "shardRarity": "cultivated", "shardCount": 2, "essenceCount": 3 },
+    "chimeric":   { "souls": 320,  "shardRarity": "cultivated", "shardCount": 3, "essenceCount": 4 },
+    "heirloom":   { "souls": 450,  "shardRarity": "cultivated", "shardCount": 3, "essenceCount": 5 },
+    "firstseed":  { "souls": 620,  "shardRarity": "heirloom",   "shardCount": 4, "essenceCount": 6 },
+    "sunwoven":   { "souls": 820,  "shardRarity": "heirloom",   "shardCount": 4, "essenceCount": 7 },
+    "almanac":    { "souls": 1000, "shardRarity": "sunwoven",   "shardCount": 5, "essenceCount": 8 }
+  },
+  "slotsByRarity": {
+    "chaff": 1,
+    "sprout": 1,
+    "grafted": 1,
+    "cultivated": 2,
+    "fused": 2,
+    "chimeric": 2,
+    "heirloom": 2,
+    "firstseed": 3,
+    "sunwoven": 3,
+    "almanac": 3
+  }
+}

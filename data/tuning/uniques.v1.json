@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "_note": "The balance surface of the `uniques` content class (item module 17, spec-uniques.md / ssot-uniques.md G1). Every number a balance pass would touch lives here; nothing structural does. The three STRUCTURAL facts stay in code with their AGENTS.md exemption comments and are deliberately absent from this file: `PrefixRolls + SuffixRolls <= 1` (it DEFINES the class, so a tunable would let a balance pass author a rare with a name), `UniquesArePromotable = false` (promotion only ADDS pool draws, which the class has at most one of), and the L0 channel weight of 0 on a fixed-core row (there is no draw for a weight to modify). See UniqueLimits.",
+
+  "rungFloorOrdinal": 80,
+  "_rungFloorNote": "ssot-uniques.md 4.1. Ordinals 10 (`chaff`) and 20 (`sprout`) are DEFINED as the absence of design ('husks, clippings'; 'it works, that is all it does'); a unique is the presence of it. This is the whole content of the `unique_eligible` budget key -- 0 below this ordinal, 1 at or above it -- so the key is DERIVED here rather than authored as a second per-rung table beside the seeded ladder. 10.7 offers the owner ordinal 20 if a `sprout`-rung joke unique is wanted; that is a one-number edit here and nothing else. D4.23 (spec-unique-pipeline.md §5 point 5, decision 13): moved 30 -> 80 as its own change; the 95 shipped anchors this raises above their own rung are `enabled: false` in the seed corpus itself (data/seed/items/uniques/*-{30,50,70}.json), never re-runged, never deleted -- UniqueCorpusValidator/UniqueValidator both exempt a disabled row from this floor check.",
+
+  "maxIdentityAtoms": 3,
+  "_maxIdentityAtomsNote": "ssot-uniques.md 3.5 rung 3 and 3.6: a READABILITY cap on the fixed core (plus the inherited base stat at seq 0 = 4 rows total), explicitly 'not a schema one'. Tunable because it is a legibility judgement a content pass may revisit, not a bound anything derives from.",
+
+  "identitySpreadPerMille": 150,
+  "_identitySpreadNote": "ssot-uniques.md 3.6: an identity atom's OnInstantiate band may span at most +/-15% of its own midpoint -- 'wide enough that a good copy is worth hunting, narrow enough that a bad copy is still the item'. 8.4 names the conditional: if `unique_value_reroll` is refused by module 15, this should narrow to 100.",
+
+  "budgetPremiumAeHundredths": 150,
+  "_budgetPremiumNote": "ssot-uniques.md 3.7 device 2, in AE x 100 (SC4 forbids floats in content). 1.5 AE is deliberately the SAME premium ssot-sets.md 3.5 gives a set per member piece: the two mechanisms are the same device and a shared number is one balance dial instead of two. Changing it here without changing the set premium re-opens 3.8's stacking argument.",
+
+  "budgetDriftTolerancePercent": 25,
+  "_budgetDriftNote": "definitions.md 7's own drift tolerance, reused rather than reinvented -- a declared `budget_ae` more than this far from the summed content is refused in BOTH directions. Pinned at LOAD against ContentValidation.DriftTolerancePercent (the same device module 9 used for powerDisplayBandPercent), so the two can never silently diverge: change one and the parse throws.",
+
+  "narrowCeilingPerMille": 600,
+  "_narrowCeilingNote": "ssot-uniques.md 3.7 device 1: `counter_pressure = narrow` means summed RAW-STAT AE <= 60% of the rung's rolled baseline. 7.2's own worked example fails this by four points on a plausibly-authored item and the lane kept it -- 'the check has teeth' -- so a balance pass that wants more headroom raises it here rather than waiving the check.",
+
+  "maxRolesPerFrame": 8,
+  "_maxRolesPerFrameNote": "ssot-uniques.md 3.7 device 4, mirroring ssot-sets.md's cap of 6 of ~15 roles for sets. 8 + 6 > 15 is a real interaction the two lanes never sized (9.4); it is fine that some roles carry both, and the number to move if it stops being fine is this one. 8.2 also says to re-derive it once the unique count passes 40 -- it is 144 today, which is why it is a tunable and not a comment.",
+
+  "forbiddenRoles": ["jewel-minor-a", "jewel-minor-b"],
+  "_forbiddenRolesNote": "ssot-uniques.md 3.7: 'no uniques on the two jewel-minor roles in v1'. A duplicated role with the smallest budget is doubled by construction, which is the fastest path to every build converging. Explicitly a v1 content decision, so it is a list here rather than a hardcoded prefix test.",
+
+  "parityLowerBoundPerMille": 250,
+  "parityUpperBoundPerMille": 750,
+  "_parityNote": "ssot-uniques.md 3.7 device 3. W is the probability a randomly rolled rare at the same rung beats the unique on total magnitude WITHIN ONE CHANNEL FAMILY (SC4 forbids cross-family totals). Below the floor the unique is strictly better on the stat sheet and rolled loot in that role is filler; above the ceiling it loses to most rares before its capability is counted and it is a trophy. The asymmetry is the balance philosophy: the rare wins the stat sheet, the unique wins the build. spec-uniques.md said to ship this UNBOUNDED until module 7's overlap harness existed; it does (RarityOverlapSimulator, built 2026-09-04 naming this module as its consumer), so the bounds are live here. They bound a REPORT, not an import refusal -- see UniqueParityMetric.",
+
+  "outOfBandMagnitudeCapPerMille": 1500,
+  "_outOfBandCapNote": "ssot-uniques.md 3.5 rung 1: an identity atom's magnitude may sit outside the tier band -- that costs the architecture nothing, the tier window is pool-only -- but not by more than 1.5x the top of the family's t5 band. This is the only ceiling in this file that bounds a MAGNITUDE, and it is a soft, configurable one: raise it in this file and out-of-band identity atoms get stronger, with no rebuild."
+}

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FusionRpg.Tools.ProveAptitude</RootNamespace>
+    <AssemblyName>ProveAptitude</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Core only. class-system-todo.md P2.6/V3: drives the REAL AptitudeResolver against the REAL
+         DerivedComposer (overlay) and BattleStatComposer (battle) and diffs their output; a
+         reimplementation of either composer here would make the proof measure two copies agreeing
+         with each other instead of the two SHIPPED composers agreeing, which is the whole point. -->
+    <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
+  </ItemGroup>
+</Project>

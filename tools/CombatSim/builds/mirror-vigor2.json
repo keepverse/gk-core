@@ -1,0 +1,22 @@
+{
+  "name": "MIRROR-VIGOR2",
+  "description": "Corner probe for the termination invariant.",
+  "element": "fire",
+  "points": {
+    "Might": 4.2,
+    "Fortitude": 4.2,
+    "Vigor": 54.2,
+    "Onslaught": 4.2,
+    "Agility": 4.2,
+    "Composure": 4.2,
+    "Pierce": 4.2,
+    "Focus": 4.2,
+    "Bulwark": 4.2,
+    "Retribution": 4.2,
+    "Precision": 4.2,
+    "Ferocity": 4.2
+  },
+  "hpPerLadder": 15,
+  "damagePerLadder": 1.5,
+  "shieldPerLadder": 2
+}

@@ -1,0 +1,19 @@
+{
+  "name": "PaperZombie",
+  "description": "Chaff zombie \u2014 theta=13 pTheta=452",
+  "hp": 2712,
+  "baseDamage": 1000,
+  "shieldHp": 0,
+  "element": "dark",
+  "stats": {
+    "resource.max.hunger": 2260,
+    "resource.max.qi": 13560,
+    "resource.max.spirit": 6328,
+    "resource.max.stamina": 3616,
+    "resource.regen.hp": 9,
+    "resource.regen.hunger": 136,
+    "resource.regen.qi": 814,
+    "resource.regen.spirit": 316,
+    "resource.regen.stamina": 226
+  }
+}

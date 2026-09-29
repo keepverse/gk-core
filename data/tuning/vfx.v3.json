@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "version": 3,
+  "_meta": {
+    "owner": "docs/architecture/vfx/vfx-ssot.md",
+    "note": "v3 (2026-08-30, UnitFrame): sustained.spanScale scales aura/marker span against max(cell, sprite bounds); render.sortOffsetAboveUnit layers overlay particles relative to unit sortingOrder when probed. v2 stays on disk for revert.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py vfx <dotted.key>=<value> [...] writes vfx.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "tint": { "maxStrength": 0.35 },
+  "burst": { "coneHalfAngle": 0.6, "risingSideFactor": 0.4, "directionalSideFactor": 0.5 },
+  "rules": {
+    "burstCap": 24,
+    "burstLifeSeconds": 0.55,
+    "floaterRateLimitSeconds": 0.05,
+    "burstRateLimitSeconds": 0.15,
+    "globalCuePerTickCap": 32,
+    "cueQueueCap": 256,
+    "critFontScale": 1.25,
+    "critPopStartScale": 1.5,
+    "critPopSettleT": 0.3,
+    "amountTierSmallBelow": 50,
+    "amountTierBigFrom": 200,
+    "amountTierSmallScale": 0.9,
+    "amountTierBigScale": 1.15
+  },
+  "sustained": {
+    "globalCap": 24,
+    "perHostCap": 2,
+    "ttlGraceSeconds": 2.0,
+    "infiniteTtlSeconds": 60.0,
+    "auraPulseSeconds": 0.3,
+    "auraMaxParticles": 6,
+    "spanScale": 1.5
+  },
+  "render": {
+    "burstParticles": 28,
+    "particleSortingOrder": 80,
+    "sortOffsetAboveUnit": 1,
+    "sustainedWorldYOffset": 0.25,
+    "particleTextureSize": 64,
+    "markerEdgeSoftness": 0.14,
+    "markerGlowStrength": 0.45,
+    "markerSizeScale": 0.24,
+    "markerYOffsetScale": 0.12,
+    "shieldBar": {
+      "barWorldWidth": 0.95,
+      "barWorldHeight": 0.12,
+      "worldYOffset": -0.35,
+      "maxSegments": 3,
+      "cap": 32,
+      "maxPips": 3
+    },
+    "tintReassertSeconds": 0.25
+  },
+  "identity": {
+    "similarRgbDistanceThreshold": 45,
+    "similarApplyRgbDistanceThreshold": 35
+  }
+}

@@ -1,0 +1,395 @@
+{
+  "schemaVersion": 1,
+  "kind": "status-catalog",
+  "version": 2,
+  "entries": [
+    {
+      "id": "blight",
+      "kind": "Contagion",
+      "family": "overlay",
+      "categories": [
+        "contagion"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [
+        "Spread",
+        "PulseHp"
+      ],
+      "displayName": "Blight",
+      "reading": "A spreading sickness.",
+      "hudToken": "B",
+      "color": "#5cff9a"
+    },
+    {
+      "id": "bond",
+      "kind": "Counter",
+      "family": "overlay",
+      "categories": [
+        "dot"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [],
+      "displayName": "Bond",
+      "reading": "A counter that meters hits.",
+      "hudToken": "B",
+      "color": "#c45cff"
+    },
+    {
+      "id": "butter",
+      "kind": "UnityCc",
+      "family": "cc",
+      "categories": [
+        "cc"
+      ],
+      "stacking": "Replace",
+      "payloadKinds": [
+        "UnityCc"
+      ],
+      "displayName": "Butter",
+      "reading": "Stops them acting.",
+      "hudToken": "B",
+      "color": "#7aa2ff"
+    },
+    {
+      "id": "charm_pulse",
+      "kind": "CrowdControl",
+      "family": "overlay",
+      "categories": [
+        "cc"
+      ],
+      "stacking": "Replace",
+      "payloadKinds": [
+        "ModifyStat"
+      ],
+      "displayName": "Charm pulse",
+      "reading": "A pulse that seizes control briefly.",
+      "hudToken": "CP",
+      "color": "#7aa2ff"
+    },
+    {
+      "id": "cold",
+      "kind": "UnityCc",
+      "family": "elemental",
+      "categories": [
+        "cc"
+      ],
+      "stacking": "Replace",
+      "payloadKinds": [
+        "UnityCc"
+      ],
+      "displayName": "Cold",
+      "reading": "Chills \u2014 slower, and ice's sibling.",
+      "hudToken": "C",
+      "color": "#7aa2ff"
+    },
+    {
+      "id": "command",
+      "kind": "Meter",
+      "family": "overlay",
+      "categories": [
+        "dot"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [
+        "ModifyStat"
+      ],
+      "displayName": "Command",
+      "reading": "A leadership meter, not a stun.",
+      "hudToken": "C",
+      "color": "#c45cff"
+    },
+    {
+      "id": "ember",
+      "kind": "UnityCc",
+      "family": "mixer",
+      "categories": [
+        "cc"
+      ],
+      "stacking": "Coexist",
+      "payloadKinds": [
+        "UnityCc"
+      ],
+      "displayName": "Ember",
+      "reading": "A mixer burn that can sit beside other burns.",
+      "hudToken": "E",
+      "color": "#7aa2ff"
+    },
+    {
+      "id": "expose",
+      "kind": "Debuff",
+      "family": "overlay",
+      "categories": [
+        "dot"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [
+        "ModifyStat"
+      ],
+      "displayName": "Expose",
+      "reading": "Makes the next hits land cleaner.",
+      "hudToken": "E",
+      "color": "#c45cff"
+    },
+    {
+      "id": "freeze",
+      "kind": "UnityCc",
+      "family": "elemental",
+      "categories": [
+        "cc"
+      ],
+      "stacking": "Replace",
+      "payloadKinds": [
+        "UnityCc"
+      ],
+      "displayName": "Freeze",
+      "reading": "Locks them in ice.",
+      "hudToken": "F",
+      "color": "#7aa2ff"
+    },
+    {
+      "id": "hypno",
+      "kind": "UnityCc",
+      "family": "cc",
+      "categories": [
+        "cc"
+      ],
+      "stacking": "Replace",
+      "payloadKinds": [
+        "UnityCc"
+      ],
+      "displayName": "Hypnotize",
+      "reading": "Turns them against their own.",
+      "hudToken": "H",
+      "color": "#7aa2ff"
+    },
+    {
+      "id": "jala",
+      "kind": "UnityCc",
+      "family": "elemental",
+      "categories": [
+        "cc"
+      ],
+      "stacking": "Replace",
+      "payloadKinds": [
+        "UnityCc"
+      ],
+      "displayName": "Jala",
+      "reading": "A hot burst that replaces its elemental family.",
+      "hudToken": "J",
+      "color": "#7aa2ff"
+    },
+    {
+      "id": "kelp",
+      "kind": "UnityCc",
+      "family": "slow",
+      "categories": [
+        "cc"
+      ],
+      "stacking": "Replace",
+      "payloadKinds": [
+        "UnityCc"
+      ],
+      "displayName": "Kelp",
+      "reading": "Wraps and slows.",
+      "hudToken": "K",
+      "color": "#7aa2ff"
+    },
+    {
+      "id": "leech",
+      "kind": "OverTime",
+      "family": "overlay",
+      "categories": [
+        "dot"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [
+        "PulseHp"
+      ],
+      "displayName": "Leech",
+      "reading": "Takes from them as they live.",
+      "hudToken": "L",
+      "color": "#c45cff",
+      "pulseHealsAttacker": true
+    },
+    {
+      "id": "nerve.afflicted",
+      "kind": "Debuff",
+      "family": "nerve",
+      "categories": [
+        "dot"
+      ],
+      "stacking": "Replace",
+      "payloadKinds": [
+        "ModifyStat"
+      ],
+      "displayName": "Afflicted",
+      "reading": "Party nerve \u2014 third rung.",
+      "hudToken": "A",
+      "color": "#c45cff"
+    },
+    {
+      "id": "nerve.shaken",
+      "kind": "Debuff",
+      "family": "nerve",
+      "categories": [
+        "dot"
+      ],
+      "stacking": "Replace",
+      "payloadKinds": [
+        "ModifyStat"
+      ],
+      "displayName": "Shaken",
+      "reading": "Party nerve \u2014 second rung.",
+      "hudToken": "S",
+      "color": "#c45cff"
+    },
+    {
+      "id": "nerve.unsettled",
+      "kind": "Debuff",
+      "family": "nerve",
+      "categories": [
+        "dot"
+      ],
+      "stacking": "Replace",
+      "payloadKinds": [
+        "ModifyStat"
+      ],
+      "displayName": "Unsettled",
+      "reading": "Party nerve \u2014 first rung.",
+      "hudToken": "U",
+      "color": "#c45cff"
+    },
+    {
+      "id": "pact_mark",
+      "kind": "Contagion",
+      "family": "overlay",
+      "categories": [
+        "contagion"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [
+        "Spread",
+        "PulseHp"
+      ],
+      "displayName": "Pact mark",
+      "reading": "A spreading mark from a pact.",
+      "hudToken": "PM",
+      "color": "#5cff9a"
+    },
+    {
+      "id": "poison",
+      "kind": "UnityCc",
+      "family": "elemental",
+      "categories": [
+        "dot"
+      ],
+      "stacking": "Replace",
+      "payloadKinds": [
+        "UnityCc"
+      ],
+      "displayName": "Poison",
+      "reading": "Ticks damage while it lasts.",
+      "hudToken": "P",
+      "color": "#c45cff"
+    },
+    {
+      "id": "rally",
+      "kind": "Buff",
+      "family": "overlay",
+      "categories": [
+        "dot"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [
+        "ModifyStat"
+      ],
+      "displayName": "Rally",
+      "reading": "A short lift for allies.",
+      "hudToken": "R",
+      "color": "#c45cff"
+    },
+    {
+      "id": "rot",
+      "kind": "Contagion",
+      "family": "overlay",
+      "categories": [
+        "contagion"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [
+        "Spread",
+        "PulseHp"
+      ],
+      "displayName": "Rot",
+      "reading": "A spreading decay.",
+      "hudToken": "R",
+      "color": "#5cff9a"
+    },
+    {
+      "id": "shatter",
+      "kind": "Debuff",
+      "family": "overlay",
+      "categories": [
+        "dot"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [
+        "ModifyStat"
+      ],
+      "displayName": "Shatter",
+      "reading": "Breaks what they were holding.",
+      "hudToken": "S",
+      "color": "#c45cff"
+    },
+    {
+      "id": "spark",
+      "kind": "Contagion",
+      "family": "overlay",
+      "categories": [
+        "contagion"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [
+        "Spread",
+        "PulseHp"
+      ],
+      "displayName": "Spark",
+      "reading": "A spreading flare.",
+      "hudToken": "S",
+      "color": "#5cff9a"
+    },
+    {
+      "id": "spore",
+      "kind": "Contagion",
+      "family": "overlay",
+      "categories": [
+        "contagion"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [
+        "Spread",
+        "PulseHp"
+      ],
+      "displayName": "Spore",
+      "reading": "A spreading cloud.",
+      "hudToken": "S",
+      "color": "#5cff9a"
+    },
+    {
+      "id": "wither",
+      "kind": "OverTime",
+      "family": "overlay",
+      "categories": [
+        "dot"
+      ],
+      "stacking": "Refresh",
+      "payloadKinds": [
+        "PulseHp"
+      ],
+      "displayName": "Wither",
+      "reading": "Overlay drain over time.",
+      "hudToken": "W",
+      "color": "#c45cff"
+    }
+  ]
+}

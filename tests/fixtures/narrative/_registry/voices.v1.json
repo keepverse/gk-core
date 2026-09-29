@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 1,
+  "_meta": {
+    "owner": "docs/architecture/narrative-seed/spec-character-vocab.md#4",
+    "note": "Test fixture for npc-story-events NR1.3. The runtime spec section 1 table calls this file voice-registers.v1.json; the seed spec that authors it calls it voices.v1.json (filed as NR-F2)."
+  },
+  "voices": {
+    "formal": {
+      "description": "Measured, complete sentences, titles and courtesy.",
+      "negative": "Not cold; formality is manner, not distance.",
+      "exemplar": "data/seed/narrative/_exemplars/voices/formal.en.json"
+    },
+    "blunt": {
+      "description": "Short, direct, no softening.",
+      "negative": "Not rude for its own sake.",
+      "exemplar": "data/seed/narrative/_exemplars/voices/blunt.en.json"
+    },
+    "playful": {
+      "description": "Light, teasing, fond of wordplay.",
+      "negative": "Not mocking the player.",
+      "exemplar": "data/seed/narrative/_exemplars/voices/playful.en.json"
+    },
+    "grim": {
+      "description": "Spare and dark, expects the worst.",
+      "negative": "Not despairing; grim creatures still act.",
+      "exemplar": "data/seed/narrative/_exemplars/voices/grim.en.json"
+    },
+    "sly": {
+      "description": "Indirect, suggestive, leaves things unsaid.",
+      "negative": "Not lying by default.",
+      "exemplar": "data/seed/narrative/_exemplars/voices/sly.en.json"
+    },
+    "gentle": {
+      "description": "Warm, patient, careful with others.",
+      "negative": "Not weak; gentleness is not submission.",
+      "exemplar": "data/seed/narrative/_exemplars/voices/gentle.en.json"
+    },
+    "none": {
+      "description": "No register fits.",
+      "negative": "The identity draft is refused and re-asked."
+    }
+  }
+}

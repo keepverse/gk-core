@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/action/spec-action-instance-and-grant.md (A21); docs/architecture/lawn-combat-wire/spec-basic-attack-seed.md (T7)",
+    "note": "T59.1 (narrowed during BUILD, 2026-09-06): the ONE genuinely missing per-category number the corpus importer needs -- a default onCommit resource cost per ActionCategory, used only when a corpus brief itself carries no cost data (data/seed/actions/committed-round-*.json's own brief shape has none). Envelope TIMING (windup/recovery/timeCost/cooldown/class) needs NOTHING here -- RpgStore.BuildActionCatalog already derives all of that per-category via ActionTimingDerivation/data/tuning/action-timing.v1.json (battle-tempo, 2026-09-05), confirmed by reading RpgStore.ActionCatalog.cs before this file was authored. Writing windup/recovery/cooldown numbers here would have duplicated that already-shipped curve.",
+    "derivation": "UNMEASURED placeholders, shipped per this repo's own 'default now, re-tune later' precedent (action-corpus-ideal.md S36) -- not a validated balance decision. Ordered by rough category weight: Attack cheapest (the default/basic-attack-shaped path already carries most of the game's combat economy), Support/Status costed highest (the two categories with no accuracy-roll gate at all per A22, so their price is the only thing that paces them), Movement cheapest of the non-Attack set (short, frequent, low-payoff by design).",
+    "kindsNote": "T7 (basic-attack-seed, 2026-09-13) ADDS the 'kinds' block below -- a schema ADDITION, not a rebalance of the five existing 'categories' numbers, which are byte-for-byte unchanged. `ActionCategory` alone cannot express that a Basic (`act.attack`) costs `stamina` while an Innate (a species' signature move) costs `qi` even though both can share `Category = Attack` -- spec-basic-attack-seed.md 'Cost resolution must become Kind-aware'. `basic` mirrors the existing `attack` category placeholder (a basic swing is the cheapest, most frequent action in the game); `innate` is priced a little above it (a species' one signature move, still far under `support`/`status`). Both UNMEASURED, same as every category row above -- the real pass is `basic-attack-cost` (T12)'s job, not this one's.",
+    "rebalance": "Never hand-edit this file by feel alone. A new version bumps `version` and keeps this one on disk for revert."
+  },
+  "categories": {
+    "attack": { "resourceId": "qi", "baseAmountAtRung1": 20, "timing": "onCommit" },
+    "defense": { "resourceId": "qi", "baseAmountAtRung1": 30, "timing": "onCommit" },
+    "support": { "resourceId": "qi", "baseAmountAtRung1": 40, "timing": "onCommit" },
+    "movement": { "resourceId": "qi", "baseAmountAtRung1": 15, "timing": "onCommit" },
+    "status": { "resourceId": "qi", "baseAmountAtRung1": 35, "timing": "onCommit" }
+  },
+  "kinds": {
+    "basic": { "resourceId": "stamina", "baseAmountAtRung1": 20, "timing": "onCommit" },
+    "innate": { "resourceId": "qi", "baseAmountAtRung1": 25, "timing": "onCommit" }
+  }
+}

@@ -1,0 +1,900 @@
+{
+  "_meta": {
+    "owner": "docs/architecture/party-dungeon/spec-dungeon-registries.md",
+    "note": "Every value here is a STARTING SHAPE so the system runs, never a balance decision (D1.1 house rule). Edit only through python tools/tuning/publish.py dungeon <key>=<value>.",
+    "structural": [
+      "raid.modes.*.pack.{rows,cols} -- structural per-run limit, not a progression ceiling; the armoury is uncapped (ideal SS11.7 (2), caps register exemption)",
+      "preflight.sampleSeeds -- validator depth, never a balance lever"
+    ]
+  },
+  "schemaVersion": 1,
+  "version": 2,
+  "raid": {
+    "modes": {
+      "solo": {
+        "parties": 1,
+        "squadSlots": 5,
+        "walksDelta": 0,
+        "bossW": 4,
+        "pack": {
+          "rows": 4,
+          "cols": 10
+        }
+      },
+      "pair": {
+        "parties": 2,
+        "squadSlots": 5,
+        "walksDelta": 1,
+        "bossW": 6,
+        "bossShieldPerPartyMilli": 300,
+        "pack": {
+          "rows": 4,
+          "cols": 10
+        }
+      },
+      "quad": {
+        "parties": 4,
+        "squadSlots": 5,
+        "walksDelta": 2,
+        "bossW": 8,
+        "bossShieldPerPartyMilli": 300,
+        "pack": {
+          "rows": 4,
+          "cols": 10
+        }
+      }
+    }
+  },
+  "preflight": {
+    "sampleSeeds": 32
+  },
+  "bands": {
+    "dangerBand": {
+      "shallow": 2,
+      "mid": 4,
+      "deep": 6,
+      "abyssal": 8
+    },
+    "depth": {
+      "short": {
+        "rows": {
+          "min": 4,
+          "max": 4
+        }
+      },
+      "medium": {
+        "rows": {
+          "min": 7,
+          "max": 7
+        }
+      },
+      "long": {
+        "rows": {
+          "min": 11,
+          "max": 11
+        }
+      }
+    },
+    "width": {
+      "narrow": {
+        "cols": {
+          "min": 3,
+          "max": 4
+        }
+      },
+      "mid": {
+        "cols": {
+          "min": 5,
+          "max": 5
+        }
+      },
+      "wide": {
+        "cols": {
+          "min": 6,
+          "max": 7
+        }
+      }
+    },
+    "branchiness": {
+      "linear": {
+        "pathWalks": 3
+      },
+      "forked": {
+        "pathWalks": 4
+      },
+      "webbed": {
+        "pathWalks": 6
+      }
+    },
+    "gateDensity": {
+      "none": {
+        "perRoomMilli": 0
+      },
+      "sparse": {
+        "perRoomMilli": 80
+      },
+      "dense": {
+        "perRoomMilli": 200
+      }
+    },
+    "secretDensity": {
+      "none": {
+        "perRoomMilli": 0
+      },
+      "sparse": {
+        "perRoomMilli": 200
+      },
+      "dense": {
+        "perRoomMilli": 350
+      }
+    },
+    "oneWayDensity": {
+      "none": {
+        "perRoomMilli": 0
+      },
+      "sparse": {
+        "perRoomMilli": 100
+      },
+      "dense": {
+        "perRoomMilli": 250
+      }
+    },
+    "sightBand": {
+      "dim": {
+        "extraLanes": -1
+      },
+      "lit": {
+        "extraLanes": 0
+      },
+      "scouting": {
+        "extraLanes": 1
+      }
+    },
+    "hazardBand": {
+      "none": {
+        "hungerPerMille": 0
+      },
+      "light": {
+        "hungerPerMille": 40
+      },
+      "heavy": {
+        "hungerPerMille": 90
+      }
+    },
+    "hpBand": {
+      "low": {
+        "milli": 250
+      },
+      "half": {
+        "milli": 500
+      },
+      "high": {
+        "milli": 750
+      }
+    }
+  },
+  "sight": {
+    "lanes": 1,
+    "scoutLanes": 2
+  },
+  "graph": {
+    "fixedRows": {
+      "midCacheRowMilli": 500
+    },
+    "secretAppearMilli": 250,
+    "minDeadEnds": 1
+  },
+  "nodes": {
+    "fight": {
+      "weightMilli": 530,
+      "earliestRowMilli": 0,
+      "latestRowMilli": 1000
+    },
+    "elite": {
+      "weightMilli": 80,
+      "earliestRowMilli": 300,
+      "latestRowMilli": 1000
+    },
+    "cache": {
+      "weightMilli": 0,
+      "earliestRowMilli": 0,
+      "latestRowMilli": 1000
+    },
+    "curio": {
+      "weightMilli": 120,
+      "earliestRowMilli": 0,
+      "latestRowMilli": 1000
+    },
+    "wild": {
+      "weightMilli": 60,
+      "earliestRowMilli": 0,
+      "latestRowMilli": 1000
+    },
+    "shrine": {
+      "weightMilli": 40,
+      "earliestRowMilli": 0,
+      "latestRowMilli": 1000
+    },
+    "rest": {
+      "weightMilli": 120,
+      "earliestRowMilli": 300,
+      "latestRowMilli": 850
+    },
+    "merchant": {
+      "weightMilli": 50,
+      "earliestRowMilli": 200,
+      "latestRowMilli": 1000
+    },
+    "trap": {
+      "weightMilli": 220,
+      "earliestRowMilli": 0,
+      "latestRowMilli": 1000
+    },
+    "unknown": {
+      "weightMilli": 0,
+      "earliestRowMilli": 0,
+      "latestRowMilli": 1000,
+      "pity": {
+        "cache": {
+          "baseMilli": 20,
+          "stepMilli": 20
+        },
+        "merchant": {
+          "baseMilli": 30,
+          "stepMilli": 30
+        },
+        "fight": {
+          "baseMilli": 100,
+          "stepMilli": 100
+        }
+      }
+    },
+    "boss": {
+      "weightMilli": 0,
+      "earliestRowMilli": 0,
+      "latestRowMilli": 1000
+    }
+  },
+  "depth": {
+    "rowsPerBandStep": 2,
+    "bossBandDelta": 1
+  },
+  "attrition": {
+    "spirit": {
+      "perEliteMilli": 100,
+      "bossPresenceMilli": 200,
+      "retreatMilli": 150
+    },
+    "restHealMilli": 500,
+    "nerve": {
+      "stageThresholds": [
+        1,
+        3,
+        5
+      ],
+      "stackPerElite": 1,
+      "stackPerBoss": 2,
+      "stackPerRetreat": 1,
+      "stackPerCurio": 1,
+      "restRelief": 2
+    },
+    "revive": {
+      "hpMilli": 250
+    },
+    "persistAcrossDelves": [
+      "hunger"
+    ]
+  },
+  "rest": {
+    "healsPools": [
+      "hp",
+      "hunger",
+      "spirit"
+    ],
+    "activations": 4,
+    "ambushMilli": 330
+  },
+  "risk": {
+    "downedRecoveryDelves": 2,
+    "recoveryRitualSouls": {
+      "very-easy": 200,
+      "easy": 400,
+      "medium": 800,
+      "hard": 1600,
+      "very-hard": 3200,
+      "nightmare": 6400,
+      "hell": 12800,
+      "abyss": 25600,
+      "hopeless": 51200,
+      "impossible": 102400
+    }
+  },
+  "events": {
+    "noRepeatRooms": 3,
+    "offeredPerRoom": 1,
+    "climateAffinity": {
+      "matchMilli": 1000,
+      "noneMilli": 1000,
+      "offMilli": 500
+    }
+  },
+  "quests": {
+    "offeredAtEntry": 2,
+    "autopilotCompletionBand": {
+      "minMilli": 300,
+      "maxMilli": 900
+    },
+    "countBand": {
+      "loneMilli": 100,
+      "fewMilli": 250,
+      "severalMilli": 500,
+      "manyMilli": 900
+    },
+    "rewardBand": {
+      "modest": {
+        "floorRung": "sprout",
+        "ceilRung": "easy"
+      },
+      "fair": {
+        "floorRung": "medium",
+        "ceilRung": "hard"
+      },
+      "rich": {
+        "floorRung": "very-hard",
+        "ceilRung": "nightmare"
+      }
+    }
+  },
+  "wild": {
+    "outcome": {
+      "eager": {
+        "joinsMilli": 500,
+        "takesLeavesMilli": 300,
+        "fleesMilli": 100,
+        "attacksMilli": 100
+      },
+      "open": {
+        "joinsMilli": 300,
+        "takesLeavesMilli": 400,
+        "fleesMilli": 200,
+        "attacksMilli": 100
+      },
+      "wary": {
+        "joinsMilli": 120,
+        "takesLeavesMilli": 380,
+        "fleesMilli": 350,
+        "attacksMilli": 150
+      },
+      "hostile": {
+        "joinsMilli": 30,
+        "takesLeavesMilli": 170,
+        "fleesMilli": 200,
+        "attacksMilli": 600
+      }
+    },
+    "deltaBands": [
+      -40,
+      -15,
+      15,
+      40
+    ],
+    "deltaShiftRungs": [
+      -2,
+      -1,
+      0,
+      1,
+      2
+    ],
+    "tide": {
+      "enabled": false,
+      "shiftRungs": []
+    },
+    "offerPreference": {
+      "loyal": {
+        "souls": "accepts",
+        "spirit": "accepts",
+        "item": "accepts",
+        "creature": "scorns"
+      },
+      "stoic": {
+        "souls": "accepts",
+        "spirit": "scorns",
+        "item": "accepts",
+        "creature": "accepts"
+      },
+      "proud": {
+        "souls": "scorns",
+        "spirit": "accepts",
+        "item": "craves",
+        "creature": "accepts"
+      },
+      "calculating": {
+        "souls": "craves",
+        "spirit": "accepts",
+        "item": "accepts",
+        "creature": "accepts"
+      },
+      "feral": {
+        "souls": "accepts",
+        "spirit": "craves",
+        "item": "scorns",
+        "creature": "accepts"
+      }
+    },
+    "offer": {
+      "spiritPerSoulMilli": 2000,
+      "soulsMilliOfPullPrice": 1500
+    },
+    "provisionOverrideTag": "bait",
+    "talk": {
+      "maxSteps": 2,
+      "flatterMilli": 500
+    },
+    "autopilot": {
+      "rule": "fight"
+    },
+    "cageMilli": 150
+  },
+  "capture": {
+    "usableBelowMilli": 300,
+    "chanceMilli": {
+      "low": {
+        "far-below": 850,
+        "below": 700,
+        "even": 500,
+        "above": 300,
+        "far-above": 100
+      },
+      "half": {
+        "far-below": 600,
+        "below": 450,
+        "even": 300,
+        "above": 150,
+        "far-above": 50
+      },
+      "high": {
+        "far-below": 350,
+        "below": 250,
+        "even": 150,
+        "above": 60,
+        "far-above": 20
+      }
+    },
+    "statusBonusMilli": {
+      "lone": 0,
+      "few": 50,
+      "several": 100,
+      "many": 150
+    },
+    "sealTierShiftBands": [
+      0,
+      -1,
+      -2
+    ],
+    "failStepBands": 1
+  },
+  "altar": {
+    "bannerId": "standard",
+    "poolFromDomain": false
+  },
+  "merchant": {
+    "markupMilli": 1250,
+    "stockCount": 4
+  },
+  "objects": {
+    "breakMode": "either",
+    "breakStaminaMilli": 400,
+    "structureHpBand": "several"
+  },
+  "pack": {
+    "footprint": {
+      "role": {
+        "armament-primary": 3,
+        "armament-secondary": 2,
+        "core-guard": 4,
+        "ward-array": 3,
+        "mantle": 3,
+        "head-guard": 2,
+        "girdle": 2,
+        "footing": 2,
+        "manipulator": 2,
+        "sense": 1,
+        "infusion": 1,
+        "jewel-major": 1,
+        "jewel-minor-a": 1,
+        "jewel-minor-b": 1,
+        "retinue": 1
+      },
+      "massStep": {
+        "light": -1,
+        "medium-light": 0,
+        "medium": 0,
+        "medium-heavy": 1,
+        "heavy": 1
+      },
+      "consumableClass": {
+        "restore": 1,
+        "draught": 1,
+        "ward": 1,
+        "board": 2,
+        "revive": 1,
+        "utility": 1
+      }
+    },
+    "stack": {
+      "consumableClass": {
+        "restore": 6,
+        "draught": 3,
+        "ward": 3,
+        "board": 1,
+        "revive": 1,
+        "utility": 6
+      },
+      "materialClass": {
+        "shard": 20,
+        "substrate": 20,
+        "essence": 20,
+        "catalyst": 10
+      }
+    },
+    "provision": {
+      "baseCells": 16
+    },
+    "autopilot": {
+      "floorRule": "value-per-cell",
+      "swapMarginMilli": 250
+    },
+    "fillBand": {
+      "identity": {
+        "minMilli": 700,
+        "maxMilli": 1000
+      }
+    }
+  },
+  "loot": {
+    "rooms": {
+      "fight": {},
+      "elite": {
+        "rarityFloor": "none",
+        "affixChannel": "drop"
+      },
+      "cache": {},
+      "curio": {},
+      "wild": {},
+      "shrine": {},
+      "rest": {},
+      "merchant": {},
+      "trap": {},
+      "unknown": {},
+      "boss": {
+        "rarityFloor": "none",
+        "rarityShiftRungs": 2,
+        "affixChannel": "boss"
+      }
+    },
+    "bossGrantDistribution": "round-robin",
+    "extendSlotChanceMicro": 100
+  },
+  "difficulty": {
+    "rungs": {
+      "very-easy": {
+        "bandDelta": -2,
+        "eliteWeightMultMilli": 820,
+        "restWeightMultMilli": 1180,
+        "restHealMultMilli": 1180,
+        "hungerMultMilli": 820,
+        "spiritDrainMultMilli": 820,
+        "merchantMarkupMultMilli": 820,
+        "wildDispositionShiftRungs": 1,
+        "enemyCountDelta": {
+          "fight": -3,
+          "elite": 0
+        },
+        "bossRetinuePerPartyDelta": 0,
+        "bossWDelta": 0,
+        "provisionCellsDelta": 0,
+        "restEveryOtherRow": false,
+        "restRowsOnlyBeforeBoss": false,
+        "doubleBoss": false,
+        "eventSeverityTier": 1,
+        "eliteKitTier": 1,
+        "bossKitTier": 1,
+        "unknownPityStepMultMilli": {
+          "cache": 820,
+          "merchant": 820,
+          "fight": 820
+        },
+        "rarityFloor": "none",
+        "rarityShiftRungs": 0
+      },
+      "easy": {
+        "bandDelta": -1,
+        "eliteWeightMultMilli": 880,
+        "restWeightMultMilli": 1120,
+        "restHealMultMilli": 1120,
+        "hungerMultMilli": 880,
+        "spiritDrainMultMilli": 880,
+        "merchantMarkupMultMilli": 880,
+        "wildDispositionShiftRungs": 0,
+        "enemyCountDelta": {
+          "fight": -2,
+          "elite": 0
+        },
+        "bossRetinuePerPartyDelta": 0,
+        "bossWDelta": 0,
+        "provisionCellsDelta": 0,
+        "restEveryOtherRow": false,
+        "restRowsOnlyBeforeBoss": false,
+        "doubleBoss": false,
+        "eventSeverityTier": 1,
+        "eliteKitTier": 1,
+        "bossKitTier": 1,
+        "unknownPityStepMultMilli": {
+          "cache": 880,
+          "merchant": 880,
+          "fight": 880
+        },
+        "rarityFloor": "none",
+        "rarityShiftRungs": 0
+      },
+      "medium": {
+        "bandDelta": -1,
+        "eliteWeightMultMilli": 940,
+        "restWeightMultMilli": 1060,
+        "restHealMultMilli": 1060,
+        "hungerMultMilli": 940,
+        "spiritDrainMultMilli": 940,
+        "merchantMarkupMultMilli": 940,
+        "wildDispositionShiftRungs": 0,
+        "enemyCountDelta": {
+          "fight": -1,
+          "elite": 0
+        },
+        "bossRetinuePerPartyDelta": 0,
+        "bossWDelta": 0,
+        "provisionCellsDelta": 0,
+        "restEveryOtherRow": false,
+        "restRowsOnlyBeforeBoss": false,
+        "doubleBoss": false,
+        "eventSeverityTier": 1,
+        "eliteKitTier": 1,
+        "bossKitTier": 1,
+        "unknownPityStepMultMilli": {
+          "cache": 940,
+          "merchant": 940,
+          "fight": 940
+        },
+        "rarityFloor": "none",
+        "rarityShiftRungs": 0
+      },
+      "hard": {
+        "bandDelta": 0,
+        "eliteWeightMultMilli": 1000,
+        "restWeightMultMilli": 1000,
+        "restHealMultMilli": 1000,
+        "hungerMultMilli": 1000,
+        "spiritDrainMultMilli": 1000,
+        "merchantMarkupMultMilli": 1000,
+        "wildDispositionShiftRungs": 0,
+        "enemyCountDelta": {
+          "fight": 0,
+          "elite": 0
+        },
+        "bossRetinuePerPartyDelta": 0,
+        "bossWDelta": 0,
+        "provisionCellsDelta": 0,
+        "restEveryOtherRow": false,
+        "restRowsOnlyBeforeBoss": false,
+        "doubleBoss": false,
+        "eventSeverityTier": 2,
+        "eliteKitTier": 2,
+        "bossKitTier": 2,
+        "unknownPityStepMultMilli": {
+          "cache": 1000,
+          "merchant": 1000,
+          "fight": 1000
+        },
+        "rarityFloor": "none",
+        "rarityShiftRungs": 0
+      },
+      "very-hard": {
+        "bandDelta": 0,
+        "eliteWeightMultMilli": 1060,
+        "restWeightMultMilli": 940,
+        "restHealMultMilli": 940,
+        "hungerMultMilli": 1060,
+        "spiritDrainMultMilli": 1060,
+        "merchantMarkupMultMilli": 1060,
+        "wildDispositionShiftRungs": -1,
+        "enemyCountDelta": {
+          "fight": 1,
+          "elite": 0
+        },
+        "bossRetinuePerPartyDelta": 0,
+        "bossWDelta": 0,
+        "provisionCellsDelta": 0,
+        "restEveryOtherRow": false,
+        "restRowsOnlyBeforeBoss": false,
+        "doubleBoss": false,
+        "eventSeverityTier": 2,
+        "eliteKitTier": 2,
+        "bossKitTier": 2,
+        "unknownPityStepMultMilli": {
+          "cache": 1060,
+          "merchant": 1060,
+          "fight": 1060
+        },
+        "rarityFloor": "none",
+        "rarityShiftRungs": 1
+      },
+      "nightmare": {
+        "bandDelta": 1,
+        "eliteWeightMultMilli": 1120,
+        "restWeightMultMilli": 880,
+        "restHealMultMilli": 880,
+        "hungerMultMilli": 1120,
+        "spiritDrainMultMilli": 1120,
+        "merchantMarkupMultMilli": 1120,
+        "wildDispositionShiftRungs": -1,
+        "enemyCountDelta": {
+          "fight": 2,
+          "elite": 0
+        },
+        "bossRetinuePerPartyDelta": 1,
+        "bossWDelta": 0,
+        "provisionCellsDelta": 0,
+        "restEveryOtherRow": false,
+        "restRowsOnlyBeforeBoss": false,
+        "doubleBoss": false,
+        "eventSeverityTier": 2,
+        "eliteKitTier": 2,
+        "bossKitTier": 2,
+        "unknownPityStepMultMilli": {
+          "cache": 1120,
+          "merchant": 1120,
+          "fight": 1120
+        },
+        "rarityFloor": "none",
+        "rarityShiftRungs": 2
+      },
+      "hell": {
+        "bandDelta": 1,
+        "eliteWeightMultMilli": 1180,
+        "restWeightMultMilli": 820,
+        "restHealMultMilli": 820,
+        "hungerMultMilli": 1180,
+        "spiritDrainMultMilli": 1180,
+        "merchantMarkupMultMilli": 1180,
+        "wildDispositionShiftRungs": -1,
+        "enemyCountDelta": {
+          "fight": 3,
+          "elite": 1
+        },
+        "bossRetinuePerPartyDelta": 1,
+        "bossWDelta": 0,
+        "provisionCellsDelta": -1,
+        "restEveryOtherRow": false,
+        "restRowsOnlyBeforeBoss": false,
+        "doubleBoss": false,
+        "eventSeverityTier": 3,
+        "eliteKitTier": 3,
+        "bossKitTier": 3,
+        "unknownPityStepMultMilli": {
+          "cache": 1180,
+          "merchant": 1180,
+          "fight": 1180
+        },
+        "rarityFloor": "very-easy",
+        "rarityShiftRungs": 3
+      },
+      "abyss": {
+        "bandDelta": 2,
+        "eliteWeightMultMilli": 1240,
+        "restWeightMultMilli": 760,
+        "restHealMultMilli": 760,
+        "hungerMultMilli": 1240,
+        "spiritDrainMultMilli": 1240,
+        "merchantMarkupMultMilli": 1240,
+        "wildDispositionShiftRungs": -2,
+        "enemyCountDelta": {
+          "fight": 4,
+          "elite": 1
+        },
+        "bossRetinuePerPartyDelta": 1,
+        "bossWDelta": 2,
+        "provisionCellsDelta": -2,
+        "restEveryOtherRow": false,
+        "restRowsOnlyBeforeBoss": false,
+        "doubleBoss": false,
+        "eventSeverityTier": 3,
+        "eliteKitTier": 3,
+        "bossKitTier": 3,
+        "unknownPityStepMultMilli": {
+          "cache": 1240,
+          "merchant": 1240,
+          "fight": 1240
+        },
+        "rarityFloor": "easy",
+        "rarityShiftRungs": 4
+      },
+      "hopeless": {
+        "bandDelta": 2,
+        "eliteWeightMultMilli": 1300,
+        "restWeightMultMilli": 700,
+        "restHealMultMilli": 700,
+        "hungerMultMilli": 1300,
+        "spiritDrainMultMilli": 1300,
+        "merchantMarkupMultMilli": 1300,
+        "wildDispositionShiftRungs": -2,
+        "enemyCountDelta": {
+          "fight": 5,
+          "elite": 1
+        },
+        "bossRetinuePerPartyDelta": 1,
+        "bossWDelta": 2,
+        "provisionCellsDelta": -3,
+        "restEveryOtherRow": true,
+        "restRowsOnlyBeforeBoss": false,
+        "doubleBoss": false,
+        "eventSeverityTier": 3,
+        "eliteKitTier": 3,
+        "bossKitTier": 3,
+        "unknownPityStepMultMilli": {
+          "cache": 1300,
+          "merchant": 1300,
+          "fight": 1300
+        },
+        "rarityFloor": "medium",
+        "rarityShiftRungs": 5
+      },
+      "impossible": {
+        "bandDelta": 3,
+        "eliteWeightMultMilli": 1360,
+        "restWeightMultMilli": 640,
+        "restHealMultMilli": 640,
+        "hungerMultMilli": 1360,
+        "spiritDrainMultMilli": 1360,
+        "merchantMarkupMultMilli": 1360,
+        "wildDispositionShiftRungs": -2,
+        "enemyCountDelta": {
+          "fight": 6,
+          "elite": 1
+        },
+        "bossRetinuePerPartyDelta": 1,
+        "bossWDelta": 2,
+        "provisionCellsDelta": -4,
+        "restEveryOtherRow": true,
+        "restRowsOnlyBeforeBoss": true,
+        "doubleBoss": true,
+        "eventSeverityTier": 3,
+        "eliteKitTier": 3,
+        "bossKitTier": 3,
+        "unknownPityStepMultMilli": {
+          "cache": 1360,
+          "merchant": 1360,
+          "fight": 1360
+        },
+        "rarityFloor": "hard",
+        "rarityShiftRungs": 6
+      }
+    },
+    "tail": {
+      "enabled": true,
+      "startsAfterRung": "impossible",
+      "bandStepPerPlus": 1,
+      "labelFormat": "abyss +{n}",
+      "rulesFrozenAtRung": "impossible"
+    },
+    "minOfferedBand": 1
+  },
+  "domain": {
+    "maxRungWithoutOath": "abyss",
+    "permadeathFromRung": "very-hard",
+    "onceEntry": {
+      "bandDelta": 7,
+      "bossRarityFloor": "hopeless",
+      "sealOnWipe": true,
+      "failKeepsBossLoot": true
+    }
+  }
+}

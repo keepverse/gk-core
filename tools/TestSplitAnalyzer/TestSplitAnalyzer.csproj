@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FusionRpg.Tools.TestSplitAnalyzer</RootNamespace>
+    <AssemblyName>TestSplitAnalyzer</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Roslyn COMPILER API only (Microsoft.CodeAnalysis.CSharp) - no Workspaces/MSBuildWorkspace,
+         so this needs no Microsoft.Build.Locator and no dependency on the installed MSBuild's
+         version (core-split-analyzer Design). Approved by the owner (R26) for this tool project
+         only - FileMove stays text-only and dependency-free by design; this job needs a semantic
+         model FileMove was never meant to carry (SOLID "O": a separate tool, not FileMove widened). -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+    <InternalsVisibleTo Include="FusionRpg.TestSplitAnalyzer.Tests" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,2164 @@
+{
+ "schemaVersion": 1,
+ "version": 1,
+ "resolverRevision": 1,
+ "tuningRevision": 1,
+ "sourceRef": "item/spec-requirement-profiles.md (module 23, pulled forward as species-gear-chain T35/T36). Matrix rule, stated once: base kind weights per power band (low never sustains: sustained/jackpot 0 \u2014 maintenance zero weight below mid, and the rarity tilt is forbidden from creating upkeep where the base gives it zero, folding that share back into level instead), minus 10 none per rung step redistributed down the ladder (higher rarities trial harder), plus a 30-point focus tilt taken from none (guarded: a zero base stays zero, so low never sustains through the tilt either). Threshold and upkeep bands keyed by power band ONLY \u2014 rarity selects the matrix row and never touches a resolved value. Cutoffs and band values are starting points for a balance pass, not tuned numbers.",
+ "powerBands": [
+  {
+   "id": "low",
+   "minP": 0,
+   "maxP": 9999
+  },
+  {
+   "id": "mid",
+   "minP": 10000,
+   "maxP": 999999
+  },
+  {
+   "id": "high",
+   "minP": 1000000,
+   "maxP": 9223372036854775807
+  }
+ ],
+ "focusBands": [
+  "offense",
+  "survivability",
+  "control",
+  "utility",
+  "economy"
+ ],
+ "profileMatrix": [
+  {
+   "rarity": "chaff",
+   "powerBand": "low",
+   "focus": "offense",
+   "weights": {
+    "none": 570,
+    "level": 200,
+    "fixed": 130,
+    "ratio": 100,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "low",
+   "focus": "survivability",
+   "weights": {
+    "none": 570,
+    "level": 230,
+    "fixed": 100,
+    "ratio": 100,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "low",
+   "focus": "control",
+   "weights": {
+    "none": 570,
+    "level": 200,
+    "fixed": 100,
+    "ratio": 130,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "low",
+   "focus": "utility",
+   "weights": {
+    "none": 600,
+    "level": 200,
+    "fixed": 100,
+    "ratio": 100,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "low",
+   "focus": "economy",
+   "weights": {
+    "none": 600,
+    "level": 200,
+    "fixed": 100,
+    "ratio": 100,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "mid",
+   "focus": "offense",
+   "weights": {
+    "none": 270,
+    "level": 250,
+    "fixed": 230,
+    "ratio": 150,
+    "sustained": 70,
+    "jackpot": 30
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "mid",
+   "focus": "survivability",
+   "weights": {
+    "none": 270,
+    "level": 280,
+    "fixed": 200,
+    "ratio": 150,
+    "sustained": 70,
+    "jackpot": 30
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "mid",
+   "focus": "control",
+   "weights": {
+    "none": 270,
+    "level": 250,
+    "fixed": 200,
+    "ratio": 180,
+    "sustained": 70,
+    "jackpot": 30
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "mid",
+   "focus": "utility",
+   "weights": {
+    "none": 270,
+    "level": 250,
+    "fixed": 200,
+    "ratio": 150,
+    "sustained": 100,
+    "jackpot": 30
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "mid",
+   "focus": "economy",
+   "weights": {
+    "none": 270,
+    "level": 250,
+    "fixed": 200,
+    "ratio": 150,
+    "sustained": 70,
+    "jackpot": 60
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "high",
+   "focus": "offense",
+   "weights": {
+    "none": 120,
+    "level": 200,
+    "fixed": 230,
+    "ratio": 200,
+    "sustained": 150,
+    "jackpot": 100
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "high",
+   "focus": "survivability",
+   "weights": {
+    "none": 120,
+    "level": 230,
+    "fixed": 200,
+    "ratio": 200,
+    "sustained": 150,
+    "jackpot": 100
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "high",
+   "focus": "control",
+   "weights": {
+    "none": 120,
+    "level": 200,
+    "fixed": 200,
+    "ratio": 230,
+    "sustained": 150,
+    "jackpot": 100
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "high",
+   "focus": "utility",
+   "weights": {
+    "none": 120,
+    "level": 200,
+    "fixed": 200,
+    "ratio": 200,
+    "sustained": 180,
+    "jackpot": 100
+   }
+  },
+  {
+   "rarity": "chaff",
+   "powerBand": "high",
+   "focus": "economy",
+   "weights": {
+    "none": 120,
+    "level": 200,
+    "fixed": 200,
+    "ratio": 200,
+    "sustained": 150,
+    "jackpot": 130
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "low",
+   "focus": "offense",
+   "weights": {
+    "none": 560,
+    "level": 206,
+    "fixed": 132,
+    "ratio": 102,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "low",
+   "focus": "survivability",
+   "weights": {
+    "none": 560,
+    "level": 236,
+    "fixed": 102,
+    "ratio": 102,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "low",
+   "focus": "control",
+   "weights": {
+    "none": 560,
+    "level": 206,
+    "fixed": 102,
+    "ratio": 132,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "low",
+   "focus": "utility",
+   "weights": {
+    "none": 590,
+    "level": 206,
+    "fixed": 102,
+    "ratio": 102,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "low",
+   "focus": "economy",
+   "weights": {
+    "none": 590,
+    "level": 206,
+    "fixed": 102,
+    "ratio": 102,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "mid",
+   "focus": "offense",
+   "weights": {
+    "none": 260,
+    "level": 254,
+    "fixed": 232,
+    "ratio": 152,
+    "sustained": 71,
+    "jackpot": 31
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "mid",
+   "focus": "survivability",
+   "weights": {
+    "none": 260,
+    "level": 284,
+    "fixed": 202,
+    "ratio": 152,
+    "sustained": 71,
+    "jackpot": 31
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "mid",
+   "focus": "control",
+   "weights": {
+    "none": 260,
+    "level": 254,
+    "fixed": 202,
+    "ratio": 182,
+    "sustained": 71,
+    "jackpot": 31
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "mid",
+   "focus": "utility",
+   "weights": {
+    "none": 260,
+    "level": 254,
+    "fixed": 202,
+    "ratio": 152,
+    "sustained": 101,
+    "jackpot": 31
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "mid",
+   "focus": "economy",
+   "weights": {
+    "none": 260,
+    "level": 254,
+    "fixed": 202,
+    "ratio": 152,
+    "sustained": 71,
+    "jackpot": 61
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "high",
+   "focus": "offense",
+   "weights": {
+    "none": 110,
+    "level": 204,
+    "fixed": 232,
+    "ratio": 202,
+    "sustained": 151,
+    "jackpot": 101
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "high",
+   "focus": "survivability",
+   "weights": {
+    "none": 110,
+    "level": 234,
+    "fixed": 202,
+    "ratio": 202,
+    "sustained": 151,
+    "jackpot": 101
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "high",
+   "focus": "control",
+   "weights": {
+    "none": 110,
+    "level": 204,
+    "fixed": 202,
+    "ratio": 232,
+    "sustained": 151,
+    "jackpot": 101
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "high",
+   "focus": "utility",
+   "weights": {
+    "none": 110,
+    "level": 204,
+    "fixed": 202,
+    "ratio": 202,
+    "sustained": 181,
+    "jackpot": 101
+   }
+  },
+  {
+   "rarity": "sprout",
+   "powerBand": "high",
+   "focus": "economy",
+   "weights": {
+    "none": 110,
+    "level": 204,
+    "fixed": 202,
+    "ratio": 202,
+    "sustained": 151,
+    "jackpot": 131
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "low",
+   "focus": "offense",
+   "weights": {
+    "none": 550,
+    "level": 212,
+    "fixed": 134,
+    "ratio": 104,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "low",
+   "focus": "survivability",
+   "weights": {
+    "none": 550,
+    "level": 242,
+    "fixed": 104,
+    "ratio": 104,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "low",
+   "focus": "control",
+   "weights": {
+    "none": 550,
+    "level": 212,
+    "fixed": 104,
+    "ratio": 134,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "low",
+   "focus": "utility",
+   "weights": {
+    "none": 580,
+    "level": 212,
+    "fixed": 104,
+    "ratio": 104,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "low",
+   "focus": "economy",
+   "weights": {
+    "none": 580,
+    "level": 212,
+    "fixed": 104,
+    "ratio": 104,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "mid",
+   "focus": "offense",
+   "weights": {
+    "none": 250,
+    "level": 258,
+    "fixed": 234,
+    "ratio": 154,
+    "sustained": 72,
+    "jackpot": 32
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "mid",
+   "focus": "survivability",
+   "weights": {
+    "none": 250,
+    "level": 288,
+    "fixed": 204,
+    "ratio": 154,
+    "sustained": 72,
+    "jackpot": 32
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "mid",
+   "focus": "control",
+   "weights": {
+    "none": 250,
+    "level": 258,
+    "fixed": 204,
+    "ratio": 184,
+    "sustained": 72,
+    "jackpot": 32
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "mid",
+   "focus": "utility",
+   "weights": {
+    "none": 250,
+    "level": 258,
+    "fixed": 204,
+    "ratio": 154,
+    "sustained": 102,
+    "jackpot": 32
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "mid",
+   "focus": "economy",
+   "weights": {
+    "none": 250,
+    "level": 258,
+    "fixed": 204,
+    "ratio": 154,
+    "sustained": 72,
+    "jackpot": 62
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "high",
+   "focus": "offense",
+   "weights": {
+    "none": 100,
+    "level": 208,
+    "fixed": 234,
+    "ratio": 204,
+    "sustained": 152,
+    "jackpot": 102
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "high",
+   "focus": "survivability",
+   "weights": {
+    "none": 100,
+    "level": 238,
+    "fixed": 204,
+    "ratio": 204,
+    "sustained": 152,
+    "jackpot": 102
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "high",
+   "focus": "control",
+   "weights": {
+    "none": 100,
+    "level": 208,
+    "fixed": 204,
+    "ratio": 234,
+    "sustained": 152,
+    "jackpot": 102
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "high",
+   "focus": "utility",
+   "weights": {
+    "none": 100,
+    "level": 208,
+    "fixed": 204,
+    "ratio": 204,
+    "sustained": 182,
+    "jackpot": 102
+   }
+  },
+  {
+   "rarity": "grafted",
+   "powerBand": "high",
+   "focus": "economy",
+   "weights": {
+    "none": 100,
+    "level": 208,
+    "fixed": 204,
+    "ratio": 204,
+    "sustained": 152,
+    "jackpot": 132
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "low",
+   "focus": "offense",
+   "weights": {
+    "none": 540,
+    "level": 218,
+    "fixed": 136,
+    "ratio": 106,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "low",
+   "focus": "survivability",
+   "weights": {
+    "none": 540,
+    "level": 248,
+    "fixed": 106,
+    "ratio": 106,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "low",
+   "focus": "control",
+   "weights": {
+    "none": 540,
+    "level": 218,
+    "fixed": 106,
+    "ratio": 136,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "low",
+   "focus": "utility",
+   "weights": {
+    "none": 570,
+    "level": 218,
+    "fixed": 106,
+    "ratio": 106,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "low",
+   "focus": "economy",
+   "weights": {
+    "none": 570,
+    "level": 218,
+    "fixed": 106,
+    "ratio": 106,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "mid",
+   "focus": "offense",
+   "weights": {
+    "none": 240,
+    "level": 262,
+    "fixed": 236,
+    "ratio": 156,
+    "sustained": 73,
+    "jackpot": 33
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "mid",
+   "focus": "survivability",
+   "weights": {
+    "none": 240,
+    "level": 292,
+    "fixed": 206,
+    "ratio": 156,
+    "sustained": 73,
+    "jackpot": 33
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "mid",
+   "focus": "control",
+   "weights": {
+    "none": 240,
+    "level": 262,
+    "fixed": 206,
+    "ratio": 186,
+    "sustained": 73,
+    "jackpot": 33
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "mid",
+   "focus": "utility",
+   "weights": {
+    "none": 240,
+    "level": 262,
+    "fixed": 206,
+    "ratio": 156,
+    "sustained": 103,
+    "jackpot": 33
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "mid",
+   "focus": "economy",
+   "weights": {
+    "none": 240,
+    "level": 262,
+    "fixed": 206,
+    "ratio": 156,
+    "sustained": 73,
+    "jackpot": 63
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "high",
+   "focus": "offense",
+   "weights": {
+    "none": 90,
+    "level": 212,
+    "fixed": 236,
+    "ratio": 206,
+    "sustained": 153,
+    "jackpot": 103
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "high",
+   "focus": "survivability",
+   "weights": {
+    "none": 90,
+    "level": 242,
+    "fixed": 206,
+    "ratio": 206,
+    "sustained": 153,
+    "jackpot": 103
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "high",
+   "focus": "control",
+   "weights": {
+    "none": 90,
+    "level": 212,
+    "fixed": 206,
+    "ratio": 236,
+    "sustained": 153,
+    "jackpot": 103
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "high",
+   "focus": "utility",
+   "weights": {
+    "none": 90,
+    "level": 212,
+    "fixed": 206,
+    "ratio": 206,
+    "sustained": 183,
+    "jackpot": 103
+   }
+  },
+  {
+   "rarity": "cultivated",
+   "powerBand": "high",
+   "focus": "economy",
+   "weights": {
+    "none": 90,
+    "level": 212,
+    "fixed": 206,
+    "ratio": 206,
+    "sustained": 153,
+    "jackpot": 133
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "low",
+   "focus": "offense",
+   "weights": {
+    "none": 530,
+    "level": 224,
+    "fixed": 138,
+    "ratio": 108,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "low",
+   "focus": "survivability",
+   "weights": {
+    "none": 530,
+    "level": 254,
+    "fixed": 108,
+    "ratio": 108,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "low",
+   "focus": "control",
+   "weights": {
+    "none": 530,
+    "level": 224,
+    "fixed": 108,
+    "ratio": 138,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "low",
+   "focus": "utility",
+   "weights": {
+    "none": 560,
+    "level": 224,
+    "fixed": 108,
+    "ratio": 108,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "low",
+   "focus": "economy",
+   "weights": {
+    "none": 560,
+    "level": 224,
+    "fixed": 108,
+    "ratio": 108,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "mid",
+   "focus": "offense",
+   "weights": {
+    "none": 230,
+    "level": 266,
+    "fixed": 238,
+    "ratio": 158,
+    "sustained": 74,
+    "jackpot": 34
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "mid",
+   "focus": "survivability",
+   "weights": {
+    "none": 230,
+    "level": 296,
+    "fixed": 208,
+    "ratio": 158,
+    "sustained": 74,
+    "jackpot": 34
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "mid",
+   "focus": "control",
+   "weights": {
+    "none": 230,
+    "level": 266,
+    "fixed": 208,
+    "ratio": 188,
+    "sustained": 74,
+    "jackpot": 34
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "mid",
+   "focus": "utility",
+   "weights": {
+    "none": 230,
+    "level": 266,
+    "fixed": 208,
+    "ratio": 158,
+    "sustained": 104,
+    "jackpot": 34
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "mid",
+   "focus": "economy",
+   "weights": {
+    "none": 230,
+    "level": 266,
+    "fixed": 208,
+    "ratio": 158,
+    "sustained": 74,
+    "jackpot": 64
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "high",
+   "focus": "offense",
+   "weights": {
+    "none": 80,
+    "level": 216,
+    "fixed": 238,
+    "ratio": 208,
+    "sustained": 154,
+    "jackpot": 104
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "high",
+   "focus": "survivability",
+   "weights": {
+    "none": 80,
+    "level": 246,
+    "fixed": 208,
+    "ratio": 208,
+    "sustained": 154,
+    "jackpot": 104
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "high",
+   "focus": "control",
+   "weights": {
+    "none": 80,
+    "level": 216,
+    "fixed": 208,
+    "ratio": 238,
+    "sustained": 154,
+    "jackpot": 104
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "high",
+   "focus": "utility",
+   "weights": {
+    "none": 80,
+    "level": 216,
+    "fixed": 208,
+    "ratio": 208,
+    "sustained": 184,
+    "jackpot": 104
+   }
+  },
+  {
+   "rarity": "fused",
+   "powerBand": "high",
+   "focus": "economy",
+   "weights": {
+    "none": 80,
+    "level": 216,
+    "fixed": 208,
+    "ratio": 208,
+    "sustained": 154,
+    "jackpot": 134
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "low",
+   "focus": "offense",
+   "weights": {
+    "none": 520,
+    "level": 230,
+    "fixed": 140,
+    "ratio": 110,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "low",
+   "focus": "survivability",
+   "weights": {
+    "none": 520,
+    "level": 260,
+    "fixed": 110,
+    "ratio": 110,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "low",
+   "focus": "control",
+   "weights": {
+    "none": 520,
+    "level": 230,
+    "fixed": 110,
+    "ratio": 140,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "low",
+   "focus": "utility",
+   "weights": {
+    "none": 550,
+    "level": 230,
+    "fixed": 110,
+    "ratio": 110,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "low",
+   "focus": "economy",
+   "weights": {
+    "none": 550,
+    "level": 230,
+    "fixed": 110,
+    "ratio": 110,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "mid",
+   "focus": "offense",
+   "weights": {
+    "none": 220,
+    "level": 270,
+    "fixed": 240,
+    "ratio": 160,
+    "sustained": 75,
+    "jackpot": 35
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "mid",
+   "focus": "survivability",
+   "weights": {
+    "none": 220,
+    "level": 300,
+    "fixed": 210,
+    "ratio": 160,
+    "sustained": 75,
+    "jackpot": 35
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "mid",
+   "focus": "control",
+   "weights": {
+    "none": 220,
+    "level": 270,
+    "fixed": 210,
+    "ratio": 190,
+    "sustained": 75,
+    "jackpot": 35
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "mid",
+   "focus": "utility",
+   "weights": {
+    "none": 220,
+    "level": 270,
+    "fixed": 210,
+    "ratio": 160,
+    "sustained": 105,
+    "jackpot": 35
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "mid",
+   "focus": "economy",
+   "weights": {
+    "none": 220,
+    "level": 270,
+    "fixed": 210,
+    "ratio": 160,
+    "sustained": 75,
+    "jackpot": 65
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "high",
+   "focus": "offense",
+   "weights": {
+    "none": 70,
+    "level": 220,
+    "fixed": 240,
+    "ratio": 210,
+    "sustained": 155,
+    "jackpot": 105
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "high",
+   "focus": "survivability",
+   "weights": {
+    "none": 70,
+    "level": 250,
+    "fixed": 210,
+    "ratio": 210,
+    "sustained": 155,
+    "jackpot": 105
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "high",
+   "focus": "control",
+   "weights": {
+    "none": 70,
+    "level": 220,
+    "fixed": 210,
+    "ratio": 240,
+    "sustained": 155,
+    "jackpot": 105
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "high",
+   "focus": "utility",
+   "weights": {
+    "none": 70,
+    "level": 220,
+    "fixed": 210,
+    "ratio": 210,
+    "sustained": 185,
+    "jackpot": 105
+   }
+  },
+  {
+   "rarity": "chimeric",
+   "powerBand": "high",
+   "focus": "economy",
+   "weights": {
+    "none": 70,
+    "level": 220,
+    "fixed": 210,
+    "ratio": 210,
+    "sustained": 155,
+    "jackpot": 135
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "low",
+   "focus": "offense",
+   "weights": {
+    "none": 510,
+    "level": 236,
+    "fixed": 142,
+    "ratio": 112,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "low",
+   "focus": "survivability",
+   "weights": {
+    "none": 510,
+    "level": 266,
+    "fixed": 112,
+    "ratio": 112,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "low",
+   "focus": "control",
+   "weights": {
+    "none": 510,
+    "level": 236,
+    "fixed": 112,
+    "ratio": 142,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "low",
+   "focus": "utility",
+   "weights": {
+    "none": 540,
+    "level": 236,
+    "fixed": 112,
+    "ratio": 112,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "low",
+   "focus": "economy",
+   "weights": {
+    "none": 540,
+    "level": 236,
+    "fixed": 112,
+    "ratio": 112,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "mid",
+   "focus": "offense",
+   "weights": {
+    "none": 210,
+    "level": 274,
+    "fixed": 242,
+    "ratio": 162,
+    "sustained": 76,
+    "jackpot": 36
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "mid",
+   "focus": "survivability",
+   "weights": {
+    "none": 210,
+    "level": 304,
+    "fixed": 212,
+    "ratio": 162,
+    "sustained": 76,
+    "jackpot": 36
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "mid",
+   "focus": "control",
+   "weights": {
+    "none": 210,
+    "level": 274,
+    "fixed": 212,
+    "ratio": 192,
+    "sustained": 76,
+    "jackpot": 36
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "mid",
+   "focus": "utility",
+   "weights": {
+    "none": 210,
+    "level": 274,
+    "fixed": 212,
+    "ratio": 162,
+    "sustained": 106,
+    "jackpot": 36
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "mid",
+   "focus": "economy",
+   "weights": {
+    "none": 210,
+    "level": 274,
+    "fixed": 212,
+    "ratio": 162,
+    "sustained": 76,
+    "jackpot": 66
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "high",
+   "focus": "offense",
+   "weights": {
+    "none": 60,
+    "level": 224,
+    "fixed": 242,
+    "ratio": 212,
+    "sustained": 156,
+    "jackpot": 106
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "high",
+   "focus": "survivability",
+   "weights": {
+    "none": 60,
+    "level": 254,
+    "fixed": 212,
+    "ratio": 212,
+    "sustained": 156,
+    "jackpot": 106
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "high",
+   "focus": "control",
+   "weights": {
+    "none": 60,
+    "level": 224,
+    "fixed": 212,
+    "ratio": 242,
+    "sustained": 156,
+    "jackpot": 106
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "high",
+   "focus": "utility",
+   "weights": {
+    "none": 60,
+    "level": 224,
+    "fixed": 212,
+    "ratio": 212,
+    "sustained": 186,
+    "jackpot": 106
+   }
+  },
+  {
+   "rarity": "heirloom",
+   "powerBand": "high",
+   "focus": "economy",
+   "weights": {
+    "none": 60,
+    "level": 224,
+    "fixed": 212,
+    "ratio": 212,
+    "sustained": 156,
+    "jackpot": 136
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "low",
+   "focus": "offense",
+   "weights": {
+    "none": 500,
+    "level": 242,
+    "fixed": 144,
+    "ratio": 114,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "low",
+   "focus": "survivability",
+   "weights": {
+    "none": 500,
+    "level": 272,
+    "fixed": 114,
+    "ratio": 114,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "low",
+   "focus": "control",
+   "weights": {
+    "none": 500,
+    "level": 242,
+    "fixed": 114,
+    "ratio": 144,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "low",
+   "focus": "utility",
+   "weights": {
+    "none": 530,
+    "level": 242,
+    "fixed": 114,
+    "ratio": 114,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "low",
+   "focus": "economy",
+   "weights": {
+    "none": 530,
+    "level": 242,
+    "fixed": 114,
+    "ratio": 114,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "mid",
+   "focus": "offense",
+   "weights": {
+    "none": 200,
+    "level": 278,
+    "fixed": 244,
+    "ratio": 164,
+    "sustained": 77,
+    "jackpot": 37
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "mid",
+   "focus": "survivability",
+   "weights": {
+    "none": 200,
+    "level": 308,
+    "fixed": 214,
+    "ratio": 164,
+    "sustained": 77,
+    "jackpot": 37
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "mid",
+   "focus": "control",
+   "weights": {
+    "none": 200,
+    "level": 278,
+    "fixed": 214,
+    "ratio": 194,
+    "sustained": 77,
+    "jackpot": 37
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "mid",
+   "focus": "utility",
+   "weights": {
+    "none": 200,
+    "level": 278,
+    "fixed": 214,
+    "ratio": 164,
+    "sustained": 107,
+    "jackpot": 37
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "mid",
+   "focus": "economy",
+   "weights": {
+    "none": 200,
+    "level": 278,
+    "fixed": 214,
+    "ratio": 164,
+    "sustained": 77,
+    "jackpot": 67
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "high",
+   "focus": "offense",
+   "weights": {
+    "none": 50,
+    "level": 228,
+    "fixed": 244,
+    "ratio": 214,
+    "sustained": 157,
+    "jackpot": 107
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "high",
+   "focus": "survivability",
+   "weights": {
+    "none": 50,
+    "level": 258,
+    "fixed": 214,
+    "ratio": 214,
+    "sustained": 157,
+    "jackpot": 107
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "high",
+   "focus": "control",
+   "weights": {
+    "none": 50,
+    "level": 228,
+    "fixed": 214,
+    "ratio": 244,
+    "sustained": 157,
+    "jackpot": 107
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "high",
+   "focus": "utility",
+   "weights": {
+    "none": 50,
+    "level": 228,
+    "fixed": 214,
+    "ratio": 214,
+    "sustained": 187,
+    "jackpot": 107
+   }
+  },
+  {
+   "rarity": "firstseed",
+   "powerBand": "high",
+   "focus": "economy",
+   "weights": {
+    "none": 50,
+    "level": 228,
+    "fixed": 214,
+    "ratio": 214,
+    "sustained": 157,
+    "jackpot": 137
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "low",
+   "focus": "offense",
+   "weights": {
+    "none": 490,
+    "level": 248,
+    "fixed": 146,
+    "ratio": 116,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "low",
+   "focus": "survivability",
+   "weights": {
+    "none": 490,
+    "level": 278,
+    "fixed": 116,
+    "ratio": 116,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "low",
+   "focus": "control",
+   "weights": {
+    "none": 490,
+    "level": 248,
+    "fixed": 116,
+    "ratio": 146,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "low",
+   "focus": "utility",
+   "weights": {
+    "none": 520,
+    "level": 248,
+    "fixed": 116,
+    "ratio": 116,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "low",
+   "focus": "economy",
+   "weights": {
+    "none": 520,
+    "level": 248,
+    "fixed": 116,
+    "ratio": 116,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "mid",
+   "focus": "offense",
+   "weights": {
+    "none": 190,
+    "level": 282,
+    "fixed": 246,
+    "ratio": 166,
+    "sustained": 78,
+    "jackpot": 38
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "mid",
+   "focus": "survivability",
+   "weights": {
+    "none": 190,
+    "level": 312,
+    "fixed": 216,
+    "ratio": 166,
+    "sustained": 78,
+    "jackpot": 38
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "mid",
+   "focus": "control",
+   "weights": {
+    "none": 190,
+    "level": 282,
+    "fixed": 216,
+    "ratio": 196,
+    "sustained": 78,
+    "jackpot": 38
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "mid",
+   "focus": "utility",
+   "weights": {
+    "none": 190,
+    "level": 282,
+    "fixed": 216,
+    "ratio": 166,
+    "sustained": 108,
+    "jackpot": 38
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "mid",
+   "focus": "economy",
+   "weights": {
+    "none": 190,
+    "level": 282,
+    "fixed": 216,
+    "ratio": 166,
+    "sustained": 78,
+    "jackpot": 68
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "high",
+   "focus": "offense",
+   "weights": {
+    "none": 40,
+    "level": 232,
+    "fixed": 246,
+    "ratio": 216,
+    "sustained": 158,
+    "jackpot": 108
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "high",
+   "focus": "survivability",
+   "weights": {
+    "none": 40,
+    "level": 262,
+    "fixed": 216,
+    "ratio": 216,
+    "sustained": 158,
+    "jackpot": 108
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "high",
+   "focus": "control",
+   "weights": {
+    "none": 40,
+    "level": 232,
+    "fixed": 216,
+    "ratio": 246,
+    "sustained": 158,
+    "jackpot": 108
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "high",
+   "focus": "utility",
+   "weights": {
+    "none": 40,
+    "level": 232,
+    "fixed": 216,
+    "ratio": 216,
+    "sustained": 188,
+    "jackpot": 108
+   }
+  },
+  {
+   "rarity": "sunwoven",
+   "powerBand": "high",
+   "focus": "economy",
+   "weights": {
+    "none": 40,
+    "level": 232,
+    "fixed": 216,
+    "ratio": 216,
+    "sustained": 158,
+    "jackpot": 138
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "low",
+   "focus": "offense",
+   "weights": {
+    "none": 480,
+    "level": 254,
+    "fixed": 148,
+    "ratio": 118,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "low",
+   "focus": "survivability",
+   "weights": {
+    "none": 480,
+    "level": 284,
+    "fixed": 118,
+    "ratio": 118,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "low",
+   "focus": "control",
+   "weights": {
+    "none": 480,
+    "level": 254,
+    "fixed": 118,
+    "ratio": 148,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "low",
+   "focus": "utility",
+   "weights": {
+    "none": 510,
+    "level": 254,
+    "fixed": 118,
+    "ratio": 118,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "low",
+   "focus": "economy",
+   "weights": {
+    "none": 510,
+    "level": 254,
+    "fixed": 118,
+    "ratio": 118,
+    "sustained": 0,
+    "jackpot": 0
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "mid",
+   "focus": "offense",
+   "weights": {
+    "none": 180,
+    "level": 286,
+    "fixed": 248,
+    "ratio": 168,
+    "sustained": 79,
+    "jackpot": 39
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "mid",
+   "focus": "survivability",
+   "weights": {
+    "none": 180,
+    "level": 316,
+    "fixed": 218,
+    "ratio": 168,
+    "sustained": 79,
+    "jackpot": 39
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "mid",
+   "focus": "control",
+   "weights": {
+    "none": 180,
+    "level": 286,
+    "fixed": 218,
+    "ratio": 198,
+    "sustained": 79,
+    "jackpot": 39
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "mid",
+   "focus": "utility",
+   "weights": {
+    "none": 180,
+    "level": 286,
+    "fixed": 218,
+    "ratio": 168,
+    "sustained": 109,
+    "jackpot": 39
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "mid",
+   "focus": "economy",
+   "weights": {
+    "none": 180,
+    "level": 286,
+    "fixed": 218,
+    "ratio": 168,
+    "sustained": 79,
+    "jackpot": 69
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "high",
+   "focus": "offense",
+   "weights": {
+    "none": 30,
+    "level": 236,
+    "fixed": 248,
+    "ratio": 218,
+    "sustained": 159,
+    "jackpot": 109
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "high",
+   "focus": "survivability",
+   "weights": {
+    "none": 30,
+    "level": 266,
+    "fixed": 218,
+    "ratio": 218,
+    "sustained": 159,
+    "jackpot": 109
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "high",
+   "focus": "control",
+   "weights": {
+    "none": 30,
+    "level": 236,
+    "fixed": 218,
+    "ratio": 248,
+    "sustained": 159,
+    "jackpot": 109
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "high",
+   "focus": "utility",
+   "weights": {
+    "none": 30,
+    "level": 236,
+    "fixed": 218,
+    "ratio": 218,
+    "sustained": 189,
+    "jackpot": 109
+   }
+  },
+  {
+   "rarity": "almanac",
+   "powerBand": "high",
+   "focus": "economy",
+   "weights": {
+    "none": 30,
+    "level": 236,
+    "fixed": 218,
+    "ratio": 218,
+    "sustained": 159,
+    "jackpot": 139
+   }
+  }
+ ],
+ "levelThresholds": {
+  "low": [
+   {
+    "value": 5,
+    "weight": 700
+   },
+   {
+    "value": 10,
+    "weight": 300
+   }
+  ],
+  "mid": [
+   {
+    "value": 10,
+    "weight": 500
+   },
+   {
+    "value": 20,
+    "weight": 500
+   }
+  ],
+  "high": [
+   {
+    "value": 20,
+    "weight": 400
+   },
+   {
+    "value": 40,
+    "weight": 600
+   }
+  ]
+ },
+ "fixedThresholds": {
+  "low": [
+   {
+    "value": 10,
+    "weight": 700
+   },
+   {
+    "value": 25,
+    "weight": 300
+   }
+  ],
+  "mid": [
+   {
+    "value": 25,
+    "weight": 500
+   },
+   {
+    "value": 50,
+    "weight": 500
+   }
+  ],
+  "high": [
+   {
+    "value": 50,
+    "weight": 400
+   },
+   {
+    "value": 100,
+    "weight": 600
+   }
+  ]
+ },
+ "ratioThresholds": {
+  "low": [
+   {
+    "value": 100,
+    "weight": 800
+   },
+   {
+    "value": 200,
+    "weight": 200
+   }
+  ],
+  "mid": [
+   {
+    "value": 200,
+    "weight": 600
+   },
+   {
+    "value": 300,
+    "weight": 400
+   }
+  ],
+  "high": [
+   {
+    "value": 300,
+    "weight": 500
+   },
+   {
+    "value": 500,
+    "weight": 500
+   }
+  ]
+ },
+ "upkeepEligible": {
+  "low": false,
+  "mid": true,
+  "high": true
+ },
+ "upkeepResources": [
+  {
+   "id": "souls",
+   "weight": 700
+  },
+  {
+   "id": "essence",
+   "weight": 300
+  }
+ ],
+ "reserveBands": {
+  "low": [],
+  "mid": [
+   {
+    "value": 10,
+    "weight": 500
+   },
+   {
+    "value": 25,
+    "weight": 500
+   }
+  ],
+  "high": [
+   {
+    "value": 25,
+    "weight": 500
+   },
+   {
+    "value": 50,
+    "weight": 500
+   }
+  ]
+ },
+ "costBands": {
+  "low": [],
+  "mid": [
+   {
+    "value": 5,
+    "weight": 500
+   },
+   {
+    "value": 10,
+    "weight": 500
+   }
+  ],
+  "high": [
+   {
+    "value": 10,
+    "weight": 500
+   },
+   {
+    "value": 20,
+    "weight": 500
+   }
+  ]
+ },
+ "periodBands": {
+  "low": [],
+  "mid": [
+   {
+    "value": 100,
+    "weight": 500
+   },
+   {
+    "value": 200,
+    "weight": 500
+   }
+  ],
+  "high": [
+   {
+    "value": 200,
+    "weight": 500
+   },
+   {
+    "value": 400,
+    "weight": 500
+   }
+  ]
+ },
+ "setEnvelopeBudget": 0
+}

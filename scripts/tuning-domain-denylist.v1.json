@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "_meta": {
+    "owner": "solid-enforcement tuning-immutability (SE2.1, 2026-09-19)",
+    "note": "A pattern list of domain SHAPES that are never a real published tuning domain -- never a domain allowlist (an allowlist of ~100+ real domains is a population that grows every time a program adds one, exactly the kind of number the contract-not-population rule forbids pinning). Closed vocabulary: a new pattern is a reviewed change, added only when a new class of test/tooling pollution is found writing into data/tuning/."
+  },
+  "patterns": [
+    "^loop.*test",
+    "^tmp-",
+    "^scratch-",
+    "^test-"
+  ]
+}

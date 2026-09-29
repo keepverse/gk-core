@@ -1,0 +1,14 @@
+{
+  "name": "EQ-AGILITY",
+  "description": "Fixed point found by the trinity test (best-response iteration). Not a designed build.",
+  "element": "fire",
+  "points": {
+    "Agility": 55,
+    "Composure": 15,
+    "Pierce": 15,
+    "Focus": 15
+  },
+  "hpPerLadder": 15,
+  "damagePerLadder": 1.5,
+  "shieldPerLadder": 2
+}

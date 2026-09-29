@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 1,
+  "_meta": {
+    "owner": "docs/architecture/narrative-seed/spec-storylet-vocab.md#34",
+    "note": "Test fixture for npc-story-events NR1.2 (the real file is narrative-seed's)."
+  },
+  "proposedLeaves": [
+    "RelationBandAtMost",
+    "CharacterStateIs",
+    "StoryFlagSet",
+    "LeadLevelAtLeast",
+    "DoctrineStudying",
+    "PartyCarriesTag"
+  ],
+  "conditions": {
+    "none": {
+      "description": "The slot has no gate beyond its kind's own.",
+      "negative": "Not 'unknown': the slot has no gate beyond its kind's own.",
+      "argFamily": "none",
+      "usableIn": ["slot"],
+      "leaf": null
+    },
+    "danger-band-is": {
+      "description": "The room's danger band is a named band.",
+      "negative": "Not a difficulty scale; a named band, never a number.",
+      "argFamily": "dangerBand",
+      "usableIn": ["slot"],
+      "leaf": "BandIs"
+    },
+    "disposition-is": {
+      "description": "The subject's relation band is at most a named band.",
+      "negative": "Not a loyalty rank; disposition belongs to a creature that has not joined.",
+      "argFamily": "disposition",
+      "usableIn": ["slot"],
+      "leaf": "RelationBandAtMost"
+    },
+    "character-state-is": {
+      "description": "The subject was met, joined, left or fell.",
+      "negative": "Not a relation band; it says whether the character was met, never how warm it is.",
+      "argFamily": "characterState",
+      "usableIn": ["slot"],
+      "leaf": "CharacterStateIs"
+    },
+    "story-flag-set": {
+      "description": "A named story flag is set.",
+      "negative": "Not a counter; a flag is set or it is not.",
+      "argFamily": "storyFlag",
+      "usableIn": ["slot", "eligibility"],
+      "leaf": "StoryFlagSet"
+    },
+    "lead-level-at-least": {
+      "description": "The summoner has reached a named level gate.",
+      "negative": "Not a level and not a band: a named gate whose threshold lives in tuning.",
+      "argFamily": "levelGate",
+      "usableIn": ["slot"],
+      "leaf": "LeadLevelAtLeast"
+    },
+    "doctrine-studying": {
+      "description": "The host world's antagonist studies or holds a doctrine.",
+      "negative": "Not a doctrine id and not a fight.",
+      "argFamily": "none",
+      "usableIn": ["eligibility"],
+      "leaf": "DoctrineStudying"
+    },
+    "role-cast": {
+      "description": "A role declared by the same storylet was cast.",
+      "negative": "Not a leaf; casting decides it before eligibility is evaluated.",
+      "argFamily": "roleId",
+      "usableIn": ["slot"],
+      "leaf": null
+    }
+  }
+}

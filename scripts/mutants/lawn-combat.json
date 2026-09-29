@@ -1,0 +1,111 @@
+[
+  { "file": "src/FusionRpg.Core/Creatures/LawnElementResolver.cs",
+    "name": "a new match keeps the previous match's cached elements",
+    "find": "_cache.Clear();",
+    "with": "" },
+
+  { "file": "src/FusionRpg.Core/Creatures/LawnElementResolver.cs",
+    "name": "a board miss is cached as Neutral and poisons the ptr",
+    "find": "if (!found) return (side, ActorElementTypes.Neutral);",
+    "with": "if (!found) { var poisoned = (side, ActorElementTypes.Neutral); _cache[key] = poisoned; return poisoned; }" },
+
+  { "file": "src/FusionRpg.Core/Creatures/LawnElementResolver.cs",
+    "name": "the cache is keyed on the caller's raw ptr spelling, not the canonical ptr",
+    "find": "if (_cache.TryGetValue(key, out var hit)) return hit;",
+    "with": "key = ptrKey;\n        if (_cache.TryGetValue(key, out var hit)) return hit;" },
+
+  { "file": "src/FusionRpg.Core/Creatures/LawnElementResolver.cs",
+    "name": "Invalidate reports a hit but never removes the entry",
+    "find": "return key.Length != 0 && _cache.Remove(key);",
+    "with": "return key.Length != 0 && _cache.ContainsKey(key);" },
+
+  { "file": "src/FusionRpg.Core/Creatures/LawnElementResolver.cs",
+    "name": "a dual-type species loses its secondary element",
+    "find": "secondary == species.ElementPrimary ? null : secondary);",
+    "with": "null);" },
+
+  { "file": "src/FusionRpg.Core/Creatures/LawnElementResolver.cs",
+    "name": "an undefined ElementPrimary is passed through instead of degrading to Neutral",
+    "find": "if (!Enum.IsDefined(typeof(ElementTypeId), species.ElementPrimary))",
+    "with": "if (species.ElementPrimary != species.ElementPrimary)" },
+
+  { "file": "src/FusionRpg.Core/Combat/OverlayCombatCalculator.cs",
+    "name": "defense is read from the attacker instead of the defender",
+    "find": "var defense = CombatDerivedReader.Defense(request.Defender.Derived, c.Element)",
+    "with": "var defense = CombatDerivedReader.Defense(request.Attacker.Derived, c.Element)" },
+
+  { "file": "src/FusionRpg.Core/Combat/OverlayCombatCalculator.cs",
+    "name": "a crit deals no extra damage",
+    "find": "finalDamage *= critMultFinal;",
+    "with": "finalDamage *= 1.0;" },
+
+  { "file": "src/FusionRpg.Core/Combat/OverlayCombatCalculator.cs",
+    "name": "component weight is ignored in the divisive offense sum",
+    "find": "weightedOffense += c.Weight * (power + componentBonus);",
+    "with": "weightedOffense += power + componentBonus;" },
+
+  { "file": "src/FusionRpg.Core/Combat/OverlayCombatCalculator.cs",
+    "name": "dodge does not reduce the hit chance",
+    "find": "- CombatDerivedReader.Dodge(request.Defender.Derived, c.Element);",
+    "with": "- 0.0;" },
+
+  { "file": "src/FusionRpg.Core/Combat/OverlayCombatCalculator.cs",
+    "name": "the elemental matchup bonus is dropped per component",
+    "find": "var componentBonus = _elementHub.ResolveComponentBonus(",
+    "with": "var componentBonus = 0.0 * _elementHub.ResolveComponentBonus(" },
+
+  { "file": "src/FusionRpg.Core/Combat/OverlayCombatCalculator.cs",
+    "name": "a missed attack can still roll a crit",
+    "find": "var cleanHit = !miss && !parried && !blocked;",
+    "with": "var cleanHit = !parried && !blocked;" },
+
+  { "file": "src/FusionRpg.Core/Combat/OverlayCombatCalculator.cs",
+    "name": "skill effectiveness multiplier is ignored",
+    "find": "var effectiveBaseDamage = request.BaseOverlayDamage * request.EffectivenessMultiplier;",
+    "with": "var effectiveBaseDamage = (double)request.BaseOverlayDamage;" },
+
+  { "file": "src/FusionRpg.Core/Events/EventDrain.cs",
+    "name": "a nested FlushForPtr reports handled (0) instead of the -1 sentinel",
+    "find": "return -1;",
+    "with": "return 0;" },
+
+  { "file": "src/FusionRpg.Core/Events/EventDrain.cs",
+    "name": "a nested FlushForPtr forgets the ptr instead of queuing it",
+    "find": "_pendingNestedFlushes.Add(ptr);",
+    "with": "{ }" },
+
+  { "file": "src/FusionRpg.Core/Events/EventDrain.cs",
+    "name": "the window budget check is inverted",
+    "find": "_timestamp() - start >= budgetTicks)\n                    break;",
+    "with": "_timestamp() - start < budgetTicks)\n                    break;" },
+
+  { "file": "src/FusionRpg.Core/Events/EventDrain.cs",
+    "name": "a chain-depth refusal is not counted",
+    "find": "_droppedByDepth++;",
+    "with": "" },
+
+  { "file": "src/FusionRpg.Core/Events/EventDrain.cs",
+    "name": "a death-budget shed is not counted",
+    "find": "        _droppedDeathBudget++;\n        if (rec.TargetPtr != dyingPtr)",
+    "with": "        if (rec.TargetPtr != dyingPtr)" },
+
+  { "file": "src/FusionRpg.Core/Events/EventDrain.cs",
+    "name": "a death-budget shed of a dying target is counted as a lost living-victim delta",
+    "find": "        if (rec.TargetPtr != dyingPtr) _droppedDeathBudgetLivingTarget++;",
+    "with": "        _droppedDeathBudgetLivingTarget++;" },
+
+  { "file": "src/FusionRpg.Core/Events/EventDrain.cs",
+    "name": "ring overflow loses the record instead of diverting it to carry",
+    "find": "_carry.Add(rec);\n            IndexBump(rec.ActorPtr, +1);",
+    "with": "IndexBump(rec.ActorPtr, +1);" },
+
+  { "file": "src/FusionRpg.Core/Events/EventDrain.cs",
+    "name": "records kept by a ptr flush re-enter the ring in reverse order",
+    "find": "foreach (var rec in flushScratch)",
+    "with": "foreach (var rec in Enumerable.Reverse(flushScratch))" },
+
+  { "file": "src/FusionRpg.Core/Events/EventDrain.cs",
+    "name": "every victim of one swing fires the per-swing action trigger",
+    "find": "var isFirst = !counter.Triggered;",
+    "with": "var isFirst = true;" }
+]

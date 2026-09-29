@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "kind": "achievement-titles-catalog",
+  "version": 1,
+  "entries": [
+    {
+      "id": "empire-title.first-blood",
+      "displayName": "First Blood",
+      "reading": "The empire remembers its first victory. Yields rise where the banner first flew.",
+      "hudToken": "F",
+      "flavor": "First to fall under your banner.",
+      "visibility": "revealed"
+    },
+    {
+      "id": "empire-title.warlord",
+      "displayName": "Warlord",
+      "reading": "Held ground pays. Garrisoned might flows back as yield, and the tithe keeps it honest.",
+      "hudToken": "W",
+      "flavor": "Take ground. Keep it. Tax it.",
+      "visibility": "revealed"
+    },
+    {
+      "id": "empire-title.greedy",
+      "displayName": "Greedy",
+      "reading": "A warning in the ledger, not a prize. This bundle never ships: its pool promises more than it holds.",
+      "hudToken": "G",
+      "flavor": "Do not promise what the pool cannot draw.",
+      "visibility": "revealed"
+    },
+    {
+      "id": "actor-title.first-blood",
+      "displayName": "Blooded",
+      "reading": "Worn by specimens that survived their first field. A small edge, honestly earned.",
+      "hudToken": "B",
+      "flavor": "Survived the first field.",
+      "visibility": "revealed"
+    },
+    {
+      "id": "actor-title.oathkeeper",
+      "displayName": "Oathkeeper",
+      "reading": "Sworn and kept. The wearer holds the line a little longer.",
+      "hudToken": "O",
+      "flavor": "Sworn and kept.",
+      "visibility": "revealed"
+    },
+    {
+      "id": "curse.fell",
+      "displayName": "Fell Mark",
+      "reading": "Something was done that cannot be undone cheaply. The mark stays until the ritual is paid.",
+      "hudToken": "C",
+      "flavor": "Earned, never aimed for.",
+      "visibility": "hidden",
+      "teaser": "Some deeds leave a mark the Hall will not hang.",
+      "lockReason": "Lift it with souls and matched essence, or carry it."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "contractVersion": 2,
+  "trigger": "OnGranted",
+  "actions": [
+    {
+      "seq": 1,
+      "action": "ModifyStat",
+      "effectId": "fx.passive_atk_flat",
+      "grantId": "live-passive",
+      "params": {
+        "channel": "atk",
+        "flat": 10
+      }
+    }
+  ],
+  "skipped": []
+}

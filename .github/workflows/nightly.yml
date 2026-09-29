@@ -1,0 +1,70 @@
+# Nightly `full` profile: runs the whole Data suite UNFILTERED so a disk regression that the fast
+# default profile cannot see is caught within a day, instead of waiting for a release tag.
+# Default profile (`gk-core/scripts/test_fast.py`) excludes DiskSemantics/Heavy; this runs everything.
+# Standard: docs/contributing/testing-standard.md §6.
+name: Nightly full test profile
+
+on:
+  schedule:
+    # 03:17 UTC daily — off the hour so it does not pile onto the many jobs that start at :00.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full:
+    runs-on: windows-latest
+    # Same hang bound as ci.yml: a real .NET process-redirection deadlock can hang a run with no
+    # diagnostic; fail fast rather than idle toward the platform's 6-hour default.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Nightly guards compare the complete merge-base range, never a shallow last commit.
+          fetch-depth: 0
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Resolve nightly verification range
+        id: nightly-range
+        shell: pwsh
+        run: |
+          $event = Get-Content $env:GITHUB_EVENT_PATH -Raw | ConvertFrom-Json
+          $head = [string]$event.after
+          if ([string]::IsNullOrWhiteSpace($head) -or $head -match '^0+$') { $head = $env:GITHUB_SHA }
+          if ([string]::IsNullOrWhiteSpace($head) -or $head -match '^0+$') { throw "nightly cannot resolve HEAD" }
+          $defaultBranch = [string]$event.repository.default_branch
+          if ([string]::IsNullOrWhiteSpace($defaultBranch)) { $defaultBranch = 'main' }
+          $base = (git merge-base $head "origin/$defaultBranch").Trim()
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($base)) { throw "nightly cannot resolve an explicit base" }
+          $range = "$base..$head"
+          "range=$range" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "FUSIONRPG_NIGHTLY_RANGE=$range" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Nightly verification range: $range"
+
+      - name: Nightly session boundary
+        shell: pwsh
+        run: |
+          python .\scripts\session-boundary-check.py --ci
+          if ($LASTEXITCODE -ne 0) { throw "nightly session-boundary check failed" }
+
+      - name: Nightly guard runner
+        shell: pwsh
+        run: |
+          python .\scripts\run_guards.py --tier ci --ci-range $env:FUSIONRPG_NIGHTLY_RANGE
+          if ($LASTEXITCODE -ne 0) { throw "nightly run_guards.py --tier ci failed" }
+
+      - name: Full profile — Data suite, unfiltered
+        shell: pwsh
+        run: |
+          # NO --filter: this is the `full` profile by construction (DiskSemantics + Heavy included).
+          # The nightly's whole job is to prove the file-bound/disk tests still pass and clean up,
+          # so the leak alarm wraps the same unfiltered run.
+          python scripts/test_substrate_leak_alarm.py --run dotnet test tests/FusionRpg.Data.Tests/FusionRpg.Data.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 15min
+          if ($LASTEXITCODE -ne 0) { throw "nightly full-profile Data suite failed — a disk test broke or leaked" }

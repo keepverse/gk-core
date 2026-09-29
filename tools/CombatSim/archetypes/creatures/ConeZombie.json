@@ -1,0 +1,25 @@
+{
+  "name": "ConeZombie",
+  "description": "Chaff zombie \u2014 theta=13 pTheta=452",
+  "hp": 14464,
+  "baseDamage": 1000,
+  "shieldHp": 4068,
+  "element": "earth",
+  "stats": {
+    "combat.block.strength.omni": 678,
+    "combat.defense.omni": 407,
+    "combat.parry.strength.omni": 678,
+    "combat.shield.toughness.omni": 271,
+    "progression.bonus.arm1": 3616,
+    "progression.bonus.defense": 2712,
+    "resource.max.hunger": 8136,
+    "resource.max.qi": 2712,
+    "resource.max.spirit": 1356,
+    "resource.max.stamina": 6328,
+    "resource.regen.hp": 9,
+    "resource.regen.hunger": 362,
+    "resource.regen.qi": 181,
+    "resource.regen.spirit": 90,
+    "resource.regen.stamina": 407
+  }
+}

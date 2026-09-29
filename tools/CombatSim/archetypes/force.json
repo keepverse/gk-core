@@ -1,0 +1,13 @@
+{
+  "name": "FORCE",
+  "description": "Soaks and mitigates; breaks guard and reflect. Wins by output nothing fully stops.",
+  "hp": 120000, "baseDamage": 1400, "shieldHp": 30000, "element": "fire",
+  "stats": {
+    "combat.power.omni": 3000, "combat.accuracy.omni": 120,
+    "combat.absorption.omni": 60, "combat.reduction.omni": 25,
+    "combat.shield.toughness.omni": 400,
+    "combat.parry.break.omni": 400, "combat.parry.shred.omni": 900,
+    "combat.block.break.omni": 400, "combat.block.shred.omni": 900,
+    "combat.reflect.resist.rate.omni": 6, "combat.reflect.resist.damage.omni": 60
+  }
+}

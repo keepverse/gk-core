@@ -1,0 +1,14 @@
+{
+  "name": "FORCE",
+  "description": "FORCE posture \u2014 points are shares; Theta sets the absolute budget.",
+  "element": "fire",
+  "points": {
+    "Might": 39.627599007881706,
+    "Vigor": 15,
+    "Onslaught": 15.333468485232851,
+    "Retribution": 30.03893354638362
+  },
+  "hpPerLadder": 15,
+  "damagePerLadder": 1.5,
+  "shieldPerLadder": 2
+}

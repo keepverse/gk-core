@@ -1,0 +1,17 @@
+{
+  "kind": "achievement-titles",
+  "version": 1,
+  "hallSlots": 3,
+  "tierNeedCounts": [10, 50, 200],
+  "poolWeightsMilli": { "bronze": 600, "silver": 300, "gold": 90, "platinum": 10 },
+  "equipShareMilli": { "default": 150 },
+  "upkeepShareMilli": { "default": 50 },
+  "stackRule": "additive-in-family-one-per-group",
+  "validTurns": { "default": 20 },
+  "titleRitualPrice": { "souls": 500, "essence": 50 },
+  "seasonTurnWindows": { "default": 100 },
+  "hiddenShareCapMilli": 312,
+  "wornRule": "highestTier",
+  "hallYieldCapMilli": 1000,
+  "hallUpkeepCapMilli": 1000
+}

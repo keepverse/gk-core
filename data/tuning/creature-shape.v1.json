@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/creature-seed/spec-species-generator.md",
+    "note": "Working values, not a validated balance decision. Tempo/reach tables are the FALLBACK path — spec-species-generator.md §4: a stated interval from power-parse wins whenever one exists; attackTempo maps through this table only when no stated interval was extracted.",
+    "rebalance": "Never hand-edit by convention alone — this file has no publish tool yet; a direct edit here is a real diff, bump `version`."
+  },
+  "attackTempoIntervalMs": {
+    "_note": "The five real anchor labels (tools/seedsmith anchor/schema.py ATTACK_TEMPO), each mapped to a plausible attack interval in milliseconds — slowest to fastest.",
+    "ponderous": 3000,
+    "slow": 2400,
+    "steady": 1500,
+    "quick": 900,
+    "flurry": 500
+  },
+  "reachRangeCells": {
+    "_note": "The four real anchor labels (anchor/schema.py REACH), each mapped to a lawn range in cells.",
+    "melee": 1,
+    "short": 3,
+    "long": 5,
+    "siege": 9
+  },
+  "impureSecondaryShareMilli": 300,
+  "speciesBaseTheta": 0
+}

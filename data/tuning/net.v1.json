@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/runbook/perf-probe-plan.md",
+    "note": "Extracted byte-identical from RpgClient.cs and PerfReporter.cs (tunables-ssot.md M.12, 2026-08-24). Injector-side networking/telemetry cadence, not gameplay balance — grouped by concept (net I/O), Injector-only (Server never runs this code, so only RpgHost.Initialize configures it).",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py net <dotted.key>=<value> [...] writes net.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "client": { "queueCap": 50000, "drainSize": 256, "flushMs": 16 },
+  "perfReporter": { "intervalSeconds": 5.0 }
+}

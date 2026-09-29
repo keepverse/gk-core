@@ -1,0 +1,26 @@
+{
+  "name": "duel",
+  "description": "Randomized mitigation-chain duel — power/defense/crit/pen/amp all in play.",
+  "trials": 10000,
+  "seed": 42,
+  "baseDamage": { "min": 80, "max": 120 },
+  "elements": "singleRandom",
+  "defenderElement": "ice",
+  "attacker": {
+    "combat.power.omni": { "min": 0, "max": 400 },
+    "combat.accuracy.omni": { "min": 0, "max": 300 },
+    "combat.crit.rate.omni": { "min": 0, "max": 200 },
+    "combat.crit.damage.omni": { "min": 0, "max": 200 },
+    "combat.penetration.omni": { "min": 0, "max": 50 },
+    "combat.amplification.omni": { "min": 0, "max": 20 }
+  },
+  "defender": {
+    "combat.defense.omni": { "min": 0, "max": 400 },
+    "combat.dodge.omni": { "min": 0, "max": 300 },
+    "combat.crit.resist.omni": { "min": 0, "max": 200 },
+    "combat.absorption.omni": { "min": 0, "max": 50 },
+    "combat.reduction.omni": { "min": 0, "max": 20 }
+  },
+  "shieldHp": 0,
+  "reflection": false
+}

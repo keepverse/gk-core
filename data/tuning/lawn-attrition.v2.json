@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/solid-remediation/spec-death-injury-engine.md, tasks/solid-remediation-todo.md T4.10",
+    "note": "UNMEASURED STARTING VALUES. The task says so in its own words: 'ships working values with an _meta note saying they are unmeasured' and 'do not ask for starting numbers; the curve's direction is the design, its constants are not'. What is designed here is the DIRECTION -- more damage taken means more chance of injury, and more again of permanent death -- plus the shape: a per-mille chance that rises linearly with the fraction of max HP lost, floored at zero below a threshold so a scratch never risks a life. The specific numbers below have never been played against and should be expected to move.",
+    "shape": "damageTakenMilli is the member's damage taken as per-mille of its max HP over the run. Below injuryFloorMilli nothing is risked at all. From there to 1000 the injury chance ramps linearly from 0 to injuryChanceAtFullMilli; permanent death ramps the same way from permadeathFloorMilli to permadeathChanceAtFullMilli. Permadeath is checked only for a member that was actually downed, so these two are not competing rolls -- injury is the common case and permanent death the rarer one layered behind it.",
+    "rebalance": "A balance pass edits the numbers in the LATEST version, never LawnPermadeathLadder.cs, and never this file in place. Publish v{n+1} through tools/tuning/publish.py: `python tools/tuning/publish.py lawn-attrition injuryChanceAtFullMilli=<n>`. This note previously read 'until then this file is edited in place like every other v1', granting an exemption the hard rule does not offer -- AGENTS.md names extending the tool as the remedy when a domain lacks support, and in this domain's case nothing needed extending: publish.py takes the domain as a free argument and these are flat integers, so the plain dotted-path `set` already worked. The exemption was never needed.",
+    "whatDamageTakenMeansOnTheLawn": "For the DEATH path the lawn passes damageTakenMilli = 1000 and that is exact, not a placeholder: a specimen named by plant.die/zombie.die lost its whole bar by definition. So no per-actor damage accumulator is needed to settle a lawn DEATH -- permadeath there evaluates at the full-bar end of the curve, i.e. permadeathChanceAtFullMilli flat. The curve's damage scaling is what INJURY for survivors will read, and that half is still unbuilt because a survivor's damage taken over a run genuinely does need an accumulator.",
+    "rebalanceLabel": "SR-17 owner ruling: lawn permadeath is a low roll",
+    "ownerRuling20260917": "OWNER RULING, 2026-09-17, and the reason this version exists: 'Lawn permanent Death? Use damage scale and low chance permanent death, that mode is casual, dont kill all player unique creature, so injury also low too.' So: keep the damage-scaled SHAPE, and drop both chances hard. permadeathChanceAtFullMilli 150 -> 40 (4% at a full bar) and injuryChanceAtFullMilli 400 -> 120 (12%). Floors are unchanged -- they decide WHEN risk starts, and the ruling was about HOW MUCH. Still unmeasured against play; the ruling fixed the direction and the magnitude class (low), not these exact integers.",
+    "publishedAs": "Published 2026-09-18 through tools/tuning/publish.py, replacing the in-place edit of v1 that commit a60706c0b had made. v1 is back to its shipped values (400 / 150) and stays on disk, so reverting this pass is restoring a file rather than reading a diff -- which is what tunables-ssot.md T4 asks for and what the in-place edit had made impossible."
+  },
+  "injuryFloorMilli": 250,
+  "injuryChanceAtFullMilli": 120,
+  "permadeathFloorMilli": 700,
+  "permadeathChanceAtFullMilli": 40
+}

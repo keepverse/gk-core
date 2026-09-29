@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>FusionRpg.E2E.Tests</RootNamespace>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.11" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FusionRpg.Server\FusionRpg.Server.csproj" />
+    <ProjectReference Include="..\..\src\FusionRpg.Contracts\FusionRpg.Contracts.csproj" />
+    <!-- rpg-simulator RS2: the scenario contract and the runner are a TOOL, and only the parts a test
+         can construct without a server are referenced here (tools/CombatSim's relationship to its
+         four referencing test projects is the precedent). The in-process host this project already
+         owns (RpgApiFactory) is what the runner is driven with. -->
+    <ProjectReference Include="..\..\tools\RpgSim\RpgSim.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The shared store test helper (see FusionRpg.Server.Tests.csproj for the same link). It lets an
+         E2E host run against an in-memory store instead of a temp data dir on disk. -->
+    <Compile Include="..\FusionRpg.Data.Tests\DataTestStore.cs" Link="TestSupport\DataTestStore.cs" />
+  </ItemGroup>
+</Project>

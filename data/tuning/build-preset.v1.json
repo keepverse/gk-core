@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/build-preset/spec-preset-store.md",
+    "status": "SHIPPED with build-preset BP1.10 (the first version of a new domain)",
+    "note": "softMaxBuildPresets is a soft refusal on create, same discipline as aptitude-presets softMaxPresets \u2014 a LIST-LENGTH soft refusal, not a \u00a711 progression cap on any magnitude. Every later revision goes through tools/tuning/publish.py, never an in-place edit."
+  },
+  "softMaxBuildPresets": 32
+}

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 1,
+  "_meta": {
+    "owner": "docs/architecture/narrative-seed/spec-storylet-vocab.md#35",
+    "note": "Test fixture for npc-story-events NR1.2 (the real file is narrative-seed's)."
+  },
+  "consequenceKinds": {
+    "none": {
+      "description": "The outcome does nothing beyond its effects.",
+      "negative": "Not 'no effect': the outcome's effects still apply.",
+      "refForms": [],
+      "params": ["none"],
+      "routesTo": "nothing"
+    },
+    "loot": {
+      "description": "The host's loot draw at this outcome's drop band.",
+      "negative": "Not a named item; the runtime rolls it.",
+      "refForms": [],
+      "params": ["none"],
+      "routesTo": "the host's loot draw"
+    },
+    "encounter": {
+      "description": "A delve-room fight.",
+      "negative": "Delve hosts only; not battle.start.",
+      "refForms": [],
+      "params": ["none"],
+      "routesTo": "Encounter.Build"
+    },
+    "scout": {
+      "description": "The party's sight radius for the room.",
+      "negative": "Not a map reveal outside the room.",
+      "refForms": [],
+      "params": ["none"],
+      "routesTo": "the party's sight radius"
+    },
+    "quest.offer": {
+      "description": "The quest engine offers a narrative quest anchor.",
+      "negative": "Not a quest definition; the storylet names a quest anchor, it never writes one.",
+      "refForms": ["quest:<questId>"],
+      "params": ["none"],
+      "routesTo": "the quest engine's offer"
+    },
+    "relation.shift": {
+      "description": "One relation fact about a target, from which the ledger derives a band.",
+      "negative": "Not a number of steps and not a direction; never about an enemy-side role.",
+      "refForms": ["role:<roleId>", "character:<characterId>"],
+      "params": ["met", "helped", "refused", "betrayed", "spared"],
+      "routesTo": "the relation ledger"
+    },
+    "story.flag": {
+      "description": "A durable story flag.",
+      "negative": "Not a relation change.",
+      "refForms": ["flag:<flagId>"],
+      "params": ["none"],
+      "routesTo": "the story ledger"
+    },
+    "recruit": {
+      "description": "Ownership transfer of the cast character, or the wild-join intake.",
+      "negative": "Never an enemy-side role.",
+      "refForms": ["role:<roleId>", "host:wild"],
+      "params": ["none"],
+      "routesTo": "the wild-join intake"
+    },
+    "scene.play": {
+      "description": "The scene player plays a spine scene.",
+      "negative": "Not a dialogue tree.",
+      "refForms": ["scene:<sceneId>"],
+      "params": ["none"],
+      "routesTo": "the scene player"
+    },
+    "battle.start": {
+      "description": "A battle request into an existing battle mode.",
+      "negative": "Not encounter; never a Delve room fight.",
+      "refForms": [],
+      "params": ["none"],
+      "routesTo": "a battle request"
+    },
+    "doctrine.setback": {
+      "description": "The antagonist's study falls back, inside the world Events phase.",
+      "negative": "Not a relation change and not an amount: how far it falls back is tuning.",
+      "refForms": [],
+      "params": ["none"],
+      "routesTo": "counter-doctrine's study setback"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "sourceRef": "spec-craft-assurance.md § The ask-first boundary (R-G1) — starting values. A balance pass owns this file, not code (tunables-ssot.md).",
+
+  "assureBonusMilli": 50,
+  "assureBonusNote": "species-gear-chain T41: the per-mille success-chance bonus ONE loaded `assurance.assure` charge grants, applied before the roll (EnhancePolicy.Resolve). 50‰ (5%) per charge is a principled middle value, not a calibration ask: `AssureLoaded` is authored as a COUNT (not a bool), so the mechanic is meant to let a player progressively de-risk a roll across several charges rather than solve it with one — 50‰ makes a handful of charges (4-8, depending on the band) meaningfully move a risky attempt toward certainty without any single charge being either negligible or a one-charge auto-win. Loading past 1000‰ total refuses (enhance.assure-overloaded) rather than wasting the excess.",
+
+  "repairCoverageBonusMilli": 50,
+  "repairCoverageBonusNote": "species-gear-chain T41 authors this key now (every key in this file is required at load, per the strict-loader contract every sibling tuning file already uses) — T44 (`repair coverage leg`) is its own reader; nothing in this task consumes it. Started at the SAME 50‰ per-charge rate as assureBonusMilli for symmetry, since T44 has not yet specified a reason to diverge the two — a balance pass is exactly where that split belongs, not a guess made here ahead of its own task."
+}

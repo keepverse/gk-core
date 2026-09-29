@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/species-build/spec-zomboss-adaptive.md",
+    "note": "Working values, not a validated balance decision (spec's own 'Ask first: the tunable values'). rotationWeights must carry one entry per ZombossPatterns.All id — the loader rejects a mismatch, which doubles as an automatic content-consistency check against the roster."
+  },
+  "loseStreakThreshold": 3,
+  "counterBiasPermille": 600,
+  "repatternCooldownEncounters": 3,
+  "revealDelayEncounters": 1,
+  "rotationWeights": {
+    "force-pure": 150,
+    "finesse-pure": 150,
+    "bastion-pure": 150,
+    "force-defence-bastion-breaks-guard": 100,
+    "force-defence-bastion-breaks-aggro": 100,
+    "finesse-defence-force-breaks-guard": 100,
+    "finesse-defence-force-breaks-aggro": 100,
+    "bastion-defence-finesse-breaks-guard": 100,
+    "bastion-defence-finesse-breaks-aggro": 100
+  }
+}

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FusionRpg.Tools.FileMove</RootNamespace>
+    <AssemblyName>FileMove</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- No project references at all, deliberately. This tool rewrites SOURCE and PROJECT files as
+         text; referencing the assemblies it edits would make it a consumer of the thing it moves, and
+         a cycle-refusal tool that can itself be part of a cycle is not one worth trusting. -->
+    <InternalsVisibleTo Include="FusionRpg.FileMove.Tests" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 1,
+  "_meta": {
+    "owner": "docs/architecture/narrative-seed/spec-storylet-vocab.md#32",
+    "note": "Test fixture for npc-story-events NR1.2 (the real file is narrative-seed's)."
+  },
+  "choiceKinds": {
+    "interact": {
+      "description": "The player engages with what is there.",
+      "negative": "Not a fight and not a trade; nothing is spent.",
+      "gate": "none",
+      "argFamily": "none"
+    },
+    "leave": {
+      "description": "The player walks away; a chain may continue later.",
+      "negative": "Not a failure, not a penalty; every storylet has exactly one.",
+      "gate": "none",
+      "argFamily": "none"
+    },
+    "use": {
+      "description": "A supply the party carries is spent.",
+      "negative": "Not bring: a supply is consumed, a party member is not.",
+      "gate": "intrinsic",
+      "argFamily": "supplyTag"
+    },
+    "offer": {
+      "description": "A cost the runtime prices against a stock.",
+      "negative": "Not a bargain kind; the price is never written in the seed.",
+      "gate": "intrinsic",
+      "argFamily": "stock"
+    },
+    "fight": {
+      "description": "A battle through the existing encounter builder.",
+      "negative": "Not threaten; a fight is the battle itself.",
+      "gate": "none",
+      "argFamily": "none"
+    },
+    "bring": {
+      "description": "A party member with the right element opens the choice.",
+      "negative": "Not use; nothing is spent, a party member qualifies.",
+      "gate": "intrinsic",
+      "argFamily": "element"
+    },
+    "persuade": {
+      "description": "A contest, won by a difference or the shipped flat coin.",
+      "negative": "Not an offer; nothing is paid.",
+      "gate": "none",
+      "argFamily": "none"
+    },
+    "threaten": {
+      "description": "The same contest, framed as a threat.",
+      "negative": "Not a fight; no battle starts from the threat itself.",
+      "gate": "none",
+      "argFamily": "none"
+    }
+  }
+}

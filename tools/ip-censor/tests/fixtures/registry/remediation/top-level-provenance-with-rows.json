@@ -1,0 +1,13 @@
+{
+  "_provenance": {
+    "promptVersion": "tree-language/3",
+    "model": "fixture-model"
+  },
+  "nodes": [
+    {
+      "id": "fixture.node",
+      "name": "Fixture Node",
+      "promptVersion": "tree-language/3"
+    }
+  ]
+}

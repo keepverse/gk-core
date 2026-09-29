@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/drop-tables-ideal.md",
+    "note": "The rarest any drop-table entry may ever be configured to be. A balance pass may tighten or loosen this; it is never a code constant (tunables-ssot.md T1)."
+  },
+  "minRatePerMillion": 1
+}

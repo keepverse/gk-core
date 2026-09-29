@@ -1,0 +1,11 @@
+{
+  "data/seed/narrative/_registry/names.en.v1.json": "player-name.json",
+  "docs/guide/the-game.md": "player-prose.md",
+  "tools/seedsmith/seedsmith/adapters/items/uniques/briefs.py": "generator-prompt.py",
+  "src/FusionRpg.Core/World/WorldTemplateCatalog.cs": "code-identifier.cs",
+  "docs/research/prior-art.md": "docs-citation.md",
+  "docs/architecture/software-architecture.md": "deliberate-identity.md",
+  "data/seed/items/_registry/kinds.json": "registry-self.json",
+  "data/seed/passive-tree/nodes/command.json": "command-pre-fix.json",
+  "data/seed/narrative/storylet.json": "narrative-placeholder.json"
+}

@@ -1,0 +1,70 @@
+== digest ==
+phase 1 post-flush
+phase 1 initiative
+draw initiative 789
+draw initiative 30
+draw initiative 181
+draw initiative 431
+reaction wave:0 no-lane
+draw crit 813044
+reaction squad:0 no-lane
+draw crit 487145
+draw crit 14872
+draw essence 243
+reaction squad:0 no-lane
+draw crit 267241
+draw crit 301443
+phase 1 shield-upkeep
+state 1 squad:0 hp=16 abs=0
+state 1 squad:1 hp=106 abs=0
+state 1 wave:0 hp=243 abs=0
+state 1 wave:1 hp=243 abs=0
+phase 2 post-flush
+phase 2 initiative
+draw initiative 851
+draw initiative 284
+draw initiative 285
+reaction squad:1 no-lane
+draw crit 393446
+draw crit 665111
+draw essence 987
+reaction squad:1 no-lane
+draw crit 845643
+draw crit 565761
+reaction wave:0 no-lane
+draw crit 82159
+draw crit 634634
+phase 2 shield-upkeep
+state 2 squad:0 hp=16 abs=0
+state 2 squad:1 hp=26 abs=0
+state 2 wave:0 hp=236 abs=0
+state 2 wave:1 hp=243 abs=0
+phase 3 post-flush
+phase 3 initiative
+draw initiative 899
+draw initiative 678
+draw initiative 891
+reaction squad:1 no-lane
+draw crit 314465
+draw crit 605919
+draw essence 36
+phase 3 shield-upkeep
+state 3 squad:0 hp=16 abs=0
+state 3 squad:1 hp=0 abs=0
+state 3 wave:0 hp=236 abs=0
+state 3 wave:1 hp=243 abs=0
+== targets ==
+1 squad:1->wave:0
+1 wave:0->squad:0
+1 wave:1->squad:0
+2 wave:0->squad:1
+2 wave:1->squad:1
+2 squad:1->wave:0
+3 wave:0->squad:1
+== applies ==
+1 squad:0 -54
+1 squad:0 -36
+2 squad:1 -44
+2 squad:1 -36
+2 wave:0 -7
+3 squad:1 -50

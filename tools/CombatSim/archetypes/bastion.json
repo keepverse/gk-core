@@ -1,0 +1,12 @@
+{
+  "name": "BASTION",
+  "description": "Guards and reflects; lands unerring crits. Wins by stopping and punishing.",
+  "hp": 100000, "baseDamage": 1000, "shieldHp": 0, "element": "earth",
+  "stats": {
+    "combat.power.omni": 1500,
+    "combat.accuracy.omni": 400, "combat.crit.rate.omni": 260, "combat.crit.damage.omni": 260,
+    "combat.parry.rate.omni": 260, "combat.parry.strength.omni": 700,
+    "combat.block.rate.omni": 260, "combat.block.strength.omni": 700,
+    "combat.reflect.rate.omni": 8, "combat.reflect.damage.omni": 45
+  }
+}

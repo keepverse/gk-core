@@ -1,0 +1,11 @@
+{
+  "name": "reflect",
+  "description": "Reflection reading pre- vs post-shield damage, and the rate/share scale. Research: PoE reflects a share of damage taken AFTER the attacker's own mitigation, and reflect is bounded so it cannot out-trade the attacker.",
+  "scenario": "shield-reflect",
+  "variants": [
+    { "name": "v0-shipped", "note": "pre-shield, scale 10", "set": [] },
+    { "name": "v1-post-shield", "note": "reflect what actually reached HP", "set": ["combat.reflectReadsPostShield=true"] },
+    { "name": "v2-share-100", "note": "pre-shield, share saturates 10x later", "set": ["combat.reflectShareScale=100"] },
+    { "name": "v3-post-share-100", "note": "both changes together", "set": ["combat.reflectReadsPostShield=true", "combat.reflectShareScale=100"] }
+  ]
+}

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\FusionRpg.Core.Tests.Shared\CoreTests.Shared.props" />
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>FusionRpg.Core.Tests</RootNamespace>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
+    <ProjectReference Include="..\..\tools\CombatSim\CombatSim.csproj" />
+    <ProjectReference Include="$(GkForgeRoot)tools\DominanceBaseline\DominanceBaseline.csproj" />
+    <ProjectReference Include="..\..\tools\ProvePredictor\ProvePredictor.csproj" />
+    <ProjectReference Include="..\..\tools\RealDataAggregate\RealDataAggregate.csproj" />
+    <ProjectReference Include="..\..\tools\ResidualFitLoop\ResidualFitLoop.csproj" />
+  </ItemGroup>
+</Project>

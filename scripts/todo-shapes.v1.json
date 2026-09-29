@@ -1,0 +1,482 @@
+{
+  "tasks/achievement-title-todo.md": {
+    "shape": "H-task",
+    "exemplar": "## Task 1: Registry grammars + tuning/catalog + validators"
+  },
+  "tasks/action-corpus-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T0.1** `pairing.forcedEnabler` emitted by `plan_subject` · **XS** · `distribution_planner/derive.py` — **DONE 2026-09-06**"
+  },
+  "tasks/action-distribution-gaps-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T0.1** Exclude payoff keys from the non-pairing round-robin · **XS** · `coverage_assignment/derive.py`, `generate_coverage_assignment.py`"
+  },
+  "tasks/action-enrich-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **AE1.1 — `action-base.v1.json` + `ActionBaseTuning` hub, configured by the server host (H7)** · S · deps: — · *(spec: action-base, Tunables)*"
+  },
+  "tasks/action-skill-tiers-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **ST2.1 — Rename `CompiledActionCost.ScaledAmount` → `Amount` (no behaviour change)** · XS · deps: — · *(spec: holder-rung-pricing)*"
+  },
+  "tasks/action-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **P0.1: extend the purity scan to `Core/Actions/`** *(before the first line of action code)* · **S**"
+  },
+  "tasks/actor-hub-and-combat-power-solid-fixing-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: Migrate Star / Loyalty ChannelMods → Hub"
+  },
+  "tasks/actor-hub-enforcement-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] Persist audit `docs/research/actor-hub-enforcement-audit-2026-09-07.md`"
+  },
+  "tasks/actor-hud-todo.md": {
+    "shape": "H-id",
+    "exemplar": "## P0 — Review gate"
+  },
+  "tasks/actor-sheet-derived-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] structure-artifact — `tasks/actor-sheet-derived-structure.md` written"
+  },
+  "tasks/actor-sheet-shell-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] HTML draft `docs/design/actor-sheet-shell-rail.html` (expanded + collapsed)"
+  },
+  "tasks/actor-sheet-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] T0 FE libs (`lucide-react`, `recharts`, `motion`, `@xyflow/react`, `react-tiny-sparkline`)"
+  },
+  "tasks/almanac-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **Task T1: Skip window capture during the automated sweep**"
+  },
+  "tasks/aptitude-sheet-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **AS-0.1** Stale-doc amend (D5) — `stale-doc-amend`"
+  },
+  "tasks/atom-family-expansion-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: `channel_weight_backfill.py` — formula + pure computation"
+  },
+  "tasks/aura-skill-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T1: `OverlayAdd` + the idempotence rule + patron migration** · **M** · **Done 2026-08-30**"
+  },
+  "tasks/backlog-clean-up-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **BCU0.1 — `lawn-signal-ownership`: record the `PUT /api/players/current` split** — closed"
+  },
+  "tasks/backlog-clear-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **BP1: spec `aura-binding-producer`** · **M** · *(spec-first — re-verified 2026-09-20)*"
+  },
+  "tasks/base-defense-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **V1 · The dependency graph stays acyclic** — RE-VERIFIED 2026-09-05 (manual, during a completeness audit)"
+  },
+  "tasks/battle-derived-wire-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 0 — Count what battle's effect path actually carries"
+  },
+  "tasks/battle-tempo-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **PU1 — One pool: `poise` moves to `ActorResourcePools`** · **M** · **Deps:** none"
+  },
+  "tasks/battle-timeline-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **B0: `decisions.md` row — battle time model**"
+  },
+  "tasks/battle-wire-remainder-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [ ] **BWR1.1 — W3: route the basic-attack's `ApplyHp` through the reflect step** · M · deps: — · *(spec: battle-derived-wire)*"
+  },
+  "tasks/buff-debuff-scope-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T1: `RelationKind` in `FusionRpg.Contracts` + `ActionTargetSpec.cs` reference swap** · **S**"
+  },
+  "tasks/build-preset-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **BP1.1 — `PatronService.SetAsync`: lift the patron route's post-write work out of the lambda (byte-identical)** · S · deps: — · *(spec: gate-services)*"
+  },
+  "tasks/class-system-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **C0.1 — `decisions.md` class-system row** — done 2026-08-26"
+  },
+  "tasks/combat-ai-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **CAI1.1 — Move the scorer: `CandidateScorer` + selection** · L · deps: — · *(spec: core-scorer §… \"the scorer\")*"
+  },
+  "tasks/combat-math-dedup-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: Status id → L2b category is declared once (D1)"
+  },
+  "tasks/combat-unification-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **Task U1: Docs unlock — decisions.md \"Combat resolution SSOT\" row**"
+  },
+  "tasks/commander-surface-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **Strengthen pass complete** — SSOT table, E2E gate, Aptitudes demotion, per-module ⛔ shares — **owner-approved 2026-08-31.**"
+  },
+  "tasks/commit-mcp-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] Soft-vs-hard matrix locked in docs (`docs/contributing/agent-git.md`)"
+  },
+  "tasks/condition-glance-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **CG-A1** Implement `resolveElementPaint` + wire theme packs (`element-paint-ssot`)"
+  },
+  "tasks/content-stack-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **E42 `units-correction`** · **S** · Deps: — · `effect-atom/spec-units-correction.md` ✅ **DONE 2026-09-03**"
+  },
+  "tasks/creative-mode-followups-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] T1 citation audit: EXEMPT 1 covers the four deliberate out-of-repo files"
+  },
+  "tasks/creature-corpus-self-heal-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **E1: strengthen the `identity` pipeline's rarity guidance** — reused"
+  },
+  "tasks/creature-lawn-deploy-todo.md": {
+    "shape": "H-id",
+    "exemplar": "### T1.1 — Patron deploy refusal · **S** · 2 files — **DONE 2026-09-06**"
+  },
+  "tasks/creature-progression-todo.md": {
+    "shape": "H-id",
+    "exemplar": "### D0.1 — Typed source model and closed grammar · **M** · 4-5 files — **BUILT, closed 2026-09-20**"
+  },
+  "tasks/creature-seed-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [ ] **GAP-4 — `creature-seed-map.md` §3 module table not updated.** The map's 18-module table,"
+  },
+  "tasks/creature-standalone-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **F2.1: `InstanceProducer.Compose` accepts forced pool picks — DONE 2026-09-07** · **M**"
+  },
+  "tasks/data-test-substrate-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **Task T0a: spec-test-store-helper.md** — the helper's contract (factories, dispose semantics, failure-is-failure)."
+  },
+  "tasks/debug-mcp-todo.md": {
+    "shape": "H-task",
+    "exemplar": "## Task 1: Scaffold + shared modules — DONE 2026-09-13 (pytest 10/10; stdio initialize answers `debug-mcp` 4.0.3)"
+  },
+  "tasks/deployment-hierarchy-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [ ] **DH1.1 — Populate `CarryInPools` at every setup call site** · M · deps: — · *(spec: deploy-carry)*"
+  },
+  "tasks/derived-cook-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **DC-1** Widen `ActorSheetChannelDto` + FE twin + ProjectSheet fill (`derived-sheet-projection`)"
+  },
+  "tasks/derived-stats-todo.md": {
+    "shape": "H-checkbox-heading",
+    "exemplar": "### - [x] T0.1 `StatClass` and the def fields"
+  },
+  "tasks/drop-tables-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: Tunable + `DropRateFloor` core logic"
+  },
+  "tasks/effect-atom-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **E1: atom-kind-registry** — accepted 2026-08-22. 12 kinds, 5 attach points, 7 triggers, 33 reason codes, four-state runtime matrix."
+  },
+  "tasks/effect-pipeline-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [ ] **EPL1.1 — The closed enum + registry + C# mirror** · S · deps: — · *(spec: affix-power-class)*"
+  },
+  "tasks/empire-development-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] 0.1 `corpse-cache` — schema + death/wipe move (core mechanism now; anti-fraud phase-gate guarantee"
+  },
+  "tasks/empire-progression-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **EP1.1 — Fix first: `species-favour` zero-fills a real 5-key plan row (W3)** · XS · deps: — · *(spec: assign-ladder)*"
+  },
+  "tasks/fe-essentials-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T1: `FirstRunReveal` component + `FocusCard` wiring** · **S/M**"
+  },
+  "tasks/first-session-progression-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: checkpoint contract and eligibility evaluator — DONE"
+  },
+  "tasks/game-control-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: `ControlInspect` + `debug.inspect` case + routes + snapshot contract"
+  },
+  "tasks/game-gui-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: Layer stack, bands and the two shells"
+  },
+  "tasks/gui-lego-condition-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] Align queue/spec docs for Condition glance and shell identity ownership"
+  },
+  "tasks/gui-lego-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] Ideal + map"
+  },
+  "tasks/identity-rename-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [ ] **T0 Session record and boundaries for the unmapped front pages.**"
+  },
+  "tasks/injector-stub-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] W1 — Split `SecondaryPluginRegistry` default vs prove; add `RegisterById`"
+  },
+  "tasks/ip-censor-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T0 Session record.** *Depends:* owner approval of this plan. **Done 2026-09-22** (lane"
+  },
+  "tasks/item-content-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T1** — Wire `ItemNameComposer.Compose` into `RpgStore.ItemCard.cs`'s `GetItemCardInput`, replacing"
+  },
+  "tasks/item-seedgen-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T31** — Implement [`spec-fill-runner.md`](../docs/architecture/item-seedgen/spec-fill-runner.md):"
+  },
+  "tasks/item-todo.md": {
+    "shape": "H-id",
+    "exemplar": "### P0.1 — Get an accept-or-decline on every external dependency"
+  },
+  "tasks/keepverse-split-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **KS0.1 ADR.** Done `7dcbf38d` (decisions.md row + PRINCIPLES + software-architecture §11). `docs/architecture/decisions.md` row: root + six sub-repos, D1-D9, direction contract,"
+  },
+  "tasks/lawn-combat-wire-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 0: `lawn-combat-observer` — the instrument everything else is measured with"
+  },
+  "tasks/lawn-interactive-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] T0 Presentation tokens"
+  },
+  "tasks/lawn-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **LW1.1 — `lawn-perf-budget.v1.json` + wire every perf-ceiling reader** · S · deps: — · *(spec: rider-default-on)*"
+  },
+  "tasks/live-probe-screenshot-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: Arm in Drain + end-of-frame runner + `debug.screenshot` case"
+  },
+  "tasks/live-probe-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: Write `scripts/guard-debug-scope.py`"
+  },
+  "tasks/live-setup-skip-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] Add the gated injector command and both vanilla method probes."
+  },
+  "tasks/loam-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **L1: The rootbed slot type** *(2026-08-23 — done. `SlotKind.Rootbed` appended last; catalog"
+  },
+  "tasks/narrative-seed-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [ ] **NS0 Session record.**"
+  },
+  "tasks/notification-ssot-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **NS0.1 — Ask A1: relocate `world-notify` to `shell/notify/rail/`** · XS · deps: — · *(spec: world-notify-source; map G0 A1)* — **Answered 2026-09-21 (owner): ACCEPTED — NS5.7–NS5.11 released**"
+  },
+  "tasks/npc-story-events-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **NR0.1 Session record.** *Depends:* owner approval of the plan. *Agent:* implementing session."
+  },
+  "tasks/onboarding-rift-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: reconcile source specs and legacy references — OPEN"
+  },
+  "tasks/overlay-switch-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T0: Confirm code anchors** (read-only, no code change)"
+  },
+  "tasks/party-dungeon-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **D1.1** The nine registry JSON files"
+  },
+  "tasks/passive-tree-repair-todo.md": {
+    "shape": "H-id",
+    "exemplar": "### P0.1: Commit a distribution census command"
+  },
+  "tasks/passive-tree-todo.md": {
+    "shape": "H-id",
+    "exemplar": "### H8: The 20-tree review pilot — GENUINELY OWNER-ONLY, confirmed 2026-09-07, not worked around"
+  },
+  "tasks/phaser-kernel-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T0: Patch stale SSOTs** · **S** · Spec: `spec-lock-doc-sync.md`"
+  },
+  "tasks/phaser-scene-poc-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] Research protocol doc + this plan/todo pair"
+  },
+  "tasks/player-guide-todo.md": {
+    "shape": "none",
+    "exemplar": ""
+  },
+  "tasks/power-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **P0.1** Standard in `AGENTS.md`, `CLAUDE.md`, `DESIGN-GATE.md`, the spec skill, and the patch record"
+  },
+  "tasks/ps1-ban-todo.md": {
+    "shape": "H-task",
+    "exemplar": "## Task 0: Program instrument"
+  },
+  "tasks/rift-gate-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: 3.9 interop verification — the one-time check, before any patch"
+  },
+  "tasks/roster-balance-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **0.1 Round-file loader** · **S** · `spec-usage-stats.md`"
+  },
+  "tasks/rpg-simulator-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **RS-CF1 — `AGENTS.md` understated the CI test-project count by 47** · S · *found by lane `sim-idea-a`, 2026-09-22*"
+  },
+  "tasks/scope-side-wide-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **SSW1: the grammar — a side-wide owner key** · S"
+  },
+  "tasks/seed-to-concrete-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T0.1** `ssot-power-scale.md` §5.3 + §10 — add the species `Θ` offset · **XS**"
+  },
+  "tasks/seedsmith-cli-ux-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] Fix `load_config` dotenv path + `resolve_live_transport`; extend `.env.example`"
+  },
+  "tasks/seedsmith-content-standard-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: Write and get sign-off on `content-completeness-core`'s own module spec"
+  },
+  "tasks/seedsmith-generated-seed-repair-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **Hard rule in AGENTS.md + CLAUDE.md** — generated seed is never hand-edited; fix the"
+  },
+  "tasks/seedsmith-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **15** `KindSpec`s matching `KindCatalog.cs` — not 14: the catalog also carries `attribute`"
+  },
+  "tasks/shield-sheet-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **SS-A0** Confirm Injector→live-bag fill includes shield instances (coordinate **CG-A4b**; do not fork transport)"
+  },
+  "tasks/shield-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **Task T1: Docs unlock — decisions.md amendment + SSOT pointer**"
+  },
+  "tasks/solid-enforcement-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **SE0.1 — Seed `scripts/enforcement-registry.v1.json`** · M · deps: —"
+  },
+  "tasks/solid-remediation-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T0.1 — Session record and boundary** ✅ `84bc61f6` · XS · deps: none"
+  },
+  "tasks/species-build-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T0.1** The memo, with `Θ` in the key · **S** · `m1`"
+  },
+  "tasks/species-gear-chain-todo.md": {
+    "shape": "H-task",
+    "exemplar": "#### ✅ Task T39: `craft-assurance` a — the free ward is a live defect: refuse `wardLoaded: true`, delete the checkbox"
+  },
+  "tasks/species-progression-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **SP0.1 — Layer-1b ledger table and store, born keyed `(save_id, empire_id)`** · M · deps: SE4.11, SE4.12 · *(spec: species-mod-ledger)*"
+  },
+  "tasks/status-rail-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] `docs/research/status/status-coverage-audit.md`"
+  },
+  "tasks/story-scene-todo.md": {
+    "shape": "H-task",
+    "exemplar": "### Task 1: Fix the four shared-kit red-guard lines"
+  },
+  "tasks/strain-splice-host-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **SSH1.1 — Extract `ComboMatcher`; the evaluator and the preview both call it** · M · deps: — · *(spec: host-gate §1)*"
+  },
+  "tasks/summoner-convergence-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [ ] **CV.1 — Keep the shared tuning ledger true** · XS · deps: — · *(plan §5)*"
+  },
+  "tasks/test-verification-boundary-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **TVB0.1 — `release.yml` exit checks + `WorkflowExitCheckTests` + a workflow owner** · S · deps: — · *(spec: core-split-wiring W0; map §7.1 E1, G14)*"
+  },
+  "tasks/todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **Task A1: Instrument InjectorLoop subsections**"
+  },
+  "tasks/trade-network-todo.md": {
+    "shape": "H-bracket",
+    "exemplar": "### [ ] 0a.1 `synthetic-graph` — a valid deterministic world at any size tier, plus a campaign driver"
+  },
+  "tasks/verification-boundaries-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] Registry v1: C# production-owner fallbacks plus the first curated focused Data socket"
+  },
+  "tasks/vfx-identity-batch1-drip-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **WispOut / BubbleRise / ChunkFall** — `VfxRecipes.cs`, `VfxAuraMath.cs`, `VfxAuraMathTests.cs`"
+  },
+  "tasks/vfx-identity-batch2-crackle-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **SparkStrobe / ShardGlitter** — `VfxRecipes.cs`, `VfxAuraMath.cs`, `VfxAuraMathTests.cs`"
+  },
+  "tasks/vfx-identity-batch3-orbit-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **SporeDrift / CharmHeartbeat** — `VfxRecipes.cs`, `VfxAuraMath.cs`, `VfxAuraMathTests.cs`"
+  },
+  "tasks/vfx-identity-batch4-apply-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **Apply burst overrides** — `VfxCatalog.cs` StatusApplyBurst for leech/rally/pact_mark/command"
+  },
+  "tasks/vfx-identity-batch45-audit-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **Harness** — `applyBurstKey` + `predictedApplyMoment` in `audit-status-vfx-identity.ps1`"
+  },
+  "tasks/vfx-identity-batch5-pulsering-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **PactFootPulse / CommandCrownPulse** — `VfxRecipes.cs`, `VfxAuraMath.cs`, `VfxAuraMathTests.cs`"
+  },
+  "tasks/vfx-identity-batch6-live-todo.md": {
+    "shape": "R-plain",
+    "exemplar": "- [x] Add `scripts/lib/LiveLawnSetup.ps1` with `Ensure-LiveLabBoard`"
+  },
+  "tasks/vfx-v2-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **T1: Anchor resolution via InjectorEntityRegistry** (SPEC W1, F4)"
+  },
+  "tasks/vfx-v3-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **V1: End producer** (spec M1)"
+  },
+  "tasks/world-map-gaps-followup-todo.md": {
+    "shape": "none",
+    "exemplar": ""
+  },
+  "tasks/world-map-runtime-gaps-todo.md": {
+    "shape": "H-id",
+    "exemplar": "### G0: Reopen complete status; retarget SVG e2e; routes comment"
+  },
+  "tasks/world-map-runtime-todo.md": {
+    "shape": "H-id",
+    "exemplar": "## R0 — E2E harness (first task)"
+  },
+  "tasks/world-map-todo.md": {
+    "shape": "R-bold",
+    "exemplar": "- [x] **Task W1: World catalogs + bootstrap validation** *(done 2026-08-21 — 13 tests; Core 1438/1438, Guard 40/40. Lane types exclude `warded`/`severed` by design: those are lane **state** on the row, and the catalog rejects them as types.)*"
+  },
+  "tasks/world-stage-todo.md": {
+    "shape": "H-task",
+    "exemplar": "## Task numbering"
+  }
+}

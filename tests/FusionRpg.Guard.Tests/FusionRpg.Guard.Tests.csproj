@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>FusionRpg.Guard.Tests</RootNamespace>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Build-order only: ClassSystemBaselineRegenTests runs scripts/regen-class-system-baselines.ps1,
+         which launches these tools with dotnet run and no build step, in the tests' own configuration. The
+         reference makes building this project build them, so no test spawns a build and a fresh
+         checkout has the binaries (cold-process-test-build precedent). No assembly is referenced. -->
+    <ProjectReference Include="..\..\tools\CombatSim\CombatSim.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="$(GkForgeRoot)tools\DominanceBaseline\DominanceBaseline.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>

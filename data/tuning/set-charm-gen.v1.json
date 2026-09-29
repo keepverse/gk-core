@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "domain": "set-charm-gen",
+  "note": "Module 13 (set-charm-gen, docs/architecture/item/spec-set-charm-gen.md). Every number the set/charm GENERATOR reasons about, in one place, because a generation run is exactly the moment a balance pass is most expensive to rebuild for. Magnitudes themselves are NOT here - they come from seedsmith.numerics (P1). What is here is the SHAPE a run must produce and the thresholds a run is judged against.",
+  "sources": [
+    "docs/architecture/item/ssot-sets.md 3.4, 3.5, 3.9",
+    "docs/architecture/item/ssot-charms.md 3.4, 3.6",
+    "docs/architecture/item/spec-set-charm-gen.md (D12, D15, D17, D27)",
+    "docs/research/game-design/03-roster-scale.md 1, 2"
+  ],
+
+  "populations": {
+    "archetypes": ["offense", "defense", "balance"],
+    "speciesSetsPerSpecies": 1,
+    "speciesCharmsPerSpecies": 1,
+    "aptitudeCountNote": "The aptitude axis is NOT listed here. It is read from data/seed/aptitudes/roster.json, the checked-in mirror of AptitudeCatalog.All - twelve today, computed as PostureCount x PerPosture so a thirteenth changes the grid by construction. Transcribing 12 here would be a second, forgettable place to edit. Three archetypes ARE listed: D12 introduces them and no other file owns them.",
+    "deadTailNote": "D17 is a POSITION, not an oversight: ~904 species sets and ~904 charms against roughly five deployed actors means most are never seen by a given player. There is deliberately no cap key of any kind on the generated population here - adding one would be a hard progression ceiling on content breadth (AGENTS.md), and D12's roster-scale generation is the point."
+  },
+
+  "setShape": {
+    "typicalMembers": 4,
+    "grandMembers": 6,
+    "maxRoles": 6,
+    "mandatoryThresholdPieces": 2,
+    "legalThresholdPieces": [2, 3, 4, 6],
+    "grandRequiredThresholdPieces": [2, 4],
+    "structuralNote": "maxRoles 6 is STRUCTURAL (ssot-sets 3.4: at least 9 of ~15 slots must stay rare/unique territory) and legalThresholdPieces is a closed VOCABULARY, not a magnitude - it is the enum the model may choose from, and audit_schema allows an enum of numbers precisely because choosing from a closed set is not inventing a number. mandatoryThresholdPieces has no exception: a set whose first bonus is at 3 has an invisible first step and cannot be splashed."
+  },
+
+  "piece": {
+    "fixedIdentityAtoms": 2,
+    "prefixRolls": 1,
+    "suffixRolls": 1,
+    "tierWindowWidth": 2,
+    "rareComparisonRolls": 4,
+    "shapeNote": "ssot-sets 3.9. pool_rolls does not exist as a column (item-ideal 2g #12) - Instantiator.Draw runs DrawBudget twice, over PrefixRolls and SuffixRolls, so 2 rolls is emitted as 1 + 1. fixedIdentityAtoms 0 is 'fixed like a unique' and prefixRolls+suffixRolls 4 over the general pool is 'rolled like a rare'; both are named failure modes in 3.9 and the distributor refuses them rather than trusting the tuning to be sane."
+  },
+
+  "budget": {
+    "aePerMemberMilli": 1500,
+    "unitNote": "Affix-equivalents in PER-MILLE, long throughout: 1500 milli-AE = 1.5 AE per member piece (ssot-sets 3.5 rule 3), so a 4-piece set caps at 6000 milli-AE. Per-mille and integer so the cap never rides on a float; the divide by 1000 happens once, at display. This is a SOFT authoring cap the distributor reports against - it refuses to EMIT over budget rather than clamping a magnitude, because a clamp would hide the mispriced threshold that produced it."
+  },
+
+  "charm": {
+    "maxTierBandsBelowEquip": 1,
+    "legalOps": ["Flat"],
+    "forbiddenOps": ["Increased", "More"],
+    "ringLayerFamilies": ["atom.searing-strike", "atom.lifesteal", "atom.retribution", "atom.keen-edge", "atom.cruelty", "atom.warded"],
+    "ringLayerKinds": ["status.apply"],
+    "ringLayerNote": "ssot-charms 3.6's own jewel-minor family set - 'conditional, per-actor riders: searing_strike, lifesteal, retribution, keen_edge, cruelty, on-hit status.apply, warded' - as the CLOSED LIST the charm generator excludes. It is a design cut, exactly like capabilityKinds/statKinds below, and it lives here for the same reason. ringLayerKinds is the 'on-hit status.apply' half, derived from the corpus rather than transcribed, so a new affliction family joins the ring layer by construction. ⛔ WHY THIS IS NOT COMPUTED FROM affix-families/*.json `roles`: that field is a role x GROUP matrix (g-on-hit.json's own note: 'every entry in this file shares this identical roles list - the matrix has one row per role per GROUP, not per family'), so 84 of the 98 shipped families carry a jewel-minor role, INCLUDING all seven 3.6 itself names as the CHARM set (vitality, might, mending, regeneration, sunbloom, midas, cleansing). A per-group matrix cannot express a per-family partition, and reading it as one left the charm brief with 14 defensive families and no authorable offense/control/utility/economy charm. Measured 2026-09-06. ⚠ Divergence recorded, not resolved here: 20 of the 70 shipped charms use a family on this list (12 control on status.apply, 6 offense on searing-strike/retribution, 2 survivability on lifesteal/warded). That is shipped content against 3.6, not a generator defect; the generator refuses to author more of it and a test pins the count.",
+    "classes": [
+      { "id": "minor", "apCost": 1, "minPoolRolls": 0, "maxPoolRolls": 1, "uniqueCarry": false, "requiresDrawback": false, "targetWeight": 22 },
+      { "id": "standard", "apCost": 2, "minPoolRolls": 1, "maxPoolRolls": 2, "uniqueCarry": false, "requiresDrawback": false, "targetWeight": 32 },
+      { "id": "signet", "apCost": 5, "minPoolRolls": 0, "maxPoolRolls": 0, "uniqueCarry": true, "requiresDrawback": true, "targetWeight": 7 }
+    ],
+    "apCostNote": "apCost is DERIVED from charmClass, never emitted by the model - the shipped corpus already proves the mapping is not one-to-one (standard ships at both 2 and 3 AP: 21 at 2, 11 at 3), so apCost here is the class's canonical cost and an authored override stays legal. Module 12 already proved a 2-AP signet must stay representable, so the class is authored and never derived back from the cost."
+  },
+
+  "distinctness": {
+    "medianCellOccupancyMax": 2,
+    "nearDuplicateRateMaxPermille": 5,
+    "charmAxisGiniMaxPermille": 137,
+    "exactDuplicateNamesMax": 0,
+    "derivation": {
+      "medianCellOccupancyMax": "Arknights 1.97 units/cell (median 2), Honkai Star Rail 1.7-1.8 (median 2), Summoners War 1.02 (median 1) - the band every well-regarded roster in docs/research/game-design/03-roster-scale.md 1 sits in. Fire Emblem Heroes, the worst documented in the genre, is 15.3 with a max of 129.",
+      "nearDuplicateRateMaxPermille": "5 permille = 0.5%, Pokemon's measured TRUE near-duplicate rate: 18 pairs of 1,025, every one a deliberate designed twin (03-roster-scale.md 2).",
+      "charmAxisGiniMaxPermille": "137 permille = 0.137, the AUTHORED charm corpus's own axis Gini over the 61 authored rows (economy 20 : 10 x 4, survivability 10 -> 11 after charm.surv-util-021, 2026-09-07's set-charm-live-endpoint trial batch), excluding the 10 resonance containers. Re-derived, not re-guessed, per this file's own rule: the ceiling tracks the authored corpus's own measured skew and moves only when that corpus does. ssot-charms' 'a skew this generator must not deepen' as a number it cannot exceed - a ceiling on inequality, not on content."
+    }
+  },
+
+  "capabilityVocabulary": {
+    "capabilityKinds": ["resource.delta", "status.apply", "resource.economy", "spawn.entity", "board.action", "status.clear", "shield.grant", "grid.spawn", "grid.clear", "box.set"],
+    "statKinds": ["stat.derived", "stat.modify"],
+    "variantGenerator": "elements+omni",
+    "variantExpansion": 7,
+    "countNote": "The pick COUNTS (60 capability, 242 stat) are deliberately absent: they are counted from data/seed/items/affix-families/*.json on every call, never transcribed. The standing rule from this program's own plan phase - never derive a design proportion from a snapshot of a generated corpus - applies to a vocabulary size just as hard. What IS listed here is which atom kinds count as a capability versus a stat, which is a design cut (ssot-sets 3.2), not a measurement."
+  }
+}

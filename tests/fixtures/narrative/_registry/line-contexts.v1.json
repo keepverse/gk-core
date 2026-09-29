@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 1,
+  "_meta": {
+    "owner": "docs/architecture/narrative-seed/spec-character-vocab.md#5",
+    "note": "Test fixture for npc-story-events NR1.3 (the real file is narrative-seed's character-vocab)."
+  },
+  "lineContexts": {
+    "greet": {
+      "description": "The first line when the player arrives.",
+      "negative": "Not a farewell; says nothing about past deeds.",
+      "keyedOn": "relation"
+    },
+    "farewell": {
+      "description": "The line when the player leaves.",
+      "negative": "Not a refusal.",
+      "keyedOn": "relation"
+    },
+    "thanks": {
+      "description": "After the player helped this character.",
+      "negative": "Not a generic pleasantry.",
+      "keyedOn": "personal-history"
+    },
+    "refused": {
+      "description": "After the player turned it down.",
+      "negative": "Not hostility in general.",
+      "keyedOn": "personal-history"
+    },
+    "spared": {
+      "description": "After the player won and let it go.",
+      "negative": "Not a surrender line.",
+      "keyedOn": "personal-history"
+    },
+    "betrayed": {
+      "description": "After the player broke faith with it.",
+      "negative": "Not ordinary disappointment.",
+      "keyedOn": "personal-history"
+    },
+    "joins": {
+      "description": "As it joins the player's side.",
+      "negative": "Not a greeting.",
+      "keyedOn": "personal-history"
+    },
+    "taunt": {
+      "description": "A hostile jab.",
+      "negative": "Not a threat of a specific consequence; no number, no promise.",
+      "keyedOn": "relation"
+    },
+    "rumor": {
+      "description": "A piece of world news or lore.",
+      "negative": "Not a quest offer; the runtime decides whether a quest follows.",
+      "keyedOn": "world-fact"
+    },
+    "doctrine": {
+      "description": "The antagonist's voice when its faction adopts a counter-doctrine.",
+      "negative": "Reacts to the player's aggregate strategy, never to an encounter.",
+      "keyedOn": "world-fact"
+    },
+    "return-won": {
+      "description": "At home, after an outing that went well.",
+      "negative": "Not praise for a specific kill; no number.",
+      "keyedOn": "outing"
+    },
+    "return-wiped": {
+      "description": "At home, after a party wiped or a siege failed.",
+      "negative": "Not blame and not a lesson in tactics.",
+      "keyedOn": "outing"
+    },
+    "return-lost": {
+      "description": "At home, after a sector was lost.",
+      "negative": "Not a threat of more loss.",
+      "keyedOn": "outing"
+    },
+    "return-quiet": {
+      "description": "At home, after an outing with nothing notable.",
+      "negative": "Not a greeting to a stranger; it knows the player was away.",
+      "keyedOn": "outing"
+    },
+    "none": {
+      "description": "No context fits.",
+      "negative": "The line call is refused."
+    }
+  }
+}

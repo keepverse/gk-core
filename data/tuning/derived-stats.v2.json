@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/battle/spec-timeline-tunables.md",
+    "note": "v2 adds turnDefaultSpeed (battle-timeline T14/B28). It is the base value of the turn.speed channel, read by DerivedStatRegistry at registration — byte-for-byte the same role categoryResistCap already plays, which is why it lives here and not in battle.v{n}.json (several tools deliberately never configure BattleTuningHub; tools/ProveAptitude says so explicitly, and sourcing it from battle tuning would break them). Value 100, extracted unchanged from DerivedTurnChannels.BaseSpeed — this module moves the number's home, it does not move the number, exactly as the cap-consolidation note below describes for categoryResistCap. The OTHER half of the old BaseSpeed constant, the readiness formula's scale unit, is NOT tunable and stayed in code as TurnReadiness.SpeedScale: work and rate both scale with it and cancel, so changing it alters tick granularity rather than making anything faster. categoryResistCap is carried over from v1 unchanged.",
+    "noteV1": "categoryResistCap moved here from status.v1.json (cap-consolidation, T1, 2026-08-24) — it was clamped TWICE (a hardcoded 0.95 in DerivedStatRegistry at compose, and this same key applied again in ResistanceEvaluator), so the compose-time clamp always won and raising this key past 0.95 was a silent no-op. Now the ONLY clamp: DerivedStatRegistry reads it at registration, ResistanceEvaluator no longer re-clamps. Value unchanged (0.95) — this module moves the cap's home, it does not move the number (T7).",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py derived-stats <dotted.key>=<value> [...] writes derived-stats.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "categoryResistCap": 0.95,
+  "turnDefaultSpeed": 100
+}

@@ -1,0 +1,33 @@
+{
+  "id": "effect-cold-hit",
+  "seed": 42,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "g-cold",
+        "effectId": "fx.cold_on_hit",
+        "ownerKey": "match",
+        "overlay": { "icd_ms": 0 }
+      }
+    },
+    { "op": "hit" },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnDamageDealt",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "ApplyStatus",
+            "effectId": "fx.cold_on_hit",
+            "grantId": "g-cold",
+            "params": { "status": "cold", "duration": 5 }
+          }
+        ]
+      }
+    }
+  ]
+}

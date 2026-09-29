@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/vfx/vfx-ssot.md",
+    "note": "Extracted byte-identical from VfxTintMath.cs, VfxBurstMath.cs, VfxRules.cs and the Injector's Fx/ render pools (tunables-ssot.md M.5, 2026-08-24). VfxCatalog.cs and VfxAuraMath.cs are hand-authored content/shape math, exempted via CONTENT_FILE, not migrated. rules.floaterCap/floaterLifeSeconds/risePixels are NOT here — VfxRules aliases DamageFxFloaterRules (data/tuning/effects.v1.json), which stays the one source. v2 (2026-08-30, aura-skill session, guard-magic-numbers.ps1 M2): added `identity` — StatusVfxIdentity.cs's two collision-detection RGB-distance thresholds, previously bare consts.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py vfx <dotted.key>=<value> [...] writes vfx.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "tint": { "maxStrength": 0.35 },
+  "burst": { "coneHalfAngle": 0.6, "risingSideFactor": 0.4, "directionalSideFactor": 0.5 },
+  "rules": {
+    "burstCap": 24,
+    "burstLifeSeconds": 0.55,
+    "floaterRateLimitSeconds": 0.05,
+    "burstRateLimitSeconds": 0.15,
+    "globalCuePerTickCap": 32,
+    "cueQueueCap": 256,
+    "critFontScale": 1.25,
+    "critPopStartScale": 1.5,
+    "critPopSettleT": 0.3,
+    "amountTierSmallBelow": 50,
+    "amountTierBigFrom": 200,
+    "amountTierSmallScale": 0.9,
+    "amountTierBigScale": 1.15
+  },
+  "sustained": {
+    "globalCap": 24,
+    "perHostCap": 2,
+    "ttlGraceSeconds": 2.0,
+    "infiniteTtlSeconds": 60.0,
+    "auraPulseSeconds": 0.3,
+    "auraMaxParticles": 6
+  },
+  "render": {
+    "burstParticles": 28,
+    "particleSortingOrder": 80,
+    "particleTextureSize": 64,
+    "markerEdgeSoftness": 0.1,
+    "shieldBar": {
+      "barWorldWidth": 0.95,
+      "barWorldHeight": 0.12,
+      "worldYOffset": -0.35,
+      "maxSegments": 3,
+      "cap": 32,
+      "maxPips": 3
+    },
+    "tintReassertSeconds": 0.25
+  },
+  "identity": {
+    "similarRgbDistanceThreshold": 45,
+    "similarApplyRgbDistanceThreshold": 35
+  }
+}

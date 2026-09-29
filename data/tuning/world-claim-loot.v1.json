@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/world-map-runtime/spec-sector-loot-wiring.md",
+    "note": "Working values for an inert-until-a-real-caller-exists mechanism (drop-tables sector-loot-wiring, 2026-09-07) — not a validated balance decision."
+  },
+  "mythicClaimBonusRatePerMillion": 10000
+}

@@ -1,0 +1,14 @@
+{
+  "name": "FINESSE-lowbase",
+  "description": "Diagnostic: base damage 1.5 -> 0.5 P(theta), hp scaled to hold fight length. Tests whether offensive aptitudes are weak by design or weak because an unscaled authored base owns most of the offence term.",
+  "element": "fire",
+  "points": {
+    "Agility": 22.411790414194105,
+    "Composure": 15.367560922010378,
+    "Pierce": 59.22064866379828,
+    "Focus": 3
+  },
+  "hpPerLadder": 12.8,
+  "damagePerLadder": 0.5,
+  "shieldPerLadder": 0
+}

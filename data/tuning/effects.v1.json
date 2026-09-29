@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/power/spec-power-reads.md",
+    "note": "Extracted byte-identical from MatchupRead.cs and DamageFx.cs (tunables-ssot.md M.9, 2026-08-24). damageFxFloater is the one source VfxRules.FloaterCap/FloaterLifeSeconds/RisePixels alias — migrating it here keeps that single-source comment true instead of forking it.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py effects <dotted.key>=<value> [...] writes effects.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "matchupRead": { "slotShareMilli": 250 },
+  "damageFxFloater": { "cap": 64, "lifeSeconds": 0.9, "risePixels": 56 }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "effect-grid-cycle",
+  "seed": 42,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "g-grid",
+        "effectId": "fx.grid_item_cycle",
+        "ownerKey": "match",
+        "overlay": { "icd_ms": 0 }
+      }
+    },
+    { "op": "hit" },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnDamageDealt",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "SpawnGridItem",
+            "effectId": "fx.grid_item_cycle",
+            "grantId": "g-grid",
+            "params": { "gridItemType": 7, "row": 2, "col": 3 }
+          },
+          {
+            "seq": 2,
+            "action": "ClearGridItem",
+            "effectId": "fx.grid_item_cycle",
+            "grantId": "g-grid",
+            "params": { "row": 2, "col": 3, "gridItemType": 7 }
+          }
+        ]
+      }
+    }
+  ]
+}

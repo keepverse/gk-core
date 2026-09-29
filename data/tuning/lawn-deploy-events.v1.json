@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/creature-lawn-deploy/spec-lawn-deploy-events.md, tasks/creature-lawn-deploy-todo.md T2.2",
+    "note": "Greenfield module (spec's own words: 'everything below is design, not a discovered wiring gap'). Two starting cases picked against ALREADY-TRACKED MatchSnapshot fields (PlantCount/ZombieCount) rather than inventing new state-tracking infrastructure (e.g. a wave counter) that this module's own scope does not ask for. Every number here is a genre-appropriate STARTING VALUE, not a validated balance decision -- matches this repo's own established 'pick starting values, tune from play' precedent (T2.11's own phased-rollout decision, cited by creature-lawn-deploy-plan.md's own Risks table). maxFiresPerRun=1 and fireChanceMilli=300 (30%) per case are deliberately conservative starting points: a genuinely rare, noteworthy moment rather than a constant nag. No souls/resource cost is charged to trigger a deploy (plan's own Gates section default, 'no cost beyond the frequency cap itself').",
+    "rebalance": "First version -- authored by hand, matching every other tuning file's own v1. A later balance pass edits the numbers below directly (or via tools/tuning/publish.py once this domain is registered there), never LawnDeployEventEvaluator.cs."
+  },
+  "maxFiresPerRun": 1,
+  "cases": {
+    "zombie-swarm": {
+      "zombieCountAtLeast": 5,
+      "fireChanceMilli": 300
+    },
+    "thin-defense": {
+      "plantCountAtMost": 2,
+      "zombieCountAtLeast": 1,
+      "fireChanceMilli": 300
+    }
+  }
+}

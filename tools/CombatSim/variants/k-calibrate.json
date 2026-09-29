@@ -1,0 +1,13 @@
+{
+  "name": "k-calibrate",
+  "description": "Find the defenseDivisorK whose mean damage matches the shipped subtractive baseline, so adopting the shape is not also a balance change.",
+  "scenario": "duel",
+  "variants": [
+    { "name": "shipped-subtractive", "set": ["combat.ampShape=reciprocal"] },
+    { "name": "divisive-k0.30", "set": ["combat.ampShape=reciprocal","combat.defenseShape=divisive","combat.defenseDivisorK=0.30"] },
+    { "name": "divisive-k0.35", "set": ["combat.ampShape=reciprocal","combat.defenseShape=divisive","combat.defenseDivisorK=0.35"] },
+    { "name": "divisive-k0.40", "set": ["combat.ampShape=reciprocal","combat.defenseShape=divisive","combat.defenseDivisorK=0.40"] },
+    { "name": "divisive-k0.45", "set": ["combat.ampShape=reciprocal","combat.defenseShape=divisive","combat.defenseDivisorK=0.45"] },
+    { "name": "divisive-k0.50", "set": ["combat.ampShape=reciprocal","combat.defenseShape=divisive","combat.defenseDivisorK=0.50"] }
+  ]
+}

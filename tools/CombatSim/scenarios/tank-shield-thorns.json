@@ -1,0 +1,10 @@
+{
+  "name": "tank-shield-thorns",
+  "description": "Thorns + a big renewing shield pool. The combo that measured 542% self-damage before the fix.",
+  "trials": 2000, "seed": 42, "maxRounds": 500,
+  "baseDamage": 1000, "elements": "singleRandom", "defenderElement": "ice",
+  "attackerHp": 100000, "defenderHp": 100000,
+  "attacker": { "combat.accuracy.omni": 300, "combat.power.omni": 2000 },
+  "defender": { "combat.reflect.rate.omni": 10, "combat.reflect.damage.omni": 100 },
+  "shieldHp": 200000, "reflection": true
+}

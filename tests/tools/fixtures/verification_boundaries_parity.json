@@ -1,0 +1,617 @@
+{
+  "_why": "The PowerShell library's ACTUAL answers to the four rules that decide which boundary owns a path. Captured once, by running `lib/VerificationBoundaries.ps1`, immediately before that file was deleted in the same commit that added this fixture. A cross-implementation differential cannot outlive its oracle, but its ANSWERS are data and data can be committed.",
+  "_what_this_does_not_prove": "It cannot detect a case that was never asked. A live differential discovers bugs by asking questions; a golden only answers questions already recorded, so a rule that changes only on an unasked case is now invisible. That is the class the live comparison used to catch, and the loss is real.",
+  "_oracle": "scripts/lib/VerificationBoundaries.ps1 (deleted in the same commit)",
+  "_rules": [
+    "Test-PatternMatch",
+    "Test-ValidPatternGrammar",
+    "Get-PatternSpecificity",
+    "Resolve-Owner"
+  ],
+  "fragment": [
+    {
+      "id": "broad",
+      "kind": "owner",
+      "paths": [
+        "src/**",
+        "docs/**/*.md",
+        "tools/t/*.py"
+      ]
+    },
+    {
+      "id": "narrow",
+      "kind": "owner",
+      "paths": [
+        "src/Fake/**"
+      ]
+    },
+    {
+      "id": "exact",
+      "kind": "owner",
+      "paths": [
+        "src/Fake/Widget.cs"
+      ]
+    },
+    {
+      "id": "tie-a",
+      "kind": "owner",
+      "paths": [
+        "src/Tie/**"
+      ]
+    },
+    {
+      "id": "tie-b",
+      "kind": "owner",
+      "paths": [
+        "src/Tie/**"
+      ]
+    }
+  ],
+  "probes": [
+    "src/Fake/Widget.cs",
+    "src/Fake/Deep/Widget.cs",
+    "src/Other.cs",
+    "srcs/Other.cs",
+    "docs/a/b.md",
+    "docs/a/b.py",
+    "tools/t/one.py",
+    "tools/t/one.txt",
+    "tools/t/Deep/one.py",
+    "src/Tie/Thing.cs",
+    "SRC/fake/widget.cs",
+    "tools/u/one.py"
+  ],
+  "patterns": [
+    "src/**",
+    "docs/**/*.md",
+    "tools/t/*.py",
+    "src/Fake/**",
+    "src/Fake/Widget.cs",
+    "src/Tie/**",
+    "src/Tie/**"
+  ],
+  "match": [
+    {
+      "p": "src/Fake/Widget.cs",
+      "t": "src/**",
+      "m": true
+    },
+    {
+      "p": "src/Fake/Widget.cs",
+      "t": "docs/**/*.md",
+      "m": false
+    },
+    {
+      "p": "src/Fake/Widget.cs",
+      "t": "tools/t/*.py",
+      "m": false
+    },
+    {
+      "p": "src/Fake/Widget.cs",
+      "t": "src/Fake/**",
+      "m": true
+    },
+    {
+      "p": "src/Fake/Widget.cs",
+      "t": "src/Fake/Widget.cs",
+      "m": true
+    },
+    {
+      "p": "src/Fake/Widget.cs",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "src/Fake/Widget.cs",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "src/Fake/Deep/Widget.cs",
+      "t": "src/**",
+      "m": true
+    },
+    {
+      "p": "src/Fake/Deep/Widget.cs",
+      "t": "docs/**/*.md",
+      "m": false
+    },
+    {
+      "p": "src/Fake/Deep/Widget.cs",
+      "t": "tools/t/*.py",
+      "m": false
+    },
+    {
+      "p": "src/Fake/Deep/Widget.cs",
+      "t": "src/Fake/**",
+      "m": true
+    },
+    {
+      "p": "src/Fake/Deep/Widget.cs",
+      "t": "src/Fake/Widget.cs",
+      "m": false
+    },
+    {
+      "p": "src/Fake/Deep/Widget.cs",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "src/Fake/Deep/Widget.cs",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "src/Other.cs",
+      "t": "src/**",
+      "m": true
+    },
+    {
+      "p": "src/Other.cs",
+      "t": "docs/**/*.md",
+      "m": false
+    },
+    {
+      "p": "src/Other.cs",
+      "t": "tools/t/*.py",
+      "m": false
+    },
+    {
+      "p": "src/Other.cs",
+      "t": "src/Fake/**",
+      "m": false
+    },
+    {
+      "p": "src/Other.cs",
+      "t": "src/Fake/Widget.cs",
+      "m": false
+    },
+    {
+      "p": "src/Other.cs",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "src/Other.cs",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "srcs/Other.cs",
+      "t": "src/**",
+      "m": false
+    },
+    {
+      "p": "srcs/Other.cs",
+      "t": "docs/**/*.md",
+      "m": false
+    },
+    {
+      "p": "srcs/Other.cs",
+      "t": "tools/t/*.py",
+      "m": false
+    },
+    {
+      "p": "srcs/Other.cs",
+      "t": "src/Fake/**",
+      "m": false
+    },
+    {
+      "p": "srcs/Other.cs",
+      "t": "src/Fake/Widget.cs",
+      "m": false
+    },
+    {
+      "p": "srcs/Other.cs",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "srcs/Other.cs",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.md",
+      "t": "src/**",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.md",
+      "t": "docs/**/*.md",
+      "m": true
+    },
+    {
+      "p": "docs/a/b.md",
+      "t": "tools/t/*.py",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.md",
+      "t": "src/Fake/**",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.md",
+      "t": "src/Fake/Widget.cs",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.md",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.md",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.py",
+      "t": "src/**",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.py",
+      "t": "docs/**/*.md",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.py",
+      "t": "tools/t/*.py",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.py",
+      "t": "src/Fake/**",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.py",
+      "t": "src/Fake/Widget.cs",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.py",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "docs/a/b.py",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.py",
+      "t": "src/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.py",
+      "t": "docs/**/*.md",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.py",
+      "t": "tools/t/*.py",
+      "m": true
+    },
+    {
+      "p": "tools/t/one.py",
+      "t": "src/Fake/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.py",
+      "t": "src/Fake/Widget.cs",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.py",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.py",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.txt",
+      "t": "src/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.txt",
+      "t": "docs/**/*.md",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.txt",
+      "t": "tools/t/*.py",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.txt",
+      "t": "src/Fake/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.txt",
+      "t": "src/Fake/Widget.cs",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.txt",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/one.txt",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/Deep/one.py",
+      "t": "src/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/Deep/one.py",
+      "t": "docs/**/*.md",
+      "m": false
+    },
+    {
+      "p": "tools/t/Deep/one.py",
+      "t": "tools/t/*.py",
+      "m": false
+    },
+    {
+      "p": "tools/t/Deep/one.py",
+      "t": "src/Fake/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/Deep/one.py",
+      "t": "src/Fake/Widget.cs",
+      "m": false
+    },
+    {
+      "p": "tools/t/Deep/one.py",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "tools/t/Deep/one.py",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "src/Tie/Thing.cs",
+      "t": "src/**",
+      "m": true
+    },
+    {
+      "p": "src/Tie/Thing.cs",
+      "t": "docs/**/*.md",
+      "m": false
+    },
+    {
+      "p": "src/Tie/Thing.cs",
+      "t": "tools/t/*.py",
+      "m": false
+    },
+    {
+      "p": "src/Tie/Thing.cs",
+      "t": "src/Fake/**",
+      "m": false
+    },
+    {
+      "p": "src/Tie/Thing.cs",
+      "t": "src/Fake/Widget.cs",
+      "m": false
+    },
+    {
+      "p": "src/Tie/Thing.cs",
+      "t": "src/Tie/**",
+      "m": true
+    },
+    {
+      "p": "src/Tie/Thing.cs",
+      "t": "src/Tie/**",
+      "m": true
+    },
+    {
+      "p": "SRC/fake/widget.cs",
+      "t": "src/**",
+      "m": true
+    },
+    {
+      "p": "SRC/fake/widget.cs",
+      "t": "docs/**/*.md",
+      "m": false
+    },
+    {
+      "p": "SRC/fake/widget.cs",
+      "t": "tools/t/*.py",
+      "m": false
+    },
+    {
+      "p": "SRC/fake/widget.cs",
+      "t": "src/Fake/**",
+      "m": true
+    },
+    {
+      "p": "SRC/fake/widget.cs",
+      "t": "src/Fake/Widget.cs",
+      "m": true
+    },
+    {
+      "p": "SRC/fake/widget.cs",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "SRC/fake/widget.cs",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "tools/u/one.py",
+      "t": "src/**",
+      "m": false
+    },
+    {
+      "p": "tools/u/one.py",
+      "t": "docs/**/*.md",
+      "m": false
+    },
+    {
+      "p": "tools/u/one.py",
+      "t": "tools/t/*.py",
+      "m": false
+    },
+    {
+      "p": "tools/u/one.py",
+      "t": "src/Fake/**",
+      "m": false
+    },
+    {
+      "p": "tools/u/one.py",
+      "t": "src/Fake/Widget.cs",
+      "m": false
+    },
+    {
+      "p": "tools/u/one.py",
+      "t": "src/Tie/**",
+      "m": false
+    },
+    {
+      "p": "tools/u/one.py",
+      "t": "src/Tie/**",
+      "m": false
+    }
+  ],
+  "grammar": [
+    {
+      "t": "src/**",
+      "g": true
+    },
+    {
+      "t": "docs/**/*.md",
+      "g": true
+    },
+    {
+      "t": "tools/t/*.py",
+      "g": true
+    },
+    {
+      "t": "src/Fake/**",
+      "g": true
+    },
+    {
+      "t": "src/Fake/Widget.cs",
+      "g": true
+    },
+    {
+      "t": "src/Tie/**",
+      "g": true
+    },
+    {
+      "t": "src/Tie/**",
+      "g": true
+    }
+  ],
+  "specificity": [
+    {
+      "t": "src/**",
+      "s": 6
+    },
+    {
+      "t": "docs/**/*.md",
+      "s": 100012
+    },
+    {
+      "t": "tools/t/*.py",
+      "s": 200012
+    },
+    {
+      "t": "src/Fake/**",
+      "s": 11
+    },
+    {
+      "t": "src/Fake/Widget.cs",
+      "s": 300018
+    },
+    {
+      "t": "src/Tie/**",
+      "s": 10
+    },
+    {
+      "t": "src/Tie/**",
+      "s": 10
+    }
+  ],
+  "resolve": [
+    {
+      "p": "src/Fake/Widget.cs",
+      "owners": "exact",
+      "specificity": 300018
+    },
+    {
+      "p": "src/Fake/Deep/Widget.cs",
+      "owners": "narrow",
+      "specificity": 11
+    },
+    {
+      "p": "src/Other.cs",
+      "owners": "broad",
+      "specificity": 6
+    },
+    {
+      "p": "srcs/Other.cs",
+      "owners": "NONE",
+      "specificity": -1
+    },
+    {
+      "p": "docs/a/b.md",
+      "owners": "broad",
+      "specificity": 100012
+    },
+    {
+      "p": "docs/a/b.py",
+      "owners": "NONE",
+      "specificity": -1
+    },
+    {
+      "p": "tools/t/one.py",
+      "owners": "broad",
+      "specificity": 200012
+    },
+    {
+      "p": "tools/t/one.txt",
+      "owners": "NONE",
+      "specificity": -1
+    },
+    {
+      "p": "tools/t/Deep/one.py",
+      "owners": "NONE",
+      "specificity": -1
+    },
+    {
+      "p": "src/Tie/Thing.cs",
+      "owners": "tie-a+tie-b",
+      "specificity": 10
+    },
+    {
+      "p": "SRC/fake/widget.cs",
+      "owners": "exact",
+      "specificity": 300018
+    },
+    {
+      "p": "tools/u/one.py",
+      "owners": "NONE",
+      "specificity": -1
+    }
+  ]
+}

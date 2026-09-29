@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ip-censor"
+version = "1.0.0"
+description = "IP detection and reporting over the tracked tree: census, scan, suggest, curate, report."
+requires-python = ">=3.11"
+
+# EXACT pins, never ranges (spec-wiring.md §Tech Stack; seedsmith's rule, same reason).
+#
+# A range lets two clones run different matchers and both call themselves green, which is
+# incompatible with a tool whose registry rows are matched by byte position.
+dependencies = [
+    # The multi-pattern automaton `scan` builds once from the registry (spec-scan.md).
+    # Distribution name is `pyahocorasick`; its import name is `ahocorasick`.
+    "pyahocorasick==2.3.1",
+    # Boundary-aware matching. `regex` is the only matcher whose boundary vocabulary can decline
+    # to split a CJK-adjacent alias (`PvZ融合版`), which `\b` cannot express (spec-scan.md).
+    "regex==2026.3.32",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.0.2",
+]
+
+[tool.setuptools.packages.find]
+include = ["ipcensor*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

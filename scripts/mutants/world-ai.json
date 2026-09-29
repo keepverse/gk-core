@@ -1,0 +1,333 @@
+[
+  {
+    "file": "src/FusionRpg.Core/World/Ai/Hops.cs",
+    "name": "every reachable sector is one hop away",
+    "find": "distance[neighbour] = distance[current] + 1;",
+    "with": "distance[neighbour] = 1;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/Hops.cs",
+    "name": "somewhere unreachable reports zero rather than nothing",
+    "find": "From(graph, from).TryGetValue(to, out var hops) ? hops : null;",
+    "with": "From(graph, from).TryGetValue(to, out var hops) ? hops : 0;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/MarchGraph.cs",
+    "name": "the march graph is built on the supply lens",
+    "find": "include, LaneLens.March, bannerElement)",
+    "with": "include, LaneLens.Supply, bannerElement)"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/MarchGraph.cs",
+    "name": "climate is unknown everywhere, so no ley discount is ever expected",
+    "find": "sectorId => view.Believed(sectorId)?.Climate;",
+    "with": "sectorId => null;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/BelievedSupply.cs",
+    "name": "any owned sector seeds supply, Seat or not",
+    "find": "&& view.Believed(id)!.Slots.Any(s => s.SlotTypeId == SlotTypeCatalog.SeatSlotTypeId))",
+    "with": ")"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/BelievedSupply.cs",
+    "name": "an enemy zone of control does not break the chain",
+    "find": "return !HeldAgainst(view, sectorId);",
+    "with": "return true;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Movement/SupplyReach.cs",
+    "name": "a one-way link carries supply both ways",
+    "find": "if (!link.OneWay) Add(outgoing, link.ToSectorId, link.FromSectorId);",
+    "with": "Add(outgoing, link.ToSectorId, link.FromSectorId);"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Topology/LaneGraph.cs",
+    "name": "every lane is traversable under both lenses",
+    "find": "return lens == LaneLens.March || type.CarriesSupply;",
+    "with": "return true;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ThreatMap.cs",
+    "name": "staleness never costs you confidence",
+    "find": "1000 - age * StaleDecayPerTurn",
+    "with": "1000"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ThreatMap.cs",
+    "name": "an old sighting never spreads",
+    "find": "Math.Min(age, MaxSpreadHops)",
+    "with": "0"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ThreatMap.cs",
+    "name": "distance from the sighting costs nothing",
+    "find": "1000 - beyond * ProximityFalloffPerHop",
+    "with": "1000"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ThreatMap.cs",
+    "name": "your own army is frightening too",
+    "find": "if (!ZoneOfControl.IsHostile(force.OwnerFactionId, view.FactionId)) continue;",
+    "with": ""
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ThreatMap.cs",
+    "name": "defending and attacking read a band the same way",
+    "find": "reading == ThreatReading.Defensive ? force.Defensive : force.Offensive",
+    "with": "force.Offensive"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ThreatMap.cs",
+    "name": "a dug-in guard's menace travels",
+    "find": "ZoneOfControl.Projects(force.Kind) ? spreadHops + FalloffReach : 0",
+    "with": "spreadHops + FalloffReach"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ReachMap.cs",
+    "name": "arriving part-way through a turn is free",
+    "find": "(cost + budget - 1) / budget",
+    "with": "cost / budget"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ReachMap.cs",
+    "name": "a dug-in legion still reaches everywhere",
+    "find": "if (budget <= 0) return turns;",
+    "with": "budget = MovementPolicy.PointsPerTurn;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ReachMap.cs",
+    "name": "a legion mid-stride routes from where it set off",
+    "find": "entity.AtSectorId ?? entity.OnLaneTowardSectorId",
+    "with": "entity.AtSectorId"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ReachMap.cs",
+    "name": "the banner is ignored, so no legion ever gets a ley discount",
+    "find": "bannerElement: BannerElement.Of(entity)",
+    "with": "bannerElement: null"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ReachMap.cs",
+    "name": "Dijkstra keeps the first route it finds rather than the cheapest",
+    "find": "if (best.TryGetValue(edge.ToSectorId, out var known) && known <= through) continue;",
+    "with": "if (best.ContainsKey(edge.ToSectorId)) continue;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierSet.cs",
+    "name": "interior ground counts as frontier",
+    "find": "if (Mine(edge.ToSectorId)) continue;",
+    "with": ""
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierSet.cs",
+    "name": "other people's ground is reported as yours",
+    "find": "if (!Mine(edge.FromSectorId)) continue;",
+    "with": ""
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ValueMap.cs",
+    "name": "overextension never bites",
+    "find": "? total * OverextensionPenaltyMilli / 1000",
+    "with": "? 0"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ValueMap.cs",
+    "name": "overextension can only reach zero, never below",
+    "find": "public const int OverextensionPenaltyMilli = 1400;",
+    "with": "public const int OverextensionPenaltyMilli = 1000;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ValueMap.cs",
+    "name": "ground beside your chain counts as overextension too",
+    "find": "if (supplied.Contains(sectorId)) return false;",
+    "with": ""
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ValueMap.cs",
+    "name": "unknown ground is worth nothing, so nobody explores",
+    "find": "var curiosityValue = meanKnownYield * OptimismMilli / 1000;",
+    "with": "var curiosityValue = 0;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ValueMap.cs",
+    "name": "curiosity keeps paying after the map is known",
+    "find": "var curiosity = unknown ? curiosityValue : 0;",
+    "with": "var curiosity = curiosityValue;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ValueMap.cs",
+    "name": "an empty threat map reads as maximum danger everywhere",
+    "find": "var risk = worstThreat == 0\n                ? 1000",
+    "with": "var risk = worstThreat == 0\n                ? 0"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ValueMap.cs",
+    "name": "guards cost nothing to clear",
+    "find": "1000 - turns * 200 - guards * 150",
+    "with": "1000 - turns * 200"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/ValueMap.cs",
+    "name": "a glimpse yields as much as a survey",
+    "find": "if (view.Believed(sectorId) is not { } believed || believed.Slots.Count == 0) return 0;",
+    "with": "if (view.Believed(sectorId) is not { } believed) return 0;\n        if (believed.Slots.Count == 0) return 500;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/SlotValueCatalog.cs",
+    "name": "a missing slot kind is a silent zero",
+    "find": "throw new KeyNotFoundException($\"No slot value for '{kind}'.\");",
+    "with": "0;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/Utility/ResponseCurves.cs",
+    "name": "an out-of-range input is believed rather than clamped",
+    "find": "var x = Math.Clamp(input, 0, Max);",
+    "with": "var x = input;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/Utility/ResponseCurves.cs",
+    "name": "quadratic and inverse-quadratic are the same shape",
+    "find": "ResponseCurve.InverseQuadratic => Max - (Max - x) * (Max - x) / Max,",
+    "with": "ResponseCurve.InverseQuadratic => x * x / Max,"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/Utility/ResponseCurves.cs",
+    "name": "a threshold fires one short of its point",
+    "find": "x >= threshold ? Max : 0",
+    "with": "x > threshold ? Max : 0"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/Utility/Consideration.cs",
+    "name": "nothing to consider is a reason to act",
+    "find": "if (considerations.Count == 0) return 0;",
+    "with": "if (considerations.Count == 0) return 1000;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/Utility/Consideration.cs",
+    "name": "compensation is skipped, so many-axis behaviours always lose",
+    "find": "return Compensate((int)product, considerations.Count);",
+    "with": "return (int)product;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/Utility/Consideration.cs",
+    "name": "compensation can carry a score past the ceiling",
+    "find": "return (int)Math.Min(ResponseCurves.Max, score + makeUp * score / ResponseCurves.Max);",
+    "with": "return (int)(score + makeUp);"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/Utility/Consideration.cs",
+    "name": "a tie between weakest axes breaks arbitrarily",
+    "find": "foreach (var consideration in considerations.OrderBy(c => c.Name, StringComparer.Ordinal))",
+    "with": "foreach (var consideration in considerations)"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierSet.cs",
+    "name": "the near side of the border is not recorded as frontier",
+    "find": "held.Add(edge.FromSectorId);",
+    "with": ""
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Finish clears the highest guarded slot instead of the lowest",
+    "find": ".OrderBy(s => s.SlotIndex)",
+    "with": ".OrderByDescending(s => s.SlotIndex)"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Finish clears with an enemy standing over it",
+    "find": "if (believed.Forces.Any(f => ZoneOfControl.IsHostile(f.OwnerFactionId, view.FactionId)\n                                     && ZoneOfControl.Projects(f.Kind))) return null;",
+    "with": ""
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Take claims ground that is still guarded",
+    "find": "if (believed.Slots.Any(s => s.GuardState == GuardState.Intact && s.GuardWaveId != null)) return null;",
+    "with": ""
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Take claims what it already owns",
+    "find": "if (believed.OwnerFactionId != null) return null;",
+    "with": ""
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Recover digs in out of supply",
+    "find": "if (entity.AtSectorId is not { } here || !supplied.Contains(here)) return null;",
+    "with": "if (entity.AtSectorId is not { } here) return null;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Recover re-files hold instead of reporting it is still mending",
+    "find": "if (string.Equals(entity.Stance, MovementPolicy.Hold, StringComparison.Ordinal))\n            return wounded > 0\n                ? Order(view, entity, WorldCommandKinds.StandFast, \"holding position, still recovering\")\n                : null;",
+    "with": "if (false) return null;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Recover digs in over a scratch",
+    "find": "if (wounded < RecoverAtMilli) return null;",
+    "with": ""
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Explore re-files the scout stance instead of marching",
+    "find": "if (!string.Equals(entity.Stance, MovementPolicy.Scout, StringComparison.Ordinal))",
+    "with": "if (true)"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Explore walks to the far side of the map",
+    "find": "&& reach.TryGetValue(id, out var turns) && turns <= ExploreTurns)",
+    "with": "&& reach.ContainsKey(id))"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Expand marches at ground worth nothing",
+    "find": "long bestScore = 0;",
+    "with": "long bestScore = long.MinValue;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "a routed force is given orders anyway",
+    "find": "if (entity.Routed) continue;",
+    "with": ""
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Defend ignores the garrison already standing there",
+    "find": "if (incoming - garrison <= margin) continue;",
+    "with": "if (incoming <= margin) continue;"
+  },
+
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Abandon fires for a faction with no loam source anywhere (G-C)",
+    "find": "if (!hasSourceAnywhere) return null;",
+    "with": "if (false) return null;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Abandon fires on a solvent component",
+    "find": "if (componentBalance >= 0) return null;   // solvent — nothing to release",
+    "with": "if (false) return null;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Abandon ignores how much runway is left",
+    "find": "if (turnsOfRunway >= LoamPolicy.AbandonmentHorizonTurns) return null;   // still enough runway",
+    "with": "if (false) return null;"
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Abandon evacuates any entity in the component, not just the weakest sector's occupant",
+    "find": "if (!string.Equals(weakest, here, StringComparison.Ordinal)) return null;   // not this entity's ground to give up",
+    "with": ""
+  },
+  {
+    "file": "src/FusionRpg.Core/World/Ai/FrontierRulesPolicy.cs",
+    "name": "Abandon picks the first sector by id instead of the worst balance",
+    "find": "if (weakest is null || balance < weakestBalance\n                || (balance == weakestBalance && string.CompareOrdinal(id, weakest) < 0))",
+    "with": "if (weakest is null)"
+  }
+]

@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 1,
+  "_meta": {
+    "owner": "docs/architecture/narrative-seed/spec-storylet-vocab.md#31",
+    "note": "Test fixture for npc-story-events NR1.2. The real file is narrative-seed's storylet-vocab (plan §8.1); this fixture carries the row shape of runtime spec-narrative-vocabulary.md §2 / seed §3.1 so the runtime loader is proven before the seed side lands."
+  },
+  "hostKinds": {
+    "delve.curio": {
+      "description": "A Delve curiosity room holding a storylet.",
+      "negative": "A host kind is where a storylet can be shown, not which storylet is chosen or what it pays.",
+      "place": "delve",
+      "roomKind": "curio",
+      "admits": ["curio"],
+      "climateNeutral": false,
+      "climateSource": "room",
+      "climates": ["none", "earth", "fire", "ice", "air", "light", "dark"],
+      "clock": "delve.room"
+    },
+    "delve.shrine": {
+      "description": "A Delve shrine room.",
+      "negative": "A host kind is not which storylet is chosen.",
+      "place": "delve",
+      "roomKind": "shrine",
+      "admits": ["shrine"],
+      "climateNeutral": false,
+      "climateSource": "room",
+      "climates": ["none", "earth", "fire", "ice", "air", "light", "dark"],
+      "clock": "delve.room"
+    },
+    "delve.trap": {
+      "description": "A Delve trap room.",
+      "negative": "A host kind is not a difficulty band.",
+      "place": "delve",
+      "roomKind": "trap",
+      "admits": ["trap"],
+      "climateNeutral": false,
+      "climateSource": "room",
+      "climates": ["none", "earth", "fire", "ice", "air", "light", "dark"],
+      "clock": "delve.room"
+    },
+    "delve.merchant": {
+      "description": "A Delve merchant room.",
+      "negative": "A host kind is not a price.",
+      "place": "delve",
+      "roomKind": "merchant",
+      "admits": ["bargain"],
+      "climateNeutral": true,
+      "climateSource": "none",
+      "climates": ["none"],
+      "clock": "delve.room"
+    },
+    "delve.wild": {
+      "description": "A Delve wild room.",
+      "negative": "A host kind is not which creature appears.",
+      "place": "delve",
+      "roomKind": "wild",
+      "admits": ["story"],
+      "climateNeutral": false,
+      "climateSource": "room",
+      "climates": ["none", "earth", "fire", "ice", "air", "light", "dark"],
+      "clock": "delve.room"
+    },
+    "delve.rest": {
+      "description": "The Delve rest ambush pool.",
+      "negative": "A host kind is not the ambush draw's odds.",
+      "place": "delve",
+      "roomKind": "rest",
+      "admits": ["encounter-event"],
+      "climateNeutral": true,
+      "climateSource": "none",
+      "climates": ["none"],
+      "clock": "delve.room"
+    },
+    "delve.unknown": {
+      "description": "A Delve room whose kind the party has not resolved.",
+      "negative": "A host kind is not an unknown outcome.",
+      "place": "delve",
+      "roomKind": "unknown",
+      "admits": ["curio", "shrine", "trap", "bargain", "story", "encounter-event"],
+      "climateNeutral": true,
+      "climateSource": "none",
+      "climates": ["none"],
+      "clock": "delve.room"
+    },
+    "world.shrine": {
+      "description": "A world sector carrying a shrine slot.",
+      "negative": "A host kind is not the sector's danger.",
+      "place": "world",
+      "roomKind": null,
+      "admits": ["shrine", "story"],
+      "climateNeutral": false,
+      "climateSource": "sector",
+      "climates": ["none", "earth", "fire", "ice", "air", "light", "dark"],
+      "clock": "world.turn"
+    },
+    "world.anomaly": {
+      "description": "A world sector carrying an anomaly slot.",
+      "negative": "A host kind is not the anomaly's content.",
+      "place": "world",
+      "roomKind": null,
+      "admits": ["curio", "trap", "encounter-event", "story"],
+      "climateNeutral": false,
+      "climateSource": "sector",
+      "climates": ["none", "earth", "fire", "ice", "air", "light", "dark"],
+      "clock": "world.turn"
+    },
+    "world.tear": {
+      "description": "A world sector carrying a tear slot.",
+      "negative": "A host kind is not the rift's origin.",
+      "place": "world",
+      "roomKind": null,
+      "admits": ["encounter-event", "trap"],
+      "climateNeutral": false,
+      "climateSource": "sector",
+      "climates": ["none", "earth", "fire", "ice", "air", "light", "dark"],
+      "clock": "world.turn"
+    },
+    "world.vault": {
+      "description": "A world sector carrying a vault slot.",
+      "negative": "A host kind is not what the vault holds.",
+      "place": "world",
+      "roomKind": null,
+      "admits": ["curio", "trap", "story"],
+      "climateNeutral": false,
+      "climateSource": "sector",
+      "climates": ["none", "earth", "fire", "ice", "air", "light", "dark"],
+      "clock": "world.turn"
+    },
+    "world.market": {
+      "description": "A world sector carrying a market slot.",
+      "negative": "A host kind is not a stock.",
+      "place": "world",
+      "roomKind": null,
+      "admits": ["bargain"],
+      "climateNeutral": false,
+      "climateSource": "sector",
+      "climates": ["none", "earth", "fire", "ice", "air", "light", "dark"],
+      "clock": "world.turn"
+    },
+    "world.wildland": {
+      "description": "A world sector carrying a wildland slot.",
+      "negative": "A host kind is not which species roams there.",
+      "place": "world",
+      "roomKind": null,
+      "admits": ["story", "encounter-event"],
+      "climateNeutral": false,
+      "climateSource": "sector",
+      "climates": ["none", "earth", "fire", "ice", "air", "light", "dark"],
+      "clock": "world.turn"
+    },
+    "world.petition": {
+      "description": "A held sector's turn, where a faction petitions.",
+      "negative": "A host kind is not a faction's loyalty.",
+      "place": "world",
+      "roomKind": null,
+      "admits": ["story", "bargain"],
+      "climateNeutral": false,
+      "climateSource": "sector",
+      "climates": ["none", "earth", "fire", "ice", "air", "light", "dark"],
+      "clock": "world.turn"
+    },
+    "expedition.return": {
+      "description": "An expedition collect.",
+      "negative": "A host kind is not the expedition's tier.",
+      "place": "expedition",
+      "roomKind": null,
+      "admits": ["story", "curio"],
+      "climateNeutral": true,
+      "climateSource": "none",
+      "climates": ["none"],
+      "clock": "expedition.collect"
+    },
+    "sanctum.hub": {
+      "description": "The homeworld on return, where one conversation per character plays.",
+      "negative": "A host kind is not a conversation count.",
+      "place": "homeworld",
+      "roomKind": null,
+      "admits": ["story"],
+      "climateNeutral": true,
+      "climateSource": "none",
+      "climates": ["none"],
+      "clock": "sanctum.return"
+    }
+  }
+}

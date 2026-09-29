@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FusionRpg.Tools.CombatSim</RootNamespace>
+    <AssemblyName>CombatSim</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Core only. This tool drives the REAL combat pipeline through Core's own public seams and
+         calls every shared shape rather than re-deriving it: StrikeMixture for the per-swing
+         mixture, ElementalResolver.RateFromZero for the reflect shape, Race.Phi for the race CDF,
+         CombatProbability for the logistic, CombatPolicy.Default for the policy. What remains
+         tool-local is the adapter layer (Archetype -> CombatActorSnapshot) and the two walks whose
+         Core call-through is still landing: StatusModel's uptime (D8/T7) and ActionEconomy's pool
+         regen (D9/T8). It opens no database, issues no SQL, and never touches the game. -->
+    <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="scenarios\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="variants\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

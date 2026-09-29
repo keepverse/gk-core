@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/loam/spec-loam-model.md, docs/architecture/world/spec-sector-development.md",
+    "note": "v2 (world-map W55): adds the `development` block beside `upkeep.developmentUpkeepPerLevel` — empire-economy-ssot.md A8 is a comparison between the two, so both live in this one file where the invariant is readable by inspection. Every other key is byte-identical to v1. `yieldPerLevel` is a provisional placeholder, chosen only to keep A8 true at publish time (6 > upkeep.developmentUpkeepPerLevel's 5) — L9's economy harness, not this migration, picks the real number. Kept deliberately close to 5 rather than a rounder, larger number: A8 makes any positive DevelopmentLevel a genuine net producer now (yield always exceeds its own upkeep), which several pre-existing Loam-domain test fixtures had used purely as an upkeep-only lever assuming no such side effect — those fixtures were repaired to use DangerBand instead (world-map W55's own audit), and a smaller margin here keeps the two concerns (a real A8 economy number vs. an arbitrary test fixture number) from silently colliding again the next time either moves.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py loam <dotted.key>=<value> [...] writes loam.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "upkeep": {
+    "seepPerTurn": 50,
+    "loamCapacity": 300,
+    "baseUpkeepPerSector": 10,
+    "garrisonUpkeepPerMember": 2,
+    "developmentUpkeepPerLevel": 5,
+    "dangerUpkeepPerBand": 3
+  },
+  "development": {
+    "yieldPerLevel": 6
+  },
+  "fade": {
+    "recoveryMilli": 20,
+    "baseDecayMilli": 40,
+    "decayPerDeficitUnitMilli": 1,
+    "decayScaleDivisor": 5,
+    "maxDecayMilli": 300,
+    "abandonmentHorizonTurns": 3
+  },
+  "legionSupply": {
+    "carryPerBearer": 200,
+    "burnPerMember": 10
+  },
+  "structures": {
+    "wellYieldMultiplierMilli": 2000,
+    "wellCostMilli": 200,
+    "waystationCostMilli": 300,
+    "wellBuildTurns": 2,
+    "waystationBuildTurns": 4,
+    "waystationRangeHops": 3,
+    "granaryCostMilli": 150,
+    "granaryCapacityBonus": 300,
+    "granaryBuildTurns": 2
+  },
+  "texture": {
+    "contagionPressurePerTurn": 60,
+    "maxPressureMilli": 300,
+    "pressureDecayPerTurn": 40,
+    "surgeDecayMultiplierMilli": 1500,
+    "unmadeSpawnAfterTurns": 5,
+    "unmadeMemberHp": 120,
+    "unmadeMemberCount": 2
+  }
+}

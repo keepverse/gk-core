@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<trademark-case-files>
+  <case-file>
+    <case-file-header>
+      <serial-number>90000001</serial-number>
+      <mark-identification>EXAMPLEMARK</mark-identification>
+      <status-code>700</status-code>
+    </case-file-header>
+    <case-file-statements>
+      <international-class>28</international-class>
+      <goods-services-description>Board games and video game software</goods-services-description>
+    </case-file-statements>
+  </case-file>
+  <case-file>
+    <case-file-header>
+      <serial-number>90000002</serial-number>
+      <mark-identification>Zenith Blade</mark-identification>
+      <status-code>700</status-code>
+    </case-file-header>
+    <case-file-statements>
+      <international-class>9</international-class>
+      <international-class>28</international-class>
+      <goods-services-description>Downloadable electronic game programs</goods-services-description>
+    </case-file-statements>
+  </case-file>
+  <case-file>
+    <case-file-header>
+      <serial-number>90000003</serial-number>
+      <mark-identification>Fixturemark</mark-identification>
+      <status-code>700</status-code>
+    </case-file-header>
+    <case-file-statements>
+      <international-class>25</international-class>
+      <goods-services-description>Clothing and footwear</goods-services-description>
+    </case-file-statements>
+  </case-file>
+  <case-file>
+    <case-file-header>
+      <serial-number>90000004</serial-number>
+      <mark-identification>Abandonedmark</mark-identification>
+      <status-code>606</status-code>
+    </case-file-header>
+    <case-file-statements>
+      <international-class>9</international-class>
+      <goods-services-description>Video game software</goods-services-description>
+    </case-file-statements>
+  </case-file>
+  <case-file>
+    <case-file-header>
+      <serial-number>90000005</serial-number>
+      <mark-identification>Gaming Chair</mark-identification>
+      <status-code>700</status-code>
+    </case-file-header>
+    <case-file-statements>
+      <international-class>28</international-class>
+      <goods-services-description>Gaming chairs and furniture</goods-services-description>
+    </case-file-statements>
+  </case-file>
+  <case-file>
+    <case-file-header>
+      <serial-number>90000006</serial-number>
+      <mark-identification>Exm</mark-identification>
+      <status-code>700</status-code>
+    </case-file-header>
+    <case-file-statements>
+      <international-class>9</international-class>
+      <goods-services-description>Video game software</goods-services-description>
+    </case-file-statements>
+  </case-file>
+</trademark-case-files>

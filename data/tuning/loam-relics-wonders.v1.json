@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/loam-relics-and-wonders/spec-wonder-structure.md",
+    "note": "v1 (empire-development Task 1.4): per-scope Unique Wonder existence caps. A policy constant, correctly a data/tuning value — one number per scope, not authored per-Wonder-row content (per-row magnitudes live in data/seed/structures seed content). Never 1 by default: both caps are real provisional counts for a balance pass to revisit, not silent hard caps; Common is uncapped in code (long.MaxValue), never a finite number here.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py loam-relics-wonders <dotted.key>=<value> [...] writes loam-relics-wonders.v{n+1}.json; the old version stays on disk for revert.",
+    "rebalanceLabel": "v1: initial Unique existence caps (provisional, for balance pass)"
+  },
+  "uniqueExistenceCap": {
+    "sector": 2,
+    "empire": 3
+  }
+}

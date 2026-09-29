@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/software-architecture.md",
+    "note": "Extracted byte-identical from SimModels.cs's SimDefaults (tunables-ssot.md M.11, 2026-08-24). Fallback stats SimEngine (server-side board simulation) uses when a spawn request omits an explicit value. Name strings (LevelName/PlantTypeName/ZombieTypeName) stay in C# — not magnitudes.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py sim <dotted.key>=<value> [...] writes sim.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "plantHp": 300,
+  "plantAttack": 20,
+  "zombieHp": 270,
+  "zombieAttack": 50,
+  "hitDamage": 50
+}

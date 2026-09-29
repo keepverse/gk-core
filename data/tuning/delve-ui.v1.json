@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/party-dungeon/spec-delve-stage.md",
+    "note": "delve-stage's own presentation pacing (§12) — a delve's balance surface (souls, drop rates, rung difficulty) is entirely the server's; what lives here is feel only: the default ui.present banner duration, and a band-4 report's dwell plus the count above which queued reports collapse into one summary. dwell.inputWindowMs/afkTimeoutMs are deliberately NOT here — they are T6's (spec-delve-battle-profile.md:256), read from the live session message, never a client constant of this module's own.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py delve-ui <dotted.key>=<value> [...] writes delve-ui.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "banner": {
+    "durationMs": 2600
+  },
+  "reveal": {
+    "toastMs": 4000,
+    "maxQueued": 3
+  }
+}

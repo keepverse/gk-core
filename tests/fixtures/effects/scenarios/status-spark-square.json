@@ -1,0 +1,48 @@
+{
+  "id": "status-spark-square",
+  "seed": 42,
+  "board": [
+    { "ptr": "P1", "side": "plant", "typeId": 0, "col": 2, "row": 2, "derivedProfile": "neutral" },
+    { "ptr": "Z1", "side": "zombie", "typeId": 0, "col": 5, "row": 2, "derivedProfile": "glass" },
+    { "ptr": "Z2", "side": "zombie", "typeId": 0, "col": 6, "row": 2, "derivedProfile": "glass" },
+    { "ptr": "Z3", "side": "zombie", "typeId": 0, "col": 9, "row": 4, "derivedProfile": "glass" }
+  ],
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "spark-sq",
+        "effectId": "fx.overlay_damage",
+        "ownerKey": "match",
+        "overlay": {
+          "statusId": "spark",
+          "amount": -12,
+          "icd_ms": 0,
+          "periodMs": 1000,
+          "durationMs": 5000,
+          "spread": {
+            "chance": 1.0,
+            "icd_ms": 0,
+            "maxHops": 2,
+            "statusId": "spark",
+            "target": {
+              "mode": "Area",
+              "shape": "Square",
+              "size": 3,
+              "anchor": "EventTarget",
+              "filters": { "side": "zombie" }
+            }
+          }
+        }
+      }
+    },
+    { "op": "hit", "actorPtr": "P1", "targetPtr": "Z1", "typeId": 0, "targetTypeId": 0 },
+    { "op": "expectStatus", "hostPtr": "Z1", "statusId": "spark", "present": true },
+    { "op": "expectStatus", "hostPtr": "Z2", "statusId": "spark", "present": false },
+    { "op": "expectStatus", "hostPtr": "Z3", "statusId": "spark", "present": false },
+    { "op": "advanceMs", "ms": 1000 },
+    { "op": "expectStatus", "hostPtr": "Z2", "statusId": "spark", "present": true },
+    { "op": "expectStatus", "hostPtr": "Z3", "statusId": "spark", "present": false }
+  ]
+}

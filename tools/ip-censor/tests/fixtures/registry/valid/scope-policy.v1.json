@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "enforcedSurfaces": [
+    "player-name",
+    "player-prose",
+    "generator-prompt"
+  ],
+  "defaultSurface": "code-identifier",
+  "pathRules": [
+    {
+      "surface": "generator-prompt",
+      "paths": [
+        "tools/seedsmith/**"
+      ]
+    },
+    {
+      "surface": "code-identifier",
+      "paths": [
+        "src/**",
+        "tests/**",
+        "tools/**"
+      ]
+    },
+    {
+      "surface": "player-name",
+      "paths": [
+        "data/seed/narrative/_registry/**",
+        "data/seed/passive-tree/**"
+      ]
+    },
+    {
+      "surface": "player-prose",
+      "paths": [
+        "data/seed/narrative/**",
+        "docs/guide/**",
+        "*.po"
+      ]
+    },
+    {
+      "surface": "docs-prose",
+      "paths": [
+        "docs/**"
+      ]
+    },
+    {
+      "surface": "registry",
+      "paths": [
+        "data/seed/**/_registry/**"
+      ]
+    }
+  ],
+  "selfPaths": {
+    "class1": [
+      "data/seed/ip-censor/**"
+    ],
+    "class2": [
+      "docs/architecture/ip-censor/**",
+      "docs/architecture/ip-censor-map.md",
+      "docs/architecture/ip-censor-ideal.md",
+      "tools/ip-censor/tests/fixtures/**",
+      "tasks/ip-censor-plan.md",
+      "tasks/ip-censor-todo.md"
+    ],
+    "class3": [
+      "tasks/ip-censor/**"
+    ]
+  }
+}

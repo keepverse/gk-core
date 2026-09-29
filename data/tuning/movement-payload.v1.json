@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/action-corpus/spec-movement-payload.md (A-M1) SS2",
+    "note": "The RPG-layer half of a movement action -- the closed vocabulary MovementPayloadPolicy (FusionRpg.Core.Actions.Movement) validates against. Ids and prose only, no magnitude of any kind: the atom roll (Instantiator.Draw) owns every number this vocabulary could carry. 'channels' is 3 of the 261+ registered derived-stat channels; 'statuses' is exactly the 13 non-UnityCc status ids of StatusCatalogBootstrap.cs:16-58 (the 8 UnityCc-wrapped ones -- butter, freeze, cold, poison, hypno, ember, jala, kelp -- are refused at load, never admitted, because a UnityCc status needs the Unity CC executor and therefore the lawn, which would let a movement action pass HasStandalonePayload while being inert with the game closed); 'payloadKinds' is the closed set buff|status|tempo|none.",
+    "rebalance": "A balance pass narrows the 'statuses' list by DELETING rows (the rule stays 'any non-UnityCc status'; the seeded default is every id that rule currently admits) -- never widens it past the load-time UnityCc predicate. 'channels' and 'payloadKinds' are structural, not a balance surface. Never hand-edit: use tools/tuning/publish.py movement-payload key=value (publish.py is domain-name-agnostic -- it globs data/tuning/<domain>.v*.json, so no separate registration step exists for a new domain). A new version bumps `version` and keeps this one on disk for revert."
+  },
+  "channels": [
+    {
+      "id": "move.range",
+      "description": "move.range is how far an actor may reposition (DerivedStatChannels.cs:525, FlatSum, StatClass.Pool); it is not attack reach, not movement speed, and not a duration -- and it has no production reader today (DerivedStatRegistry.cs:237 is its only registration; DominanceGuard.cs:103 reserves it), so a payload written entirely here is declared and inert until a reader lands."
+    },
+    {
+      "id": "skill.cooldown.movement",
+      "description": "skill.cooldown.movement is the movement action-category's own cooldown tempo channel (DerivedStatChannels.cs:482,485, StatClass.Race); it is never a damage or defense multiplier, never shared with attack/defense/support/status, and it has no production reader today (DerivedStatRegistry.cs:177-180, DominanceGuard.cs:118-119)."
+    },
+    {
+      "id": "skill.effectiveness.movement",
+      "description": "skill.effectiveness.movement is the movement action-category's own effectiveness tempo channel (DerivedStatChannels.cs:483,486, StatClass.Feeder); it is never an attack-damage multiplier, never shared with attack/defense/support/status, and it has no production reader today (DerivedStatRegistry.cs:177-180, DominanceGuard.cs:118-119)."
+    }
+  ],
+  "statuses": [
+    {
+      "id": "wither",
+      "description": "wither is an overlay-authored OverTime/PulseHp status (StatusCatalogBootstrap.cs:26); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "bond",
+      "description": "bond is an overlay-authored Counter/PulseHp status (StatusCatalogBootstrap.cs:27); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "rally",
+      "description": "rally is an overlay-authored Buff/ModifyStat status (StatusCatalogBootstrap.cs:28); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "leech",
+      "description": "leech is an overlay-authored OverTime/PulseHp status that also heals its attacker (StatusCatalogBootstrap.cs:31-32); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "expose",
+      "description": "expose is an overlay-authored Debuff/ModifyStat status (StatusCatalogBootstrap.cs:33); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "command",
+      "description": "command is an overlay-authored Meter/ModifyStat status (StatusCatalogBootstrap.cs:34); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "shatter",
+      "description": "shatter is an overlay-authored Debuff/ModifyStat status (StatusCatalogBootstrap.cs:35); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "charm_pulse",
+      "description": "charm_pulse is an overlay-authored CrowdControl/ModifyStat status, corrected from UnityCc because no vanilla method exists for it (StatusCatalogBootstrap.cs:36-51); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "blight",
+      "description": "blight is a contagion Spread+PulseHp status (StatusCatalogBootstrap.cs:54); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "rot",
+      "description": "rot is a contagion Spread+PulseHp status (StatusCatalogBootstrap.cs:55); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "spark",
+      "description": "spark is a contagion Spread+PulseHp status (StatusCatalogBootstrap.cs:56); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "pact_mark",
+      "description": "pact_mark is a contagion Spread+PulseHp status (StatusCatalogBootstrap.cs:57); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    },
+    {
+      "id": "spore",
+      "description": "spore is a contagion Spread+PulseHp status (StatusCatalogBootstrap.cs:58); it does not carry StatusPayloadKind.UnityCc and never needs the Unity CC executor or the lawn to resolve."
+    }
+  ],
+  "payloadKinds": [
+    {
+      "id": "buff",
+      "description": "buff names a stat-modifying movement payload (a legal channel write); it is never a status application and never the explicit no-payload marker."
+    },
+    {
+      "id": "status",
+      "description": "status names a status-applying movement payload (a legal status from this file's own 'statuses' list); it is never a stat modification and never the explicit no-payload marker."
+    },
+    {
+      "id": "tempo",
+      "description": "tempo names a cooldown- or effectiveness-channel movement payload; it is never a stat buff outside the movement category's own tempo channels and never a status application."
+    },
+    {
+      "id": "none",
+      "description": "none is the explicit no-payload marker a planner may state directly instead of by omission; it is never treated as a legal standalone payload, and a category=Movement action carrying only none is rejected by ActionValidator."
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 1,
+  "_meta": {
+    "owner": "docs/architecture/narrative-seed/spec-character-vocab.md#3",
+    "note": "Test fixture for npc-story-events NR1.3 (the real file is narrative-seed's character-vocab)."
+  },
+  "roles": {
+    "wanderer": {
+      "description": "A creature on the move with no fixed post.",
+      "negative": "Not a trader; it has nothing to sell.",
+      "allegiance": "independent"
+    },
+    "trader": {
+      "description": "Exchanges goods; gives a market a face.",
+      "negative": "Not the market's rules — prices are the runtime's.",
+      "allegiance": "independent"
+    },
+    "hermit": {
+      "description": "Keeps to one place and knows it well.",
+      "negative": "Not a quest-giver by default.",
+      "allegiance": "independent"
+    },
+    "chronicler": {
+      "description": "Keeps and trades in history and rumor.",
+      "negative": "Not an oracle; it reports, it does not foretell.",
+      "allegiance": "independent"
+    },
+    "clan-elder": {
+      "description": "Speaks for a clan.",
+      "negative": "Not the clan's policy — the clan's needs are computed from world state.",
+      "allegiance": "independent"
+    },
+    "warlord": {
+      "description": "Leads a hostile force on the world map.",
+      "negative": "Not a rival that grows from meeting the player.",
+      "allegiance": "antagonist"
+    },
+    "captive": {
+      "description": "Held against its will, found in a cage or a camp.",
+      "negative": "Not an ally until freed.",
+      "allegiance": "independent"
+    },
+    "envoy": {
+      "description": "Carries a message between powers.",
+      "negative": "Not a trader and not a clan elder.",
+      "allegiance": "independent"
+    },
+    "companion": {
+      "description": "Travels with the player's side.",
+      "negative": "Not a roster slot; joining is the runtime's ownership transfer.",
+      "allegiance": "ally"
+    },
+    "none": {
+      "description": "The model cannot place this creature in any role.",
+      "negative": "The seed is refused; a character must have a role."
+    }
+  },
+  "leads": {
+    "lead_summoner": "player",
+    "lead_companion": "ally",
+    "lead_antagonist": "antagonist"
+  }
+}

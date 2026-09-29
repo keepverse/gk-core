@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/creature-lawn-deploy/spec-zomboss-deploy-ai.md, tasks/creature-lawn-deploy-todo.md T3.2/T3.3",
+    "note": "Greenfield module. `waveRarityCeilings` is a NAMED, REVERSIBLE substitution for the spec's own 'threat band' language (Assumption 1/T3.2's own acceptance line): a real per-species ThreatBand exists (data/tuning/creature-threat.v1.json) but is unreachable from CreatureSpeciesCatalog -- SlotFilter.cs's own doc comment confirms it is consumed into a numeric/derived field and discarded during species generation, never carried onto the live CreatureSpeciesDef the summon roller (and this module) actually reads. BaseRarity (already on CreatureSpeciesDef, already the summon-gacha ladder) stands in as the threat proxy instead: higher rung = later-wave-only, mirroring the summon system's own established 'rarity is power' assumption rather than inventing a second, parallel threat scale. Rungs, in CreatureRarity's own declared ordinal order: Chaff=0, Sprout=1, Grafted=2, Cultivated=3, Fused=4, Chimeric=5, Heirloom=6, Firstseed=7, Sunwoven=8, Almanac=9. `difficultyPolicyIds` and `rosterSizeMax` are both named-tunable per the spec's own Assumption 3 / Tunables section -- a later balance pass edits this file directly, never ZombossDeployRoster.cs/ZombossDeployPolicy.cs. `scorer.fireChanceMilli` is the same per-mille-roll convention lawn-deploy-events.v1.json's own `fireChanceMilli` already established for the player-side trigger -- deliberately reused, not a second roll shape invented for the zombie side. `scorer.minEnemyUnitsToConsiderDeploy`/`maxConcurrentOwnUnits` gate the decision on ILawnBoardView's own Relation-tagged unit counts (Enemy = the player's own units from Zomboss's reading; Ally = Zomboss's own already-deployed units) -- never a raw on-board-side count.",
+    "rebalance": "First version -- authored by hand matching this repo's own 'pick starting values, tune from play' precedent (same as lawn-deploy-events.v1.json's own _meta). waveRarityCeilings thresholds are a rough, ungrooved guess: real balance data doesn't exist for a feature that has never shipped."
+  },
+  "difficultyPolicyIds": {
+    "normal": "zomboss-deploy-ai:default"
+  },
+  "waveRarityCeilings": [
+    { "maxWaveAtLeast": 1, "rarityCeiling": "Sprout" },
+    { "maxWaveAtLeast": 5, "rarityCeiling": "Cultivated" },
+    { "maxWaveAtLeast": 10, "rarityCeiling": "Chimeric" },
+    { "maxWaveAtLeast": 15, "rarityCeiling": "Firstseed" },
+    { "maxWaveAtLeast": 20, "rarityCeiling": "Almanac" }
+  ],
+  "rosterSizeMax": 8,
+  "scorer": {
+    "fireChanceMilli": 300,
+    "minEnemyUnitsToConsiderDeploy": 3,
+    "maxConcurrentOwnUnits": 2
+  }
+}

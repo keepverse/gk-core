@@ -1,0 +1,10 @@
+{
+  "name": "amp-shape",
+  "description": "Does stacking combat.reduction confer total immunity? LinearClamped (shipped) reaches ampFactor=0 once reduction exceeds amplification by one AmpScale. Reciprocal mirrors PierceFactor and only approaches zero.",
+  "scenario": "immunity",
+  "variants": [
+    { "name": "v0-shipped-linear", "note": "max(0, 1 + d/s) — floor is reachable", "set": [] },
+    { "name": "v1-reciprocal", "note": "1/(1 - d/s) below zero — asymptotic", "set": ["combat.ampShape=reciprocal"] },
+    { "name": "v2-linear-scale100", "note": "linear but 10x scale — immunity moved, not removed", "set": ["combat.ampScale=100"] }
+  ]
+}

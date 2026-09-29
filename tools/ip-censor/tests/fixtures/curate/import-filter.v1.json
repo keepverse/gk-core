@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "format": "uspto-case-files-xml/v1",
+  "category": "franchise-mark",
+  "internationalClasses": ["9", "28", "41"],
+  "statusCodes": ["700"],
+  "goodsTerms": ["game"],
+  "excludeTerms": ["chair", "furniture"],
+  "minMarkLength": 4
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/data-architecture.md",
+    "note": "Extracted byte-identical from SealedCompactionPolicy.cs (tunables-ssot.md M.16, 2026-08-24). Retention tails only. Schema-version fields (ActivitySnapshotSchemaVersion, XpSnapshotSchemaVersion) stay structural consts, not migrated. The souls-award overflow ceiling (maxSoulAward) that lived here through M.16 was removed by T3.5 (spec-caps-reconcile.md §2.1, 2026-08-24) — it is now derived dynamically from the live balance (RpgStore.Souls.cs's MaxSoulAwardFrom), not a config constant.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py data <dotted.key>=<value> [...] writes data.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "retain": {
+    "activityTail": 10000,
+    "xpTailPerActor": 5000,
+    "soulTailPerPlayer": 5000,
+    "keepLastNFullCaptureRuns": 50
+  }
+}

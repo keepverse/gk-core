@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/power/ssot-power-scale.md",
+    "note": "power-dial (T4.2, spec-power-dial.md, 2026-08-24): the single commit that turns bMilli 0 -> 400, the decided starting dial (SSOT S4.5). One field. A re-derives to 26200 automatically at load (SSOT S4.3); the pin holds at P(20)=680 for both v1 and v2, so the item corpus does not move at calibration depth. v1 stays on disk -- reverting is republishing it and un-bumping BattleRuleset.RulesetVersion, no code change (PS-7).",
+    "rebalance": "Never hand-edit this file. A balance pass changes bMilli only and republishes power-scale.v{n+1}.json; every prior version stays on disk for revert (power-guard G4 checks the pin holds for every version on disk)."
+  },
+  "curve": { "cMilli": 80000, "bMilli": 400, "pinIndex": 20, "pinValue": 680 },
+  "weights": {
+    "WdMilli": 1000,
+    "WaMilli": 25000,
+    "WrMilli": 250,
+    "WzMilli": 1000,
+    "WmMilli": 5000,
+    "WwMilli": 5000,
+    "WfMilli": 25000
+  },
+  "channels": {
+    "atk":     { "cMilli": 12000, "pinValue": 92 },
+    "defense": { "cMilli": 2000,  "pinValue": 22 }
+  }
+}

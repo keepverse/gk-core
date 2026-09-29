@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/action/spec-battle-board.md",
+    "note": "A10 battle-board -- a normal (non-siege) encounter's own seeded, bounded grid size. Siege gets its GridSpec from DistrictLayout (world-sector/slot data); a plain squad-vs-wave battle has no such source, so this is a fresh balance surface, not a duplicate of siege.v1.json's board.moveCost/maxCells (those stay siege-specific and unread by this module)."
+  },
+  "size": {
+    "_note": "spec-battle-board.md section 1: 'the random range must be bounded, and the bound is a balance decision rather than a technical one: range 3 is long on a 5x5 board and short on 20x20.' Square boards only (rows == cols) -- the spec's own two worked examples (5x5, 20x20) are both square, and nothing in the locked design asks for independent row/col ranges.",
+    "minSide": 5,
+    "maxSide": 9
+  }
+}

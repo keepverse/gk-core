@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 1,
+  "_meta": {
+    "owner": "docs/architecture/npc-story-events/spec-narrative-vocabulary.md#1",
+    "note": "Fixture stand-in so NarrativeRegistryHub.Configure can read the whole registry directory; the committed empty data/seed/narrative/_registry/doctrines.v1.json is the file the runtime ships and is read by its own test."
+  },
+  "doctrines": {}
+}

@@ -1,0 +1,40 @@
+{
+  "id": "status-wither-area",
+  "seed": 42,
+  "board": [
+    { "ptr": "P1", "side": "plant", "typeId": 0, "col": 2, "row": 2, "derivedProfile": "neutral" },
+    { "ptr": "Z1", "side": "zombie", "typeId": 0, "col": 7, "row": 2, "derivedProfile": "glass" },
+    { "ptr": "Z2", "side": "zombie", "typeId": 0, "col": 8, "row": 2, "derivedProfile": "glass" }
+  ],
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "dot-area",
+        "effectId": "fx.overlay_damage",
+        "ownerKey": "match",
+        "overlay": {
+          "amount": -20,
+          "icd_ms": 0,
+          "target": {
+            "mode": "Area",
+            "shape": "Row",
+            "anchor": "EventTarget",
+            "filters": { "side": "zombie" }
+          },
+          "delivery": {
+            "mode": "OverTime",
+            "periodMs": 1000,
+            "durationMs": 5000,
+            "tickBudget": 1
+          }
+        }
+      }
+    },
+    { "op": "hit", "actorPtr": "P1", "targetPtr": "Z1", "typeId": 0, "targetTypeId": 0 },
+    { "op": "expectEmpty" },
+    { "op": "advanceMs", "ms": 1000 },
+    { "op": "expectPlan", "golden": "status_wither_area_tick.plan.json" }
+  ]
+}

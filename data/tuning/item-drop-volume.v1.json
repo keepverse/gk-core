@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "sourceRef": "docs/architecture/item/spec-drop-volume.md (item module 11) — D18, D26, D38, Correction 1 and Correction 5. A balance pass owns this file, not code (tunables-ssot.md).",
+  "volume": {
+    "thetaPin": 20,
+    "baseMilli": 1000,
+    "slopeMilli": 25,
+    "floorMilli": 100,
+    "pinNote": "Theta = 20 is the item corpus's existing calibration point (power-scale.v2.json pinIndex 20, pinValue 680). At the pin the scale is exactly 1000 permille = x1.0, which is what makes every per-event yield in spec-drop-volume.md Correction 1 reproduce exactly.",
+    "slopeNote": "STARTING VALUE, owner's to move. Derived from one statable property rather than invented: an actor at twice the pin's Theta (40) sees 1.5x the pin's drop volume, so slope = 500 permille / 20 Theta = 25. D38 removed the slope from the KILL path entirely; this term governs non-kill sources only (chest, boss, completion).",
+    "floorNote": "STRUCTURAL, not a progression ceiling (AGENTS.md). A draw rate cannot be negative, and a Theta below the pin must not produce a negative draw count. It is a LOWER bound; there is deliberately NO upper bound anywhere in this file — a cap on volume would be metering the player, which D26 puts outside this program."
+  },
+  "kill": {
+    "dropChanceOnKillMilli": 50,
+    "note": "D38 — a flat 5% on kill, for every rarity. This answers 'does anything drop at all'. WHICH rung is a second, independent roll against the rarity catalog's own weights (rarity_budget.drop_weight_default, seeded by module 7) — a DIFFERENT table. A 5% kill rate is not a 5% chance at an almanac.",
+    "scalesWithTheta": false,
+    "scalesWithThetaNote": "D38: on kills a veteran and a beginner see the same rate, and progression shows up as WHAT drops, not how often. If the kill path should also scale with Theta, that is flipping this flag, not a redesign."
+  },
+  "pity": {
+    "heirloom": {
+      "hardFloorItems": 43,
+      "note": "Re-solved against module 7's SEEDED weights, never inherited from I12's seven-rung table. heirloom-and-above is 5900/100000 = 5.9% (2500+1600+1100+700), so the natural drought probability at 43 items is 0.941^43 = 7.32% — the same behavioural property I12 tuned its 25 for at its own 10.0% (0.90^25 = 7.18%). The TEST asserts the drought probability, not this number, so a reweight moves the number and not the test."
+    },
+    "sunwoven": {
+      "rampStartItems": 83,
+      "rampStepItems": 10,
+      "rampWeightMultiplier": 2,
+      "hardCeilingItems": 221,
+      "note": "sunwoven-and-above is 1800/100000 = 1.8% (1100+700). 0.982^83 = 22.14% matches I12's 0.99^150 = 22.15% ramp-start drought; 0.982^221 = 1.81% matches its 0.99^400 = 1.79% ceiling drought. The ramp doubles the sunwoven and almanac weights once per rampStepItems past rampStartItems."
+    },
+    "unguardedTopRungNote": "ssot-rarity.md 3.8 leaves ordinal 100 (almanac) unguarded on purpose. Its deterministic source is the first-clear grant (data/seed/containers/first-clear-grants.json, container item.first-clear-almanac-seed) and promotion (module 15), not a third counter. Path corrected 2026-09-06: this note named data/seed/loot/first-clear.v1.json, which has never existed. The grant lives under containers/ because that is a SeedScanner.OwnedFolders entry, so it imports through the standard AtomSeedFile -> RpgStore.ImportContent path instead of a second hand-written writer."
+  },
+  "itemLevelJitter": {
+    "downBelowPerMille": 150,
+    "flatBelowPerMille": 750,
+    "note": "ssot-generation.md 4.1 — on stream item.ilvl, NextPerMille() lands in [0,150) = -1, [150,750) = 0, [750,1000) = +1. Item level is a property of the CONTENT; the player enters this nowhere."
+  },
+  "nesting": {
+    "maxDepth": 3,
+    "note": "STRUCTURAL (recursion bound), not a balance number — ssot-generation.md 5.3 property 5: 'nesting is for reuse, not for depth'. Exceeding it rejects at import rather than clamping."
+  },
+  "log": {
+    "retentionHorizonDays": 90,
+    "note": "OWNER'S NUMBER (I12 11 Q6) — 90 is a starting value, not a ruling. What trims past the horizon is context_json / result_json only; item_generation is the permanent record. item_drop_log stays the inflow measurement module 20's loot filter needs, so the trim is watermarked and never removes a row's identity."
+  }
+}

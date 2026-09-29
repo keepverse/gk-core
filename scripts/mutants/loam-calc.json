@@ -1,0 +1,106 @@
+[
+  { "file": "src/FusionRpg.Core/World/Loam/TerritoryComponents.cs",
+    "name": "an unowned sector can join a component",
+    "find": "if (!owned.Contains(link.FromSectorId) || !owned.Contains(link.ToSectorId)) continue;",
+    "with": "if (false) continue;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamProduction.cs",
+    "name": "an unowned rootbed still seeps",
+    "find": "if (ownerFactionId is null) return 0;",
+    "with": "" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamProduction.cs",
+    "name": "any slot produces loam, not just a rootbed",
+    "find": "if (SlotTypeCatalog.Get(slotTypeId).Kind == SlotKind.Rootbed)",
+    "with": "if (true)" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamUpkeep.cs",
+    "name": "the faction-wide source exemption never triggers",
+    "find": "if (!hasSourceAnywhere) return 0;",
+    "with": "if (false) return 0;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamUpkeep.cs",
+    "name": "upkeep divides twice, rounding early",
+    "find": "return sum * intensityMilli * handicapMilli / 1_000_000;",
+    "with": "return sum * intensityMilli / 1_000 * handicapMilli / 1_000;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamUpkeep.cs",
+    "name": "garrison members are free",
+    "find": "+ (long)garrisonMembers * LoamPolicy.GarrisonUpkeepPerMember",
+    "with": "+ 0" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamUpkeep.cs",
+    "name": "development and danger cost nothing to hold",
+    "find": "+ LoamPolicy.DevelopmentAndDangerUpkeep(developmentLevel, dangerBand);",
+    "with": "+ 0;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamBalance.cs",
+    "name": "balance adds upkeep instead of subtracting it",
+    "find": "public static long PerSector(long production, long upkeep) => production - upkeep;",
+    "with": "public static long PerSector(long production, long upkeep) => production + upkeep;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamBalance.cs",
+    "name": "a component's balance is only its last sector, not the sum",
+    "find": "total += PerSector(world, byId[sectorId]);",
+    "with": "total = PerSector(world, byId[sectorId]);" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamBalance.cs",
+    "name": "a faction's balance is only its last component, not the sum",
+    "find": "total += PerComponent(world, component);",
+    "with": "total = PerComponent(world, component);" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/FadePolicy.cs",
+    "name": "a shortfall recovers instead of decaying",
+    "find": "? Math.Max(0, currentStabilityMilli - DecayFor(-balance, pressureMilli, surge))",
+    "with": "? Math.Max(0, currentStabilityMilli + LoamPolicy.RecoveryMilli)" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/FadePolicy.cs",
+    "name": "recovery uses the decay constant instead of its own",
+    "find": ": Math.Min(1000, currentStabilityMilli + LoamPolicy.RecoveryMilli);",
+    "with": ": Math.Min(1000, currentStabilityMilli + LoamPolicy.BaseDecayMilli);" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/FadePolicy.cs",
+    "name": "decay has no ceiling",
+    "find": "return (int)Math.Max(0, Math.Min(LoamPolicy.MaxDecayMilli, scaled));",
+    "with": "return (int)Math.Max(0, scaled);" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/FadePolicy.cs",
+    "name": "decay ignores how deep the deficit runs",
+    "find": "+ deficitMagnitude / LoamPolicy.DecayScaleDivisor * LoamPolicy.DecayPerDeficitUnitMilli",
+    "with": "+ 0" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/Habitability.cs",
+    "name": "any slot at all makes ground habitable",
+    "find": "if (SlotTypeCatalog.Get(slotTypeId).Kind == SlotKind.Rootbed) return true;",
+    "with": "return true;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamPolicy.cs",
+    "name": "development and danger upkeep multiplies instead of adding",
+    "find": "(long)developmentLevel * DevelopmentUpkeepPerLevel + (long)dangerBand * DangerUpkeepPerBand;",
+    "with": "(long)developmentLevel * DevelopmentUpkeepPerLevel * ((long)dangerBand * DangerUpkeepPerBand);" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamForecast.cs",
+    "name": "a solvent component still gets a weakest contributor named",
+    "find": "if (available >= upkeep) return null;",
+    "with": "if (false) return null;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamForecast.cs",
+    "name": "the strongest contributor is picked instead of the weakest",
+    "find": ".OrderBy(id => LoamBalance.PerSector(world, world.Sectors.First(s => s.SectorId == id)))",
+    "with": ".OrderByDescending(id => LoamBalance.PerSector(world, world.Sectors.First(s => s.SectorId == id)))" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamForecast.cs",
+    "name": "the forecast's production cap never throttles new accrual",
+    "find": "total += sector.LoamStock + Math.Min(room, yield);",
+    "with": "total += sector.LoamStock + yield;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamForecast.cs",
+    "name": "release is forecast for a deficit that would not actually zero the sector",
+    "find": "return FadePolicy.Apply(weakestSector.StabilityMilli, -shortfall) == 0 ? weakest : null;",
+    "with": "return FadePolicy.Apply(weakestSector.StabilityMilli, -shortfall) >= 0 ? weakest : null;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamForecast.cs",
+    "name": "the forecast never names a release candidate at all",
+    "find": "var weakest = Weakest(world, component, projected, upkeep);\n        if (weakest is null) return null;",
+    "with": "return null;" }
+]

@@ -1,0 +1,119 @@
+{
+  "_meta": {
+    "owner": "docs/architecture/party-dungeon/spec-dungeon-registries.md",
+    "note": "STARTING SHAPE, not a balance decision."
+  },
+  "schemaVersion": 1,
+  "version": 1,
+  "slot": {
+    "countBand": {
+      "lone": {
+        "min": 1,
+        "max": 1
+      },
+      "few": {
+        "min": 2,
+        "max": 3
+      },
+      "several": {
+        "min": 3,
+        "max": 5
+      },
+      "many": {
+        "min": 4,
+        "max": 7
+      }
+    }
+  },
+  "threatWindow": {
+    "bossFloorRung": "raider"
+  },
+  "spread": {
+    "mono": {
+      "offClimateMilli": 0
+    },
+    "dual": {
+      "offClimateMilli": 400
+    },
+    "rainbow": {
+      "offClimateMilli": 700
+    }
+  },
+  "formation": {
+    "pack": {
+      "w": 4
+    },
+    "party": {
+      "w": 4,
+      "slots": {
+        "min": 3,
+        "max": 5
+      },
+      "maxRepeatedPosture": 2
+    },
+    "boss": {
+      "rankSpan": 2
+    }
+  },
+  "boss": {
+    "fightLengthTargetRounds": {
+      "min": 6,
+      "max": 12
+    }
+  },
+  "affix": {
+    "eliteKitTier": {
+      "t1": {
+        "affixCount": 1,
+        "floorRung": "very-easy",
+        "ceilRung": "medium"
+      },
+      "t2": {
+        "affixCount": 2,
+        "floorRung": "hard",
+        "ceilRung": "hell"
+      },
+      "t3": {
+        "affixCount": 3,
+        "floorRung": "abyss",
+        "ceilRung": "impossible"
+      }
+    },
+    "bossKitTier": {
+      "t1": {
+        "affixCount": 1,
+        "floorRung": "very-easy",
+        "ceilRung": "medium"
+      },
+      "t2": {
+        "affixCount": 2,
+        "floorRung": "hard",
+        "ceilRung": "hell"
+      },
+      "t3": {
+        "affixCount": 3,
+        "floorRung": "abyss",
+        "ceilRung": "impossible"
+      }
+    }
+  },
+  "phase": {
+    "breakpoint": {
+      "hpThresholdMilli": [
+        500
+      ]
+    },
+    "escalating": {
+      "hpThresholdMilli": [
+        660,
+        330
+      ]
+    }
+  },
+  "summon": {
+    "capPerBoss": 2
+  },
+  "pack": {
+    "sameSpeciesMaxMilli": 500
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "ArmedGargantuar",
+  "description": "Heirloom zombie \u2014 theta=13 pTheta=452",
+  "hp": 6328,
+  "baseDamage": 1000,
+  "shieldHp": 0,
+  "element": "dark",
+  "stats": {
+    "combat.power.omni": 994,
+    "progression.bonus.atk": 4520,
+    "resource.max.hunger": 4068,
+    "resource.max.qi": 2712,
+    "resource.max.spirit": 1356,
+    "resource.max.stamina": 8136,
+    "resource.regen.hp": 136,
+    "resource.regen.hunger": 136,
+    "resource.regen.qi": 181,
+    "resource.regen.spirit": 90,
+    "resource.regen.stamina": 407
+  }
+}

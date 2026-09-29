@@ -1,0 +1,14 @@
+{
+  "name": "tank-glass-attacker",
+  "description": "Same max tank, but the attacker is a glass cannon: huge power, low HP.",
+  "trials": 2000, "seed": 42, "maxRounds": 500,
+  "baseDamage": 4000, "elements": "singleRandom", "defenderElement": "ice",
+  "attackerHp": 20000, "defenderHp": 100000,
+  "attacker": { "combat.accuracy.omni": 300, "combat.power.omni": 8000, "combat.crit.rate.omni": 300 },
+  "defender": {
+    "combat.reflect.rate.omni": 10, "combat.reflect.damage.omni": 100,
+    "combat.defense.omni": 1500, "combat.reduction.omni": 40,
+    "combat.absorption.omni": 100
+  },
+  "shieldHp": 200000, "reflection": true
+}

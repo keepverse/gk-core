@@ -1,0 +1,14 @@
+{
+  "id": "effect-secondary-match-cycle",
+  "seed": 42,
+  "plugins": ["sec.match.butter"],
+  "steps": [
+    { "op": "clear" },
+    { "op": "matchStart" },
+    { "op": "hit", "typeId": 0, "targetTypeId": 0 },
+    { "op": "expectPlan", "golden": "butter_on_hit.plan.json" },
+    { "op": "matchEnd" },
+    { "op": "hit", "typeId": 0, "targetTypeId": 0 },
+    { "op": "expectEmpty" }
+  ]
+}

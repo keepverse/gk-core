@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "sourceRef": "spec-sockets.md 3/4/5/6/8/10/11 + ssot-sockets.md 4.1/4.2/4.4/4.7 (module 16, `sockets`). OWNED BY MODULE 16 FROM v2 ONWARDS. v1 was forward-seeded by module 6 (base-types, build order 6) with the socketCeiling table alone, because module 6 needed the ceiling to validate the shipped 740-entry corpus and module 16 had not built yet. Module 16 has now taken ownership: the fifteen ceiling rows are UNCHANGED value for value (they are spec-sockets.md 3's own re-issued table and re-deriving them would have been a second source of truth), and every other section below is new here.",
+  "socketCeiling": {
+    "armament-primary": 8,
+    "core-guard": 8,
+    "ward-array": 6,
+    "armament-secondary": 6,
+    "jewel-major": 2,
+    "manipulator": 4,
+    "mantle": 6,
+    "head-guard": 4,
+    "girdle": 4,
+    "sense": 2,
+    "footing": 4,
+    "infusion": 4,
+    "retinue": 4,
+    "jewel-minor-a": 2,
+    "jewel-minor-b": 2
+  },
+  "socketCeilingNote": "A ROLE property. `standard` is deliberately ABSENT, not zero -- D14 puts the commander slot out of item scope entirely, and a zero row would read as 'in scope, allowed no sockets'. A base type may declare its OWN socketMax anywhere in [0, its role's ceiling]; that variation is ordinary base-type variety (module 6 measured it 740 times across the shipped corpus) and only EXCEEDING the ceiling is a violation. spec-sockets.md 3's stronger wording -- 'fixed per role, never varied per base type' -- is contradicted by the shipped corpus and is corrected here rather than enforced.",
+  "structuralCeiling": 8,
+  "structuralCeilingNote": "STRUCTURAL, exempt from AGENTS.md's no-hard-ceilings rule and required to say so. It is a LEGIBILITY limit on one item's recipe shape -- a four-ingredient recipe is memorable, a six-ingredient one is a wiki lookup -- not a ceiling on how strong an item, an insert or a combination may become. Every power axis the socket layer touches stays open: insertTiers.count is a soft content axis (raise it and the ladder extends), a combination's granted tier is unbounded above, and magnitude growth rides contentScale, which this layer never reads. Mirrored as SocketLimits.SocketMaxCeiling; the parser REFUSES a ceiling row above it rather than clamping.",
+  "rarityGrant": {
+    "chaff": {
+      "socketMin": 0,
+      "socketMax": 0
+    },
+    "sprout": {
+      "socketMin": 0,
+      "socketMax": 0
+    },
+    "grafted": {
+      "socketMin": 0,
+      "socketMax": 2
+    },
+    "cultivated": {
+      "socketMin": 0,
+      "socketMax": 2
+    },
+    "fused": {
+      "socketMin": 2,
+      "socketMax": 4
+    },
+    "chimeric": {
+      "socketMin": 2,
+      "socketMax": 4
+    },
+    "heirloom": {
+      "socketMin": 2,
+      "socketMax": 6
+    },
+    "firstseed": {
+      "socketMin": 2,
+      "socketMax": 6
+    },
+    "sunwoven": {
+      "socketMin": 4,
+      "socketMax": 8
+    },
+    "almanac": {
+      "socketMin": 4,
+      "socketMax": 8
+    }
+  },
+  "rarityGrantNote": "The decided shape of the `socket_min` / `socket_max` rarity_budget keys (ssot-rarity.md 5 recorded both as 'awaiting I4'): TWO INTEGERS PER RUNG, the inclusive window the socket count is rolled from at drop, before the base type's own socketMax clamps it. Transcribed from ssot-sockets.md 4.1's five ORDINAL BANDS onto the shipped ten rungs two rungs per band, not re-derived. Adjacent windows OVERLAP by design (OD4): a [1..3] item rolling 3 out-sockets a [2..4] item rolling 2, so socket count never becomes a strict ladder. APPEND-ONLY in the same sense `ordinal` is -- the count derives from the rung row at the instance's recorded catalog_revision, so a silent edit re-sockets every item ever dropped at that rung. The parser refuses a non-overlapping, non-monotonic or ceiling-breaking table at LOAD.",
+  "socketAllowanceByKind": {
+    "ordinary": {
+      "chaff": 0,
+      "sprout": 0,
+      "grafted": 0,
+      "cultivated": 0,
+      "fused": 0,
+      "chimeric": 0,
+      "heirloom": 0,
+      "firstseed": 0,
+      "sunwoven": 0,
+      "almanac": 0
+    },
+    "set": {
+      "chaff": 0,
+      "sprout": 0,
+      "grafted": 0,
+      "cultivated": 0,
+      "fused": -1,
+      "chimeric": -1,
+      "heirloom": -1,
+      "firstseed": -1,
+      "sunwoven": -1,
+      "almanac": -1
+    },
+    "unique": {
+      "chaff": 1,
+      "sprout": 1,
+      "grafted": 1,
+      "cultivated": 1,
+      "fused": 1,
+      "chimeric": 1,
+      "heirloom": 1,
+      "firstseed": 1,
+      "sunwoven": 1,
+      "almanac": 1
+    },
+    "boss": {
+      "chaff": 1,
+      "sprout": 1,
+      "grafted": 1,
+      "cultivated": 1,
+      "fused": 1,
+      "chimeric": 1,
+      "heirloom": 1,
+      "firstseed": 1,
+      "sunwoven": 1,
+      "almanac": 1
+    }
+  },
+  "socketAllowanceByKindNote": "species-gear-chain T4 (spec-socket-allowance-by-kind): the allowance is a property of WHAT KIND of item something is, shifting rarityGrant's WINDOW before the roll (the only position where reduced and increased are symmetric). Signed-integer deltas per kind per rung (OQ1), shifting BOTH min and max (OQ2). unique and boss are two rows with identical values today -- different acquisition routes that will diverge (OQ3). APPEND-ONLY and pinned to catalog_revision exactly like rarityGrant: a post-ship edit re-sockets every item ever dropped. The set row is 0 below fused ON PURPOSE: chaff/sprout are {0,0} and grafted/cultivated sit at min 0, so any -1 there is a load REJECTION (negative window), not a quieter reduction. The unique/boss +1 has no visible effect at sunwoven/almanac until the eight-socket topology lands (derived {3,5} resolves to 4 through the downstream clamps) -- the parser REPORTS those cells in StructuralBoundNotes rather than hiding them. void has no row: no void source exists yet, and an unknown kind is a load rejection, so a void row appears with the void program, not before.",
+  "insertTiers": {
+    "count": 5,
+    "upcycleInputPerOutput": 3,
+    "note": "count is a SOFT content axis, not a cap: raising it extends the insert ladder and nothing in this module refuses the higher tier -- it is here so a balance pass can extend it in a file rather than a rebuild. upcycleInputPerOutput is the k -> k+1 stack arithmetic (ssot-sockets.md 4.3), the primary drain on the gem inventory. It is a BOUNDED RATIO between two tiers of one thing, not a ceiling on how much a player may earn."
+  },
+  "removal": {
+    "freeThroughTier": 2,
+    "costedThroughTier": 3,
+    "note": "ssot-sockets.md 4.7, tiered by INSERT tier. t1-t2 free (the learning tier), t3 costed with the insert surviving, t4 and above destroys the insert. THE ITEM ALWAYS SURVIVES at every tier -- an item can never be permanently ruined by a bad insert, which is what makes it safe to socket mid-campaign gear. Expressed as two thresholds rather than a per-tier list so extending insertTiers.count needs no edit here."
+  },
+  "resonance": {
+    "pureThresholds": [
+      2,
+      3,
+      4
+    ],
+    "diversityThresholds": [
+      3,
+      4
+    ],
+    "ringOrder": [
+      "fire",
+      "ice",
+      "earth",
+      "air"
+    ],
+    "eclipsePair": [
+      "light",
+      "dark"
+    ],
+    "attunedEffectiveCountBonus": 1,
+    "attunedTierBonus": 1,
+    "note": "ringOrder is element-hub-ssot.md 8.5's cycle: fire -> ice -> earth -> air -> fire, four adjacent pairs. eclipsePair is the light/dark mutual counter. attunedEffectiveCountBonus applies to PURE only -- the one shape with a count of same-element contributors to raise; Ring and Eclipse are presence tests with no count, and Diversity's count is of DISTINCT elements, where a +1 would invent an element that is not in the item. attunedTierBonus applies to a Strain or Splice, which has no count to raise (spec-sockets.md 6's two-arm table)."
+  },
+  "strainSplice": {
+    "ingredientCount": 4,
+    "note": "D20 fixes a Strain or a Splice at exactly 4 ingredients. It is not a free tunable: it decides how much of an item's body a chaff chassis can capture, and it is what makes the per-actor geometric ceiling 2. Changing it is a reviewed content decision, which is why the parser refuses a value above structuralCeiling -- an ingredient count no item can hold would author 102 combinations nothing can ever fire."
+  },
+  "_meta": {
+    "rebalanceLabel": "circuit-topology v2: eight-socket ceiling, doubled roles, helm 4 (R11); R12 removes the per-actor cap"
+  }
+}

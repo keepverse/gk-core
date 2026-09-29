@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/action/spec-rung-table.md (A12)",
+    "note": "qPower(r) = 1.75^((r-1)/2), qCost(r) = 1.38^(r-1), qCd(r) = 1.15^(r-1). The exponent form documents how these per-mille integers were derived; it is never evaluated at runtime (no Math.Pow in Core/Actions/Rungs/). Working values chosen to hit the spec's stated escalation tax (power x9.38, cost x13.15 across rungs 2-10, a 1.40x tax) -- not yet validated against play data (tunables-ssot.md T5). structureBudget and poolRolls are the shipped 10-row shape (spec-rung-table.md SS4), an illustration of one authored ladder rather than a rule.",
+    "rebalance": "Never hand-edit this file by feel alone -- the monotonicity test (RungTableTests) must stay green. A new version bumps `version` and keeps this one on disk for revert."
+  },
+  "cap": 10,
+  "rows": [
+    { "rung": 1,  "minTier": 1, "maxTier": 1, "poolRolls": 1, "qPowerMilli": 1000,  "costMulti": 1000,  "cdMulti": 1000, "structureBudget": [] },
+    { "rung": 2,  "minTier": 1, "maxTier": 1, "poolRolls": 1, "qPowerMilli": 1323,  "costMulti": 1380,  "cdMulti": 1150, "structureBudget": [] },
+    { "rung": 3,  "minTier": 2, "maxTier": 2, "poolRolls": 1, "qPowerMilli": 1750,  "costMulti": 1904,  "cdMulti": 1322, "structureBudget": ["scopeSplit", "riderStatus"] },
+    { "rung": 4,  "minTier": 2, "maxTier": 2, "poolRolls": 1, "qPowerMilli": 2315,  "costMulti": 2628,  "cdMulti": 1521, "structureBudget": ["scopeSplit", "riderStatus"] },
+    { "rung": 5,  "minTier": 3, "maxTier": 3, "poolRolls": 2, "qPowerMilli": 3062,  "costMulti": 3627,  "cdMulti": 1749, "structureBudget": ["scopeSplit", "riderStatus", "condition"] },
+    { "rung": 6,  "minTier": 3, "maxTier": 3, "poolRolls": 2, "qPowerMilli": 4051,  "costMulti": 5005,  "cdMulti": 2011, "structureBudget": ["scopeSplit", "riderStatus", "condition"] },
+    { "rung": 7,  "minTier": 4, "maxTier": 4, "poolRolls": 2, "qPowerMilli": 5359,  "costMulti": 6907,  "cdMulti": 2313, "structureBudget": ["scopeSplit", "riderStatus", "condition", "sequence", "consumption"] },
+    { "rung": 8,  "minTier": 4, "maxTier": 4, "poolRolls": 2, "qPowerMilli": 7090,  "costMulti": 9531,  "cdMulti": 2660, "structureBudget": ["scopeSplit", "riderStatus", "condition", "sequence", "consumption"] },
+    { "rung": 9,  "minTier": 5, "maxTier": 5, "poolRolls": 3, "qPowerMilli": 9379,  "costMulti": 13153, "cdMulti": 3059, "structureBudget": ["scopeSplit", "riderStatus", "condition", "sequence", "consumption", "reaction", "restriction"] },
+    { "rung": 10, "minTier": 5, "maxTier": 5, "poolRolls": 3, "qPowerMilli": 12407, "costMulti": 18151, "cdMulti": 3518, "structureBudget": ["scopeSplit", "riderStatus", "condition", "sequence", "consumption", "reaction", "restriction"] }
+  ]
+}

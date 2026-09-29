@@ -1,0 +1,79 @@
+<Project>
+
+  <!--
+    Build-matrix consequences of the cells declared in Directory.Build.props. Only the three
+    injector host projects carry $(FusionRpgCellProfile); every other project in the repo is inert
+    here.
+
+    Two rules, and the second is the one the matrix depends on:
+
+      1. A requested profile that disagrees with the cell is REPORTED, never obeyed. The bridge a
+         host compiles is $(FusionRpgCellProfile), so no env var and no -p: can point a 3.8.1
+         interop at the pvzrh-3.9 bridge. That leak was the second half of the build defect.
+
+      2. A cell is never compiled against another cell's pack. The fingerprints live in
+         game-profiles.json and the matcher lives in scripts/guard-game-profile.py — the SAME
+         script deploy-play.py and publish_player.py already run immediately before their injector
+         build, so this stays one matcher instead of a second, drifting copy. The two Melon hosts
+         that have no interop refs at all are excluded: they are skipping, and their skip message is
+         the right message.
+  -->
+
+  <PropertyGroup>
+    <!-- The profile guard runs as Python. The script path, the Exec prefix and the argument
+         SPELLINGS all differ between the two, so each is resolved from the extension rather than
+         hardcoded, and the .ps1 arm is kept so this file still works on a branch where the port
+         has not landed. That is the same interpreter-aware shape scripts/run_guards.py uses for the
+         enforcement registry, and it is what lets a port land without editing every caller. -->
+    <FusionRpgProfileGuardScript Condition="Exists('$(MSBuildThisFileDirectory)scripts\guard-game-profile.py')">$(MSBuildThisFileDirectory)scripts\guard-game-profile.py</FusionRpgProfileGuardScript>
+    <FusionRpgProfileGuardScript Condition="'$(FusionRpgProfileGuardScript)' == ''">$(MSBuildThisFileDirectory)scripts\guard-game-profile.ps1</FusionRpgProfileGuardScript>
+    <FusionRpgPython Condition="'$(FusionRpgPython)' == ''">python</FusionRpgPython>
+    <FusionRpgProfileGuardIsPy Condition="$(FusionRpgProfileGuardScript.EndsWith('.py'))">true</FusionRpgProfileGuardIsPy>
+    <FusionRpgProfileGuardIsPy Condition="'$(FusionRpgProfileGuardIsPy)' == ''">false</FusionRpgProfileGuardIsPy>
+    <FusionRpgProfileGuardPrefix Condition="'$(FusionRpgProfileGuardIsPy)' == 'true'">&quot;$(FusionRpgPython)&quot;</FusionRpgProfileGuardPrefix>
+    <FusionRpgProfileGuardPrefix Condition="'$(FusionRpgProfileGuardIsPy)' != 'true'">&quot;$(FusionRpgPowerShell)&quot; -NoProfile -NonInteractive -ExecutionPolicy Bypass -File</FusionRpgProfileGuardPrefix>
+    <FusionRpgProfileGuardGameDirArg Condition="'$(FusionRpgProfileGuardIsPy)' == 'true'">--game-dir</FusionRpgProfileGuardGameDirArg>
+    <FusionRpgProfileGuardGameDirArg Condition="'$(FusionRpgProfileGuardIsPy)' != 'true'">-GameDir</FusionRpgProfileGuardGameDirArg>
+    <FusionRpgProfileGuardProfileArg Condition="'$(FusionRpgProfileGuardIsPy)' == 'true'">--profile</FusionRpgProfileGuardProfileArg>
+    <FusionRpgProfileGuardProfileArg Condition="'$(FusionRpgProfileGuardIsPy)' != 'true'">-ExpectedProfile</FusionRpgProfileGuardProfileArg>
+    <FusionRpgPowerShell Condition="'$(FusionRpgPowerShell)' == '' and Exists('$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe')">$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe</FusionRpgPowerShell>
+    <FusionRpgPowerShell Condition="'$(FusionRpgPowerShell)' == ''">pwsh</FusionRpgPowerShell>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(FusionRpgCellProfile)' != ''">
+    <FusionRpgCellPackDir Condition="'$(FusionRpgCellLoader)' == 'BepInEx'">$(BepGameDir)</FusionRpgCellPackDir>
+    <FusionRpgCellPackDir Condition="'$(FusionRpgCellLoader)' == 'MelonLoader'">$(MlGameDir)</FusionRpgCellPackDir>
+    <FusionRpgCellFingerprintGate Condition="'$(FusionRpgCellPackDir)' != '' and Exists('$(FusionRpgCellPackDir)')">true</FusionRpgCellFingerprintGate>
+    <FusionRpgCellFingerprintGate Condition="'$(FusionRpgCellLoader)' == 'MelonLoader'">false</FusionRpgCellFingerprintGate>
+    <FusionRpgCellFingerprintGate Condition="'$(FusionRpgCellLoader)' == 'MelonLoader' and '$(HasMelonRefs)' == 'true'">true</FusionRpgCellFingerprintGate>
+  </PropertyGroup>
+
+  <Target Name="FusionRpgCellProfileNotice"
+          BeforeTargets="Build"
+          Condition="'$(FusionRpgCellProfile)' != '' and '$(DesignTimeBuild)' != 'true'">
+    <Warning Condition="'$(FusionRpgRequestedProfile)' != '' and '$(FusionRpgRequestedProfile)' != '$(FusionRpgCellProfile)'"
+             Code="FUSIONRPG0001"
+             Text="$(MSBuildProjectName) compiles cell $(FusionRpgCellProfile); the requested profile '$(FusionRpgRequestedProfile)' is IGNORED. A host project is one cell of the matrix and is not re-targeted at build time (docs/architecture/game-versioning.md) — build the host project that serves '$(FusionRpgRequestedProfile)' instead, or unset the variable that asked for it." />
+  </Target>
+
+  <!--
+    Both hooks are listed on purpose: `dotnet build` reaches CoreCompile but not a BeforeTargets on
+    Build, while a caller invoking -t:Build directly reaches only the latter. The gate has to fire in
+    both, and it has to fire BEFORE the compiler — a mismatched pack is the one case where the
+    compiler's own message (CS0266 / CS1501) is the least useful one available.
+  -->
+  <Target Name="FusionRpgCellPackFingerprint"
+          BeforeTargets="Build;CoreCompile"
+          Condition="'$(FusionRpgCellFingerprintGate)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+    <Exec Command="$(FusionRpgProfileGuardPrefix) &quot;$(FusionRpgProfileGuardScript)&quot; $(FusionRpgProfileGuardGameDirArg) &quot;$(FusionRpgCellPackDir)&quot; $(FusionRpgProfileGuardProfileArg) &quot;$(FusionRpgCellProfile)&quot;"
+          ContinueOnError="true"
+          StandardOutputImportance="low"
+          ConsoleToMSBuild="true">
+      <Output TaskParameter="ExitCode" PropertyName="FusionRpgCellPackFingerprintExit" />
+    </Exec>
+    <Error Condition="'$(FusionRpgCellPackFingerprintExit)' != '0'"
+           Code="FUSIONRPG0002"
+           Text="Cell $(FusionRpgCellProfile) x $(FusionRpgCellLoader) was pointed at a pack that is not this cell's: $(FusionRpgCellPackDir). gameAssembly/Assembly-CSharp fingerprints did not match game-profiles.json. A pack belongs to exactly one cell of the matrix (docs/architecture/game-versioning.md), so this host is NOT COMPILED. Point it at the matching pack: set $(FusionRpgCellPackVar), or pass -p:BepGameDir / -p:MlGameDir if your caller already knows the cell." />
+  </Target>
+
+</Project>

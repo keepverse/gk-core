@@ -1,0 +1,12 @@
+{
+  "name": "FINESSE",
+  "description": "Dodges and denies crits; pierces armour and shields. Wins by not being there.",
+  "hp": 80000, "baseDamage": 1000, "shieldHp": 0, "element": "air",
+  "stats": {
+    "combat.power.omni": 1500, "combat.accuracy.omni": 260,
+    "combat.dodge.omni": 320,
+    "combat.crit.resist.omni": 200, "combat.crit.resist.damage.omni": 200,
+    "combat.penetration.omni": 90, "combat.amplification.omni": 30,
+    "combat.shield.pen.omni": 500
+  }
+}

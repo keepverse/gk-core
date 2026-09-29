@@ -1,0 +1,14 @@
+{
+  "name": "FINESSE-ns",
+  "description": "FINESSE posture \u2014 points are shares; Theta sets the absolute budget. | Shield-free copy of the simulated-search allocation. The closed form is single-phase, so a depleting pool is the one thing that makes rounds non-identical; keeping a shield-free twin is what separates \"the math is wrong\" from \"the math omits a phase\".",
+  "element": "fire",
+  "points": {
+    "Agility": 22.411790414194105,
+    "Composure": 15.367560922010378,
+    "Pierce": 59.22064866379828,
+    "Focus": 3
+  },
+  "hpPerLadder": 15,
+  "damagePerLadder": 1.5,
+  "shieldPerLadder": 2
+}

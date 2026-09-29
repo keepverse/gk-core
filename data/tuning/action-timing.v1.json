@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/battle-tempo/spec-action-timing.md",
+    "note": "battle-tempo action-timing (2026-09-05). Every timing number an action's compiled ActionEnvelope carries -- wind-up/recovery power coefficients, per-category time-cost and cooldown bases, and the basic attack's own token wind-up/recovery. Derived at CATALOG BUILD (RpgStore.BuildActionCatalog), never at seed time (D2) -- the Python seeder never reads this file.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py action-timing <dotted.key>=<value> [...] writes action-timing.v{n+1}.json; the old version stays on disk for revert.",
+    "balanceStatus": "UNMEASURED placeholders, shipped per the same posture AptitudeGuardEconomy's own coefficients used (aptitudes.v{n}.json's own precedent, 'shipping a guess is fine, calling it balance is not'). MEAS (battle-tempo-todo.md) sizes the real numbers via the staged sweep before the joint re-bless -- nothing here is a validated balance decision.",
+    "windupFormula": "windupTicks = min(windupCapTicks, windupPerPowerMilli * realizedPowerMilli / 1000), realizedPowerMilli = ActorPowerCache.Compose(container.Atoms).Total -- the ACTION'S OWN composed power (spec-action-timing.md S2.2a), which is what lets a big-payoff action at a given rung telegraph longer than a cheap one at the SAME rung (S2.2a's own 'within a rung' scaling claim -- a rung-uniform input like qPowerMilli or powerBudgetMilli directly could not deliver that). windupCapTicks = windupCapReferenceMilli * roundDurationMs / 1000 (battle.v{n}.json's own ruleset.roundDurationMs) -- RELATIVE to the round, never an absolute literal (D1, action-ideal.md decision #10). Decision 8 ('drive from qPowerMilli, not powerBudgetMilli') is honoured in how windupPerPowerMilli was SIZED for this v1 (against qPowerMilli's ~12.4x spread at rung 10, not powerBudgetMilli's 37.2x), not by substituting qPowerMilli as the formula's literal input -- recorded here because the map's own D1/decision-8 language is genuinely ambiguous between the two readings and a future session should not have to re-derive which one shipped.",
+    "recoveryFormula": "recoveryTicks = recoveryPerPowerMilli * realizedPowerMilli / 1000, uncapped -- the smaller of the two coefficients (spec S2.2 table: 'the cost of having acted', not a telegraph)."
+  },
+  "windupPerPowerMilli": 20,
+  "windupCapReferenceMilli": 300,
+  "recoveryPerPowerMilli": 8,
+  "basicAttack": {
+    "windupTicks": 150,
+    "recoveryTicks": 50
+  },
+  "categories": {
+    "attack": {
+      "timeCostBaseTicks": 100,
+      "cooldownBaseTicks": 200
+    },
+    "defense": {
+      "timeCostBaseTicks": 120,
+      "cooldownBaseTicks": 150
+    },
+    "support": {
+      "timeCostBaseTicks": 100,
+      "cooldownBaseTicks": 250
+    },
+    "movement": {
+      "timeCostBaseTicks": 80,
+      "cooldownBaseTicks": 100
+    },
+    "status": {
+      "timeCostBaseTicks": 90,
+      "cooldownBaseTicks": 180
+    }
+  }
+}

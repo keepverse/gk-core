@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/base-defense-map.md",
+    "note": "base-defense siege-board (spec-siege-board.md). Costs are integer, base 10 rather than base 1, so a future '0.5x road' fits as 5 without ever introducing a fraction.",
+    "noteMaxCells": "board.maxCells is STRUCTURAL, not a progression ceiling (AGENTS.md's exemption for structural limits/buffers) -- an allocation/perf bound on one board. A spec larger than this is a bug in district-layout, not an ambitious player. Kept as a config row anyway, per tunables-ssot.md, rather than a hidden code constant.",
+    "noteDiagonal": "diagonalSurcharge ships at 0 -- decision 36 (owner, 2026-09-04): Chebyshev already means a diagonal costs one step, same as orthogonal; a surcharge would desynchronize movement from every range check already shipped (GridDistance.InRange/Square). Kept in the schema, not removed, so a later balance pass can revisit it in one row without a code change."
+  },
+  "board": {
+    "moveCost": {
+      "open": 10,
+      "rough": 20,
+      "diagonalSurcharge": 0
+    },
+    "maxCells": 4096
+  },
+  "district": {
+    "_note": "sideByBaseTier is a LOOKUP keyed by WorldSector.DevelopmentLevel (base-defense-ideal.md line ~1415: 'Seat / tier ... DevelopmentLevel is exactly this'), never a formula (spec-district-layout.md section 2). A DevelopmentLevel past the highest authored key plateaus at that key's side -- the grid does not grow past it; further development buys build slots and tower tier instead (P(Theta)), never board size.",
+    "sideByBaseTier": { "0": 18, "1": 24, "2": 30 },
+    "coreSideMilli": 400,
+    "gateCount": 2,
+    "rampartThickness": 1,
+    "fortressRampartBonus": 1,
+    "approachDepth": 4,
+    "approachDepthPerWardLevel": 1
+  },
+  "structure": {
+    "_note": "base-defense structure-state (spec-structure-state.md), decision 32. tierMultiplierMilli is keyed by the AUTHORED material-tier ordinal -- the ordinal is content (a model writes 'stone'/'iron'/...), every number here is not. Values below (1000/1800/3000) are the spec's own worked example, not invented. depletionPerHarvestMilli=10 means 100 harvests to exhaust a deposit (spec section 7).",
+    "repairCostRatioMilli": 600,
+    "tierMultiplierMilli": { "1": 1000, "2": 1800, "3": 3000 },
+    "depletionPerHarvestMilli": 10
+  },
+  "storage": {
+    "_note": "F12 (base-defense audit): capacityPerDevelopmentLevel must grow the sector's effective loam cap alongside decision 21's rootbed-slot growth, or a new slot's whole output becomes wasted overflow. Derived, not guessed: one rootbed's own SeepPerTurn (data/tuning/loam.v4.json's upkeep.seepPerTurn=50) is the smallest unit of production a new slot could add, so one level's growth covers at least one new rootbed's worth before capacity is exhausted again.",
+    "capacityPerDevelopmentLevel": 50
+  },
+  "field": {
+    "_note": "base-defense siege-objective (spec-siege-objective.md section 2), decision 5. maxLivingPerSide is decision 29's difficulty dial -- deliberately UNSET (-1, matching CapPolicy's own unlimited sentinel) until a real board exists to measure a real cap on. NEVER derive this from board cell count (section 5.9's degenerate strategy).",
+    "maxLivingPerSide": -1
+  },
+  "slots": {
+    "legion": {
+      "_note": "section 3, decision 4: legion slot CAPACITY is even (2v2, 4v4) -- validated loudly at load. perDevelopmentLevel growth is off by default.",
+      "perSide": 2,
+      "perDevelopmentLevel": 0
+    },
+    "defense": {
+      "_note": "section 4 (audit finding, missed by the first completeness pass): the SECOND budget -- how many structures may stand on the board, orthogonal to the legion budget above. atDevelopmentZero/perDevelopmentLevel are the spec's own worked example. gridCapacityPoint=2 is derived, not guessed: it matches district.sideByBaseTier's own highest authored tier key (2) -- past the point the BOARD itself stops growing, slot COUNT also stops growing and further development buys tower TIER instead (structure-state's P(Theta)), the escape valve that keeps this fixed-size board legal under the no-hard-ceilings rule.",
+      "atDevelopmentZero": 4,
+      "perDevelopmentLevel": 2,
+      "gridCapacityPoint": 2
+    }
+  },
+  "legion": {
+    "_note": "section 5: no limit exists today (section 3.6), so this is free to choose -- decision 29 defers it, UNSET (-1) rather than a const. Author it like expeditions.v1.json's squadSlots, never like WebMatchService's const int maxSquad=6 (the named anti-pattern).",
+    "maxMembers": -1
+  },
+  "defense": {
+    "_note": "section 7, section 5.8: the placeholder battle resolver's DefenderBonusMilli (world.v5.json, shipped 1250) must not stack with real fortifications once structure-state/siege-cover model them on the board itself. A district assault reads THIS value instead -- 1000 (no bonus) until a later module has real per-shot cover math to replace it with.",
+    "districtDefenderBonusMilli": 1000
+  },
+  "waves": {
+    "_note": "base-defense siege-waves (spec-siege-waves.md). maxArrivalsPerRound is a STRUCTURAL work bound (F9/C7), configurable because the right value depends on board size. batchIntervalTicks/batchSize are decision 29's pacing dial -- deliberately UNSET (-1) until a real board exists to measure on. fieldClearedThreshold=0 means fully cleared.",
+    "maxArrivalsPerRound": 8,
+    "batchIntervalTicks": -1,
+    "fieldClearedThreshold": 0,
+    "batchSize": -1
+  },
+  "shooting": {
+    "_note": "base-defense siege-cover (spec-siege-cover.md), decision 35: the HoMM3-inspired shooting model. All per-mille, 1000 = no penalty. rangeThresholdMilli is a FRACTION of board side (never an absolute cell count), so an 18-cell and a 30-cell board do not share a falloff point. Values below are HoMM3's own shipped 50% penalties and the spec's own worked defaults, not invented.",
+    "rangeThresholdMilli": 500,
+    "rangePowerMilli": 500,
+    "obstructionPowerMilli": 700,
+    "obstructionFloorMilli": 250,
+    "meleeLockPowerMilli": 500
+  },
+  "construction": {
+    "_note": "base-defense siege-construction (spec-siege-construction.md), decisions 16/17/28/34. shardVeinYield/materialSeamYield are '4' and '3' because that is what the guards already say -- shard-vein carries GuardHeavy x4, material-seam GuardMedium x3 (spec's own tunables table): starting the balance at the numbers the map already encodes tests the map's own intent rather than an invented one. refineYieldMilli=600 is LOSSY by decision 28 (a bounded ratio, exempt from the progression-ceiling rule). refinePerTurnCap is decision 29's gate -- UNSET (-1) until a real board exists to measure on.",
+    "shardVeinYieldPerTurn": 4,
+    "materialSeamYieldPerTurn": 3,
+    "refineRubblePerIronwork": 4,
+    "refineYieldMilli": 600,
+    "refinePerTurnCap": -1,
+    "labourMoatStaminaCost": 30,
+    "labourMoatHungerCost": 15,
+    "labourMoatTurns": 2,
+    "summonQiCost": 25
+  },
+  "fog": {
+    "_note": "base-defense siege-fog (spec-siege-fog.md, module 30). enabled is a rollout kill switch, never a difficulty toggle. defaultVisionRangeTiles is the fallback for any structure with no authored VisionRangeTiles, and every animate combatant at v1 (no per-species catalog exists yet) -- must be > 0 or the whole board is permanently fogged for everyone.",
+    "enabled": true,
+    "defaultVisionRangeTiles": 6
+  },
+  "economy": {
+    "_note": "base-defense siege-economy (spec-siege-economy.md). nodeYieldPerRound is flat per node per round -- deliberately NOT on P(Theta) (principle P2: a node's yield is a property of the ground, so it cannot outrun the sinks it feeds). depotSeedMilli is how much of the DEFENDER's sector stockpile is actually reachable during a siege -- a bounded ratio, exempt from the progression-ceiling rule. captureRecoveryMilli is a scaling factor on top of the HP proportion (F11) -- 1000 = the HP proportion applies unscaled.",
+    "nodeYieldPerRoundLoam": 5,
+    "nodeYieldPerRoundIronwork": 3,
+    "depotSeedMilli": 1000,
+    "captureRecoveryMilli": 1000
+  },
+  "ai": {
+    "_note": "base-defense siege-ai (spec-siege-ai.md), section 5.16/5.20. weight.* are XCOM's own SHIPPED values (hitChance dominates lethality 70:15 -- inverting this reads as suicidal, the most-cited 'stupid AI' complaint in the whole survey) plus Fire Emblem's cannotCounter/round terms. weight.risk=120 is a balance value, and decision 31's one-row rollback (set to 0 = cover-blind). aggressionRange=2 and maxCandidatesScored=32 are STRUCTURAL (the -2..+2 range IS the taunt/stealth/decoy vocabulary; the candidate count is a per-decision work bound), not progression ceilings. threatRadiusCells=4 is the only incomingThreat tunable -- there is deliberately no reference-power constant: threat is computed as a fraction of the DECIDING actor's own CombatPowerOmni (Theta-invariant), never an absolute milli value, since combat power scales with P(Theta) and a fixed reference could never have a safe default (a private per-Theta curve is exactly what the power-ladder rule forbids).",
+    "weightHitChance": 70,
+    "weightObjective": 50,
+    "weightKill": 15,
+    "weightLowHp": 10,
+    "weightCannotCounter": 10,
+    "weightRound": 1,
+    "weightRisk": 120,
+    "stanceDefault": "Guard",
+    "autoResolveHandicapMilli": 1000,
+    "retargetLatencyTicks": 0,
+    "aggressionRange": 2,
+    "maxCandidatesScored": 32,
+    "objectiveReferenceDistanceCells": 20,
+    "threatRadiusCells": 4
+  }
+}

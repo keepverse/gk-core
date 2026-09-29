@@ -1,0 +1,67 @@
+{
+  "name": "defense-shape-clean",
+  "description": "Same comparison, with ampShape=reciprocal held constant so the ampFactor immunity does not contaminate the zero-damage counts.",
+  "scenario": "duel",
+  "variants": [
+    {
+      "name": "v0-shipped",
+      "note": "subtractive, pierceScale 10",
+      "set": [
+        "combat.ampShape=reciprocal"
+      ]
+    },
+    {
+      "name": "v1-pierce-100",
+      "note": "subtractive, penetration 10x less sharp",
+      "set": [
+        "combat.pierceScale=100",
+        "combat.ampShape=reciprocal"
+      ]
+    },
+    {
+      "name": "v2-pierce-400",
+      "note": "subtractive, penetration in P(theta) units",
+      "set": [
+        "combat.pierceScale=400",
+        "combat.ampShape=reciprocal"
+      ]
+    },
+    {
+      "name": "v3-divisive-k0.5",
+      "note": "defense = half offense halves the hit",
+      "set": [
+        "combat.defenseShape=divisive",
+        "combat.defenseDivisorK=0.5",
+        "combat.ampShape=reciprocal"
+      ]
+    },
+    {
+      "name": "v4-divisive-k1",
+      "note": "defense = offense halves the hit",
+      "set": [
+        "combat.defenseShape=divisive",
+        "combat.defenseDivisorK=1.0",
+        "combat.ampShape=reciprocal"
+      ]
+    },
+    {
+      "name": "v5-divisive-k2",
+      "note": "defense must be 2x offense to halve",
+      "set": [
+        "combat.defenseShape=divisive",
+        "combat.defenseDivisorK=2.0",
+        "combat.ampShape=reciprocal"
+      ]
+    },
+    {
+      "name": "v6-divisive-k1-p100",
+      "note": "divisive + softened penetration",
+      "set": [
+        "combat.defenseShape=divisive",
+        "combat.defenseDivisorK=1.0",
+        "combat.pierceScale=100",
+        "combat.ampShape=reciprocal"
+      ]
+    }
+  ]
+}

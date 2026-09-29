@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "version": 3,
+  "_meta": {
+    "owner": "docs/architecture/power/ssot-power-scale.md",
+    "program": "passive-tree-repair (spec-pin-table-v3.md, 2026-09-15)",
+    "note": "Pins, not curves. Each row is a channel's composed value at the Theta=20 reference with zero contributions (uniform rule). Growth stays on ChannelLadder B_ch / the tier ladder; nothing here grows. Rate-channel rows carry PinValue only (cMilli 0, unused): the sigmoid divisor stays the universal 100.0. v2.json frozen. Deliberately absent: status.power/resist (status-anchor owns their base — scale determines unit), attackInterval/produceInterval (interval-ledger owns their ms reference), zombieSpeed (battle-tempo's channel — another program's pin to author), '' (channel-less families resolve via the status anchor path, never a curve).",
+    "rebalance": "Never hand-edit this file. A balance pass republishes power-scale.v{n+1}.json; every prior version stays on disk for revert."
+  },
+  "curve": { "cMilli": 80000, "bMilli": 400, "pinIndex": 20, "pinValue": 680 },
+  "weights": {
+    "WdMilli": 1000,
+    "WaMilli": 25000,
+    "WrMilli": 250,
+    "WzMilli": 1000,
+    "WmMilli": 5000,
+    "WwMilli": 5000,
+    "WfMilli": 25000
+  },
+  "_sharedDialNote": "curve+weights are identical to v2 by design: one ladder, one dial. A dial change republishes every version; v3 never forks the curve, it only adds channel pins.",
+  "channels": {
+    "arm1Max": { "cMilli": 3000, "pinValue": 30, "reason": "Outer-armor cap at reference depth: clears Flat armor stacks, ordered above the defense pin 22 (armor is the outer layer)." },
+    "arm2Max": { "cMilli": 1000, "pinValue": 15, "reason": "Inner-armor cap: half the arm1Max order (two-layer structure)." },
+    "combat.power.{variant}": { "cMilli": 9000, "pinValue": 92, "reason": "Aggregate offence magnitude at atk order (v2 atk pin 92); reviewer to confirm against the power/atk relationship." },
+    "combat.defense.{variant}": { "cMilli": 2000, "pinValue": 22, "reason": "Same order as the v2 defense pin 22: a per-element slot reads the same magnitude." },
+    "combat.shield.capacity.{variant}": { "cMilli": 14000, "pinValue": 136, "reason": "Pool sized against HP: 20% of the BaseHp pin 680 at reference depth." },
+    "combat.shield.toughness.{variant}": { "cMilli": 52000, "pinValue": 520, "reason": "Contest-point scale at dodge parity (BaseDodge(20)=520): toughness-vs-pen is a same-scale difference like accuracy-vs-dodge." },
+    "combat.shield.pen.{variant}": { "cMilli": 52000, "pinValue": 520, "reason": "Counterpart of toughness: same scale by symmetry." },
+    "combat.shield.regen.{variant}": { "cMilli": 14000, "pinValue": 140, "reason": "Per-second pool refill sized against the expander's share math, not just the pool: m1 = round(35 x pin/1000) must clear zero at tier 1, so pin 140 yields m1=5/s (~4% of the capacity pin per tier-1 point). A capacity-proportional 14 would price to m1=0 and trip the flat-tier lint — the share gate, not the pool, sets the floor." },
+    "combat.accuracy.{variant}": { "cMilli": 0, "pinValue": 740, "reason": "Read, not authored: BaseAccuracy(20)=220+26*20 (BattleModels.cs). PinValue only; no growth implied." },
+    "combat.dodge.{variant}": { "cMilli": 0, "pinValue": 520, "reason": "Read, not authored: BaseDodge(20)=26*20. PinValue only." },
+    "combat.crit.rate.{variant}": { "cMilli": 0, "pinValue": 200, "reason": "Read, not authored: BaseCritRate(20)=10*20. PinValue only." },
+    "combat.crit.resist.{variant}": { "cMilli": 0, "pinValue": 450, "reason": "Read, not authored: BaseCritResist(20)=10*20+250. PinValue only." },
+    "combat.crit.damage.{variant}": { "cMilli": 0, "pinValue": 1000, "reason": "Identity multiplier in per-mille (1.0x); the class is bounded (1.0x,2.0x) by its own math." },
+    "combat.crit.resist.damage.{variant}": { "cMilli": 0, "pinValue": 1000, "reason": "Identity multiplier in per-mille (1.0x); same bound." }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "names": [
+    {
+      "match": "Examplemark Dragon",
+      "replacement": "Fusion Drake",
+      "confirmedBy": "fixture-owner",
+      "confirmedOn": "2026-09-19"
+    },
+    {
+      "match": "Zenith Blade",
+      "replacement": "Pinnacle Edge",
+      "confirmedBy": "fixture-owner",
+      "confirmedOn": "2026-09-19"
+    }
+  ],
+  "ids": [
+    {
+      "match": "Examplemark_a",
+      "replacement": "Fusionmark_a",
+      "confirmedBy": "fixture-owner",
+      "confirmedOn": "2026-09-19"
+    }
+  ]
+}

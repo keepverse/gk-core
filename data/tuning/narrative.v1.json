@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/npc-story-events/spec-narrative-vocabulary.md#4",
+    "rebalance": "Never hand-edit. python tools/tuning/publish.py narrative <key>=<value>",
+    "note": "The narrative domain's union of keys (plan section 4 D4). Every key is required by NarrativeTuningLoader.Parse; a missing key is a load rejection naming its path, never a default."
+  },
+  "selection": {
+    "kindFrequencyBand": {
+      "curio": "staple",
+      "shrine": "staple",
+      "trap": "staple",
+      "bargain": "staple",
+      "story": "occasional",
+      "encounter-event": "staple"
+    },
+    "specificityStepMilli": 1000,
+    "unplayedFirst": true
+  },
+  "firing": {
+    "delve.curio": { "baseMilli": 1000, "stepMilli": 0 },
+    "delve.shrine": { "baseMilli": 1000, "stepMilli": 0 },
+    "delve.trap": { "baseMilli": 1000, "stepMilli": 0 },
+    "delve.merchant": { "baseMilli": 1000, "stepMilli": 0 },
+    "delve.wild": { "baseMilli": 1000, "stepMilli": 0 },
+    "delve.rest": { "baseMilli": 1000, "stepMilli": 0 },
+    "delve.unknown": { "baseMilli": 1000, "stepMilli": 0 },
+    "world.shrine": { "baseMilli": 50, "stepMilli": 5 },
+    "world.anomaly": { "baseMilli": 50, "stepMilli": 5 },
+    "world.tear": { "baseMilli": 50, "stepMilli": 5 },
+    "world.vault": { "baseMilli": 50, "stepMilli": 5 },
+    "world.market": { "baseMilli": 50, "stepMilli": 5 },
+    "world.wildland": { "baseMilli": 50, "stepMilli": 5 },
+    "world.petition": { "baseMilli": 50, "stepMilli": 5 },
+    "expedition.return": { "baseMilli": 1000, "stepMilli": 0 },
+    "sanctum.hub": { "baseMilli": 1000, "stepMilli": 0 }
+  },
+  "cooldown": {
+    "perStorylet": { "world.turn": 10, "expedition.collect": 3, "sanctum.return": 3 },
+    "perKind": { "world.turn": 3, "expedition.collect": 1, "sanctum.return": 1 }
+  },
+  "fairness": { "maxNegativeInARow": 1 },
+  "relation": {
+    "shiftByFactKind": { "met": 0, "helped": -1, "refused": 1, "betrayed": 2, "spared": -1 },
+    "baseBandByRole": {
+      "wanderer": "wary",
+      "trader": "open",
+      "hermit": "wary",
+      "chronicler": "open",
+      "clan-elder": "wary",
+      "warlord": "hostile",
+      "captive": "wary",
+      "envoy": "wary",
+      "companion": "open"
+    },
+    "baseBandByFactionKind": { "Clan": "wary", "Rival": "hostile", "Zomboss": "hostile", "Wild": "wary" },
+    "topBandStoryGated": true
+  },
+  "casting": {
+    "score": { "metBefore": 30, "perBandFriendlier": 10, "notCastRecentlyPulses": 5 },
+    "residentChanceMilliBySlot": {
+      "Market": 1000,
+      "Shrine": 600,
+      "Wildland": 300,
+      "Vault": 300,
+      "Anomaly": 200,
+      "Tear": 200
+    },
+    "saveCastPerRole": { "companion": 2 }
+  },
+  "gates": { "leadLevel": {} }
+}

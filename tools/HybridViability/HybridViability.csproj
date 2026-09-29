@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FusionRpg.Tools.HybridViability</RootNamespace>
+    <AssemblyName>HybridViability</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Core only, and ships no src/ code — same rule tools/DominanceBaseline and tools/ResidualFitLoop
+         follow. This measures HYBRID viability, which balance-guard has never reported: DominanceGuard
+         already accepts an arbitrary build list, so no guard change is needed, only different builds.
+         passive-tree-ideal.md §3.3 — Fmax must be sized against where hybrids already sit. -->
+    <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
+  </ItemGroup>
+</Project>

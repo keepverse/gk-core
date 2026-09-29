@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/combat-ai/spec-profile-schema.md",
+    "note": "combat-ai module 2 (CAI1.8): the ten siege AI weights, migrated from siege.v1.json's own ai block, at the same address for the first time -- a relocation, not a balance pass. Every other lever ships at its identity value. See docs/architecture/combat-ai/spec-profile-schema.md S6/S7 for the migration table and docs/research/combat-ai/ for the evidence this move was byte-identical.",
+    "rebalanceLabel": "combat-ai CAI4.7: the lawn section (four balance keys, seeds)"
+  },
+  "profiles": {
+    "*/default": {
+      "tierOverride": null,
+      "tierByActorClass": {
+        "unique": "smart",
+        "general": "performance"
+      },
+      "rows": [
+        {
+          "selector": "nearest",
+          "condition": "always",
+          "conditionArgMilli": 0,
+          "conditionArgId": "",
+          "census": "none",
+          "censusArg": 0,
+          "actions": {}
+        }
+      ],
+      "scoring": {
+        "weightHitChance": 70,
+        "weightObjective": 50,
+        "weightKill": 15,
+        "weightLowHp": 10,
+        "weightCannotCounter": 10,
+        "weightRound": 1,
+        "weightRisk": 120,
+        "aggressionRange": 2,
+        "maxCandidatesScored": 32
+      },
+      "selection": {
+        "mode": "argmax",
+        "keepPctMilli": 1000,
+        "rngStreamName": "ai.select"
+      },
+      "reserves": [],
+      "guards": {
+        "minTargetsForArea": 1,
+        "killMarginMilli": 0,
+        "fightEndingLiveCount": 0
+      },
+      "antiRepeat": {
+        "retargetLatencyTicks": 0,
+        "commitmentBonus": 0,
+        "repeatDecayHalfLifeTicks": 0
+      },
+      "personality": {
+        "bounds": {
+          "aggression": 0,
+          "recklessness": 0,
+          "focus": 0,
+          "thrift": 0
+        }
+      }
+    },
+    "siege/default": {
+      "tierOverride": "smart",
+      "tierByActorClass": {
+        "unique": "smart",
+        "general": "performance"
+      },
+      "rows": [
+        {
+          "selector": "nearest",
+          "condition": "always",
+          "conditionArgMilli": 0,
+          "conditionArgId": "",
+          "census": "none",
+          "censusArg": 0,
+          "actions": {}
+        }
+      ],
+      "scoring": {
+        "weightHitChance": 70,
+        "weightObjective": 50,
+        "weightKill": 15,
+        "weightLowHp": 10,
+        "weightCannotCounter": 10,
+        "weightRound": 1,
+        "weightRisk": 120,
+        "aggressionRange": 2,
+        "maxCandidatesScored": 32
+      },
+      "selection": {
+        "mode": "argmax",
+        "keepPctMilli": 1000,
+        "rngStreamName": "ai.select"
+      },
+      "reserves": [],
+      "guards": {
+        "minTargetsForArea": 1,
+        "killMarginMilli": 0,
+        "fightEndingLiveCount": 0
+      },
+      "antiRepeat": {
+        "retargetLatencyTicks": 0,
+        "commitmentBonus": 0,
+        "repeatDecayHalfLifeTicks": 0
+      },
+      "personality": {
+        "bounds": {
+          "aggression": 0,
+          "recklessness": 0,
+          "focus": 0,
+          "thrift": 0
+        }
+      }
+    }
+  },
+  "router": {
+    "orderTimeoutTicks": 5000,
+    "reactionsPerRoundExpected": 1000
+  },
+  "lawn": {
+    "trigger": {
+      "swingsPerDecision": 7,
+      "ticksPerDecision": 50,
+      "postCastLockTicks": 10,
+      "offsetStream": "lawn.ai.offset"
+    },
+    "_note": "combat-ai CAI4.7 lawn section: the four BALANCE keys (spec-lawn-cast-trigger.md SS287-306). Every seed is principle- or prior-art-derived and marked for tuning; the four STRUCTURAL values (CarryCasts, DecisionsPerFrame, CastTokens, CastTokenTimeoutTicks) are code consts and are deliberately NOT here. The frame share lives in data/tuning/lawn-perf-budget.v1.json (a perf domain), not on the balance surface."
+  }
+}

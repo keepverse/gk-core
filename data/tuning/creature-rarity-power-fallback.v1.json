@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "rarityByThreatRung": [
+    { "threatRung": 1,  "threatBand": "nuisance",  "rarity": "chaff" },
+    { "threatRung": 2,  "threatBand": "pest",      "rarity": "sprout" },
+    { "threatRung": 3,  "threatBand": "marauder",  "rarity": "grafted" },
+    { "threatRung": 4,  "threatBand": "raider",    "rarity": "cultivated" },
+    { "threatRung": 5,  "threatBand": "warden",    "rarity": "fused" },
+    { "threatRung": 6,  "threatBand": "scourge",   "rarity": "chimeric" },
+    { "threatRung": 7,  "threatBand": "tyrant",    "rarity": "heirloom" },
+    { "threatRung": 8,  "threatBand": "harbinger", "rarity": "firstseed" },
+    { "threatRung": 9,  "threatBand": "cataclysm", "rarity": "sunwoven" },
+    { "threatRung": 10, "threatBand": "calamity",  "rarity": "almanac" }
+  ],
+  "_note": "creature-corpus-self-heal Phase H (owner-directed, 2026-09-07): rarity is OUR game's own mechanism, not an almanac/PvZ property, so when the identity pipeline's 3-way vote never converges there is no reason to leave it unresolved forever — the owner's direction is 'stronger species are rarer, fall back to a deterministic engine.' This is a straight rank-preserving correspondence to creature-threat.v1.json's own 10 rungs (nuisance..calamity), which are themselves already the real p10..p90 deciles of a measured (toughness*600+damage*400)/1000 score over the corpus (see that file's own _note) — reusing that already-validated power banding rather than inventing a second, independent one. Only used when the identity pipeline's rarity vote is 'unresolved' AND the species' own threatBand is resolved (real or itself deterministically defaulted this same pass); never overrides a real LLM rarity judgment."
+}

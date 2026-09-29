@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/action-corpus/spec-dedup-select.md (A-S3) §2/§3",
+    "note": "k is the avoidNeighbours list size A-S1 reads from this file (spec-distribution-planner.md SS3 step 8) -- FINGERPRINT_COMPONENT_COUNT + 1 = 8, the smallest value that can show the model one neighbour per field tier 2 could reject on, plus one. Before this file existed, A-S1's own loader (distribution_planner/tuning.py) defaulted k to the same 8 -- this row makes that value real rather than a fallback; the number itself does not change. similarityThresholdMilli is the tier-3 review-queue trigger (SS1: '700 per-mille -- the point at which a reader would call them restatements... a review-queue trigger, not a bound'), re-tuned against the first smoke batch's queue size (an empty queue means too high, a queue over roughly a tenth of the round means too low) -- never against acceptance, since tier 3 never gates. t2FieldDistance is the tier-2 near-duplicate rule ('exactly one field apart', SS3 step 3) -- shipped and read as data, but the shipped masked-hash-set algorithm only implements the value 1; loosening or tightening it is a new algorithm, not a config edit (dedup_select/derive.py's own docstring explains why).",
+    "rebalance": "Re-tune similarityThresholdMilli by editing this file, never in code. k and t2FieldDistance are structural (see note) -- a change to either needs a matching algorithm change, reviewed the same way a new fingerprint component would be. A new version bumps `version` and keeps this one on disk for revert."
+  },
+  "k": 8,
+  "similarityThresholdMilli": 700,
+  "t2FieldDistance": 1
+}

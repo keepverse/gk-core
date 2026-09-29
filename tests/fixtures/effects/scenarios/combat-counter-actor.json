@@ -1,0 +1,40 @@
+{
+  "id": "combat-counter-actor",
+  "seed": 42,
+  "board": [
+    { "ptr": "P1", "side": "plant", "typeId": 0, "col": 2, "row": 2 },
+    { "ptr": "Z1", "side": "zombie", "typeId": 0, "col": 7, "row": 2 },
+    { "ptr": "Z2", "side": "zombie", "typeId": 0, "col": 8, "row": 2 }
+  ],
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "streak",
+        "effectId": "fx.overlay_damage",
+        "ownerKey": "match",
+        "overlay": {
+          "icd_ms": 0,
+          "delivery": {
+            "mode": "Counter",
+            "everyHits": 5,
+            "resetOnBurst": true,
+            "counterScope": "Actor"
+          },
+          "burst": {
+            "amount": -500,
+            "target": { "mode": "EventTarget" },
+            "delivery": { "mode": "Instant" }
+          }
+        }
+      }
+    },
+    { "op": "hit", "actorPtr": "P1", "targetPtr": "Z1" },
+    { "op": "hit", "actorPtr": "P1", "targetPtr": "Z2" },
+    { "op": "hit", "actorPtr": "P1", "targetPtr": "Z1" },
+    { "op": "hit", "actorPtr": "P1", "targetPtr": "Z2" },
+    { "op": "hit", "actorPtr": "P1", "targetPtr": "Z2" },
+    { "op": "expectPlan", "golden": "combat_counter_actor.plan.json" }
+  ]
+}

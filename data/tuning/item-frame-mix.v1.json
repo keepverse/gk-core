@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "domain": "item-frame-mix",
+  "note": "D3's frame-mix bonus (spec-threshold-grants.md, module 12 threshold-grants). A hybrid body that mixes humanoid and plant base types across its twelve core roles recovers budget it conceded by not taking the best base type in every role. The count the recovery keys on is WEIGHTED BY ROLE budgetWeightMilli, never by item: concession is cheapest in the lightest roles, so an unweighted 6/6 split concedes only 230 of 800 permille (jewel-minor-a 15 + jewel-minor-b 15 + retinue 40 + footing 50 + infusion 50 + girdle 60) and D3's 'parity, bought with per-slot quality' would be bought at 28.75% of the stated price.",
+
+  "hybridCore": {
+    "budgetTotalMilli": 800,
+    "parityMinorityMilli": 400,
+    "structuralNote": "STRUCTURAL, not a progression ceiling (AGENTS.md). Both numbers are DERIVED from data/seed/items/_registry/core.v1.json: the twelve roles with hybridEligible=true sum to exactly 800 permille, so the smaller of two disjoint sums over them is at most 400. They are declared here so a role-table change that breaks the invariant is caught at load against a stated expectation instead of silently re-scaling every hybrid body. A minorityMilli above parityMinorityMilli THROWS - it is never clamped, because a clamp would hide exactly that broken role table."
+  },
+
+  "recoveryCurve": {
+    "shapeNote": "Four properties are STRUCTURAL and enforced at load; only the knot positions are tunable. (1) f(0) = 800 permille, the floor D3 rules. (2) f(parity) = 1000 permille, recovery capped at +200 and no further. (3) f is STRICTLY INCREASING on [0, parity] - no flat interval anywhere, which is the property that kills a step function. Pinned only at its ends, a step firing at minorityMilli 40 passes every endpoint test and reduces D3's whole anti-cherry-pick mechanism to the price of conceding one cheap role (footing, 50 permille). (4) f is continuous; its knots are minorityMilli values, so two bodies 1 permille apart can never differ by 100. A knot list that violates (1)-(4) is refused at load with ContentRuleViolated{threshold.frame-mix-curve-*}, not silently accepted.",
+    "shippedDefault": "linear - f(m) = 800 + m/2, i.e. +1 permille of budget per 2 permille conceded. This is spec-threshold-grants.md's own 2g table verbatim, and the faithful translation of D3's breakpoint table (0 -> +0, 2 -> +70, 4 -> +140, 6 -> +200 items across a twelve-role body), which is itself very nearly linear in item count.",
+    "knots": [
+      { "minorityMilli": 0,   "effectiveBudgetMilli": 800  },
+      { "minorityMilli": 100, "effectiveBudgetMilli": 850  },
+      { "minorityMilli": 200, "effectiveBudgetMilli": 900  },
+      { "minorityMilli": 300, "effectiveBudgetMilli": 950  },
+      { "minorityMilli": 400, "effectiveBudgetMilli": 1000 }
+    ]
+  },
+
+  "tiers": {
+    "derivedNote": "NOT a second authoring surface. The frame-mix bonus reaches an actor as a set-kind container granted at breakpoints, exactly like a set tier (D27 puts it in the `set` kind explicitly). Its breakpoints are the recovery curve's own knots above zero, ordinal-numbered in ascending minorityMilli - so a balance pass that moves a knot moves the tier with it and the two can never drift. The zero knot grants nothing: it is the floor, a body that concedes nothing.",
+    "containerIdFormat": "set.frame-mix-{ordinal:D2}",
+    "sourceKey": "frame-mix",
+    "priority": 0
+  }
+}

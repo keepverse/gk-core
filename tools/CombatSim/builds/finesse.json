@@ -1,0 +1,14 @@
+{
+  "name": "FINESSE",
+  "description": "FINESSE posture \u2014 points are shares; Theta sets the absolute budget.",
+  "element": "fire",
+  "points": {
+    "Agility": 42.916909513479034,
+    "Composure": 39.08309407010993,
+    "Pierce": 15,
+    "Focus": 3
+  },
+  "hpPerLadder": 15,
+  "damagePerLadder": 1.5,
+  "shieldPerLadder": 2
+}

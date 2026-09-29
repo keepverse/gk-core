@@ -1,0 +1,25 @@
+{
+  "name": "evasion",
+  "description": "Parry/block bands active — exercises the ClampedContest strength/shred exchange.",
+  "trials": 10000,
+  "seed": 42,
+  "baseDamage": 1000,
+  "elements": "singleRandom",
+  "defenderElement": "ice",
+  "attacker": {
+    "combat.accuracy.omni": 300,
+    "combat.crit.rate.omni": -500,
+    "combat.parry.break.omni": { "min": 0, "max": 150 },
+    "combat.parry.shred.omni": { "min": 0, "max": 150 },
+    "combat.block.break.omni": { "min": 0, "max": 150 },
+    "combat.block.shred.omni": { "min": 0, "max": 150 }
+  },
+  "defender": {
+    "combat.parry.rate.omni": { "min": 0, "max": 300 },
+    "combat.parry.strength.omni": { "min": 0, "max": 200 },
+    "combat.block.rate.omni": { "min": 0, "max": 300 },
+    "combat.block.strength.omni": { "min": 0, "max": 200 }
+  },
+  "shieldHp": 0,
+  "reflection": false
+}

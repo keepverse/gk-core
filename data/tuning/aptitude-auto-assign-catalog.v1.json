@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "kind": "aptitude-auto-assign-catalog",
+  "version": 1,
+  "entries": [
+    {
+      "id": "active-preset",
+      "displayName": "Active preset"
+    },
+    {
+      "id": "species-favour",
+      "displayName": "Species favour"
+    },
+    {
+      "id": "posture-force",
+      "displayName": "Force posture"
+    },
+    {
+      "id": "posture-finesse",
+      "displayName": "Finesse posture"
+    },
+    {
+      "id": "posture-bastion",
+      "displayName": "Bastion posture"
+    },
+    {
+      "id": "even",
+      "displayName": "Even split"
+    }
+  ]
+}

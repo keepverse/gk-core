@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "sourceRef": "spec-enhance-reroll.md §4/§4a/§5/§6a, ssot-enhancement.md (I6), ssot-reroll.md (I7) — starting values. A balance pass owns this file, not code (tunables-ssot.md).",
+
+  "scalarPerLevelMilli": 20,
+  "scalarNote": "I6 §3.3's linear +20‰-per-level track, never compounded. It is the NAIVE track: the shipped gain is the asymptotic curve below, and this value is kept because §4b's crafting-horizon table is computed against it and because it is the curve's own slope at n → 0.",
+
+  "asymptoteK": 8,
+  "asymptoteNote": "gain(n, rung) = enhance_cap(rung) × n / (n + K) — spec-enhance-reroll.md §4a, recorded identically in spec-rarity-bands.md. enhance_cap is MODULE 7's seeded per-rung ‰ column (data/tuning/item-rarity.v1.json); K is this module's and lives HERE, so there is exactly one source of truth for each half. Never a hard stop: the curve approaches enhance_cap and never reaches it, so +1 always buys something and no level is ever refused.",
+
+  "milestoneStride": 4,
+  "milestoneNote": "I6's milestone atoms at +4/+8/+12/+16/+20 restated as a STRIDE rather than a five-entry list — a list would be a hard stop at +20 dressed as content, and AGENTS.md forbids that shape. Every stride-th level draws a milestone from the reserved family space no affix pool may draw from. species-gear-chain T13: milestoneTierLadder carries the per-ORDINAL atom tier (1st milestone reads element 0, ordinals past the array read the last element) — starting shallow so a +4 and a +20 milestone are never the same row.",
+  "milestoneTierLadder": [1, 2, 2, 3, 4],
+
+  "ilvlCapFloor": 4,
+  "ilvlCapDivisor": 4,
+  "ilvlCapNote": "maxLevel(ilvl) = max(floor, floor + ilvl/divisor) — a FLOOR with no ceiling (spec §4's cap table): ilvl 32 → +12, ilvl 128 → +36, ilvl 500 → +129. It bounds how far ONE low-level item can be pushed; it bounds nothing about progression, because item level is itself unbounded.",
+
+  "bands": [
+    { "id": "safe",  "fromLevel": 1,  "toLevel": 8,     "successStartMilli": 1000, "successEndMilli": 1000, "canDowngrade": false },
+    { "id": "risk",  "fromLevel": 9,  "toLevel": 14,    "successStartMilli": 950,  "successEndMilli": 600,  "canDowngrade": false },
+    { "id": "peril", "fromLevel": 15, "toLevel": null,  "successStartMilli": 500,  "successEndMilli": 200,  "spanLevels": 10, "canDowngrade": true }
+  ],
+  "bandNote": "spec §4's three bands. The peril band is OPEN-ENDED (toLevel null): it decays over spanLevels from its start to its end and then holds at successEndMilli forever. successEndMilli is a SOFT FLOOR and must stay above zero — a zero success chance is the luck wall D7 forbids by name, and the loader refuses one.",
+
+  "downgradeFromLevel": 17,
+  "downgradeNote": "From +17 a failure may drop ONE level unless a ward.enhance is loaded. There is no destroy outcome — not as an enum value, not as a reason code (spec §4).",
+
+  "craftPityThreshold": 25,
+  "craftPityNote": "The guaranteed-tier counter (spec §5). 25 is rpg_summon_pity's shipped hard-pity number reused verbatim (SummonRoller.cs:23-30), deliberately NOT sized as a progression choice — §4b records N ≈ 0.19 realms at v1 depth, so there is nothing to size it against yet. At the threshold the next reroll on the target group does not roll a tier at all: it is PLACED at the container's max_tier and the counter resets, so no draw weight moves and ssot-rarity.md §3.5's measured overlap invariant still holds.",
+
+  "transferRatioMilli": 700,
+  "transferItemLevelWindow": 8,
+  "transferNote": "I6 §7.4, adopted. §4b makes 700‰ load-bearing rather than a feel number: with N ≈ 0.19 realms an investment locked to one item is one the player abandons at the next content step, and transfer is the only mechanism that lets it follow them. The ±8 window reads ITEM level, never the player (D26).",
+
+  "rerollCostRungSlopeMilli": 220,
+  "rerollCostAffixBaseMilli": 250,
+  "rerollCostAffixStepMilli": 750,
+  "rerollCostNote": "reroll_cost_mult's decided shape (ssot-rarity.md §4.4/§9.7, which requires it scale with AFFIX COUNT, not rung alone). Two legs that multiply: the seeded per-rung rarity_budget row is 1000 + rungSlope × rungIndex (chaff 1000 … almanac 2980, ×2.98 across the whole ladder), and the affix leg is affixBase + affixStep × affixCount (1 affix 1000 … 5 affixes 4000, ×4.00 across the shipped count range). The affix leg DOMINATES on purpose — ssot-rarity.md §8.1 keeps low rungs alive as crafting bases only if a low-affix item is cheap to USE, not merely cheap to own; a rung-dominant price inverts that mechanism."
+}

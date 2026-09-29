@@ -1,0 +1,43 @@
+{
+  "id": "status-pact-mark-random",
+  "seed": 42,
+  "board": [
+    { "ptr": "P1", "side": "plant", "typeId": 0, "col": 2, "row": 2, "derivedProfile": "neutral" },
+    { "ptr": "Z1", "side": "zombie", "typeId": 0, "col": 5, "row": 2, "derivedProfile": "glass" },
+    { "ptr": "Z2", "side": "zombie", "typeId": 0, "col": 6, "row": 2, "derivedProfile": "glass" }
+  ],
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "pact-rand",
+        "effectId": "fx.overlay_damage",
+        "ownerKey": "match",
+        "overlay": {
+          "statusId": "pact_mark",
+          "amount": -12,
+          "icd_ms": 0,
+          "periodMs": 1000,
+          "durationMs": 5000,
+          "spread": {
+            "chance": 1.0,
+            "icd_ms": 0,
+            "maxHops": 2,
+            "statusId": "pact_mark",
+            "target": {
+              "mode": "Random",
+              "count": 2,
+              "filters": { "side": "zombie" }
+            }
+          }
+        }
+      }
+    },
+    { "op": "hit", "actorPtr": "P1", "targetPtr": "Z1", "typeId": 0, "targetTypeId": 0 },
+    { "op": "expectStatus", "hostPtr": "Z1", "statusId": "pact_mark", "present": true },
+    { "op": "expectStatus", "hostPtr": "Z2", "statusId": "pact_mark", "present": false },
+    { "op": "advanceMs", "ms": 1000 },
+    { "op": "expectStatus", "hostPtr": "Z2", "statusId": "pact_mark", "present": true }
+  ]
+}

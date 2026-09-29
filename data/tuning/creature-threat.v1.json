@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "thresholds": [
+    { "rung": 1,  "id": "nuisance",   "maxScore": 12,   "thetaOffset": 0 },
+    { "rung": 2,  "id": "pest",       "maxScore": 24,   "thetaOffset": 4 },
+    { "rung": 3,  "id": "marauder",   "maxScore": 120,  "thetaOffset": 9 },
+    { "rung": 4,  "id": "raider",     "maxScore": 188,  "thetaOffset": 13 },
+    { "rung": 5,  "id": "warden",     "maxScore": 432,  "thetaOffset": 18 },
+    { "rung": 6,  "id": "scourge",    "maxScore": 720,  "thetaOffset": 22 },
+    { "rung": 7,  "id": "tyrant",     "maxScore": 1800, "thetaOffset": 27 },
+    { "rung": 8,  "id": "harbinger",  "maxScore": 2400, "thetaOffset": 31 },
+    { "rung": 9,  "id": "cataclysm",  "maxScore": 4920, "thetaOffset": 36 },
+    { "rung": 10, "id": "calamity",   "maxScore": null, "thetaOffset": 40 }
+  ],
+  "scoreWeights": { "toughnessMilli": 600, "damageMilli": 400 },
+  "inferredDefaultRung": 4,
+  "_note": "Starting values, tuned from play — not a validated balance decision (ssot-power-scale.md §5.3's own precedent). Rung boundaries 1-9 are the real p10..p90 deciles of the (toughness*600+damage*400)/1000 score over the 719 non-blocked species in data/seed/creatures/_dump (measured 2026-09-01, seed-to-concrete T1.5) — chosen from the actual distribution specifically so no rung starts empty, per spec-threat-band.md §3's own warning about a fitted curve emptying rungs. thetaOffset is an evenly-stepped 0-40 ladder (~4.44/rung), amended into ssot-power-scale.md §5.3/§10 by T0.1 before this file could ship."
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/battle-tempo/spec-battle-resources.md",
+    "note": "battle-tempo battle-resources (2026-09-05). The share of BaseHp(theta) each of the six actor resource pools gets as its max, per-mille. A PROJECTION of the shipped ladder, never a second curve (spec S2.2): resource.max.{id} = BaseHp(theta) * poolShareMilli[id] / 1000, so the only new numbers in the whole module are the six shares below. hp is absent on purpose -- it mirrors BattleActorSetup.MaxHp directly (spec S2.6) rather than deriving, because two disagreeing HP maxima is worse than an incomplete row.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py battle-resources <dotted.key>=<value> [...] writes battle-resources.v{n+1}.json; the old version stays on disk for revert.",
+    "balanceStatus": "UNMEASURED placeholders, shipped per the same posture action-timing.v1.json and reaction-lane.v1.json already used in this program: 'shipping a guess is fine, calling it balance is not'. The shares are DELIBERATELY UNIFORM -- no measurement exists that would justify making poise scarcer than qi, and inventing a differentiation we cannot defend would be worse than an honest flat placeholder. Per-id rows exist so a balance pass can differentiate later as a config edit, never a schema change.",
+    "sizing": "500 per-mille against the shipped pin (BaseHp(20) = 680, power-scale.v2.json curve.pinValue) gives a pool of 340 at theta=20. reaction-lane.v1.json's poiseSpend is 100, so a pinned actor affords ~3 counters in a battle. That is the only sanity anchor behind this number -- it is a starting point for RL3's sizing pass, not a balance decision.",
+    "regenIsAbsentOnPurpose": "SUPERSEDED 2026-09-14 (lawn-combat-wire T11, spec-lawn-combat-calibration.md). This used to say there was no regen block at all -- ResourceChannelReader.RegenPerTick rounded the channel to a whole long, so the smallest expressible non-zero rate accrued ~300 poise per round against a spend of 100 (three counters a round, erasing the scarcity poise exists to create), and there was nothing representable between that and zero. resource-subtick (S10.1, 2026-09-13) resolved the REPRESENTATION problem: the reader now carries a per-mille-per-tick remainder instead of rounding, so 999 rates exist between nothing and a whole unit. This file now authors exactly ONE non-zero regen row -- stamina, for the lawn/battle basic attack -- and leaves the other four at 0 deliberately, not by omission: poise's original scarcity argument still holds verbatim (nothing changed its spend economics, resource-hub-ssot.md SS11 pools 'refill AT REST' and a battle/lawn encounter is not a rest), and hunger/spirit/qi have no cost mechanism spending them yet, so authoring a rate for them would be inventing a balance number nothing consumes. See _meta.regenDerivation for the stamina arithmetic.",
+    "regenDerivation": "UNMEASURED, derived at the pin (theta=20, power-scale.v2.json curve.pinValue=680): poolMax(20,'stamina') = BaseHp(20) * poolShareMilli.stamina / 1000 = 680 * 500 / 1000 = 340. regenPerSecondShareMilli.stamina=50 (5 percent of the pool per second) => regenPerSecond(20) = poolMax * 50 / 1000 = 17. A Peashooter's shipped attack interval is 1.5s (measured live 2026-09-13), so the sustainable spend at the pin is 17 * 1.5 = 25.5 -- action-corpus-cost-templates kinds.basic.baseAmountAtRung1 is authored just under that ceiling (spec-lawn-combat-calibration.md Method #2), so continuous single-target fire is sustainable with a thin margin and a genuine burst can still tip it into deficit. basic-attack-cost (T12) is the wiring that actually spends it; basic-attack-live-proof 4 is where exhaustion-then-recovery gets proven live.",
+    "rebalanceLabel": "T11 lawn-combat-calibration: author stamina regen share"
+  },
+  "poolShareMilli": {
+    "stamina": 500,
+    "hunger": 500,
+    "spirit": 500,
+    "qi": 500,
+    "poise": 500
+  },
+  "regenPerSecondShareMilli": {
+    "stamina": 50,
+    "hunger": 0,
+    "spirit": 0,
+    "qi": 0,
+    "poise": 0
+  }
+}

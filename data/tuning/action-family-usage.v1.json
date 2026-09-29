@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/roster-balance/spec-usage-stats.md (FC1) §\"the policy\"",
+    "note": "Starting values, per this repo's own tuning-file convention -- not calibrated against a re-run yet. Measured baseline 2026-09-06 by the real, live FC1 module (not a hand computation -- an earlier hand pass wrongly computed evenness over only the 59 USED families rather than the full 98-family population and got 908, which is wrong; the real, correct per-mille figure the shipped code produces is below), ALL-TIME across 216 accepted candidates over every real committed round (excluding the refuted model-experiment file): evennessMilli 807, familiesUsed 59/98 (602 permille of the 98-family population), top10SharePermille 451. Honest reading against these floors: evenness (807 vs floor 850) FAILS, top10SharePermille (451 vs ceiling 300) FAILS by a wide margin, familiesUsedShare (602 vs floor 400) PASSES. minEvennessMilli is 850 rather than the species-program's 900 because this population is 98-wide with a genuinely free-form multi-select pick per brief, where perfect evenness is neither achievable nor desirable -- 850 is chosen so it flags the real, measured skew rather than being retrofitted to pass it. minFamiliesUsedShare 400 is set as a floor well below the current 602 deliberately, so it flags a real regression (fewer than 40 families ever touched) without flagging today's actually-acceptable all-time coverage. The LATEST-ROUND numbers (reported separately by FC1, never conflated with all-time) measure WORSE on the most recent round alone (evenness 774, top10Share 513, 46 never-used) -- concentration compounds within one round before averaging out across several, which is exactly the number FC3's weighting is meant to act on."
+  },
+  "minEvennessMilli": 850,
+  "maxTop10SharePermille": 300,
+  "minFamiliesUsedShare": 400
+}

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>FusionRpg.Server.Tests</RootNamespace>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.11" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FusionRpg.Server\FusionRpg.Server.csproj" />
+    <ProjectReference Include="..\..\src\FusionRpg.Contracts\FusionRpg.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The shared store test helper. It lives in FusionRpg.Data.Tests; linking the source is the
+         repo's existing cross-test-project seam (see FusionRpg.Core.Tests.csproj's Injector links),
+         and it is what lets a Server test build its store in memory instead of on disk. -->
+    <Compile Include="..\FusionRpg.Data.Tests\DataTestStore.cs" Link="TestSupport\DataTestStore.cs" />
+  </ItemGroup>
+</Project>

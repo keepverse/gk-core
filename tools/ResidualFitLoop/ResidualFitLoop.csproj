@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FusionRpg.Tools.ResidualFitLoop</RootNamespace>
+    <AssemblyName>ResidualFitLoop</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Core only. class-system-todo.md P8.6: run to emitted metrics to aggregate to fit to publish,
+         reusing the shipped Predictor/TerminationGuard/PerfProbe, not a second, parallel pipeline.
+         spec-residual-fit.md 5: "this module ships no src/ code", so the fit LOOP lives here, in
+         tools/, calling the SHIPPED FusionRpg.Core resolver/guard/probe as a black box rather than
+         reimplementing any of them. -->
+    <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
+  </ItemGroup>
+</Project>

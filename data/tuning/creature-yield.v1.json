@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "rungs": {
+    "chaff": "shard.chaff",
+    "sprout": "shard.sprout",
+    "grafted": "shard.grafted",
+    "cultivated": "shard.cultivated",
+    "fused": "shard.fused",
+    "chimeric": "shard.chimeric",
+    "heirloom": "shard.heirloom",
+    "firstseed": "shard.firstseed",
+    "sunwoven": "shard.sunwoven",
+    "almanac": "shard.almanac"
+  },
+  "_note": "species-gear-chain T31 (creature-drop-tables E3a), v1 creation. A ten-row identity map is the legal first value (spec-creature-drop-tables.md § Tunables) -- ExpeditionResolver's plan-time shard mint now keys on the planned wave's own species rung instead of isBoss. Owned by this module alone; species-materials reads nothing from it. A later balance pass may compress rungs into fewer material grades (MH's Scale -> Scale+ -> Shard precedent) by editing this map through publish.py, never the ladder itself."
+}

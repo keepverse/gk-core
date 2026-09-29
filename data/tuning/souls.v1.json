@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/creatures/spec-soul-economy.md",
+    "note": "Extracted byte-identical from SoulEarnPolicy.cs (tunables-ssot.md M.3, 2026-08-23). killCapPerMatch and victoryFullPerDay were removed by T3.6 (spec-caps-reconcile.md §2.3, SSOT §11.7, 2026-08-24) — the flat caps are gone; killDelta/victoryDelta/defeatDelta are unchanged and now scale by contentScale(Theta) instead (SSOT §11.7a). discoveryDelta widened 2026-09-01 (seed-to-concrete T4.1) from the old four-value CreatureRarity to the ten-rung ladder. Corrected same day (caught by SoulEarnPolicyTests.Discovery_faucet_by_rarity, which still pins the four pre-migration values): the first widening pass interpolated smoothly across all ten rungs toward the old Legendary value landing on Almanac, instead of pinning the four known legacy anchors (chaff=25 was Common, cultivated=75 was Rare, heirloom=200 was Epic, sunwoven=500 was Legendary — each species' actual discovery payout must not silently change) and only interpolating the NEW intermediate rungs between them plus extrapolating one new step for the still-empty Almanac. Now anchored correctly; every non-anchor value remains a staircase-interpolated starting value, not a validated balance decision.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py souls <dotted.key>=<value> [...] writes souls.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "kill": {
+    "killDelta": 1
+  },
+  "matchEnd": {
+    "victoryDelta": 100,
+    "defeatDelta": 25
+  },
+  "discoveryDelta": {
+    "chaff": 25,
+    "sprout": 42,
+    "grafted": 58,
+    "cultivated": 75,
+    "fused": 115,
+    "chimeric": 160,
+    "heirloom": 200,
+    "firstseed": 350,
+    "sunwoven": 500,
+    "almanac": 750
+  },
+  "codex": {
+    "halfMilestone": 500,
+    "fullMilestone": 1500
+  }
+}

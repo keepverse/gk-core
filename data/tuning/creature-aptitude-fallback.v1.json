@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "inferredDefaultAptitude": "Onslaught",
+  "_note": "creature-corpus-self-heal Phase I (owner-directed, 2026-09-07): unlike rarity's threatBand-derived fallback, NO real stat signal separates the 12 aptitudes -- measured directly (151 species with a computable power score cross-referenced against their resolved aptitude): one-way ANOVA F-ratio 1.34, effectively noise, and 10 of the 11 real unresolved species have no computable score at all to feed a classifier in the first place. The owner's direction, given that finding: this is our own game mechanism, so when a real derivation does not exist we are allowed to just invent a flat default rather than leave it unresolved forever. 'Onslaught' is picked because it is already the single most common aptitude in the real corpus (332/840, 395 per mille, measured 2026-09-07) -- assigning the residual 11 species to it nudges an already-dominant category by ~1%, rather than creating a new population anomaly the way picking a rare aptitude would. This is an invented convention, not a derivation -- never described as 'calculated from stats' anywhere downstream."
+}

@@ -1,0 +1,19 @@
+{
+  "contractVersion": 2,
+  "trigger": "OnTimer",
+  "actions": [
+    {
+      "action": "ApplyResourceDelta",
+      "effectId": "fx.overlay_damage",
+      "grantId": "dot-area",
+      "params": { "channel": "hp", "amount": -20, "targetPtr": "Z1" }
+    },
+    {
+      "action": "ApplyResourceDelta",
+      "effectId": "fx.overlay_damage",
+      "grantId": "dot-area",
+      "params": { "channel": "hp", "amount": -20, "targetPtr": "Z2" }
+    }
+  ],
+  "skipped": []
+}

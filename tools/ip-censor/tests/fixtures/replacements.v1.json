@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "replacements": [
+    {
+      "match": "pvz",
+      "replacement": "Fusion",
+      "confirmedBy": "owner",
+      "confirmedOn": "2026-09-19"
+    },
+    {
+      "match": "Plants vs. Zombies",
+      "replacement": "Fusion",
+      "confirmedBy": "owner",
+      "confirmedOn": "2026-09-19"
+    },
+    {
+      "match": "Crazy Dave",
+      "replacement": "the Garden Keeper",
+      "confirmedBy": "owner",
+      "confirmedOn": "2026-09-19"
+    },
+    {
+      "match": "Penny",
+      "replacement": "Hourbloom",
+      "confirmedBy": "owner",
+      "confirmedOn": "2026-09-19"
+    },
+    {
+      "match": "Dr. Zomboss",
+      "replacement": "the Rotwright",
+      "confirmedBy": "owner",
+      "confirmedOn": "2026-09-19"
+    }
+  ]
+}

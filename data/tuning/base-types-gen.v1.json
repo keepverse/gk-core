@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "_meta": {
+    "kind": "generator-tuning",
+    "purpose": "base-types-gen (item-seedgen module 6, docs/architecture/item-seedgen/spec-base-types-gen.md) — the ONLY place a `socketMax` value, an implicit `powerBand` value, or the enhancement-track level ladder is decided for a generated base-type entry. The model never sees these; brief.py/schema.py offer the model identity fields only (name, flavor, class, implicit family, tags), and emit.py resolves every field below from this file, keyed by the caller-supplied (role, band) partition.",
+    "sourceRefs": [
+      "docs/architecture/item-seedgen/spec-base-types-gen.md",
+      "docs/architecture/item/spec-base-types.md §socketMax section",
+      "data/tuning/sockets.v1.json (module 16's socketCeiling(role) — the ceiling this file's split reads, never re-states)",
+      "data/seed/items/base-types/humanoid-armament-primary-a.json / -b.json (measured: band a sockets cluster {0,1,2}, band b {2,3,4} against a ceiling of 4 — this file's split reproduces that shape as a rule, not a per-role copy)"
+    ],
+    "authoredUtc": "2026-09-07T00:00:00Z"
+  },
+  "socketMaxSplit": {
+    "description": "Per-mille cut of module 16's socketCeiling(role) that band 'a' entries may reach versus band 'b'. A NEW band letter (c/d, append-only per core.v1.json's own rule) falls back to bandNotListedDefault rather than refusing — a generator must not go inert the day content ops appends a band.",
+    "a": {
+      "floorPermilleOfCeiling": 0,
+      "ceilingPermilleOfCeiling": 500,
+      "note": "band a spans [0, ceil(ceiling * 0.5)] — the lower half of the role's socket ceiling, matching the shipped corpus's own band-a clustering at {0,1,2} against a ceiling of 4."
+    },
+    "b": {
+      "floorPermilleOfCeiling": 500,
+      "ceilingPermilleOfCeiling": 1000,
+      "note": "band b spans [floor(ceiling * 0.5), ceiling] — the upper half, matching the shipped corpus's band-b clustering at {2,3,4} against the same ceiling."
+    },
+    "bandNotListedDefault": {
+      "floorPermilleOfCeiling": 0,
+      "ceilingPermilleOfCeiling": 1000,
+      "note": "a band letter this table does not name yet (c, d, ...) gets the full [0, ceiling] range rather than a refusal — conservative, and it is what 'append-only bands' in core.v1.json implies for a generator that must keep working the day one is added."
+    }
+  },
+  "implicitPowerBandLadder": {
+    "description": "Round-robin ladder of bands.v1.json powerBand words, cycled by the entry's sequence index within its (role, frame, band) partition — deterministic and re-run-stable, never chosen by the model. Two ladders, one per band letter, so band b entries trend one rung higher than band a's, matching the shipped corpus's own measured distribution (humanoid-armament-primary-a.json: 8 low / 3 trivial / 1 medium; -b.json: 8 low / 4 medium).",
+    "a": ["trivial", "low", "low", "medium"],
+    "b": ["low", "low", "medium", "medium"],
+    "bandNotListedDefault": ["low"],
+    "bandNotListedNote": "a band letter absent from this table cycles a single conservative 'low' rather than refusing — same reasoning as socketMaxSplit's own fallback."
+  },
+  "enhanceTrack": {
+    "levels": [4, 12, 20],
+    "levelsNote": "STRUCTURAL, not a balance tunable in the ordinary sense — it is the shape every one of the 740 shipped base-type entries already uses (measured: every enhanceTrack in data/seed/items/base-types/**/*.json is exactly a 3-rung [4, 12, 20] ladder, or a 2-rung [4, 12] ladder for a handful of legacy partitions). Kept here rather than as a Python constant anyway, because a future balance pass moving the milestone breakpoints should not need a code change.",
+    "familyCount": 3,
+    "familyCountNote": "how many distinct enhancement-milestone families a generated base type's track names — one per level in `levels`. Families themselves are never listed here: they are drawn, at generation time, from enhancement-milestones-gen's real corpus (data/seed/items/enhancement-milestones/milestones.json), so this file cannot drift out of sync with what that corpus actually ships."
+  }
+}

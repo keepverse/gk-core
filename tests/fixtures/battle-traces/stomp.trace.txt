@@ -1,0 +1,94 @@
+phase 1 post-flush
+phase 1 initiative
+draw initiative 273
+draw initiative 720
+draw initiative 604
+draw initiative 889
+draw initiative 420
+reaction wave:0 no-lane
+draw crit 256938
+draw crit 772567
+reaction squad:0 no-lane
+draw crit 35312
+draw crit 660916
+reaction squad:0 no-lane
+draw crit 11649
+draw crit 257808
+reaction wave:0 no-lane
+draw crit 382313
+draw crit 467146
+reaction squad:0 no-lane
+draw crit 712964
+phase 1 shield-upkeep
+state 1 squad:0 hp=344 abs=0
+state 1 squad:1 hp=360 abs=0
+state 1 wave:0 hp=14 abs=0
+state 1 wave:1 hp=133 abs=0
+state 1 wave:2 hp=133 abs=0
+phase 2 post-flush
+phase 2 initiative
+draw initiative 776
+draw initiative 965
+draw initiative 477
+draw initiative 336
+draw initiative 996
+reaction wave:0 no-lane
+draw crit 317816
+draw crit 161236
+reaction squad:0 no-lane
+draw crit 934605
+reaction wave:1 no-lane
+draw crit 244488
+draw crit 976846
+reaction squad:0 no-lane
+draw crit 751191
+phase 2 shield-upkeep
+state 2 squad:0 hp=344 abs=0
+state 2 squad:1 hp=360 abs=0
+state 2 wave:0 hp=0 abs=0
+state 2 wave:1 hp=79 abs=0
+state 2 wave:2 hp=133 abs=0
+phase 3 post-flush
+phase 3 initiative
+draw initiative 114
+draw initiative 171
+draw initiative 24
+draw initiative 438
+reaction wave:1 no-lane
+draw crit 406614
+draw crit 356400
+reaction squad:0 no-lane
+draw crit 148692
+draw crit 327313
+reaction wave:1 no-lane
+draw crit 796377
+draw crit 754565
+reaction squad:0 no-lane
+draw crit 395888
+draw crit 303895
+phase 3 shield-upkeep
+state 3 squad:0 hp=326 abs=0
+state 3 squad:1 hp=360 abs=0
+state 3 wave:0 hp=0 abs=0
+state 3 wave:1 hp=0 abs=0
+state 3 wave:2 hp=133 abs=0
+phase 4 post-flush
+phase 4 initiative
+draw initiative 742
+draw initiative 695
+draw initiative 275
+reaction wave:2 no-lane
+draw crit 628376
+draw crit 550296
+reaction squad:0 no-lane
+draw crit 375331
+draw crit 576577
+reaction wave:2 no-lane
+draw crit 295259
+draw crit 174881
+phase 4 shield-upkeep
+state 4 squad:0 hp=318 abs=0
+state 4 squad:1 hp=360 abs=0
+state 4 wave:0 hp=0 abs=0
+state 4 wave:1 hp=0 abs=0
+state 4 wave:2 hp=0 abs=0

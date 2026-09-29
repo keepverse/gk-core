@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/action-corpus/spec-characteristic-pool.md (A-S0)",
+    "note": "These weights are untuned -- every traitCategoryMilli, elementCategoryMilli and rarityCategoryMilli cell ships flat at the neutral default 1000, and anchorCategoryMilli ships flat at 1000 too, except elementSecondaryScaleMilli at 500 (a secondary is half a primary -- the one default derived from a stated meaning rather than from data). At 1000 the score reproduces the plain signal-count ranking exactly (spec-characteristic-pool.md SS3 step 4, mirroring spec-innate-picker.md SS3.3's own w_t=1000 default). The first smoke batch is the evidence they move on.",
+    "rebalance": "Re-tune by editing a cell here, never in code -- a grep over characteristic_pool/derive.py for a bare numeric literal other than indices and 0/1 must stay empty (spec acceptance #6). A new version bumps `version` and keeps this one on disk for revert."
+  },
+  "elementSecondaryScaleMilli": 500,
+  "traitCategoryMilli": {
+    "berserker":       { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "bloodthirsty":     { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "chaos-marked":     { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "coward":           { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "critical-hunter":  { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "genius":           { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "greedy":           { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "guardian":         { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "immortal":         { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "loyal":            { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "regenerator":      { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "soul-eater":       { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "swift":            { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "void-touched":     { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 }
+  },
+  "elementCategoryMilli": {
+    "air":   { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "dark":  { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "earth": { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "fire":  { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "ice":   { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "light": { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 }
+  },
+  "rarityCategoryMilli": {
+    "almanac":    { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "chaff":      { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "chimeric":   { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "cultivated": { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "firstseed":  { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "fused":      { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "grafted":    { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "heirloom":   { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "sprout":     { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "sunwoven":   { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 }
+  },
+  "anchorCategoryMilli": {
+    "posture":          { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "reach":            { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 },
+    "targetPreference":  { "attack": 1000, "defense": 1000, "support": 1000, "movement": 1000, "status": 1000 }
+  }
+}

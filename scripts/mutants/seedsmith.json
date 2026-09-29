@@ -1,0 +1,62 @@
+[
+  {
+    "file": "tools/seedsmith/seedsmith/metrics/coverage.py",
+    "name": "EmptyPartition reports the wrong set difference direction",
+    "find": "empty = sorted(allocated - occupied)",
+    "with": "empty = sorted(occupied - allocated)"
+  },
+  {
+    "file": "tools/seedsmith/seedsmith/metrics/linkage.py",
+    "name": "SetCompletability never flags an uncompletable set",
+    "find": "if members and not pinned:",
+    "with": "if False:"
+  },
+  {
+    "file": "tools/seedsmith/seedsmith/metrics/linkage.py",
+    "name": "Unobtainable never flags unreachable content",
+    "find": "missing = [e for e in entries if not acquisition.reaches(e)]",
+    "with": "missing = []"
+  },
+  {
+    "file": "tools/seedsmith/seedsmith/metrics/distribution.py",
+    "name": "CellDeviation flags in-tolerance cells and ignores out-of-tolerance ones",
+    "find": "if not row.tolerance.contains(observed, row.target):",
+    "with": "if row.tolerance.contains(observed, row.target):"
+  },
+  {
+    "file": "tools/seedsmith/seedsmith/numerics/resolve.py",
+    "name": "OD4 overlap guardrail inverted (the exact historical defect this audit already caught once)",
+    "find": "        if hi_t < lo_next:",
+    "with": "        if hi_t >= lo_next:"
+  },
+  {
+    "file": "tools/seedsmith/seedsmith/metrics/balance.py",
+    "name": "LadderInversion stops treating a pooled PAVA block as an inversion",
+    "find": "if not block.pooled:",
+    "with": "if True:"
+  },
+  {
+    "file": "tools/seedsmith/seedsmith/metrics/constraint.py",
+    "name": "Constraint never reports an unbound rule",
+    "find": "if not rule.bound_in:",
+    "with": "if False:"
+  },
+  {
+    "file": "tools/seedsmith/seedsmith/metrics/exemplar.py",
+    "name": "ExemplarConformance never notices a missing required field",
+    "find": "missing = sorted(f for f in spec.required if f not in entry.data)",
+    "with": "missing = []"
+  },
+  {
+    "file": "tools/seedsmith/seedsmith/metrics/dedup.py",
+    "name": "SemanticDedup misses a two-entry exact duplicate",
+    "find": "if len(group) > 1:",
+    "with": "if len(group) > 2:"
+  },
+  {
+    "file": "tools/seedsmith/seedsmith/metrics/quality.py",
+    "name": "FlavourMissing reports entries THAT HAVE flavour as missing",
+    "find": "missing = [e for e in entries if not e.get(\"flavor\")]",
+    "with": "missing = [e for e in entries if e.get(\"flavor\")]"
+  }
+]

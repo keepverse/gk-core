@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "countByRarity": {
+    "chaff": [0, 0],
+    "sprout": [1, 1],
+    "grafted": [1, 2],
+    "cultivated": [1, 2],
+    "fused": [2, 3],
+    "chimeric": [2, 3],
+    "heirloom": [2, 4],
+    "firstseed": [3, 5],
+    "sunwoven": [3, 6],
+    "almanac": [4, 7]
+  },
+  "_note": "Starting values, tuned from play (ssot-power-scale.md §5.3's own precedent) — no prior spec pinned a variant-count-per-rarity table (creature-seed-ideal.md:1032 only says 'count from rarity', no numbers). [lo,hi] per rung; `identity` pipeline (classify-pipelines module 7, pipeline 8) names WHICH variants are plausible, this table clamps the COUNT deterministically — the model never decides how many."
+}

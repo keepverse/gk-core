@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/shield-system-spec.md",
+    "note": "Extracted byte-identical from ShieldPolicy.cs (tunables-ssot.md M.4, 2026-08-23). The source file's own comment: 'changing any value is an Ask-first (spec §8) and breaks the math goldens' — this migration does not change any value, only where it lives.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py shield <dotted.key>=<value> [...] writes shield.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "matchupShareKPm": 250,
+  "chipFloorKPm": 100,
+  "penCapKPm": 3000,
+  "maxShieldsPerActor": 3,
+  "drainPriority": {
+    "aura": 30,
+    "skill": 20,
+    "innate": 10
+  }
+}

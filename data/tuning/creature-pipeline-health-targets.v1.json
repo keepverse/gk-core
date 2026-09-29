@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "disagreementRate": {
+    "maxRateSharePermille": 300
+  },
+  "repairRate": {
+    "maxRepairSharePermille": 200
+  },
+  "basisMix": {
+    "maxMismatchSharePermille": 0
+  },
+  "_note": "Starting values, tuned from play (ssot-power-scale.md §5.3's own precedent) — no real classification run has happened yet (T2.11 is owner-run, ~14h). disagreementRate 300‰ (30%) is a generous starting ceiling per-field/side; option-permutation.md §5 frames a near-zero rate as healthy and a high rate as a weak description, so this ceiling is a review trigger, not a validated threshold. repairRate 200‰ (20%) tracks how often a pipeline needed at least one repair before persisting. basisMix's target is structural (0 mismatches, always) — an anchor's echoed `basis` disagreeing with power-parse's own computed basis for the same species is a bug in anchor-emit, never a balance choice."
+}

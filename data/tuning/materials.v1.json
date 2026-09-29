@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "sourceRef": "docs/architecture/item/spec-salvage-craft.md (item module 14) - D7, D23, D24, D26, D29, and ssot-materials-crafting.md (I9) sections 5.1, 7.4. A balance pass owns this file, not code (tunables-ssot.md). Every quantity the cost path and the salvage path read is here; MaterialTuning.cs is a pure parser with no defaults.",
+
+  "grade": {
+    "itemLevelPerGrade": 25,
+    "maxGrade": 4,
+    "note": "I9 5.1: grade = 1 + min(maxGrade-1, itemLevel / itemLevelPerGrade), integer division. STRUCTURAL on the maxGrade side - four substrate grades ship (crude/sound/fine/prime) and a fifth would be a new material id, not a balance edit. itemLevelPerGrade is a real tunable: it is where the grade lock's steepness lives."
+  },
+
+  "upcycle": {
+    "maxInputGrade": 2,
+    "inputPerOutput": 5,
+    "capNote": "BOUNDED RATIO, exempt from AGENTS.md's no-hard-ceilings rule and required to say so. maxInputGrade caps a CONVERSION between two material grades (crude->sound->fine); it is not a ceiling on how much a player may earn, own, or spend. Without it, volume-farming level-10 content manufactures prime substrate and the grade lock (I9 5.3) stops meaning anything - which is the exact failure the cap exists to prevent, not a progression stop. inputPerOutput is the drain valve I9 7.3 names: 'if substrate inflates past usefulness anyway, the drain valve is the upcycle recipe ratio - a data edit, not a redesign.'"
+  },
+
+  "forgeGemRungNote": "species-gear-chain T9 (spec-gem-tier.md OQ2): the forge-gem verb feeds the OUTPUT gem tier as the RecipeContext rung input. That rung index is a 0..9 ladder position while a gem tier is 1..5 - the scale mismatch is deliberate and stated here, not a bug: pricing the legs on the output tier is what makes a t4 upcycle cost more than a t2, and rung-variable legs (souls x30, essence x3) are the drain. Prose only - no number in this file moves for it.",
+
+  "costBandMultiplierPerMille": {
+    "cheap": 500,
+    "modest": 1000,
+    "standard": 2000,
+    "steep": 4000,
+    "exorbitant": 8000,
+    "mirrorNote": "MIRRORS data/seed/items/_registry/bands.v1.json costBand.multiplierTable, which is FROZEN at registryVersion 1 and is the authority. It is mirrored here rather than read from there because Core never reads a file (tunables-ssot.md 7.2) and the registry is a seed-authoring artefact, not a tuning file. MaterialCorpusTests asserts the two agree value-for-value against the real registry, so a drift is a red test rather than a silent 2x price change.",
+    "applicationNote": "bands.v1.json's own formula: resolvedQty = max(1, ceil(baseQty * multiplierPerMille / 1000)). Ceiling always, so no band can make a cost free."
+  },
+
+  "operations": {
+    "forge": {
+      "owner": "salvage-craft (14)",
+      "souls": { "coefficient": 40, "variable": "grade" },
+      "substrate": { "coefficient": 4, "variable": "grade" },
+      "catalyst": { "id": "catalyst.forge", "coefficient": 1, "variable": "flat" }
+    },
+    "upcycle": {
+      "owner": "salvage-craft (14)",
+      "souls": { "coefficient": 20, "variable": "grade" },
+      "substrate": { "coefficient": 5, "variable": "flat" },
+      "note": "substrate is a FLAT 5, not 5 x g - I9 7.4 reads 'five of grade g -> one of grade g+1', a fixed conversion ratio. It is upcycle.inputPerOutput and the two are asserted equal at parse time."
+    },
+    "forge-gem": {
+      "owner": "sockets (16)",
+      "souls": { "coefficient": 30, "variable": "rung" },
+      "shard": { "coefficient": 1, "variable": "flat" },
+      "essence": { "coefficient": 3, "variable": "rung" },
+      "catalyst": { "id": "catalyst.forge", "coefficient": 1, "variable": "flat" }
+    },
+    "bore": {
+      "owner": "sockets (16)",
+      "souls": { "coefficient": 50, "variable": "rung" },
+      "substrate": { "coefficient": 3, "variable": "rung" },
+      "catalyst": { "id": "catalyst.forge", "coefficient": 1, "variable": "flat" }
+    },
+    "imbue": {
+      "owner": "sockets (16)",
+      "souls": { "coefficient": 50, "variable": "rung" },
+      "substrate": { "coefficient": 3, "variable": "rung" },
+      "essence": { "coefficient": 2, "variable": "rung" },
+      "catalyst": { "id": "catalyst.forge", "coefficient": 1, "variable": "flat" },
+      "note": "D24 - the tenth row, which I9 7.4 has no line for at all. The souls and substrate legs are bore's VERBATIM (50/3, both rung-linear), per D24's ruling that imbuing prices on the same curve as boring; the one addition is the essence leg, because essence is the class whose whole job is direction without magnitude and imbue is the operation that names which element a hole becomes. Asserted equal to bore's legs by test, so a balance pass that moves bore and forgets imbue goes red."
+    },
+    "socket": {
+      "owner": "sockets (16)",
+      "souls": { "coefficient": 10, "variable": "flat", "bandImmune": true },
+      "bandImmuneNote": "I9 7.4 states this as a RULE, not an illustration: 'socketing an insert costs 10 souls and nothing else - moving a gem you already own between sockets must never be a material decision, or players stop experimenting and the socket system dies quietly.' A costBand multiplier on this leg would make the number the author's rather than the rule's - recipe.022 in the shipped corpus authors soulsCostBand 'cheap', which would resolve it to 5 and quietly contradict the rule. bandImmune keeps the rule; the band is still parsed and still validated, it just does not scale this leg."
+    },
+    "elevate": {
+      "owner": "enhance-reroll (15)",
+      "souls": { "coefficient": 60, "variable": "rung" },
+      "substrate": { "coefficient": 2, "variable": "rung" },
+      "shard": { "coefficient": 1, "variable": "rung" },
+      "catalyst": { "id": "catalyst.temper", "coefficient": 1, "variable": "rung" }
+    },
+    "temper": {
+      "owner": "enhance-reroll (15)",
+      "souls": { "coefficient": 15, "variable": "enhanceNext" },
+      "substrate": { "coefficient": 1, "variable": "enhanceNext" },
+      "catalyst": { "id": "catalyst.temper", "coefficient": 1, "variable": "ceilThirdEnhanceNext" }
+    },
+    "reroll-one": {
+      "owner": "enhance-reroll (15)",
+      "souls": { "coefficient": 80, "variable": "rung" },
+      "essence": { "coefficient": 2, "variable": "rung" },
+      "catalyst": { "id": "catalyst.flux", "coefficient": 1, "variable": "flat" }
+    },
+    "reroll-all": {
+      "owner": "enhance-reroll (15)",
+      "souls": { "coefficient": 200, "variable": "rung" },
+      "shard": { "coefficient": 1, "variable": "flat" },
+      "catalyst": { "id": "catalyst.flux", "coefficient": 1, "variable": "rung" },
+      "note": "spec-salvage-craft.md's re-issued table prints 'b flux' in the ESSENCE column and leaves Catalyst blank for this row - a column shift introduced when the row was re-typed. I9 7.4, the source, has essence '-' and catalyst 'b flux'. The source wins; recorded in tasks/item-todo.md P4.1 as a spec defect."
+    }
+  },
+
+  "salvageCoefficient": {
+    "derivationNote": "I9 5.1's salvage_coefficient is FOUR rows keyed on the retired four-band ladder. Re-derived here to ten rungs the same way module 7 re-derived I12's drop weights and module 11 re-solved I12's pity thresholds: hold the source's own anchors exactly, and interpolate by a stated rule rather than by feel. The four anchors are not chosen - they are LegacyCreatureRarityIds.ForwardMap, the shipped one-way band->rung map (common->chaff 0, rare->cultivated 3, epic->heirloom 6, legendary->sunwoven 8), so common's row lands on chaff, rare's on cultivated, epic's on heirloom and legendary's on sunwoven, value for value. Between anchors: integer linear interpolation with FLOOR, never round-half-up, because rounding a salvage yield UP is the only direction that can break R2's strict-loss invariant. Above the top anchor (almanac, rung 9): substrateBase and shardBack continue the last segment's slope, floored; essenceCap stays flat, because I9's own table already stopped it growing at epic (3 at both epic and legendary) - the flat tail is the source's shape, not an invention. MaterialCorpusTests re-computes all thirty numbers from the four anchors plus this rule and asserts the file matches, so an edit by feel goes red with the derivation named.",
+    "chaff":      { "substrateBase": 2,  "essenceCap": 0, "shardBack": 0 },
+    "sprout":     { "substrateBase": 2,  "essenceCap": 0, "shardBack": 0 },
+    "grafted":    { "substrateBase": 3,  "essenceCap": 1, "shardBack": 0 },
+    "cultivated": { "substrateBase": 4,  "essenceCap": 2, "shardBack": 1 },
+    "fused":      { "substrateBase": 4,  "essenceCap": 2, "shardBack": 1 },
+    "chimeric":   { "substrateBase": 5,  "essenceCap": 2, "shardBack": 1 },
+    "heirloom":   { "substrateBase": 6,  "essenceCap": 3, "shardBack": 2 },
+    "firstseed":  { "substrateBase": 7,  "essenceCap": 3, "shardBack": 2 },
+    "sunwoven":   { "substrateBase": 9,  "essenceCap": 3, "shardBack": 3 },
+    "almanac":    { "substrateBase": 10, "essenceCap": 3, "shardBack": 3 }
+  },
+
+  "salvageEnhanceReturnDivisor": 3,
+  "salvageEnhanceReturnNote": "I9 5.1: catalyst.temper x (enh / divisor), integer division. Strictly lossy against temper's own catalyst leg (ceil((n+1)/3) spent per level, floor(n/3) returned in total), which is one of R2's three locks. There is deliberately NO upper bound on the return - a long enhancement history returns proportionally more temper, and that is the converter working, not a leak."
+}

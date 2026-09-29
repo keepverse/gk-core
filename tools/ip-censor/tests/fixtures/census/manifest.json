@@ -1,0 +1,5 @@
+{
+  "data/seed/narrative/storylet.md": "prose/storylet.md",
+  "src/FusionRpg.Server/Namespaces.cs": "code/namespace.cs",
+  "data/seed/narrative/_registry/names.en.v1.json": "data/tokens.json"
+}

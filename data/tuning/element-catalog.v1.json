@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "kind": "element-catalog",
+  "version": 1,
+  "entries": [
+    {
+      "id": "omni",
+      "displayName": "Omni",
+      "ordinal": -1,
+      "color": "#d0d4dc",
+      "presentationOnly": true
+    },
+    {
+      "id": "fire",
+      "displayName": "Fire",
+      "ordinal": 0,
+      "color": "#ff5a36",
+      "presentationOnly": false
+    },
+    {
+      "id": "ice",
+      "displayName": "Ice",
+      "ordinal": 1,
+      "color": "#7ec8ff",
+      "presentationOnly": false
+    },
+    {
+      "id": "air",
+      "displayName": "Air",
+      "ordinal": 2,
+      "color": "#c8f0ff",
+      "presentationOnly": false
+    },
+    {
+      "id": "earth",
+      "displayName": "Earth",
+      "ordinal": 3,
+      "color": "#c4a35a",
+      "presentationOnly": false
+    },
+    {
+      "id": "light",
+      "displayName": "Light",
+      "ordinal": 4,
+      "color": "#ffe566",
+      "presentationOnly": false
+    },
+    {
+      "id": "dark",
+      "displayName": "Dark",
+      "ordinal": 5,
+      "color": "#6b4cff",
+      "presentationOnly": false
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/creatures/spec-creature-summoning.md",
+    "note": "Extracted byte-identical from SummonBannerCatalog.cs and SummonRoller.cs (tunables-ssot.md M.8, 2026-08-24). Banner ids/HasElementFocus stay in C# (schema); costs and pity/rarity math moved. `roller` redesigned 2026-09-01 (seed-to-concrete T4.1, owner Q15: 'All ten, two pity guards at 70 and 90') from a flat common/rare/epic/legendary split to all ten ladder rungs. Per-mille rates are a monotonically decreasing staircase (chaff, the implicit remainder, down to almanac at 2‰) — a STARTING VALUE, not a validated balance decision, per this spec's own explicit 'ask first' boundary on the summon-rate spread (spec-rarity-migration.md §5). The two named pity guards are ordinals from ssot-rarity.md §3.3: heirloom=70, sunwoven=90 — almanac (ordinal 100, the true top) is deliberately NOT pity-guarded, matching Q15's literal '70 and 90'. Pull-count fields (heirloomHardPity, sunwovenSoftStart, sunwovenHardPity) are unchanged from the old epicHardPity/legendarySoftStart/legendaryHardPity values — they gate on PULL COUNT, not on rarity width, so widening the ladder does not by itself change what they should be.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py summoning <dotted.key>=<value> [...] writes summoning.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "banners": {
+    "standard-rift":   { "costPerPull": 100, "costPerTen": 900,  "focusWeightMultiplier": 1.0 },
+    "element-focus":    { "costPerPull": 120, "costPerTen": 1080, "focusWeightMultiplier": 3.0 }
+  },
+  "roller": {
+    "heirloomHardPity": 25,
+    "sunwovenSoftStart": 41,
+    "sunwovenHardPity": 55,
+    "sunwovenBasePerMille": 8,
+    "sunwovenRampPerMille": 60,
+    "almanacPerMille": 2,
+    "heirloomPerMille": 25,
+    "firstseedPerMille": 15,
+    "chimericPerMille": 40,
+    "fusedPerMille": 60,
+    "cultivatedPerMille": 100,
+    "graftedPerMille": 150,
+    "sproutPerMille": 250,
+    "shinyOneIn": 64
+  }
+}

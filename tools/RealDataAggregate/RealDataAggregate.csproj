@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FusionRpg.Tools.RealDataAggregate</RootNamespace>
+    <AssemblyName>RealDataAggregate</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- No src/ ProjectReference at all: spec-residual-fit.md §5's "ships no src/ code" pattern,
+         one step further than tools/DominanceBaseline (which still references Core for the shipped
+         resolver). This tool only reads the raw rpg_hot.sqlite schema (runs + events tables) and JSON,
+         the same primitives FusionRpg.Data itself is built on, not any Core combat/derived-stat logic.
+         Reading via RpgStore.ListRuns/ListEvents instead would mean a hardcoded LIMIT 100 and a
+         single-player filter, neither designed for bulk aggregation, so raw SQL against the documented
+         schema (class-system-todo.md P9.2) is the more honest dependency here, not a shortcut. -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
+  </ItemGroup>
+</Project>

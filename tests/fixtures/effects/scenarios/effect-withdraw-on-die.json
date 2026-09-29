@@ -1,0 +1,66 @@
+{
+  "id": "effect-withdraw-on-die",
+  "seed": 42,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "entity-death",
+        "effectId": "fx.spawn_zombie_ondeath",
+        "ownerKey": "entity:DEAD",
+        "overlay": { "icd_ms": 0 }
+      }
+    },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "match-butter",
+        "effectId": "fx.butter_on_hit",
+        "ownerKey": "match",
+        "overlay": { "icd_ms": 0 }
+      }
+    },
+    { "op": "die", "side": "zombie", "ptr": "0xDEAD", "typeId": 0 },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnDeath",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "SpawnEntity",
+            "effectId": "fx.spawn_zombie_ondeath",
+            "grantId": "entity-death",
+            "params": {
+              "kind": "zombie",
+              "typeId": 0,
+              "hp": 100,
+              "maxHp": 100
+            }
+          }
+        ]
+      }
+    },
+    { "op": "hit" },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnDamageDealt",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "ApplyStatus",
+            "effectId": "fx.butter_on_hit",
+            "grantId": "match-butter",
+            "params": { "status": "butter" }
+          }
+        ]
+      }
+    },
+    { "op": "die", "side": "zombie", "ptr": "0xDEAD", "typeId": 0 },
+    { "op": "expectEmpty" }
+  ]
+}

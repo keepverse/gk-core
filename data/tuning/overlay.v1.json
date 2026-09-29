@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/overlay-switch-program.md",
+    "note": "Extracted byte-identical from OverlayPausePolicy.cs, OverlaySwitchLayout.cs, OverlaySwitchState.cs (tunables-ssot.md M.4, 2026-08-23) plus OverlaySettingsGui.cs's panel size (M.14, 2026-08-24) — same UI/feel-tuning class as switchLayout.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py overlay <dotted.key>=<value> [...] writes overlay.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "pause": {
+    "pausedTimeScale": 0.0,
+    "maxResumeScale": 10.0
+  },
+  "switchLayout": {
+    "baseButtonW": 72.0,
+    "baseButtonH": 28.0,
+    "baseMargin": 16.0,
+    "referenceHeight": 1080.0,
+    "minScale": 1.0,
+    "maxScale": 3.0
+  },
+  "switchState": {
+    "debounceMs": 300,
+    "probeIntervalMs": 30000,
+    "sendTimeoutMs": 3000
+  },
+  "settingsGui": {
+    "panelW": 280.0,
+    "panelH": 196.0
+  },
+  "riftMenu": {
+    "anchorCenterX": 0.5,
+    "anchorCenterY": 0.62,
+    "widthFraction": 0.11,
+    "heightFraction": 0.16,
+    "minDevicePx": 44.0
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/scoped-inventory-hierarchy/spec-legion-cargo.md",
+    "note": "v1 (empire-development Task 1.1): flat per-member cargo defaults — every member counts regardless of role, a deliberate divergence from LegionSupply's Bearer-only loam-carry precedent (spec Locked anchors, owner-confirmed). Both values are provisional placeholders for a real per-species stat that does not exist yet (no seedsmith unit pipeline); a later program adds the generator, the memberCount x per-unit formula does not change.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py scoped-inventory <dotted.key>=<value> [...] writes scoped-inventory.v{n+1}.json; the old version stays on disk for revert.",
+    "rebalanceLabel": "v1: initial flat cargo defaults"
+  },
+  "cargoWeightPerUnit": 50,
+  "cargoSlotsPerUnit": 2
+}

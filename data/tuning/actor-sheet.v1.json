@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "kind": "actor-sheet",
+  "version": 2,
+  "defaultOpen": "condition",
+  "tabs": [
+    {
+      "kind": "condition",
+      "label": "Condition",
+      "order": 0,
+      "hidden": false,
+      "icon": "heart-pulse"
+    },
+    {
+      "kind": "aptitudes",
+      "label": "Aptitudes",
+      "order": 1,
+      "hidden": false,
+      "icon": "sparkles"
+    },
+    {
+      "kind": "derived",
+      "label": "Derived",
+      "order": 2,
+      "hidden": false,
+      "icon": "sigma"
+    },
+    {
+      "kind": "shield",
+      "label": "Shield",
+      "order": 3,
+      "hidden": false,
+      "icon": "shield"
+    },
+    {
+      "kind": "status",
+      "label": "Status",
+      "order": 4,
+      "hidden": false,
+      "icon": "activity"
+    },
+    {
+      "kind": "elements",
+      "label": "Elements",
+      "order": 5,
+      "hidden": false,
+      "icon": "atom"
+    },
+    {
+      "kind": "kit",
+      "label": "Kit",
+      "order": 6,
+      "hidden": false,
+      "icon": "backpack"
+    },
+    {
+      "kind": "paths",
+      "label": "Paths",
+      "order": 7,
+      "hidden": false,
+      "icon": "git-branch"
+    }
+  ],
+  "kitRoles": [
+    {
+      "roleId": "armament-primary",
+      "labels": {
+        "humanoid": "Weapon",
+        "plant": "Stem"
+      }
+    },
+    {
+      "roleId": "core-guard",
+      "labels": {
+        "humanoid": "Chest",
+        "plant": "Core"
+      }
+    },
+    {
+      "roleId": "ward-array",
+      "labels": {
+        "humanoid": "Ward",
+        "plant": "Ward"
+      }
+    },
+    {
+      "roleId": "armament-secondary",
+      "labels": {
+        "humanoid": "Off-hand",
+        "plant": "Tendril"
+      }
+    },
+    {
+      "roleId": "jewel-major",
+      "labels": {
+        "humanoid": "Major jewel",
+        "plant": "Bloom"
+      }
+    },
+    {
+      "roleId": "manipulator",
+      "labels": {
+        "humanoid": "Hands",
+        "plant": "Grasp"
+      }
+    },
+    {
+      "roleId": "mantle",
+      "labels": {
+        "humanoid": "Cloak",
+        "plant": "Canopy"
+      }
+    },
+    {
+      "roleId": "head-guard",
+      "labels": {
+        "humanoid": "Helm",
+        "plant": "Crown"
+      }
+    },
+    {
+      "roleId": "girdle",
+      "labels": {
+        "humanoid": "Belt",
+        "plant": "Ring"
+      }
+    },
+    {
+      "roleId": "sense",
+      "labels": {
+        "humanoid": "Amulet",
+        "plant": "Sense"
+      }
+    },
+    {
+      "roleId": "footing",
+      "labels": {
+        "humanoid": "Boots",
+        "plant": "Roots"
+      }
+    },
+    {
+      "roleId": "infusion",
+      "labels": {
+        "humanoid": "Infusion",
+        "plant": "Sap"
+      }
+    },
+    {
+      "roleId": "retinue",
+      "labels": {
+        "humanoid": "Retinue",
+        "plant": "Swarm"
+      }
+    },
+    {
+      "roleId": "jewel-minor-a",
+      "labels": {
+        "humanoid": "Minor jewel A",
+        "plant": "Bud A"
+      }
+    },
+    {
+      "roleId": "jewel-minor-b",
+      "labels": {
+        "humanoid": "Minor jewel B",
+        "plant": "Bud B"
+      }
+    }
+  ]
+}

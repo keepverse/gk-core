@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/software-architecture.md",
+    "note": "Extracted byte-identical from TraitBattleCatalog.cs, BattleModels.cs (BattleRuleset) and BattleStatComposer.cs (tunables-ssot.md M.7, 2026-08-24). Trait ids/mechanisms and the record shape stay in C# (schema, not balance) — only each trait's Milli/Charges magnitudes moved, same split M.2 used for the world catalogs. critical-hunter carries no magnitudes (its ChannelMods moved to an atom in E12).",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py battle <dotted.key>=<value> [...] writes battle.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "ruleset": {
+    "roundDurationMs": 1000,
+    "maxRounds": 50
+  },
+  "statComposer": {
+    "primaryAffinityDivisor": 4,
+    "secondaryAffinityDivisor": 8
+  },
+  "traits": {
+    "berserker":       { "berserkRampHalfMilli": 250, "berserkRampQuarterMilli": 500 },
+    "regenerator":      { "regenPerRoundMilli": 20 },
+    "soul-eater":       { "onKillHealMilli": 100 },
+    "guardian":         { "guardShareMilli": 250 },
+    "swift":            { "initiativeBonusMilli": 1000 },
+    "immortal":         { "deathRefusalCharges": 1 },
+    "coward":           { "retreatBelowMilli": 250 },
+    "greedy":           { "soulLootBonusMilli": 250 },
+    "genius":           { "specimenXpBonusMilli": 250 },
+    "void-touched":     { "essenceProcMilli": 100, "essenceRiderMilli": 150 },
+    "chaos-marked":     { "essenceProcMilli": 100, "essenceRiderMilli": 150 }
+  }
+}

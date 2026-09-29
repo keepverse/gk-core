@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": 1,
+  "_meta": {
+    "owner": "docs/architecture/narrative-seed/spec-storylet-vocab.md#38",
+    "note": "Test fixture for npc-story-events NR1.2 (the real file is narrative-seed's). The key order of `teaches` IS the teaching order (arc-shapes section 5)."
+  },
+  "teaches": {
+    "expedition-dispatch": {
+      "description": "How to send, wait for and collect an expedition.",
+      "negative": "Not the expedition tiers' numbers.",
+      "loop": "2. Idle expeditions",
+      "carriers": ["spine", "storylet"],
+      "requires": ["host expedition.return"],
+      "teachingLine": "Send a squad out while you work the lawn; it comes back with what it finds."
+    },
+    "talk-verbs": {
+      "description": "What the talk choices are.",
+      "negative": "Not a promise that talking wins.",
+      "loop": "7. Quests and events",
+      "carriers": ["spine", "storylet"],
+      "requires": ["a persuade or threaten slot"],
+      "teachingLine": "You can argue with people, or lean on them; both are a roll, not a guarantee."
+    },
+    "offer-cost": {
+      "description": "That an offer spends a stock the runtime prices.",
+      "negative": "Not a price.",
+      "loop": "7. Quests and events",
+      "carriers": ["storylet"],
+      "requires": ["an offer slot"],
+      "teachingLine": "An offer spends what you actually hold."
+    },
+    "bring-option": {
+      "description": "That the right companion opens a choice.",
+      "negative": "Not a party-building guide.",
+      "loop": "7. Quests and events",
+      "carriers": ["storylet"],
+      "requires": ["a bring slot"],
+      "teachingLine": "Some doors only open for the right company."
+    },
+    "relation-bands": {
+      "description": "That choices move a character along the one ladder.",
+      "negative": "Not a loyalty number.",
+      "loop": "7. Quests and events",
+      "carriers": ["spine", "storylet"],
+      "requires": ["a relation.shift consequence"],
+      "teachingLine": "People remember what you did to them."
+    },
+    "quest-log": {
+      "description": "Where offered quests are kept and how to drop one for free.",
+      "negative": "Not a quest's goal.",
+      "loop": "7. Quests and events",
+      "carriers": ["spine", "storylet"],
+      "requires": ["a quest.offer consequence"],
+      "teachingLine": "Offered work waits in your log, and leaving it costs nothing."
+    },
+    "delve-extract": {
+      "description": "That extracting banks the haul and a wipe loses it.",
+      "negative": "Not a difficulty warning.",
+      "loop": "6. Dungeon crawler",
+      "carriers": ["spine", "storylet"],
+      "requires": ["a delve host"],
+      "teachingLine": "Carry the haul out and it is yours; fall down here and it is not."
+    },
+    "world-command": {
+      "description": "That End Turn commits every order at once.",
+      "negative": "Not a strategy.",
+      "loop": "4. World map",
+      "carriers": ["spine"],
+      "requires": [],
+      "teachingLine": "Give your orders, then end the turn: everything moves at once."
+    },
+    "fusion": {
+      "description": "That duplicates and essence fuse into stronger forms.",
+      "negative": "Not a recipe list.",
+      "loop": "B. Creature summon and fusion",
+      "carriers": ["spine"],
+      "requires": [],
+      "teachingLine": "Two of the same creature, and what you feed them, make something stronger."
+    },
+    "counter-doctrine": {
+      "description": "That the antagonist adapts to how you fight, and a raid sets it back.",
+      "negative": "Not a threat level.",
+      "loop": "3. Farming, hunting, and defending the empire",
+      "carriers": ["spine", "storylet"],
+      "requires": ["a doctrine.setback consequence", "a doctrine-studying eligibility"],
+      "teachingLine": "It learns your habits; hit the study and it forgets some."
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/aptitude-sheet/spec-aptitude-preset-api.md",
+    "status": "SHIPPED with aptitude-sheet AS-3.1",
+    "note": "Soft caps for the aptitude build-preset library (E8). softMaxPresets is a tunable soft refusal on create — not a grind ceiling on PointBudget. defaultRowAbsMax is an optional UI/editor default for new abs caps; materialize still treats unset abs as no axis."
+  },
+  "softMaxPresets": 32,
+  "defaultRowAbsMax": 1000
+}

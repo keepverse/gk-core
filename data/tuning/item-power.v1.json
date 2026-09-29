@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "sourceRef": "spec-item-power-reads.md (item module 9) -- every number a balance pass would touch",
+  "implicitShareCapMilli": 150,
+  "grantedActionShareCapMilli": null,
+  "showPowerOnCard": true,
+  "powerDisplaySigFigs": 2,
+  "powerDisplayBandPercent": 25,
+  "powerDisplayBandPercentNote": "derived, not chosen -- must equal ContentValidation.DriftTolerancePercent (25); a test pins the two together so they cannot drift apart silently."
+}

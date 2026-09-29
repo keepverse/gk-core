@@ -1,0 +1,72 @@
+{
+  "version": 2,
+  "thresholds": [
+    {
+      "rung": 1,
+      "id": "nuisance",
+      "maxScore": 256,
+      "thetaOffset": 0
+    },
+    {
+      "rung": 2,
+      "id": "pest",
+      "maxScore": 326,
+      "thetaOffset": 4
+    },
+    {
+      "rung": 3,
+      "id": "marauder",
+      "maxScore": 414,
+      "thetaOffset": 9
+    },
+    {
+      "rung": 4,
+      "id": "raider",
+      "maxScore": 572,
+      "thetaOffset": 13
+    },
+    {
+      "rung": 5,
+      "id": "warden",
+      "maxScore": 850,
+      "thetaOffset": 18
+    },
+    {
+      "rung": 6,
+      "id": "scourge",
+      "maxScore": 1320,
+      "thetaOffset": 22
+    },
+    {
+      "rung": 7,
+      "id": "tyrant",
+      "maxScore": 2480,
+      "thetaOffset": 27
+    },
+    {
+      "rung": 8,
+      "id": "harbinger",
+      "maxScore": 4840,
+      "thetaOffset": 31
+    },
+    {
+      "rung": 9,
+      "id": "cataclysm",
+      "maxScore": 9760,
+      "thetaOffset": 36
+    },
+    {
+      "rung": 10,
+      "id": "calamity",
+      "maxScore": null,
+      "thetaOffset": 40
+    }
+  ],
+  "scoreWeights": {
+    "toughnessMilli": 600,
+    "damageMilli": 400,
+    "costMilli": 400
+  },
+  "inferredDefaultRung": 4,
+  "_note": "v2, 2026-09-18 (creature-seed R-CS5). v1's thresholds were fitted on worse inputs and its bottom three rungs capped at 12/24/120 while the cheapest real creature scores 180 -- they were a fit to missing-data-as-zero, from ~280 species whose toughness never parsed. Re-scoring v1 against the 2026-09-18 capture empties `nuisance` outright. MEASURED, and the measurement is why the SCORE changed rather than only the thresholds: over the 911-row capture the two-field score maps onto 145 distinct values with a single tie of 154 species (hp 300 / attack 0 -> 180). A ladder cannot rank creatures it cannot tell apart, so no choice of thresholds fixes that; three honest re-fits each piled ~half the roster into one rung. Adding cost gives 446 distinct triples, largest tie 22. costMilli = 400 is an owner ruling about MEANING, not a best fit. The fit flattens almost immediately -- worst-rung occupancy goes 44.0% at 0, 26.8% at 200, 22.7% at 400, and then only to 17.1% at 8000, so twenty times the weight buys 5.6 further points. Since the measurement cannot choose, the design statement does: threat is what a creature does in a fight, with price as a corrector. At 400 cost is 28.6% of the blend -- a real tie-breaker, and an honest proxy for the abilities the score cannot see (D&D 5e's documented CR blind spot: legendary and lair actions push real difficulty past what stats say). A cost-dominant weight would make threat mostly 'what the game charged', which is a different claim. Cost is floored at 0 in the scorer: two species carry a negative price (ZombieEndoFlame -125, PresentZombie -100), which is bookkeeping for a type that refunds or is granted, not a claim that they are safer than a free creature. 116 species have cost 0 and are still separated by hp/attack, which is why cost ADDS a term rather than replacing one. Thresholds are deciles over distinct score values. Every rung is occupied and none exceeds 22.7%: nuisance 207, pest 140, marauder 84, raider 74, warden 59, scourge 101, tyrant 88, harbinger 66, cataclysm 48, calamity 44. thetaOffset is untouched -- this decides WHICH rung a species lands on, never what a rung is worth, so it stays on the one power ladder."
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/species-build/spec-redistribution-plan.md",
+    "note": "Working values, not a validated balance decision (the spec's own Boundaries section: 'a balance pass owns the band values — shipping a guess is fine, calling it balance is not'). Sized against the real classified-anchor corpus so Phase 3 (the band check) passes today; a future balance pass may move them.",
+    "rebalance": "Regenerate via `dotnet run --project tools/CreatureBuildPlanGen` after any edit here, then commit the refreshed _species-build-plan.json alongside the tuning bump.",
+    "respecWhy": "spec-species-respec.md decision 15 — churn-priced, never level-scaled. price(count) = base + base * count * escalationPermille / 1000, linear (geometric against a flat soul faucet is how a price becomes a ceiling). Placeholder magnitudes, same 'shipping a guess is fine' posture as the band values above."
+  },
+  "parityFloorPermille": 50,
+  "parityCeilingPermille": 200,
+  "leanMinPermille": 350,
+  "leanMaxPermille": 600,
+  "crowdingFactor": 633,
+  "secondarySharePermille": 300,
+  "maxAptitudesPerSpecies": 5,
+  "minAptitudesPerSpecies": 2,
+  "respecBasePrice": 50,
+  "respecEscalationPermille": 500,
+  "respecDecayDays": 3
+}

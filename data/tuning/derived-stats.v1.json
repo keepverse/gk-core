@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/derived-stats/spec-cap-consolidation.md",
+    "note": "categoryResistCap moved here from status.v1.json (cap-consolidation, T1, 2026-08-24) — it was clamped TWICE (a hardcoded 0.95 in DerivedStatRegistry at compose, and this same key applied again in ResistanceEvaluator), so the compose-time clamp always won and raising this key past 0.95 was a silent no-op. Now the ONLY clamp: DerivedStatRegistry reads it at registration, ResistanceEvaluator no longer re-clamps. Value unchanged (0.95) — this module moves the cap's home, it does not move the number (T7).",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py derived-stats <dotted.key>=<value> [...] writes derived-stats.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "categoryResistCap": 0.95
+}

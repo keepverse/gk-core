@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "projects": {
+    "data": {
+      "maxParallelThreads": 2,
+      "shards": [
+        { "id": "a", "prefixes": ["FusionRpg.Data.Tests.Items.", "FusionRpg.Data.Tests.Delve."] },
+        { "id": "b", "prefixes": ["FusionRpg.Data.Tests.Actions."] },
+        { "id": "c", "prefixes": ["FusionRpg.Data.Tests.CorpseCache.", "FusionRpg.Data.Tests.PassiveTree.", "FusionRpg.Data.Tests.CargoCommands."] },
+        { "id": "rest", "remainder": true }
+      ]
+    }
+  },
+  "_meta": {
+    "measured": {
+      "data": {
+        "note": "readings, never asserted (TVB1.3). Machine was NOT idle: 26-30 concurrent dotnet.exe processes from other sessions during both runs (AGENTS.md 'Concurrent sessions, heavy machine load'); walls are comparative (same box, back-to-back, same --no-build assembly), not absolute.",
+        "2026-09-19": {
+          "shards2TotalWallSeconds": 98.49,
+          "shards4TotalWallSeconds": 86.45,
+          "kept": 4
+        }
+      }
+    }
+  }
+}

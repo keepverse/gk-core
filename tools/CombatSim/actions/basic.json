@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "name": "basic",
+  "_meta": {
+    "owner": "docs/architecture/action/spec-action-costs.md",
+    "status": "POC action set. The action program (A1-A10) is specced but NOT BUILT, so this is a faithful slice of its COST model only - enough to make the resource distribution measurable, not an implementation of the action layer.",
+    "modelled": "cost.resourceId + cost.shareOfOutputMilli + when=onCommit; lazy regen; validate-all-then-consume-all; committing costs, not landing.",
+    "notModelled": "envelope/cooldowns, target rules, usability conditions, grid + range, the reaction lane, per-tick channelled costs, exhaustion statuses, interrupt refunds. Each is a named module of the action program.",
+    "pricing": "cost = shareOfOutput x NOMINAL output (base damage x damageMultiplier), not damage dealt. Two reasons, and both are load-bearing: (1) spec-action-costs.md 3 - COMMITTING is what costs, so a miss pays in full; (2) class-system-ideal.md 7a.4 prices OUTPUT rather than investment, and pricing output is also what keeps the economy Theta-free, because output is P(Theta)-scaled and so is the cost."
+  },
+
+  "actions": [
+    {
+      "id": "strike",
+      "category": "attack",
+      "_note": "The physical default. resource-hub-ssot.md 2: stamina pays for move, basic attack, guard, reposition.",
+      "cost": { "resourceId": "stamina", "shareOfOutputMilli": 220, "when": "onCommit" },
+      "damageMultiplier": 1.0,
+      "priority": 2
+    },
+    {
+      "id": "skill-strike",
+      "category": "attack",
+      "_note": "Anything with a trigger, an element, or a container of atoms behind it draws on qi (resource-hub-ssot.md 2). Hits harder and costs a larger share of a larger output - so it is strictly more expensive per point of damage, and the choice is about tempo, not efficiency.",
+      "cost": { "resourceId": "qi", "shareOfOutputMilli": 300, "when": "onCommit" },
+      "damageMultiplier": 1.8,
+      "priority": 1
+    },
+    {
+      "id": "pass",
+      "category": "support",
+      "_note": "spec-action-costs.md: pass costs time (PassQuantum) and nothing else. It is what an actor with no affordable action does - NOT a skipped turn, which is why it is an action at all (action-map.md membership rule).",
+      "cost": null,
+      "damageMultiplier": 0.0,
+      "priority": 99
+    }
+  ],
+
+  "_absentOnPurpose": {
+    "spirit": "resource-hub-ssot.md 2 is explicit: spirit is NEVER an action cost. It is what the actor IS, and what the summoner harvests when it is extinguished. No action here spends it, and adding one would contradict the SSOT.",
+    "hunger": "Pays for nothing directly - it is sustain, and it GATES regeneration. A `recover` action belongs here once regen is modelled; today neither engine ticks regen against a hunger gate, so authoring one would be a row nothing reads.",
+    "hp": "Nothing pays hp to act. It is spent by BEING hit, which the damage pipeline already models - that is the whole of `hp for defense`.",
+    "poise": "Blocked. DerivedStatChannels.ResourceIds is the locked five; resource.max.poise is not a registered channel. Needs the decisions.md Resource model amendment (five -> six). Guard therefore costs stamina today, which is what resource-hub-ssot.md 2 already says it does.",
+    "guard": "A defence action needs the reaction lane (A8) and a defender-side decision point. Neither engine has one - both resolve a swing atomically - so a guard action would be a damage modifier wearing an action costume."
+  }
+}

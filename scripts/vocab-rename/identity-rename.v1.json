@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "id": "identity-rename",
+  "comment": "identity-rename plan D3: the prose rename rules. Rules apply longest-match-first in the order written; the tool masks protected spans (fenced blocks, inline code, link targets, URLs, href-style attributes, JSON keys, {token} braces) and the identifier allow-list before any rule runs, so a code identifier can never be rewritten. A match whose neighbour is -./:_ plus an identifier character goes to residue (a prose compound nobody has decided), never to a silent skip.",
+  "phases": [
+    {
+      "id": "names",
+      "include": [
+        "README.md",
+        "CONTRIBUTING.md",
+        "docs/README.md",
+        "docs/assets/banner.svg",
+        "docs/guide/**"
+      ],
+      "exclude": [
+        "docs/guide/mechanisms/_gen-stubs.ps1",
+        "docs/guide/mechanisms/_render.py"
+      ],
+      "rendered": {
+        "content": "docs/guide/mechanisms/_content/*.json",
+        "slugKey": "slug",
+        "outputs": [
+          "docs/guide/mechanisms/{slug}.md",
+          "docs/guide/site/mechanisms/{slug}.html"
+        ],
+        "fixed": [
+          "docs/guide/mechanisms/README.md"
+        ]
+      },
+      "rules": [
+        {
+          "id": "title-caps",
+          "match": "RISE OF SUMMONER",
+          "replace": "GARDEN KEEPER AND HIS MULTIVERSE"
+        },
+        {
+          "id": "title",
+          "match": "Rise of Summoner",
+          "replace": "Garden Keeper and his Multiverse"
+        },
+        {
+          "id": "vision-sentence-own-leads",
+          "match": "It stays inside Fusion’s own world — its plants and zombies, Crazy Dave, Penny, and Zomboss — and grows it into a persistent war\\.",
+          "replace": "It stays inside Fusion’s own world — its plants and zombies — and grows it into a persistent war. Its leads are the game’s own: the Garden Keeper and Hourbloom, against the Rotwright."
+        },
+        {
+          "id": "dave-level-compound",
+          "match": "Dave-level",
+          "replace": "Keeper-level"
+        },
+        {
+          "id": "dave-gated-compound",
+          "match": "Dave-gated",
+          "replace": "Keeper-gated"
+        },
+        {
+          "id": "a-dave-threshold",
+          "match": "a Dave threshold",
+          "replace": "a Keeper threshold"
+        },
+        {
+          "id": "the-dave-numbers",
+          "match": "the Dave numbers",
+          "replace": "the Keeper numbers"
+        },
+        {
+          "id": "crazy-dave",
+          "match": "Crazy Dave",
+          "replace": "the Garden Keeper"
+        },
+        {
+          "id": "dr-zomboss-dotted",
+          "match": "Dr\\. Zomboss",
+          "replace": "the Rotwright"
+        },
+        {
+          "id": "dr-zomboss-plain",
+          "match": "Dr Zomboss",
+          "replace": "the Rotwright"
+        },
+        {
+          "id": "zomboss",
+          "match": "Zomboss",
+          "replace": "the Rotwright"
+        },
+        {
+          "id": "dave",
+          "match": "Dave",
+          "replace": "the Garden Keeper"
+        },
+        {
+          "id": "penny",
+          "match": "Penny",
+          "replace": "Hourbloom"
+        }
+      ]
+    },
+    {
+      "id": "fusion",
+      "include": [
+        "README.md",
+        "CONTRIBUTING.md",
+        "docs/README.md",
+        "docs/assets/banner.svg",
+        "docs/guide/**"
+      ],
+      "exclude": [
+        "docs/guide/mechanisms/_gen-stubs.ps1",
+        "docs/guide/mechanisms/_render.py"
+      ],
+      "rendered": {
+        "content": "docs/guide/mechanisms/_content/*.json",
+        "slugKey": "slug",
+        "outputs": [
+          "docs/guide/mechanisms/{slug}.md",
+          "docs/guide/site/mechanisms/{slug}.html"
+        ],
+        "fixed": [
+          "docs/guide/mechanisms/README.md"
+        ]
+      },
+      "rules": [
+        {
+          "id": "fan-made-pack",
+          "match": "a fan-made Fusion pack",
+          "replace": "a fan-made pack of the host game"
+        },
+        {
+          "id": "legal-attribution",
+          "match": "Fusion is a trademark of Electronic Arts Inc\\. Fusion is an independent fan-made game\\.",
+          "replace": "The host game and its characters are the property of their respective owners. The fan-made pack is an independent work."
+        },
+        {
+          "id": "plants-vs-zombies-colon-fusion",
+          "match": "Plants vs\\. Zombies: Fusion",
+          "replace": "Fusion"
+        },
+        {
+          "id": "plants-vs-zombies-fusion",
+          "match": "Plants vs\\. Zombies Fusion",
+          "replace": "Fusion"
+        },
+        {
+          "id": "pvz-colon-fusion",
+          "match": "PvZ: Fusion",
+          "replace": "Fusion"
+        },
+        {
+          "id": "pvz-fusion",
+          "match": "PvZ Fusion",
+          "replace": "Fusion"
+        },
+        {
+          "id": "plants-vs-zombies-dotted",
+          "match": "Plants vs\\. Zombies",
+          "replace": "Fusion"
+        },
+        {
+          "id": "plants-vs-zombies",
+          "match": "Plants vs Zombies",
+          "replace": "Fusion"
+        },
+        {
+          "id": "plant-vs-zombie",
+          "match": "Plant vs Zombie",
+          "replace": "Fusion"
+        },
+        {
+          "id": "pvz",
+          "match": "PvZ",
+          "replace": "Fusion"
+        }
+      ]
+    }
+  ],
+  "identifierAllowList": [
+    "pvz\\.[A-Za-z0-9_.*]+",
+    "drop\\.pvz\\.[A-Za-z0-9_-]+",
+    "PVZRH",
+    "pvzrh-[0-9.]+",
+    "PvZ ?2",
+    "PvZ Heroes",
+    "Garden Warfare",
+    "FusionRpg\\.[A-Za-z0-9_.]+",
+    "FUSIONRPG_[A-Za-z0-9_]+",
+    "EmpireId\\.[A-Za-z0-9_]+",
+    "WorldFactionKind\\.[A-Za-z0-9_]+",
+    "[A-Za-z0-9_]*Zomboss[A-Za-z0-9_]+",
+    "commander:[A-Za-z0-9_.:-]+",
+    "first-win-[a-z0-9-]+",
+    "actor-dave",
+    "actor-penny",
+    "pvz-stats"
+  ],
+  "protectedJsonKeys": [
+    "slug",
+    "related",
+    "sources",
+    "pillar",
+    "id",
+    "key",
+    "href",
+    "url",
+    "path",
+    "file"
+  ],
+  "protectedHtmlAttributes": [
+    "content",
+    "alt",
+    "title",
+    "aria-label"
+  ]
+}

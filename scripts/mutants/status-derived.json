@@ -1,0 +1,11 @@
+[
+  { "file": "src/FusionRpg.Core/Status/StatusStatPayload.cs",
+    "name": "IsDerivedChannel always returns true",
+    "find": "public static bool IsDerivedChannel(string channel) =>\n        DerivedStatChannels.IsCombatChannel(channel) || DerivedStatusChannels.Contains(channel);",
+    "with": "public static bool IsDerivedChannel(string channel) => true;" },
+
+  { "file": "src/FusionRpg.Core/Stats/Derived/Subsystems/StatusDerivedSubsystem.cs",
+    "name": "an unrecognised status op silently defaults to Flat instead of being refused",
+    "find": "default: parsed = default; return false;",
+    "with": "default: parsed = DerivedModifierOp.Flat; return true;" }
+]

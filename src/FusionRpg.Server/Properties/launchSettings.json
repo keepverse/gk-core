@@ -1,0 +1,18 @@
+{
+  "profiles": {
+    "FusionRpg.Server": {
+      "commandName": "Project",
+      "applicationUrl": "http://127.0.0.1:5088",
+      "environmentVariables": {
+        "FUSIONRPG_SIM": "1"
+      }
+    },
+    "Play": {
+      "commandName": "Project",
+      "applicationUrl": "http://127.0.0.1:5088",
+      "environmentVariables": {
+        "FUSIONRPG_NO_BROWSER": "0"
+      }
+    }
+  }
+}

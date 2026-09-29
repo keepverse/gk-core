@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/battle-tempo/spec-reaction-lane.md",
+    "note": "battle-tempo reaction-lane RL2 (2026-09-05). The counter's poise spend and the riposte share it converts at -- ReactionCounter.TryCounter's two magnitudes. WReact itself stays in battle.v{n}.json's timeline.profiles (it is a slot-width MECHANISM choice per profile, not a payoff number).",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py reaction-lane <dotted.key>=<value> [...] writes reaction-lane.v{n+1}.json; the old version stays on disk for revert.",
+    "balanceStatus": "UNMEASURED placeholder, shipped per the same posture action-timing.v1.json's own coefficients used: 'shipping a guess is fine, calling it balance is not'. RL3 (battle-tempo-todo.md) sizes the real numbers against the Phase 2 win-rate sweep -- nothing here is a validated balance decision, and this file exists only so RL2's own mechanism has a real, non-hardcoded number to call ReactionCounter.TryCounter with."
+  },
+  "poiseSpend": 100,
+  "riposteShareCapMilli": 500
+}

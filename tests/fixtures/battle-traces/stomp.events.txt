@@ -1,0 +1,8 @@
+0 spawn squad:0 10001 squad 0  
+0 spawn squad:1 10001 squad 0  
+0 spawn wave:0 10001 wave 0  
+0 spawn wave:1 10001 wave 0  
+0 spawn wave:2 10001 wave 0  
+2 die wave:0 10001 wave 0  
+3 die wave:1 10001 wave 0  
+4 die wave:2 10001 wave 0  

@@ -1,0 +1,47 @@
+{
+  "id": "status-blight-row",
+  "seed": 42,
+  "board": [
+    { "ptr": "P1", "side": "plant", "typeId": 0, "col": 2, "row": 2, "derivedProfile": "neutral" },
+    { "ptr": "Z1", "side": "zombie", "typeId": 0, "col": 5, "row": 2, "derivedProfile": "glass" },
+    { "ptr": "Z2", "side": "zombie", "typeId": 0, "col": 6, "row": 2, "derivedProfile": "glass" },
+    { "ptr": "Z3", "side": "zombie", "typeId": 0, "col": 5, "row": 3, "derivedProfile": "glass" }
+  ],
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "blight-row",
+        "effectId": "fx.overlay_damage",
+        "ownerKey": "match",
+        "overlay": {
+          "statusId": "blight",
+          "amount": -12,
+          "icd_ms": 0,
+          "periodMs": 1000,
+          "durationMs": 5000,
+          "spread": {
+            "chance": 1.0,
+            "icd_ms": 0,
+            "maxHops": 2,
+            "statusId": "blight",
+            "target": {
+              "mode": "Area",
+              "shape": "Row",
+              "anchor": "EventTarget",
+              "filters": { "side": "zombie" }
+            }
+          }
+        }
+      }
+    },
+    { "op": "hit", "actorPtr": "P1", "targetPtr": "Z1", "typeId": 0, "targetTypeId": 0 },
+    { "op": "expectStatus", "hostPtr": "Z1", "statusId": "blight", "present": true },
+    { "op": "expectStatus", "hostPtr": "Z2", "statusId": "blight", "present": false },
+    { "op": "expectStatus", "hostPtr": "Z3", "statusId": "blight", "present": false },
+    { "op": "advanceMs", "ms": 1000 },
+    { "op": "expectStatus", "hostPtr": "Z2", "statusId": "blight", "present": true },
+    { "op": "expectStatus", "hostPtr": "Z3", "statusId": "blight", "present": false }
+  ]
+}

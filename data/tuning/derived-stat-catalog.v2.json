@@ -1,0 +1,1011 @@
+{
+  "schemaVersion": 2,
+  "kind": "derived-stat-catalog",
+  "version": 1,
+  "tabs": [
+    {
+      "id": "elements",
+      "displayName": {
+        "en": "Elements"
+      },
+      "order": 10,
+      "expand": "element"
+    },
+    {
+      "id": "status",
+      "displayName": {
+        "en": "Status"
+      },
+      "order": 20,
+      "expand": "status-category"
+    },
+    {
+      "id": "resources",
+      "displayName": {
+        "en": "Resources"
+      },
+      "order": 30,
+      "expand": "resource"
+    },
+    {
+      "id": "other",
+      "displayName": {
+        "en": "Other"
+      },
+      "order": 40,
+      "expand": "none"
+    }
+  ],
+  "sheetGroups": [
+    {
+      "id": "offense",
+      "tab": "elements",
+      "displayName": {
+        "en": "Offense"
+      },
+      "order": 10
+    },
+    {
+      "id": "defense",
+      "tab": "elements",
+      "displayName": {
+        "en": "Defense"
+      },
+      "order": 20
+    },
+    {
+      "id": "shield",
+      "tab": "elements",
+      "displayName": {
+        "en": "Shield"
+      },
+      "order": 30
+    },
+    {
+      "id": "guard",
+      "tab": "elements",
+      "displayName": {
+        "en": "Guard"
+      },
+      "order": 40
+    },
+    {
+      "id": "reflect",
+      "tab": "elements",
+      "displayName": {
+        "en": "Reflect"
+      },
+      "order": 50
+    },
+    {
+      "id": "status",
+      "tab": "status",
+      "displayName": {
+        "en": "Status"
+      },
+      "order": 10
+    },
+    {
+      "id": "pools",
+      "tab": "resources",
+      "displayName": {
+        "en": "Pools"
+      },
+      "order": 10
+    },
+    {
+      "id": "progression",
+      "tab": "other",
+      "displayName": {
+        "en": "Progression"
+      },
+      "order": 10
+    },
+    {
+      "id": "tempo",
+      "tab": "other",
+      "displayName": {
+        "en": "Tempo"
+      },
+      "order": 20
+    },
+    {
+      "id": "skill",
+      "tab": "other",
+      "displayName": {
+        "en": "Skill"
+      },
+      "order": 30
+    },
+    {
+      "id": "siege",
+      "tab": "other",
+      "displayName": {
+        "en": "Siege"
+      },
+      "order": 40
+    }
+  ],
+  "statusCategoryVariants": [
+    {
+      "id": "omni",
+      "displayName": {
+        "en": "Omni"
+      },
+      "ordinal": 0
+    },
+    {
+      "id": "dot",
+      "displayName": {
+        "en": "DoT"
+      },
+      "ordinal": 1
+    },
+    {
+      "id": "cc",
+      "displayName": {
+        "en": "CC"
+      },
+      "ordinal": 2
+    },
+    {
+      "id": "contagion",
+      "displayName": {
+        "en": "Contagion"
+      },
+      "ordinal": 3
+    }
+  ],
+  "actionCategoryVariants": [
+    {
+      "id": "attack",
+      "displayName": {
+        "en": "Attack"
+      },
+      "ordinal": 0
+    },
+    {
+      "id": "defense",
+      "displayName": {
+        "en": "Defense"
+      },
+      "ordinal": 1
+    },
+    {
+      "id": "support",
+      "displayName": {
+        "en": "Support"
+      },
+      "ordinal": 2
+    },
+    {
+      "id": "movement",
+      "displayName": {
+        "en": "Movement"
+      },
+      "ordinal": 3
+    },
+    {
+      "id": "status",
+      "displayName": {
+        "en": "Status"
+      },
+      "ordinal": 4
+    }
+  ],
+  "entries": [
+    {
+      "family": "combat.power",
+      "expand": "element",
+      "sheetGroup": "offense",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Power"
+      },
+      "reading": {
+        "en": "Adds to overlay damage on this element's share of the hit. Flat game units — not a percentage."
+      },
+      "icon": "power",
+      "gauge": "relative"
+    },
+    {
+      "family": "combat.defense",
+      "expand": "element",
+      "sheetGroup": "defense",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Defense"
+      },
+      "reading": {
+        "en": "Subtracts from the attacker's power on this element's share. Flat game units."
+      },
+      "icon": "defense",
+      "gauge": "relative"
+    },
+    {
+      "family": "combat.crit.rate",
+      "expand": "element",
+      "sheetGroup": "offense",
+      "compose": "FlatSum",
+      "unitClass": "SigmoidPoints",
+      "displayName": {
+        "en": "Crit chance"
+      },
+      "reading": {
+        "en": "How often a hit rolls critical. Sigmoid points — the percentage depends on the opponent. The card shows points; the inspector shows ≈ pp vs a named reference."
+      },
+      "icon": "crit",
+      "gauge": "sigmoid"
+    },
+    {
+      "family": "combat.crit.resist",
+      "expand": "element",
+      "sheetGroup": "defense",
+      "compose": "FlatSum",
+      "unitClass": "SigmoidPoints",
+      "displayName": {
+        "en": "Crit resist"
+      },
+      "reading": {
+        "en": "Pushes back against the attacker's crit chance. Same sigmoid family."
+      },
+      "icon": "crit-resist",
+      "gauge": "sigmoid"
+    },
+    {
+      "family": "combat.crit.damage",
+      "expand": "element",
+      "sheetGroup": "offense",
+      "compose": "FlatSum",
+      "unitClass": "SigmoidMultiplierPoints",
+      "displayName": {
+        "en": "Crit damage"
+      },
+      "reading": {
+        "en": "How much worse a crit is. Multiplier points with a real ceiling near ×2. Stacking far past that buys almost nothing."
+      },
+      "icon": "crit-dmg",
+      "gauge": "sigmoid"
+    },
+    {
+      "family": "combat.crit.resist.damage",
+      "expand": "element",
+      "sheetGroup": "defense",
+      "compose": "FlatSum",
+      "unitClass": "SigmoidMultiplierPoints",
+      "displayName": {
+        "en": "Crit damage taken"
+      },
+      "reading": {
+        "en": "Shrinks the attacker's crit-damage multiplier against you."
+      },
+      "icon": "crit-taken",
+      "gauge": "sigmoid"
+    },
+    {
+      "family": "combat.accuracy",
+      "expand": "element",
+      "sheetGroup": "offense",
+      "compose": "FlatSum",
+      "unitClass": "SigmoidPoints",
+      "displayName": {
+        "en": "Accuracy"
+      },
+      "reading": {
+        "en": "How often the hit lands versus dodge. Sigmoid points, opposed."
+      },
+      "icon": "accuracy",
+      "gauge": "sigmoid"
+    },
+    {
+      "family": "combat.dodge",
+      "expand": "element",
+      "sheetGroup": "defense",
+      "compose": "FlatSum",
+      "unitClass": "SigmoidPoints",
+      "displayName": {
+        "en": "Dodge"
+      },
+      "reading": {
+        "en": "How often you are somewhere else. Opposed by accuracy."
+      },
+      "icon": "dodge",
+      "gauge": "sigmoid"
+    },
+    {
+      "family": "combat.shield.capacity",
+      "expand": "element",
+      "sheetGroup": "shield",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Shield capacity"
+      },
+      "reading": {
+        "en": "Extra hit points added to a shield layer of this element. Game units, not a percent."
+      },
+      "icon": "shield-cap",
+      "gauge": "relative"
+    },
+    {
+      "family": "combat.shield.toughness",
+      "expand": "element",
+      "sheetGroup": "shield",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Shield toughness"
+      },
+      "reading": {
+        "en": "How hard that shield layer is to chew through before HP."
+      },
+      "icon": "shield-tough",
+      "gauge": "relative"
+    },
+    {
+      "family": "combat.shield.pen",
+      "expand": "element",
+      "sheetGroup": "shield",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Shield pierce"
+      },
+      "reading": {
+        "en": "How much of their shield you ignore on a hit of this element."
+      },
+      "icon": "shield-pen",
+      "gauge": "relative"
+    },
+    {
+      "family": "combat.shield.regen",
+      "expand": "element",
+      "sheetGroup": "shield",
+      "compose": "FlatSum",
+      "unitClass": "GameUnitsPerSecond",
+      "displayName": {
+        "en": "Shield regen"
+      },
+      "reading": {
+        "en": "Shield hit points restored per second on matching layers."
+      },
+      "icon": "shield-regen",
+      "gauge": "relative"
+    },
+    {
+      "family": "combat.penetration",
+      "expand": "element",
+      "sheetGroup": "offense",
+      "compose": "FlatSum",
+      "unitClass": "ReciprocalPoints",
+      "displayName": {
+        "en": "Penetration"
+      },
+      "reading": {
+        "en": "Pushes through absorption. Reciprocal — more still helps, never a hard stop."
+      },
+      "icon": "pen",
+      "gauge": "reciprocal"
+    },
+    {
+      "family": "combat.absorption",
+      "expand": "element",
+      "sheetGroup": "defense",
+      "compose": "FlatSum",
+      "unitClass": "ReciprocalPoints",
+      "displayName": {
+        "en": "Absorption"
+      },
+      "reading": {
+        "en": "Soaks incoming damage before it becomes HP. Opposed by penetration."
+      },
+      "icon": "absorb",
+      "gauge": "reciprocal"
+    },
+    {
+      "family": "combat.amplification",
+      "expand": "element",
+      "sheetGroup": "offense",
+      "compose": "FlatSum",
+      "unitClass": "ReciprocalPoints",
+      "displayName": {
+        "en": "Amplification"
+      },
+      "reading": {
+        "en": "Multiplies the hit after the power/defense delta. Reciprocal family."
+      },
+      "icon": "amp",
+      "gauge": "reciprocal"
+    },
+    {
+      "family": "combat.reduction",
+      "expand": "element",
+      "sheetGroup": "defense",
+      "compose": "FlatSum",
+      "unitClass": "ReciprocalPoints",
+      "displayName": {
+        "en": "Reduction"
+      },
+      "reading": {
+        "en": "Shrinks incoming damage after the delta. Reciprocal family."
+      },
+      "icon": "reduce",
+      "gauge": "reciprocal"
+    },
+    {
+      "family": "combat.reflect.rate",
+      "expand": "element",
+      "sheetGroup": "reflect",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Reflect chance"
+      },
+      "reading": {
+        "en": "Chance that hitting you sends damage back."
+      },
+      "icon": "reflect",
+      "gauge": "ratio"
+    },
+    {
+      "family": "combat.reflect.damage",
+      "expand": "element",
+      "sheetGroup": "reflect",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Reflect damage"
+      },
+      "reading": {
+        "en": "How hard the reflected hit is."
+      },
+      "icon": "reflect-dmg",
+      "gauge": "ratio"
+    },
+    {
+      "family": "combat.reflect.resist.rate",
+      "expand": "element",
+      "sheetGroup": "reflect",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Reflect chance resist"
+      },
+      "reading": {
+        "en": "Pushes back against their reflect chance."
+      },
+      "icon": "reflect-resist",
+      "gauge": "ratio"
+    },
+    {
+      "family": "combat.reflect.resist.damage",
+      "expand": "element",
+      "sheetGroup": "reflect",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Reflect damage resist"
+      },
+      "reading": {
+        "en": "Shrinks reflected damage that would hit you."
+      },
+      "icon": "reflect-taken",
+      "gauge": "ratio"
+    },
+    {
+      "family": "combat.parry.rate",
+      "expand": "element",
+      "sheetGroup": "guard",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Parry chance"
+      },
+      "reading": {
+        "en": "Chance to turn the hit aside. Per-mille on the wire; the player sees a percent."
+      },
+      "icon": "parry",
+      "gauge": "ratio"
+    },
+    {
+      "family": "combat.parry.strength",
+      "expand": "element",
+      "sheetGroup": "guard",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Parry strength"
+      },
+      "reading": {
+        "en": "How much of the hit a successful parry removes."
+      },
+      "icon": "parry-str",
+      "gauge": "relative"
+    },
+    {
+      "family": "combat.parry.break",
+      "expand": "element",
+      "sheetGroup": "guard",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Parry break"
+      },
+      "reading": {
+        "en": "How much of their parry you ignore."
+      },
+      "icon": "parry-break",
+      "gauge": "ratio"
+    },
+    {
+      "family": "combat.parry.shred",
+      "expand": "element",
+      "sheetGroup": "guard",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Parry shred"
+      },
+      "reading": {
+        "en": "Peels their parry chance down when you land."
+      },
+      "icon": "parry-shred",
+      "gauge": "relative"
+    },
+    {
+      "family": "combat.block.rate",
+      "expand": "element",
+      "sheetGroup": "guard",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Block chance"
+      },
+      "reading": {
+        "en": "Chance to stop the hit outright. Per-mille on the wire."
+      },
+      "icon": "block",
+      "gauge": "ratio"
+    },
+    {
+      "family": "combat.block.strength",
+      "expand": "element",
+      "sheetGroup": "guard",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Block strength"
+      },
+      "reading": {
+        "en": "How much a successful block removes."
+      },
+      "icon": "block-str",
+      "gauge": "relative"
+    },
+    {
+      "family": "combat.block.break",
+      "expand": "element",
+      "sheetGroup": "guard",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Block break"
+      },
+      "reading": {
+        "en": "How much of their block you ignore."
+      },
+      "icon": "block-break",
+      "gauge": "ratio"
+    },
+    {
+      "family": "combat.block.shred",
+      "expand": "element",
+      "sheetGroup": "guard",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Block shred"
+      },
+      "reading": {
+        "en": "Peels their block chance down when you land."
+      },
+      "icon": "block-shred",
+      "gauge": "relative"
+    },
+    {
+      "family": "status.power",
+      "expand": "status-category",
+      "sheetGroup": "status",
+      "compose": "SumIncreased",
+      "unitClass": "StatusPotencyPoints",
+      "displayName": {
+        "en": "Status power"
+      },
+      "reading": {
+        "en": "Potency when applying statuses of this category."
+      },
+      "icon": "status-power",
+      "gauge": "relative"
+    },
+    {
+      "family": "status.resist",
+      "expand": "status-category",
+      "sheetGroup": "status",
+      "compose": "SumIncreased",
+      "unitClass": "StatusPotencyPoints",
+      "displayName": {
+        "en": "Status resist"
+      },
+      "reading": {
+        "en": "Resistance against statuses of this category. Category slots are capped; omni is not."
+      },
+      "icon": "status-resist",
+      "gauge": "capped",
+      "capRef": "categoryResistCap"
+    },
+    {
+      "family": "status.duration",
+      "expand": "status-category",
+      "sheetGroup": "status",
+      "compose": "SumIncreased",
+      "unitClass": "StatusPotencyPoints",
+      "displayName": {
+        "en": "Status duration"
+      },
+      "reading": {
+        "en": "Duration bonus for statuses of this category."
+      },
+      "icon": "status-duration",
+      "gauge": "relative"
+    },
+    {
+      "family": "status.durationReduction",
+      "expand": "status-category",
+      "sheetGroup": "status",
+      "compose": "SumIncreased",
+      "unitClass": "StatusPotencyPoints",
+      "displayName": {
+        "en": "Duration reduction"
+      },
+      "reading": {
+        "en": "Duration cut when receiving statuses of this category."
+      },
+      "icon": "status-duration-reduction",
+      "gauge": "relative"
+    },
+    {
+      "family": "status.intensity",
+      "expand": "status-category",
+      "sheetGroup": "status",
+      "compose": "SumIncreased",
+      "unitClass": "StatusPotencyPoints",
+      "displayName": {
+        "en": "Status intensity"
+      },
+      "reading": {
+        "en": "Intensity bonus for statuses of this category."
+      },
+      "icon": "status-intensity",
+      "gauge": "relative"
+    },
+    {
+      "family": "status.intensityReduction",
+      "expand": "status-category",
+      "sheetGroup": "status",
+      "compose": "SumIncreased",
+      "unitClass": "StatusPotencyPoints",
+      "displayName": {
+        "en": "Intensity reduction"
+      },
+      "reading": {
+        "en": "Intensity cut when receiving statuses of this category."
+      },
+      "icon": "status-intensity-reduction",
+      "gauge": "relative"
+    },
+    {
+      "family": "resource.max",
+      "expand": "resource",
+      "sheetGroup": "pools",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Resource max"
+      },
+      "reading": {
+        "en": "Maximum pool size for this resource."
+      },
+      "icon": "resource-max",
+      "gauge": "relative"
+    },
+    {
+      "family": "resource.regen",
+      "expand": "resource",
+      "sheetGroup": "pools",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Resource regen"
+      },
+      "reading": {
+        "en": "Pool restored per tick."
+      },
+      "icon": "resource-regen",
+      "gauge": "relative"
+    },
+    {
+      "family": "resource.efficiency",
+      "expand": "resource",
+      "sheetGroup": "pools",
+      "compose": "SumIncreased",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Resource efficiency"
+      },
+      "reading": {
+        "en": "Gain multiplier for this resource."
+      },
+      "icon": "resource-efficiency",
+      "gauge": "bounded",
+      "capRef": "resourceEfficiencyCap"
+    },
+    {
+      "family": "resource.restore",
+      "expand": "resource",
+      "sheetGroup": "pools",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Resource restore"
+      },
+      "reading": {
+        "en": "Active restoration power for this resource."
+      },
+      "icon": "resource-restore",
+      "gauge": "relative"
+    },
+    {
+      "family": "progression.bonus.maxHp",
+      "expand": "none",
+      "sheetGroup": "progression",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Bonus max HP"
+      },
+      "reading": {
+        "en": "Flat bonus to maximum hit points."
+      },
+      "icon": "bonus-max-hp",
+      "gauge": "relative"
+    },
+    {
+      "family": "progression.bonus.atk",
+      "expand": "none",
+      "sheetGroup": "progression",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Bonus attack"
+      },
+      "reading": {
+        "en": "Flat bonus to attack."
+      },
+      "icon": "bonus-atk",
+      "gauge": "relative"
+    },
+    {
+      "family": "progression.bonus.defense",
+      "expand": "none",
+      "sheetGroup": "progression",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Bonus defense"
+      },
+      "reading": {
+        "en": "Flat bonus to defense."
+      },
+      "icon": "bonus-defense",
+      "gauge": "relative"
+    },
+    {
+      "family": "progression.bonus.arm1",
+      "expand": "none",
+      "sheetGroup": "progression",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Bonus arm1"
+      },
+      "reading": {
+        "en": "Flat bonus to first armor layer."
+      },
+      "icon": "bonus-arm1",
+      "gauge": "relative"
+    },
+    {
+      "family": "progression.bonus.arm2",
+      "expand": "none",
+      "sheetGroup": "progression",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Bonus arm2"
+      },
+      "reading": {
+        "en": "Flat bonus to second armor layer."
+      },
+      "icon": "bonus-arm2",
+      "gauge": "relative"
+    },
+    {
+      "family": "progression.power",
+      "expand": "none",
+      "sheetGroup": "progression",
+      "compose": "FlatReplace",
+      "unitClass": "LadderIndex",
+      "displayName": {
+        "en": "Power index"
+      },
+      "reading": {
+        "en": "Theta — the ladder index. Contests read it linearly; magnitudes read P(Theta)."
+      },
+      "icon": "theta",
+      "gauge": "none"
+    },
+    {
+      "family": "progression.realm",
+      "expand": "none",
+      "sheetGroup": "progression",
+      "compose": "FlatReplace",
+      "unitClass": "LadderIndex",
+      "displayName": {
+        "en": "Realm"
+      },
+      "reading": {
+        "en": "Cultivation realm index."
+      },
+      "icon": "realm",
+      "gauge": "none"
+    },
+    {
+      "family": "progression.xpRate",
+      "expand": "none",
+      "sheetGroup": "progression",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "XP rate"
+      },
+      "reading": {
+        "en": "Experience gain multiplier."
+      },
+      "icon": "xp-rate",
+      "gauge": "bounded"
+    },
+    {
+      "family": "progression.breakthroughSuccess",
+      "expand": "none",
+      "sheetGroup": "progression",
+      "compose": "SumIncreased",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Breakthrough success"
+      },
+      "reading": {
+        "en": "Chance bonus on breakthrough attempts."
+      },
+      "icon": "breakthrough",
+      "gauge": "bounded",
+      "capRef": "breakthroughSuccessCap"
+    },
+    {
+      "family": "turn.speed",
+      "expand": "none",
+      "sheetGroup": "tempo",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "Turn speed"
+      },
+      "reading": {
+        "en": "Action timeline speed."
+      },
+      "icon": "turn-speed",
+      "gauge": "relative"
+    },
+    {
+      "family": "turn.haste",
+      "expand": "none",
+      "sheetGroup": "tempo",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Haste"
+      },
+      "reading": {
+        "en": "Action haste multiplier."
+      },
+      "icon": "haste",
+      "gauge": "bounded"
+    },
+    {
+      "family": "move.range",
+      "expand": "none",
+      "sheetGroup": "siege",
+      "compose": "FlatSum",
+      "unitClass": "Count",
+      "displayName": {
+        "en": "Move range"
+      },
+      "reading": {
+        "en": "Movement range on the board."
+      },
+      "icon": "move-range",
+      "gauge": "relative"
+    },
+    {
+      "family": "loadout.slots",
+      "expand": "none",
+      "sheetGroup": "siege",
+      "compose": "FlatSum",
+      "unitClass": "Count",
+      "displayName": {
+        "en": "Loadout slots"
+      },
+      "reading": {
+        "en": "Extra equipment or loadout slots."
+      },
+      "icon": "loadout-slots",
+      "gauge": "relative"
+    },
+    {
+      "family": "ai.aggression",
+      "expand": "none",
+      "sheetGroup": "siege",
+      "compose": "FlatSum",
+      "unitClass": "GameUnits",
+      "displayName": {
+        "en": "AI aggression"
+      },
+      "reading": {
+        "en": "Siege targeting-priority scalar."
+      },
+      "icon": "ai-aggression",
+      "gauge": "relative"
+    },
+    {
+      "family": "skill.cooldown",
+      "expand": "action-category",
+      "sheetGroup": "skill",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Skill cooldown"
+      },
+      "reading": {
+        "en": "Cooldown modifier for this action category."
+      },
+      "icon": "skill-cooldown",
+      "gauge": "bounded"
+    },
+    {
+      "family": "skill.effectiveness",
+      "expand": "action-category",
+      "sheetGroup": "skill",
+      "compose": "FlatSum",
+      "unitClass": "PerMilleRatio",
+      "displayName": {
+        "en": "Skill effectiveness"
+      },
+      "reading": {
+        "en": "Effectiveness multiplier for this action category."
+      },
+      "icon": "skill-effectiveness",
+      "gauge": "bounded"
+    }
+  ]
+}

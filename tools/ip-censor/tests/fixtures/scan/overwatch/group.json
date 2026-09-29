@@ -1,0 +1,16 @@
+{
+  "mark": "overwatch",
+  "category": "franchise-mark",
+  "scope": ["player-name", "player-prose", "generator-prompt"],
+  "remediation": "generator-owned",
+  "aliases": [
+    {"text": "overwatch"}
+  ],
+  "admission": {
+    "stage": "reconfirm",
+    "evidence": "census",
+    "source": "fixture census; owner-confirmed 2026-09-19",
+    "confirmedBy": "owner",
+    "confirmedOn": "2026-09-19"
+  }
+}

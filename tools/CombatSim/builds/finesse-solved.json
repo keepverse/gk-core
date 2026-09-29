@@ -1,0 +1,14 @@
+{
+  "name": "FINESSE-SOLVED",
+  "description": "Allocation SOLVED in closed form (search --analytic, seed 307, 24 restarts x 220 iters, ~2.3s): arrows 64.8/64.7/65.1, spread 0.4%. Shield-free, because the closed form is single-phase.",
+  "element": "fire",
+  "points": {
+    "Agility": 15.926631318888967,
+    "Composure": 20.96165338605917,
+    "Pierce": 53.88487073981292,
+    "Focus": 9.226844555238944
+  },
+  "hpPerLadder": 15,
+  "damagePerLadder": 1.5,
+  "shieldPerLadder": 2
+}

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/action/spec-action-instance-and-grant.md (A21); docs/architecture/lawn-combat-wire/spec-basic-attack-seed.md (T7)",
+    "note": "T59.1 (narrowed during BUILD, 2026-09-06): the ONE genuinely missing per-category number the corpus importer needs -- a default onCommit resource cost per ActionCategory, used only when a corpus brief itself carries no cost data (data/seed/actions/committed-round-*.json's own brief shape has none). Envelope TIMING (windup/recovery/timeCost/cooldown/class) needs NOTHING here -- RpgStore.BuildActionCatalog already derives all of that per-category via ActionTimingDerivation/data/tuning/action-timing.v1.json (battle-tempo, 2026-09-05), confirmed by reading RpgStore.ActionCatalog.cs before this file was authored. Writing windup/recovery/cooldown numbers here would have duplicated that already-shipped curve.",
+    "derivation": "UNMEASURED placeholders, shipped per this repo's own 'default now, re-tune later' precedent (action-corpus-ideal.md S36) -- not a validated balance decision. Ordered by rough category weight: Attack cheapest (the default/basic-attack-shaped path already carries most of the game's combat economy), Support/Status costed highest (the two categories with no accuracy-roll gate at all per A22, so their price is the only thing that paces them), Movement cheapest of the non-Attack set (short, frequent, low-payoff by design).",
+    "kindsNote": "T11 (lawn-combat-wire, spec-lawn-combat-calibration.md, 2026-09-14): basic.baseAmountAtRung1 was T7's UNMEASURED category-weight placeholder (20). T11 derives it from the shipped stamina envelope instead: at the pin (theta=20), poolMax('stamina') = BaseHp(20) * battle-resources poolShareMilli.stamina / 1000 = 680 * 500 / 1000 = 340, and regenPerSecondShareMilli.stamina=50 (battle-resources.v2.json) gives regenPerSecond(20) = 340 * 50 / 1000 = 17. A Peashooter's shipped attack interval is 1.5s (measured live 2026-09-13), so the sustainable spend at the pin is 17 * 1.5 = 25.5; 25 is authored just under that ceiling (cost <= regenPerSecond * attackIntervalSeconds), so continuous single-target fire is sustainable with a thin margin and a genuine burst still reaches deficit. UNMEASURED for feel -- basic-attack-cost (T12) wires the actual charge, this only fixes the number's arithmetic. innate's own baseAmountAtRung1 (25, qi) is untouched by this change and is coincidentally the same digits -- it is T7's own placeholder, still T12's to revisit, not derived by this note.",
+    "rebalance": "Never hand-edit this file by feel alone. A new version bumps `version` and keeps this one on disk for revert.",
+    "rebalanceLabel": "T11 lawn-combat-calibration: derive stamina basic cost from the pool/regen envelope"
+  },
+  "categories": {
+    "attack": {
+      "resourceId": "qi",
+      "baseAmountAtRung1": 20,
+      "timing": "onCommit"
+    },
+    "defense": {
+      "resourceId": "qi",
+      "baseAmountAtRung1": 30,
+      "timing": "onCommit"
+    },
+    "support": {
+      "resourceId": "qi",
+      "baseAmountAtRung1": 40,
+      "timing": "onCommit"
+    },
+    "movement": {
+      "resourceId": "qi",
+      "baseAmountAtRung1": 15,
+      "timing": "onCommit"
+    },
+    "status": {
+      "resourceId": "qi",
+      "baseAmountAtRung1": 35,
+      "timing": "onCommit"
+    }
+  },
+  "kinds": {
+    "basic": {
+      "resourceId": "stamina",
+      "baseAmountAtRung1": 25,
+      "timing": "onCommit"
+    },
+    "innate": {
+      "resourceId": "qi",
+      "baseAmountAtRung1": 25,
+      "timing": "onCommit"
+    }
+  }
+}

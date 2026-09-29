@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "version": 2,
+  "_meta": {
+    "owner": "docs/architecture/world/spec-ai-commander.md",
+    "note": "Extracted byte-identical from FrontierRulesPolicy.cs, ThreatMap.cs and ValueMap.cs (tunables-ssot.md M.10, 2026-08-24). ThreatMap.FalloffReach stays computed (1000 / proximityFalloffPerHop) rather than duplicated as its own key.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py ai <dotted.key>=<value> [...] writes ai.v{n+1}.json; the old version stays on disk for revert.",
+    "v2Note": "Adds frontierRules.momentumMarginMilli (world-map W34 momentum, owner decision 2026-08-31). A rule that would send an entity somewhere other than where this faction's own last order sent it must beat the standing choice by this margin, in per-mille of the standing score -- hysteresis, which is what damps the defend/expand oscillation a bare bonus term cannot. 250 = 25% is a starting value, not a measured one: it is the number a balance pass moves first."
+  },
+  "frontierRules": {
+    "recoverAtMilli": 400,
+    "exploreTurns": 3,
+    "severanceThresholdCost": 10000,
+    "momentumMarginMilli": 250
+  },
+  "threatMap": {
+    "staleDecayPerTurn": 150,
+    "maxSpreadHops": 4,
+    "proximityFalloffPerHop": 400
+  },
+  "valueMap": {
+    "optimismMilli": 700,
+    "overextensionPenaltyMilli": 1400,
+    "habitabilityPenaltyMilli": 1400,
+    "defaultWeights": {
+      "yield": 1000,
+      "strategic": 800,
+      "defensibility": 500,
+      "cost": 700,
+      "risk": 900,
+      "curiosity": 600
+    }
+  }
+}

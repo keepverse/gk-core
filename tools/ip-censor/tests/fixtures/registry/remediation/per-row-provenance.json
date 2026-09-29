@@ -1,0 +1,9 @@
+[
+  {
+    "speciesId": "fixture-species",
+    "_provenance": {
+      "model": "fixture-model",
+      "promptVersion": "species/2"
+    }
+  }
+]

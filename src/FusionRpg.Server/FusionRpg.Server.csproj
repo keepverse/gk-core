@@ -1,0 +1,238 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FusionRpg.Server</RootNamespace>
+    <AssemblyTitle>FusionRpg Server</AssemblyTitle>
+    <Product>FusionRpg</Product>
+    <Company>FusionRpg (hobby OSS)</Company>
+    <Authors>Lê Tú Hào</Authors>
+    <Description>FusionRpg Server — localhost RPG overlay API (AGPL hobby project)</Description>
+    <Copyright>Copyright (c) 2026 Lê Tú Hào</Copyright>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <Version>0.1.2</Version>
+    <InformationalVersion>0.1.2</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <!-- Player zip: scripts/publish_player.py uses win-x64 self-contained publish -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishSingleFile>false</PublishSingleFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FusionRpg.Contracts\FusionRpg.Contracts.csproj" />
+    <ProjectReference Include="..\FusionRpg.Core\FusionRpg.Core.csproj" />
+    <ProjectReference Include="..\FusionRpg.CheatCore\FusionRpg.CheatCore.csproj" />
+    <ProjectReference Include="..\FusionRpg.Data\FusionRpg.Data.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- tunables-ssot.md §7.2: the server loads data/tuning/ and injects it; Core never reads a file.
+         Copied next to the exe the same way the sqlite data dir already resolves relative to it. -->
+    <Content Include="..\..\data\tuning\**\*.json">
+      <Link>data\tuning\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- party-dungeon D1.x: Program.cs (8a82cf0) already loads this tree unconditionally at startup
+         via DungeonRegistryLoader.LoadAll/dungeon-tuning's own readers, but no content rule ever
+         copied it next to the exe, which silently breaks EVERY test that boots the real host
+         (WebApplicationFactory-backed E2E tests), not just a dungeon-specific one. Same copy pattern
+         as data\tuning\ above, one directory over. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\dungeon\**\*.json">
+      <Link>data\seed\dungeon\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- identity-rename T2: the authored lead-names registry (the three leads of owner ruling R11,
+         data/seed/narrative/_registry/names.en.v1.json). `Program.cs` reads it at boot through
+         LeadNamesBoot, which refuses to start without it — a published server that silently invented
+         a lead's name would put an unauthored identity into player-facing text. Same copy pattern as
+         data\seed\dungeon\ below. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\narrative\_registry\**\*.json">
+      <Link>data\seed\narrative\_registry\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- OWNER RULING 2026-09-23 (tasks/content-stack-todo.md CS-F3): the species tree ships and the
+         boot self-heals the roster once. `SpeciesImportRunner.RunSelfHealing` reads
+         data/generated/creatures/*.json beside the exe and writes the roster when the tables are empty,
+         because since the catalog-runtime flip the roster is store-backed and
+         `CreatureSpeciesCatalog.Configure` throws on an empty one, so without this tree a player
+         install could not boot at all. This rule widens species-build T2.1's two single-file rules into
+         the whole tree (same Link paths, so the two named files are covered exactly as before); the pack
+         therefore gets larger and the FIRST boot does the import. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\generated\creatures\**\*.json">
+      <Link>data\generated\creatures\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- ds 18 fusion-recipe-runtime (T8.5): the committed recipe seed fusion-recipe-reconcile owns
+         writing. No rule of its own any more — the whole-tree rule above covers it at the identical
+         Link path, and a second Include for the same output file is a duplicate item. -->
+    <!-- item-todo.md P4.1/module-20 web pass (2026-09-06): the item program's whole seed tree
+         (base types, affix families, rarity/tuning, sets, uniques, consumables, recipes) is loaded
+         unconditionally at startup the same way dungeon's is above, and had the identical missing-rule
+         defect — silently absent next to the exe, so `MapWorkbench`'s recipe corpus never loads and
+         every workbench route 404s/405s on a real published build despite passing every in-process
+         test. Same copy pattern as data\seed\dungeon\ above, one directory over. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\items\**\*.json"
+             Exclude="$(GkDataRoot)packs\fusion\data\seed\items\**\*.ledger.json">
+      <Link>data\seed\items\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- strain-splice-host SSH4.4 (spec-combo-bind §1): the combination container build resolves every
+         grant family against the SHIPPED atom catalog, which `Program.cs` reads at boot before the
+         combination seed. Without this rule a published server boots with no atom catalog next to the
+         exe and every combination's container build refuses — the same silent missing-copy-rule defect
+         data\seed\items\ above already had. `SeedImportRunner` finds the same tree by walking up in a
+         dev checkout, which is why only the published path was missing it. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\atoms\**\*.json">
+      <Link>data\seed\atoms\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- KS-F1 (findings-1, 2026-09-23): the eight folders `SeedScanner.OwnedFolders` sweeps that had
+         NO copy rule. `SeedImportRunner.RunSelfHealing` resolves its root by walking UP from the exe
+         (`FindUp(searchStartDir, "data", "seed")`, src/FusionRpg.Data/Seed/SeedImportRunner.cs), so a
+         dev checkout silently borrows the repository's own tree and hides the gap — while a
+         publish-dir-only install, where the walk finds the exe's own `data/seed` first, sweeps only
+         the folders that were copied and reports `Imported` for a PARTIAL tree: `containers`,
+         `curves`, `rarity`, `elements`, `channel-policy`, `channel-pools`, `effects/affixes` and
+         `creatures/species-effects` (12 committed files) would be inert with nothing saying so.
+         `data/seed/dungeon/**` above already covers the seven dungeon folders; `creatures` is
+         targeted at `species-effects` because the rest of that tree (6.1 MB / 573 files) is not an
+         import input. Kept in sync by `BootContentCopyRuleTests`' scanner-join case, which reads
+         `SeedScanner.OwnedFolders` and fails when a swept folder has no rule. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\containers\**\*.json">
+      <Link>data\seed\containers\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\curves\**\*.json">
+      <Link>data\seed\curves\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\rarity\**\*.json">
+      <Link>data\seed\rarity\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\elements\**\*.json">
+      <Link>data\seed\elements\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\channel-policy\**\*.json">
+      <Link>data\seed\channel-policy\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\channel-pools\**\*.json">
+      <Link>data\seed\channel-pools\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\effects\**\*.json">
+      <Link>data\seed\effects\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\creatures\species-effects\**\*.json">
+      <Link>data\seed\creatures\species-effects\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- item-content T6 (item-lore): ssot-presentation.md §5.3 N2's string catalog. Program.cs reads
+         it at boot for card block 10's authored flavour sentence; without this rule the file is simply
+         absent next to the exe and every unique/set renders its key with no prose — the same silent
+         missing-copy-rule defect data\seed\items\ above already had. -->
+    <Content Include="$(GkContentRoot)content\display\*.json">
+      <Link>content\display\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- base-defense-todo.md 25.4: structure-catalog-import reads this committed corpus at startup
+         (Program.cs) the same way dungeon's registry and item's seed tree do above — the identical
+         missing-copy-rule defect those two comments already name, caught here before it ever shipped
+         rather than after, since StructureCatalog.Configure is being wired in the same change that
+         deletes the C# literal fallback. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\structures\**\*.json">
+      <Link>data\seed\structures\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- action-corpus T59.4 (boot import), found LIVE 2026-09-19 (action-skill-tiers ST4.5): a published
+         server imported ZERO actions. `Program.cs` reads the three brief files straight off
+         AppContext.BaseDirectory and guards each with `File.Exists`, the one content read in this file
+         that neither walks up from the exe nor had a copy rule, so every guard missed, the catalog
+         stayed empty, and `GET /api/debug/action-budget-report` priced nothing. That reads exactly like
+         a balance fault, which is why the report existed before anyone could see the cause. Same
+         missing-copy-rule defect data\seed\dungeon\, data\seed\items\ and data\seed\structures\ above
+         each already name.
+         NON-RECURSIVE on purpose: what the server reads is the top-level brief files. The siblings are
+         generator working trees that must never ship (`_briefs` alone is 34 MB and `_candidates` is
+         gitignored), and a bare `*.json` glob excludes all of them by construction. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\actions\*.json">
+      <Link>data\seed\actions\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- item-ideal drop-volume (module 11): `Program.cs` reads data/seed/loot/tables*.json at boot for the
+         runtime drop-table corpus, guarded by `Directory.Exists`, the identical silent skip the actions
+         corpus above had, and no copy rule either, so a published build shipped no drop tables at all.
+         Flat glob: the tree is flat and the reader is TopDirectoryOnly. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\loot\*.json">
+      <Link>data\seed\loot\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- passive-tree (TreeBinder's committed output): PassiveTreeImportRunner reads
+         data/generated/passive-tree/*.json at boot (`Program.cs`, RunSelfHealing). It resolves through
+         SeedImportRunner.FindUp, which walks UP from the exe, so a dev checkout silently borrows the
+         repository's own tree and hides the gap, while a player install, which has nothing above it,
+         got the code fallback. Flat glob, matching the runner's own SearchOption.TopDirectoryOnly. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\generated\passive-tree\*.json">
+      <Link>data\generated\passive-tree\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- summoner-convergence ST4.5c (manager ruling on the ST4.5a diagnosis): the power tables'
+         seed folder — coefficients AND trigger frequencies. SeedScanner.AtomFolders sweeps `power`,
+         and SeedImportRunner.FindUp walks up from the exe, so a dev checkout borrows the repo's copy
+         and looks healthy while a player install, which has nothing above it, gets
+         PowerTables.Authored()'s code fallback — the two deployments disagreeing about which power
+         tables load. Same missing-copy-rule defect data\seed\dungeon\, data\seed\items\,
+         data\seed\structures\, data\seed\actions\ and data\seed\loot\ above each already name. A
+         player install with no trigger frequencies would price every triggered atom at zero. Flat
+         glob: the folder is flat and the scanner's own file walk is top-directory-only. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\power\*.json">
+      <Link>data\seed\power\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- commander-identity SE4.3: `Program.cs` reads the authored default-commanders registry at boot
+         to configure CommanderDirectoryHub (Core never touches a path). Same missing-copy-rule family
+         the blocks above each already name; without this rule a published build would fail loudly at
+         boot rather than resolve a commander. Recursive: the registry lives under `_registry\`. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\commanders\**\*.json">
+      <Link>data\seed\commanders\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <!-- save-identity SE4.12: `Program.cs` reads the authored new-save registry before `store.Init()`,
+         which seeds the current save's empires from it. Same missing-copy-rule family as the blocks
+         above; without it a published build would refuse to boot rather than guess a save's empires. -->
+    <Content Include="$(GkDataRoot)packs\fusion\data\seed\saves\**\*.json">
+      <Link>data\seed\saves\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- aura-skill-todo.md Phase 5: DebugEndpoints.FindLatestLiveBoardStart carries the stale-board
+         rule that cost two sessions; it needs a regression test and is not part of the public API. -->
+    <InternalsVisibleTo Include="FusionRpg.Server.Tests" />
+  </ItemGroup>
+
+</Project>

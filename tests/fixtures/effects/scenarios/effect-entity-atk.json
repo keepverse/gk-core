@@ -1,0 +1,34 @@
+{
+  "id": "effect-entity-atk",
+  "seed": 42,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "live-entity-atk",
+        "effectId": "fx.passive_atk_flat",
+        "ownerKey": "entity:AAA",
+        "overlay": { "flat": 50.0 }
+      }
+    },
+    { "op": "expectPlan", "golden": "entity_atk.plan.json" },
+    { "op": "withdraw", "grantId": "live-entity-atk" },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnRemoved",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "ModifyStat",
+            "effectId": "fx.passive_atk_flat",
+            "grantId": "live-entity-atk",
+            "params": { "channel": "atk", "flat": 50, "remove": true }
+          }
+        ]
+      }
+    }
+  ]
+}

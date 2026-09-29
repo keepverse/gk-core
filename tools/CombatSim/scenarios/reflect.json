@@ -1,0 +1,20 @@
+{
+  "name": "reflect",
+  "description": "Reflection active on the defender, resist on the attacker. Watch selfDamageShare.",
+  "trials": 10000,
+  "seed": 42,
+  "baseDamage": 1000,
+  "elements": "singleRandom",
+  "defenderElement": "ice",
+  "attacker": {
+    "combat.accuracy.omni": 300,
+    "combat.reflect.resist.rate.omni": { "min": 0, "max": 5 },
+    "combat.reflect.resist.damage.omni": { "min": 0, "max": 5 }
+  },
+  "defender": {
+    "combat.reflect.rate.omni": { "min": 0, "max": 10 },
+    "combat.reflect.damage.omni": { "min": 0, "max": 10 }
+  },
+  "shieldHp": 0,
+  "reflection": true
+}

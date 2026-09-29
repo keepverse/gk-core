@@ -1,0 +1,13 @@
+{
+  "contractVersion": 2,
+  "trigger": "OnDamageDealt",
+  "actions": [
+    {
+      "action": "ApplyResourceDelta",
+      "effectId": "fx.overlay_damage",
+      "grantId": "heal",
+      "params": { "channel": "hp", "amount": 30, "targetPtr": "Z1" }
+    }
+  ],
+  "skipped": []
+}

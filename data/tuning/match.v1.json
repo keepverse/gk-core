@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/software-architecture.md",
+    "note": "Extracted byte-identical from CapPolicy.cs (tunables-ssot.md M.7, 2026-08-24). RAM cap config for Intent/FA4/debug Create spawns (not vanilla waves). MaxLivingBullets stays a C# default (-1 = unlimited, a sentinel, not a magnitude). waveHoldFloorSeconds added E36 (spec-wave-control.md SS2.2): the wave-timer floor wave.control's hold op applies every tick via F-WAVE-FREEZE, moved out of CheatActions.cs's own bare 30f literal (tunables-ssot.md T1 -- a balance pass would tune this floor). Added by hand rather than tools/tuning/publish.py because that tool's set_path refuses to invent a new key and this domain has no --add-key-shaped flag yet (only --add-edge, aptitudes-shaped, and --add-rung-power-budget, action-rungs-shaped, exist) -- flagged for the owner rather than silently worked around.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py match <dotted.key>=<value> [...] writes match.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "maxLivingPlants": 50,
+  "maxLivingZombies": 80,
+  "waveHoldFloorSeconds": 30
+}

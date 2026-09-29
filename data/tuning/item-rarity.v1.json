@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "sourceRef": "ssot-rarity.md §9.5 / item-ideal.md rarity-bands (module 7) — starting values, a balance pass owns this file, not code",
+  "coefficientTableId": "flat-1000-v1",
+  "coefficientTableNote": "power_ceiling's pinAE was priced when every one of the 20 power coefficients was flat at CoeffMilli=1000 (Power/CoefficientTable.cs). A mismatch against PowerTables.Current is a staleness WARNING, never a load failure -- the shares below are ratio-invariant under a uniform coefficient rescale by construction.",
+  "rungs": {
+    "chaff":      { "dropWeightPer100k": 40700, "enhanceCapMilli": 860, "powerCeilingShareMilli": 0 },
+    "sprout":     { "dropWeightPer100k": 21000, "enhanceCapMilli": 860, "powerCeilingShareMilli": 22 },
+    "grafted":    { "dropWeightPer100k": 13700, "enhanceCapMilli": 762, "powerCeilingShareMilli": 51 },
+    "cultivated": { "dropWeightPer100k": 9000,  "enhanceCapMilli": 627, "powerCeilingShareMilli": 84 },
+    "fused":      { "dropWeightPer100k": 5900,  "enhanceCapMilli": 619, "powerCeilingShareMilli": 173 },
+    "chimeric":   { "dropWeightPer100k": 3800,  "enhanceCapMilli": 552, "powerCeilingShareMilli": 243 },
+    "heirloom":   { "dropWeightPer100k": 2500,  "enhanceCapMilli": 260, "powerCeilingShareMilli": 492 },
+    "firstseed":  { "dropWeightPer100k": 1600,  "enhanceCapMilli": 232, "powerCeilingShareMilli": 632 },
+    "sunwoven":   { "dropWeightPer100k": 1100,  "enhanceCapMilli": 200, "powerCeilingShareMilli": 818 },
+    "almanac":    { "dropWeightPer100k": 700,   "enhanceCapMilli": 200, "powerCeilingShareMilli": 1000 }
+  },
+  "enhanceCapStepMarginAlphaMilli": 900,
+  "enhanceCapAsymptoteNote": "The curve enhance_cap feeds is gain(n) = enhance_cap(rung) x n/(n+K). K is MODULE 15's and lives in data/tuning/enhancement.v1.json (asymptoteK), read by EnhancePolicy -- it was authored here on 2026-09-04 as well and nothing ever read that copy, so the duplicate was removed 2026-09-05 rather than left as a second source of truth a balance pass could edit with no effect."
+}

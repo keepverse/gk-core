@@ -1,0 +1,14 @@
+{
+  "name": "BASTION-lowbase",
+  "description": "Diagnostic: base damage 1.5 -> 0.5 P(theta), hp scaled to hold fight length. Tests whether offensive aptitudes are weak by design or weak because an unscaled authored base owns most of the offence term.",
+  "element": "fire",
+  "points": {
+    "Bulwark": 15.048070677559497,
+    "Fortitude": 36.79922904934844,
+    "Precision": 21.583473333374908,
+    "Ferocity": 26.569226939717144
+  },
+  "hpPerLadder": 12.8,
+  "damagePerLadder": 0.5,
+  "shieldPerLadder": 0
+}

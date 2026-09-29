@@ -1,0 +1,33 @@
+{
+  "id": "effect-set-dirt",
+  "seed": 42,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "g-dirt",
+        "effectId": "fx.set_dirt_box",
+        "ownerKey": "match",
+        "overlay": { "icd_ms": 0 }
+      }
+    },
+    { "op": "hit" },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnDamageDealt",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "SetBoxType",
+            "effectId": "fx.set_dirt_box",
+            "grantId": "g-dirt",
+            "params": { "boxType": 2, "row": 2, "col": 3 }
+          }
+        ]
+      }
+    }
+  ]
+}

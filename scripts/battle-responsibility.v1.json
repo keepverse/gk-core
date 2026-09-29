@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "law": "docs/architecture/battle-engine-ssot.md",
+  "guard": "scripts/guard-battle-responsibility.ps1",
+  "scan": ["src", "tools"],
+
+  "_readme": [
+    "The closed responsibility register from battle-engine-ssot.md section 3, made mechanical.",
+    "The register is the owner's eleven plus eight additions accepted 2026-09-16. It skips #13,",
+    "which was retracted the same day: five IIntentSource implementations are five policies plugged",
+    "into one seam, not five copies of a mechanism, and calling that a defect was the expensive",
+    "direction to be wrong in. The numbering keeps the gap so the retraction stays visible.",
+    "",
+    "A 'decision' is the arithmetic or branch that IS the mechanism, never the name of it. Calling",
+    "the owner's function is reuse and passes; writing the owner's formula out again is a second",
+    "owner and fails, whatever the local variables are called. That distinction is the whole point:",
+    "guard-class-system.ps1 used to be a positive-presence check a hand-copied reflect formula would",
+    "pass; combat-math-dedup T4 (2026-09-23) added a negative half over the analytic and siege files,",
+    "",
+    "A mechanism with no decision pattern carries a note saying why, because a row that says nothing",
+    "looks exactly like a row that is enforced. A note is not an exemption - it is an admission,",
+    "and every one of them names what would close it.",
+    "",
+    "Every allow entry names the module that removes it. An exception with no owning module is how",
+    "grandfathered debt becomes a template."
+  ],
+
+  "mechanisms": [
+    {
+      "id": 1,
+      "name": "Damage calculator",
+      "owner": "src/FusionRpg.Core/Combat/OverlayCombatCalculator.cs",
+      "decisions": [
+        {
+          "id": "power-minus-defense",
+          "what": "Subtracting a defense magnitude from a power magnitude — the mitigation decision itself, not a call to the primitive that performs it",
+          "pattern": "CombatPowerOmni\\)[^\\r\\n;]*-[^\\r\\n;]*[Dd]efense",
+          "allow": [
+            {
+              "path": "src/FusionRpg.Core/Battle/Siege/SiegeExpectedDamage.cs",
+              "module": "estimator-parity",
+              "why": "D7 — subtractive defense against a shipped divisive default, with no base-damage term and no amp or crit, while its own comment claims it is identical to the resolver"
+            }
+          ]
+        },
+        {
+          "id": "crit-multiplier-from-one",
+          "what": "Building a crit multiplier as one-plus-a-contest — the crit damage decision. Both spellings match on purpose: the owner now reaches the curve through ElementalResolver.Contest, and a second owner writing CombatProbability.Sigmoid inline is the same decision made twice",
+          "pattern": "1\\.0\\s*\\+\\s*(CombatProbability\\.Sigmoid|ElementalResolver\\.Contest)",
+          "allow": [
+            {
+              "path": "src/FusionRpg.Core/Balance/Analytic/StrikeMixture.cs",
+              "module": "estimator-parity",
+              "why": "X5 — the analytic estimator re-derives the resolver's crit shape instead of being pinned to it"
+            },
+            {
+              "path": "tools/CombatSim/Analytic.cs",
+              "module": "estimator-parity",
+              "why": "X5 — the same re-derivation in the sim tool. G2's own finding was that no guard scans tools/ at all"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Elemental system",
+      "owner": "src/FusionRpg.Core/Combat/Element/ElementalResolver.cs",
+      "decisions": [
+        {
+          "id": "sigmoid-contest",
+          "what": "Deciding a contest between two actors by putting their difference through the logistic curve. Calling ElementalResolver.Contest is reuse and passes; calling CombatProbability.Sigmoid directly is deciding the contest yourself",
+          "pattern": "CombatProbability\\.Sigmoid\\s*\\(",
+          "allow": [
+            {
+              "path": "src/FusionRpg.Core/Combat/CombatProbability.cs",
+              "module": "none — this is the declaration",
+              "why": "The function itself. A declaration is not a second decision, and excluding it by pattern would also exclude the owner"
+            },
+            {
+              "path": "src/FusionRpg.Core/Balance/Analytic/StrikeMixture.cs",
+              "module": "estimator-parity",
+              "why": "X5 — the analytic estimator decides its own hit/crit contests instead of calling the resolver"
+            },
+            {
+              "path": "tools/CombatSim/Analytic.cs",
+              "module": "estimator-parity",
+              "why": "X5 — the same three contests again in the sim tool"
+            },
+            {
+              "path": "src/FusionRpg.Core/Battle/Siege/SiegeHitChance.cs",
+              "module": "battle-mode-parity",
+              "why": "Found 2026-09-17 by registering this pattern: siege decides its own hit chance rather than resolving through the engine's elemental sub-module, so a siege swing reads omni-only accuracy while every other mode reads omni + element. Rule 4 — a mechanism one mode has differently"
+            },
+            {
+              "path": "src/FusionRpg.Core/Delve/Difficulty/ActorThetaSeam.cs",
+              "module": "battle-mode-parity",
+              "why": "Found the same way: the delve's difficulty seam decides a dodge contest of its own against BattleRuleset.BaseDodge. Same finding as siege, different mode"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Status system",
+      "owner": "src/FusionRpg.Core/Status/ResistanceEvaluator.cs",
+      "decisions": [
+        {
+          "id": "sigmoid-body",
+          "what": "The logistic curve written out — every contest in the engine goes through this one declaration",
+          "pattern": "1(\\.0)?\\s*/\\s*\\(\\s*1(\\.0)?\\s*\\+\\s*Math\\.Exp\\s*\\(",
+          "allow": []
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Shield",
+      "owner": "src/FusionRpg.Core/Combat/Shield/ShieldGate.cs",
+      "decisions": [],
+      "note": "Conforming today by the 2026-09-16 audit: DamageApplyPipeline reaches ShieldGate on both the battle and lawn apply paths. Absorption order is a branch rather than a formula, so no text pattern separates the decision from a call to it. `battle-effect-math` revisits this when it wires the battle bag's CombatMath.",
+      "waits-on": "battle-effect-math"
+    },
+    {
+      "id": 5,
+      "name": "Targeting and area effect",
+      "owner": "src/FusionRpg.Core/Combat/TargetResolver.cs",
+      "decisions": [],
+      "note": "Conforming today: the dispatcher, EffectBag, StatusEffectBridge, StatusSpread and ActionTargetResolver all call TargetResolver.Resolve. Area shapes are a closed vocabulary guarded elsewhere, and a second owner would be a second shape enum rather than a copied formula.",
+      "waits-on": "no module — recorded as conforming, re-checked by the close audit"
+    },
+    {
+      "id": 6,
+      "name": "Resource resolve and consume",
+      "owner": "src/FusionRpg.Core/Actions/Cost/CostLedger.cs",
+      "decisions": [],
+      "note": "Conforming today, and deliberately so: BattleRunState.cs:129 uses LawnActorResourcePools verbatim with a comment saying it avoided a near-duplicate type. This is the law applied correctly before it was written down.",
+      "waits-on": "no module — recorded as conforming, re-checked by the close audit"
+    },
+    {
+      "id": 7,
+      "name": "Proc and trigger condition (atom runtime scope)",
+      "owner": "src/FusionRpg.Core/Effects/EffectBag.cs",
+      "decisions": [],
+      "note": "The trigger vocabulary is 13 strings with one declaration since 2026-09-16 and is already guarded. The defect here is D3 — 9 of the 13 never fire in battle — which is an absence, not a second owner, so this guard cannot see it. `battle-effect-math` owns closing it.",
+      "waits-on": "battle-effect-math"
+    },
+    {
+      "id": 8,
+      "name": "Action system",
+      "owner": "src/FusionRpg.Core/Battle/Timeline/ActionRunner.cs",
+      "decisions": [],
+      "note": "No decision pattern yet. Cost, cooldown and envelope are ledger operations rather than formulas, so a second owner appears as a second ledger type — which `guard-actor-hub.py`'s shape would catch better than a text pattern would. Named here so the gap is visible.",
+      "waits-on": "the close audit"
+    },
+    {
+      "id": 9,
+      "name": "Injury and permanent death",
+      "owner": "src/FusionRpg.Core/Delve/Attrition/ExtractionSettlement.cs",
+      "decisions": [],
+      "note": "D10 — permanent death is delve-local. ExtractionSettlement decides Retire/Recover/Roster for a delve and no other mode has an equivalent, so today's owner is a mode rather than the engine. `death-and-injury` promotes it, and writes this row's pattern.",
+      "waits-on": "death-and-injury"
+    },
+    {
+      "id": 10,
+      "name": "Equipment damage in battle",
+      "owner": "",
+      "decisions": [],
+      "note": "No implementation anywhere — every 'durability' hit in source is an unrelated word-sense. Owner ruling 2026-09-16: owned by the `species-gear-chain` program, not this one, and struck from the remediation fix list. It stays a registered responsibility with a named owner rather than disappearing.",
+      "waits-on": "species-gear-chain"
+    },
+    {
+      "id": 11,
+      "name": "All battle derived stats and their mechanisms",
+      "owner": "src/FusionRpg.Core/Stats/Derived/ActorHub.cs",
+      "decisions": [],
+      "note": "Already enforced, by a guard of the right shape: scripts/guard-actor-hub.py refuses a second composer. Duplicating that here would give the same rule two owners, which is the defect this register exists to refuse.",
+      "waits-on": "no module — enforced by guard-actor-hub.py"
+    },
+    {
+      "id": 12,
+      "name": "The unified virtual clock — initiative, turn order and scheduling",
+      "owner": "src/FusionRpg.Core/Battle/Timeline/SimulationClock.cs",
+      "decisions": [],
+      "note": "D15 — the lawn runs two time bases at once: status timing reads the injector's wall clock while DoT scheduling reads the kernel's 100 ms event queue. That is one board with two notions of when, which is a second owner this guard cannot see, because the second owner is a wiring choice rather than a copied formula.",
+      "waits-on": "battle-mode-parity"
+    },
+    {
+      "id": 14,
+      "name": "Movement and board position",
+      "owner": "src/FusionRpg.Core/Battle/Timeline/ActionRunner.cs",
+      "decisions": [],
+      "note": "Battle-only today (A9/A10 TryMoveTowardNearestEnemy, siege board). Under section 3c the engine owns whether a move is legal and what it costs; where to move is AI. No pattern separates the two yet.",
+      "waits-on": "battle-mode-parity"
+    },
+    {
+      "id": 15,
+      "name": "Death, cleanup and body state",
+      "owner": "src/FusionRpg.Core/Battle/BattleRunState.cs",
+      "decisions": [],
+      "note": "Different per mode today — ImmortalCharges and entity grant withdrawal do not agree across modes. Distinct from permanent death (#9): this is the corpse and the cleanup, not the roster verdict.",
+      "waits-on": "death-and-injury"
+    },
+    {
+      "id": 16,
+      "name": "Summon / spawn during battle",
+      "owner": "src/FusionRpg.Core/Effects/Atoms/AtomKindRegistry.cs",
+      "decisions": [],
+      "note": "One atom kind (`spawn.entity`) against a closed 18-kind registry that is already guarded. A second owner would be a nineteenth kind, which that guard refuses.",
+      "waits-on": "no module — enforced by the atom-kind registry guard"
+    },
+    {
+      "id": 17,
+      "name": "Kill attribution",
+      "owner": "src/FusionRpg.Core/Creatures/CreatureProgressionSource.cs",
+      "decisions": [],
+      "note": "D9 — absent outside the lawn, and on the lawn the general horde has no owner row, so no empire earns from it. An absence, which this guard cannot see; recorded so the register does not read as conforming.",
+      "waits-on": "battle-mode-parity"
+    },
+    {
+      "id": 18,
+      "name": "Retaliation / reflect",
+      "owner": "src/FusionRpg.Core/Combat/CombatDamageDispatcher.cs",
+      "decisions": [
+        {
+          "id": "reflect-delta-reads",
+          "what": "Deciding what a reflect contest is between — which channels are read, and for whom. The dispatcher owns this because it is the only place that knows the incoming hit's element payload",
+          "pattern": "CombatDerivedReader\\.Reflect(Rate|Damage)\\s*\\(",
+          "allow": []
+        },
+        {
+          "id": "reflect-scale-inline",
+          "shape": "banned",
+          "what": "Dividing a reflect delta by a reflect scale inline. This is the D8 formula itself, and after T2.3 it has exactly one owner — ElementalResolver.RateFromZero — which takes the scale as an argument and so does not spell the channel name. A file that still names ReflectRateScale or ReflectShareScale as a divisor is writing the formula out again",
+          "pattern": "/\\s*[A-Za-z0-9_.]*Reflect(Rate|Share)Scale",
+          "allow": [
+            {
+              "path": "tools/CombatSim/Analytic.cs",
+              "module": "estimator-parity",
+              "why": "The third copy, found by this guard on 2026-09-17. The two Core copies are gone: the dispatcher and PhaseModel both call ElementalResolver.RateFromZero now. This one is the POC reference the port is measured against, so extracting it changes what 'reference' means — T2.7's stated default is to leave it pinned by estimator-parity rather than delete it"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "name": "Determinism and seeded RNG streams",
+      "owner": "src/FusionRpg.Core/Battle/SeededRng.cs",
+      "decisions": [],
+      "note": "Not a feature but a property: a mode whose randomness is not seeded per stream cannot be replayed. Seeded streams exist in battle only, which is an absence elsewhere rather than a second owner here.",
+      "waits-on": "battle-mode-parity"
+    },
+    {
+      "id": 20,
+      "name": "Victory / defeat and settlement",
+      "owner": "src/FusionRpg.Core/Delve/Attrition/ExtractionSettlement.cs",
+      "decisions": [],
+      "note": "Per mode today — the delve settles through ExtractionSettlement and the other modes each differ. Shares an owner file with #9 because the delve decided both in one place; separating them is part of what `death-and-injury` does.",
+      "waits-on": "death-and-injury"
+    }
+  ]
+}

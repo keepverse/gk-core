@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/spec-expeditions.md",
+    "note": "Extracted byte-identical from ExpeditionTierCatalog.cs and ExpeditionResolver.cs (tunables-ssot.md M.4, 2026-08-23). Tier ids/names/hasBossWave stay in C# (schema); their numeric fields, and the resolver's event-roll bands, moved here.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py expeditions <dotted.key>=<value> [...] writes expeditions.v{n+1}.json; the old version stays on disk for revert."
+  },
+  "tiers": {
+    "scout-30m":   { "durationMinutes": 30,   "tickCount": 6,  "battleCount": 1, "squadSlots": 2 },
+    "forage-4h":   { "durationMinutes": 240,  "tickCount": 8,  "battleCount": 2, "squadSlots": 3 },
+    "hunt-8h":     { "durationMinutes": 480,  "tickCount": 8,  "battleCount": 3, "squadSlots": 4 },
+    "warpath-20h": { "durationMinutes": 1200, "tickCount": 10, "battleCount": 4, "squadSlots": 5 }
+  },
+  "eventRoll": {
+    "quietCeilMilli": 400,
+    "foundSoulsCeilMilli": 750,
+    "wildCeilMilli": 900,
+    "wildJoinMilli": 250,
+    "shinyDie": 64,
+    "injuryPowerDivisor": 4
+  }
+}

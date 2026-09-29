@@ -1,0 +1,14 @@
+{
+  "name": "FORCE-lowbase",
+  "description": "Diagnostic: base damage 1.5 -> 0.5 P(theta), hp scaled to hold fight length. Tests whether offensive aptitudes are weak by design or weak because an unscaled authored base owns most of the offence term.",
+  "element": "fire",
+  "points": {
+    "Might": 40.28109329885851,
+    "Vigor": 15,
+    "Onslaught": 15,
+    "Retribution": 29.71906955469596
+  },
+  "hpPerLadder": 12.8,
+  "damagePerLadder": 0.5,
+  "shieldPerLadder": 0
+}

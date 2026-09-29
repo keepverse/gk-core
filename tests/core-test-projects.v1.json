@@ -1,0 +1,1025 @@
+{
+  "schemaVersion": 1,
+  "analyzerCommit": "274824c9c955f31856200ed2843c462fe1eb4173",
+  "sharedDir": "tests/FusionRpg.Core.Tests.Shared",
+  "shared": [
+    "AssemblyInfo.cs",
+    "ContractTuningTestBootstrap.cs",
+    "TestSupport/ExternalProcess.cs",
+    "TestSupport/ToolProcess.cs"
+  ],
+  "residual": "FusionRpg.Core.Tests",
+  "projects": [
+    {
+      "name": "FusionRpg.Core.AchievementTitlesTuningTests.Tests",
+      "include": [
+        "AchievementTitlesTuningTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.ActorHub.Tests",
+      "include": [
+        "ActorHub/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.ActorSurface.Tests",
+      "include": [
+        "ActorSurface/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Atoms.Tests",
+      "include": [
+        "Atoms/ActivationEdgeTests.cs",
+        "Atoms/ActorPowerTests.cs",
+        "Atoms/AffixLibraryGeneratorTests.cs",
+        "Atoms/AffixValidatorTests.cs",
+        "Atoms/AtomBenchGuardTests.cs",
+        "Atoms/AtomCompilerTests.cs",
+        "Atoms/AtomKindRegistryTests.cs",
+        "Atoms/AtomPushInstallerTests.cs",
+        "Atoms/AtomRowValidatorDerivedOpTests.cs",
+        "Atoms/AtomRunnerTests.cs",
+        "Atoms/AtomSeedFileTests.cs",
+        "Atoms/AtomSeedFileTriggerFrequencyTests.cs",
+        "Atoms/AuraBindingPlanTests.cs",
+        "Atoms/BindGateTests.cs",
+        "Atoms/BulletFireResolverTests.cs",
+        "Atoms/BulletModifyCompileTests.cs",
+        "Atoms/BulletModifyMathTests.cs",
+        "Atoms/CapPerMatchTests.cs",
+        "Atoms/ChannelExtensionTests.cs",
+        "Atoms/ChannelPoolTests.cs",
+        "Atoms/ClampedLevelScaleMagnitudeTests.cs",
+        "Atoms/CompiledGrantOwnerScopeTests.cs",
+        "Atoms/ComposeFindingsTests.cs",
+        "Atoms/ContainerValidatorTests.cs",
+        "Atoms/ContentHashTests.cs",
+        "Atoms/ContentMetricsTests.cs",
+        "Atoms/ContentValidationTests.cs",
+        "Atoms/CostFunctionTriggerFrequencyTests.cs",
+        "Atoms/CurveTableTests.cs",
+        "Atoms/DerivedComposeKindOpsTests.cs",
+        "Atoms/EffectAtomCatalogGeneratedTests.cs",
+        "Atoms/EffectCatalogExecutionParityTests.cs",
+        "Atoms/EffectOverlayMergeWave8Tests.cs",
+        "Atoms/ElementRosterDataTests.cs",
+        "Atoms/EligibilityRuleTests.cs",
+        "Atoms/EntityFieldsTwelvePlusTests.cs",
+        "Atoms/EntityOwnerKeyDirectionTests.cs",
+        "Atoms/EventLinkedMagnitudeTests.cs",
+        "Atoms/ExternalRefMagnitudeTests.cs",
+        "Atoms/Generation/FamilyExpansionTests.cs",
+        "Atoms/Generation/TierBandsFileTests.cs",
+        "Atoms/InstanceProducerTests.cs",
+        "Atoms/InstantiatorCountUnitFreezeTests.cs",
+        "Atoms/InstantiatorDrawBudgetTests.cs",
+        "Atoms/InstantiatorTests.cs",
+        "Atoms/JsonOverlayTests.cs",
+        "Atoms/KindValueGuardTests.cs",
+        "Atoms/MigrationParityTests.cs",
+        "Atoms/MigrationSchemaTests.cs",
+        "Atoms/OneRowClaimTests.cs",
+        "Atoms/ParamParityGuardTests.cs",
+        "Atoms/ParamSchemaVsExecutorTests.cs",
+        "Atoms/PowerAiContractTests.cs",
+        "Atoms/PowerInteractionTests.cs",
+        "Atoms/PowerLadderKMicroTests.cs",
+        "Atoms/PowerLadderMagnitudeTests.cs",
+        "Atoms/PowerReadsTests.cs",
+        "Atoms/PowerVectorTests.cs",
+        "Atoms/PredicateCompilerTests.cs",
+        "Atoms/PredicateEquivalenceTests.cs",
+        "Atoms/PredicatePricerTests.cs",
+        "Atoms/PushContractTests.cs",
+        "Atoms/ResolverTests.cs",
+        "Atoms/RunnerDefEmitTests.cs",
+        "Atoms/SpawnNonGridCompileTests.cs",
+        "Atoms/SpawnNonGridTests.cs",
+        "Atoms/StatDerivedCompileGapTests.cs",
+        "Atoms/TriggerVocabularyTests.cs",
+        "Atoms/TypeOwnerKeyDirectionTests.cs",
+        "Atoms/UiPresentTests.cs",
+        "Atoms/ValueSpecTests.cs",
+        "Atoms/VariantShiftTests.cs",
+        "Atoms/WaveControlCompileTests.cs",
+        "Atoms/WorldSeedTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [
+        "tests/FusionRpg.Core.Tests/Atoms/EffectSeedFixtureOracle.cs",
+        "tests/FusionRpg.Core.Tests/World/StructureCatalogTestBootstrap.cs"
+      ],
+      "content": [
+        "../fixtures/effects/**/*"
+      ],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Aura.Tests",
+      "include": [
+        "Aura/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Balance.Tests",
+      "include": [
+        "Balance/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj",
+        "tools/CombatSim/CombatSim.csproj",
+        "tools/DominanceBaseline/DominanceBaseline.csproj",
+        "tools/ProvePredictor/ProvePredictor.csproj",
+        "tools/RealDataAggregate/RealDataAggregate.csproj",
+        "tools/ResidualFitLoop/ResidualFitLoop.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.BoardProjectionTests.Tests",
+      "include": [
+        "BoardProjectionTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.CapPolicyTests.Tests",
+      "include": [
+        "CapPolicyTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.ClassSystem.Tests",
+      "include": [
+        "ClassSystem/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj",
+        "tools/CombatSim/CombatSim.csproj",
+        "tools/ProveAptitude/ProveAptitude.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.CombatCounterTests.Tests",
+      "include": [
+        "CombatCounterTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.CombatDotTests.Tests",
+      "include": [
+        "CombatDotTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.CombatFanoutTests.Tests",
+      "include": [
+        "CombatFanoutTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.CombatHitEmitPolicyTests.Tests",
+      "include": [
+        "CombatHitEmitPolicyTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Commanders.Tests",
+      "include": [
+        "Commanders/CommanderDirectoryCollection.cs",
+        "Commanders/CommanderDirectoryTests.cs",
+        "Commanders/CommanderIdTests.cs",
+        "Commanders/CommanderResourcePoolsTests.cs",
+        "Commanders/CommanderRosterTests.cs",
+        "Commanders/MatchCommanderSnapshotTests.cs",
+        "Commanders/PlayerEmpireCommandersTests.cs",
+        "Commanders/ThirdCommanderOpenClosedTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [
+        "tests/FusionRpg.Core.Tests/Commanders/ShippedCommanders.cs"
+      ],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.DamageFxPaletteTests.Tests",
+      "include": [
+        "DamageFxPaletteTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Diagnostics.Tests",
+      "include": [
+        "Diagnostics/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Dungeon.Tests",
+      "include": [
+        "Dungeon/DungeonRegistryTests.cs",
+        "Dungeon/DungeonTuningTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [
+        "tests/FusionRpg.Core.Tests/Dungeon/DungeonHubTestBootstrap.cs",
+        "tests/FusionRpg.Core.Tests/Dungeon/DungeonTestFiles.cs"
+      ],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.EffectClock.Tests",
+      "include": [
+        "EffectClock/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.EffectEventAdapterCoreTests.Tests",
+      "include": [
+        "EffectEventAdapterCoreTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.EffectGrantSessionRecorderTests.Tests",
+      "include": [
+        "EffectGrantSessionRecorderTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.EffectGrantSessionTests.Tests",
+      "include": [
+        "EffectGrantSessionTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.EffectOfflineKitTests.Tests",
+      "include": [
+        "EffectOfflineKitTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.EffectPluginHostTests.Tests",
+      "include": [
+        "EffectPluginHostTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.EffectPluginLifecycleTests.Tests",
+      "include": [
+        "EffectPluginLifecycleTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [
+        "../fixtures/effects/**/*"
+      ],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.EffectScenarioRunnerTests.Tests",
+      "include": [
+        "EffectScenarioRunnerTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [
+        "../fixtures/effects/**/*"
+      ],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Effects.Tests",
+      "include": [
+        "Effects/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Events.Tests",
+      "include": [
+        "Events/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Expeditions.Tests",
+      "include": [
+        "Expeditions/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.GameProfileConstantsTests.Tests",
+      "include": [
+        "GameProfileConstantsTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Hud.Tests",
+      "include": [
+        "Hud/**",
+        "Goldens/actor-hud/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [
+        "src/FusionRpg.Injector/Hud/ActorHudCache.cs",
+        "src/FusionRpg.Injector/Stats/InjectorDerivedOverride.cs",
+        "src/FusionRpg.Injector/Hud/ActorHudUniqueFlags.cs"
+      ],
+      "content": [
+        "Goldens\\actor-hud\\**\\*"
+      ],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Items.Tests",
+      "include": [
+        "Items/AffixFamilySeedFileTests.cs",
+        "Items/ArmouryCompareBandAndUnitTests.cs",
+        "Items/ArmouryCompareTests.cs",
+        "Items/ArmouryGuardsTests.cs",
+        "Items/ArmouryQueryTests.cs",
+        "Items/BaseTypeCorpusTests.cs",
+        "Items/BaseTypeSeedFileTests.cs",
+        "Items/CharmCarryCorpusTests.cs",
+        "Items/CharmCarryTests.cs",
+        "Items/CombinationCorpusTests.cs",
+        "Items/CombinationEvaluatorTests.cs",
+        "Items/ComboContainerBuildTests.cs",
+        "Items/ComboMatcherTests.cs",
+        "Items/ComboPricingTests.cs",
+        "Items/ConsumableCorpusTests.cs",
+        "Items/ConsumableTests.cs",
+        "Items/CraftAssuranceHorizonReportTests.cs",
+        "Items/CraftAssuranceTuningTests.cs",
+        "Items/CraftRiskPolicyTests.cs",
+        "Items/CreatureKillLootSourceTests.cs",
+        "Items/DraughtManifestTests.cs",
+        "Items/DropRateFloorTests.cs",
+        "Items/DropTableValidatorAssuranceTests.cs",
+        "Items/DurabilityTests.cs",
+        "Items/EnhancePolicyTests.cs",
+        "Items/EquipAssignTests.cs",
+        "Items/EquipProjectionSocketsTests.cs",
+        "Items/EquipmentContainerBuildTests.cs",
+        "Items/ExtendSlotRollTests.cs",
+        "Items/FrameLeanTests.cs",
+        "Items/GemContainerBuildTests.cs",
+        "Items/GrantedActionTextTests.cs",
+        "Items/IlvlTierLadderTests.cs",
+        "Items/ItemCardTests.cs",
+        "Items/ItemCategoryTableTests.cs",
+        "Items/ItemDisplayTests.cs",
+        "Items/ItemGrantedActionTests.cs",
+        "Items/ItemNameComposerTests.cs",
+        "Items/ItemPowerReadsTests.cs",
+        "Items/ItemRarityLadderTests.cs",
+        "Items/ItemRarityTuningTests.cs",
+        "Items/ItemSurfaceTests.cs",
+        "Items/ItemUpgradeCostContractTests.cs",
+        "Items/ItemUpgradeEdgesTests.cs",
+        "Items/ItemUpgradePolicyTests.cs",
+        "Items/LoadoutReportTests.cs",
+        "Items/LootMintAtTests.cs",
+        "Items/LootPipelineTrophyTests.cs",
+        "Items/MaterialCorpusTests.cs",
+        "Items/MaterialSpeciesCostTests.cs",
+        "Items/MaterialTrophyResolveTests.cs",
+        "Items/MaterialVocabularyTests.cs",
+        "Items/MilestoneTrackTests.cs",
+        "Items/MutationReplayTests.cs",
+        "Items/PotentialTests.cs",
+        "Items/RarityBudgetKeysTests.cs",
+        "Items/RarityLadderSeedAgreementTests.cs",
+        "Items/RarityLadderTests.cs",
+        "Items/RarityOverlapSimulatorTests.cs",
+        "Items/RarityPowerCeilingTests.cs",
+        "Items/RateAuthoringTests.cs",
+        "Items/RelicHomeTests.cs",
+        "Items/RepairPolicyTests.cs",
+        "Items/RequirementProfileTests.cs",
+        "Items/RerollPolicyTests.cs",
+        "Items/RerollRendererTests.cs",
+        "Items/RoleFamilyTableTests.cs",
+        "Items/SalvagePolicyTests.cs",
+        "Items/SlotRolesTests.cs",
+        "Items/SocketAllowanceTests.cs",
+        "Items/SocketGeometryTests.cs",
+        "Items/SocketOperationsTests.cs",
+        "Items/StrainSpliceGridTests.cs",
+        "Items/ThresholdGrantCorpusTests.cs",
+        "Items/ThresholdGrantTests.cs",
+        "Items/UniqueContainerBuildTests.cs",
+        "Items/UniqueCorpusTests.cs",
+        "Items/WorldSectorLootSourceTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [
+        "tests/FusionRpg.Core.Tests/Items/DropVolumeCorpusTests.cs",
+        "tests/FusionRpg.Core.Tests/Items/DropVolumeTests.cs",
+        "tests/FusionRpg.Core.Tests/Items/LootPipelineTests.cs",
+        "tests/FusionRpg.Core.Tests/Items/RelicTests.cs",
+        "tests/FusionRpg.Core.Tests/Items/UniqueTests.cs"
+      ],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Lawn.Tests",
+      "include": [
+        "Lawn/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.LawnCoordMathTests.Tests",
+      "include": [
+        "LawnCoordMathTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Match.Tests",
+      "include": [
+        "Match/Ai/ILawnBoardViewTests.cs",
+        "Match/Ai/ZombossDeployAiTests.cs",
+        "Match/Ai/ZombossDeployRosterTests.cs",
+        "Match/Ai/ZombossDeployRunStateHolderTests.cs",
+        "Match/LawnDeployEventEvaluatorTests.cs",
+        "Match/LawnDeployEventRunStateHolderTests.cs",
+        "Match/LawnDeployRosterSnapshotTests.cs",
+        "Match/MatchRuntimeHypnoDispatchTests.cs",
+        "Match/ScopeMembershipEventsTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj",
+        "src/FusionRpg.Data/FusionRpg.Data.csproj"
+      ],
+      "links": [
+        "tests/FusionRpg.Core.Tests/Match/ModsAbsorptionTests.cs",
+        "tests/FusionRpg.Core.Tests/Match/UniqueEquipmentAtomMappingTests.cs",
+        "tests/FusionRpg.Data.Tests/DataTestStore.cs"
+      ],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.MatchAdmitTests.Tests",
+      "include": [
+        "MatchAdmitTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.MatchInjectContractTests.Tests",
+      "include": [
+        "MatchInjectContractTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.MatchRuntimeTests.Tests",
+      "include": [
+        "MatchRuntimeTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.MatchValidatorTests.Tests",
+      "include": [
+        "MatchValidatorTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Notify.Tests",
+      "include": [
+        "Notify/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.OnboardingCheckpointEvaluatorTests.Tests",
+      "include": [
+        "OnboardingCheckpointEvaluatorTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Overlay.Tests",
+      "include": [
+        "Overlay/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.OverlayApplyGuardTests.Tests",
+      "include": [
+        "OverlayApplyGuardTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.OverlayProcTests.Tests",
+      "include": [
+        "OverlayProcTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.PassiveTree.Tests",
+      "include": [
+        "PassiveTree/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Power.Tests",
+      "include": [
+        "Power/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Progression.Tests",
+      "include": [
+        "Progression/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.PvzActivityRollupBuilderTests.Tests",
+      "include": [
+        "PvzActivityRollupBuilderTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.PvzStatsApplyGateTests.Tests",
+      "include": [
+        "PvzStatsApplyGateTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.PvzStatsSheetComposerTests.Tests",
+      "include": [
+        "PvzStatsSheetComposerTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.RpgProgressionBalanceTests.Tests",
+      "include": [
+        "RpgProgressionBalanceTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.RpgXpApplyTests.Tests",
+      "include": [
+        "RpgXpApplyTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.RpgXpAwardMapTests.Tests",
+      "include": [
+        "RpgXpAwardMapTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Saves.Tests",
+      "include": [
+        "Saves/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.SimEngineMatchIsolationTests.Tests",
+      "include": [
+        "SimEngineMatchIsolationTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.SimEngineMatchOverlayTests.Tests",
+      "include": [
+        "SimEngineMatchOverlayTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.SimEngineShieldTests.Tests",
+      "include": [
+        "SimEngineShieldTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.StatMathAndSimTests.Tests",
+      "include": [
+        "StatMathAndSimTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.StatSystemTests.Tests",
+      "include": [
+        "StatSystemTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Stats.Tests",
+      "include": [
+        "Stats/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Status.Tests",
+      "include": [
+        "Status/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.TargetResolverTests.Tests",
+      "include": [
+        "TargetResolverTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [
+        "../fixtures/combat/**/*"
+      ],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.TitleLifecyclePolicyTests.Tests",
+      "include": [
+        "TitleLifecyclePolicyTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.UniqueBindingsTests.Tests",
+      "include": [
+        "UniqueBindingsTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.UniqueEquipmentCatalogTests.Tests",
+      "include": [
+        "UniqueEquipmentCatalogTests.cs"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Vfx.Tests",
+      "include": [
+        "Vfx/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Vocabulary.Tests",
+      "include": [
+        "Vocabulary/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    },
+    {
+      "name": "FusionRpg.Core.Workspace.Tests",
+      "include": [
+        "Workspace/**"
+      ],
+      "references": [
+        "src/FusionRpg.Core/FusionRpg.Core.csproj"
+      ],
+      "links": [],
+      "content": [],
+      "coreInternals": true
+    }
+  ]
+}

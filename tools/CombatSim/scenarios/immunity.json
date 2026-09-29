@@ -1,0 +1,19 @@
+{
+  "name": "immunity",
+  "description": "Heavy defensive reduction vs a strong attacker — probes whether mitigation can reach total immunity.",
+  "trials": 10000,
+  "seed": 42,
+  "baseDamage": 1000,
+  "elements": "singleRandom",
+  "defenderElement": "ice",
+  "attacker": {
+    "combat.accuracy.omni": 500,
+    "combat.power.omni": { "min": 500, "max": 5000 },
+    "combat.amplification.omni": { "min": 0, "max": 20 }
+  },
+  "defender": {
+    "combat.reduction.omni": { "min": 25, "max": 60 }
+  },
+  "shieldHp": 0,
+  "reflection": false
+}

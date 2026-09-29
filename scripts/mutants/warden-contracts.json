@@ -1,0 +1,31 @@
+[
+  { "file": "src/FusionRpg.Data/Sqlite/RpgStore.Contracts.cs",
+    "name": "a warden bind never actually gets flagged as one",
+    "find": "BindContractRowUnlocked(db, playerId, id, stamp, warden: true);",
+    "with": "BindContractRowUnlocked(db, playerId, id, stamp, warden: false);" },
+
+  { "file": "src/FusionRpg.Data/Sqlite/RpgStore.Contracts.cs",
+    "name": "a fresh warden bind's flag is dropped at the insert itself",
+    "find": "VALUES($i, $p, 1, $loyalty, $pers, $now, NULL, '', 0, 1, $warden)",
+    "with": "VALUES($i, $p, 1, $loyalty, $pers, $now, NULL, '', 0, 1, 0)" },
+
+  { "file": "src/FusionRpg.Data/Sqlite/RpgStore.Contracts.cs",
+    "name": "the stored warden column is never actually read back",
+    "find": "r.GetInt64(10) != 0",
+    "with": "false" },
+
+  { "file": "src/FusionRpg.Data/Sqlite/RpgStore.Contracts.cs",
+    "name": "release ignores the warden flag entirely",
+    "find": "if (row.Warden) return (false, \"contract.warden-permanent\", null);",
+    "with": "if (false) return (false, \"contract.warden-permanent\", null);" },
+
+  { "file": "src/FusionRpg.Data/Sqlite/RpgStore.Contracts.cs",
+    "name": "re-signing a warden the same day skips the replay short-circuit",
+    "find": "if (existing is { Bound: true, Warden: true })",
+    "with": "if (false)" },
+
+  { "file": "src/FusionRpg.Data/Sqlite/RpgStore.Contracts.cs",
+    "name": "binding as warden ignores an existing ordinary bind",
+    "find": "if (existing is { Bound: true, Warden: false })",
+    "with": "if (false)" }
+]

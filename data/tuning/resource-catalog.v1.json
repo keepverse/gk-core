@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "kind": "resource-catalog",
+  "version": 1,
+  "entries": [
+    {
+      "id": "hp",
+      "class": "body",
+      "exhaustion": false,
+      "actionCost": false,
+      "labels": {
+        "plant": "HP",
+        "zombie": "HP"
+      },
+      "icon": "heart",
+      "color": "#e74c3c",
+      "meterKind": "pool"
+    },
+    {
+      "id": "stamina",
+      "class": "body",
+      "exhaustion": true,
+      "actionCost": true,
+      "labels": {
+        "plant": "Stamina",
+        "zombie": "Stamina"
+      },
+      "icon": "zap",
+      "color": "#f1c40f",
+      "meterKind": "pool"
+    },
+    {
+      "id": "hunger",
+      "class": "energy",
+      "exhaustion": true,
+      "actionCost": false,
+      "labels": {
+        "plant": "Sun",
+        "zombie": "Hunger"
+      },
+      "icon": "sun",
+      "color": "#f39c12",
+      "meterKind": "pool"
+    },
+    {
+      "id": "spirit",
+      "class": "essence",
+      "exhaustion": true,
+      "actionCost": false,
+      "labels": {
+        "plant": "Spirit",
+        "zombie": "Spirit"
+      },
+      "icon": "sparkles",
+      "color": "#9b59b6",
+      "meterKind": "pool"
+    },
+    {
+      "id": "qi",
+      "class": "essence",
+      "exhaustion": true,
+      "actionCost": true,
+      "labels": {
+        "plant": "Yang",
+        "zombie": "Yin"
+      },
+      "icon": "yin-yang",
+      "color": "#3498db",
+      "meterKind": "pool"
+    },
+    {
+      "id": "poise",
+      "class": "body",
+      "exhaustion": true,
+      "actionCost": true,
+      "labels": {
+        "plant": "Poise",
+        "zombie": "Poise"
+      },
+      "icon": "shield",
+      "color": "#95a5a6",
+      "meterKind": "pool"
+    }
+  ]
+}

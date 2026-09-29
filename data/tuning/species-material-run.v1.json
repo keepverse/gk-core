@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/species-gear-chain/spec-species-materials.md § Design 4 (R9, R-SC1)",
+    "note": "Generation-run counts for the deterministic trophy id planner (seedsmith trophyplan, task T34). perSpecies/perFamily decide which trophy MATERIAL IDS EXIST -- a generation-time question with a different owner than data/tuning/creature-yield.v1.json's own runtime shard-per-rung mapping. R9 removed the general layer entirely: there is no 'perGeneral' key, and the strict loader refuses one by name rather than ignoring it."
+  },
+  "perSpecies": 2,
+  "perFamily": 8
+}

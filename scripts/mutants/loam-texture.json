@@ -1,0 +1,96 @@
+[
+  { "file": "src/FusionRpg.Core/World/Loam/LoamPhases.cs",
+    "name": "an active granary's capacity bonus never applies",
+    "find": "if (structure.Kind == StructureKind.Storage) bonus += structure.CapacityBonus;",
+    "with": "if (false) bonus += structure.CapacityBonus;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamPhases.cs",
+    "name": "a granary still under construction already raises capacity",
+    "find": "if (slot.ConstructionTurnsRemaining is > 0) continue;",
+    "with": "if (false) continue;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamPhases.cs",
+    "name": "contagion never raises a neighbour's pressure",
+    "find": "? Math.Min(LoamPolicy.MaxPressureMilli, sector.PressureMilli + LoamPolicy.ContagionPressurePerTurn)",
+    "with": "? sector.PressureMilli" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamPhases.cs",
+    "name": "pressure never decays back toward zero on its own",
+    "find": ": Math.Max(0, sector.PressureMilli - LoamPolicy.PressureDecayPerTurn);",
+    "with": ": sector.PressureMilli;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamPhases.cs",
+    "name": "a Fracture surge is never actually rolled for",
+    "find": "var surge = TurnCalendar.Roll(turn, seed).Plague;",
+    "with": "var surge = false;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamPhases.cs",
+    "name": "a fully-warded component still finds a fade target and crashes",
+    "find": "if (weakest is null)\n                    {\n                        report.Add(phase, TurnReportKinds.Event, faction.FactionId, \"loam.shortfall.unresolved:\" + shortfall);\n                        continue;\n                    }",
+    "with": "" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamPhases.cs",
+    "name": "a warded sector still recovers when its component pays in full",
+    "find": "if (world.Sectors.First(s => s.SectorId == id).WardenBindingId is not null) continue;",
+    "with": "if (false) continue;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamPhases.cs",
+    "name": "the Unmade spawn before the neglect threshold is reached",
+    "find": "neglectedTurns >= LoamPolicy.UnmadeSpawnAfterTurns",
+    "with": "true" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamPhases.cs",
+    "name": "the Unmade spawn onto ground something already occupies",
+    "find": "!alreadyOccupied)",
+    "with": "true)" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamPhases.cs",
+    "name": "the neglect counter never resets once ground stops being barren and lost",
+    "find": "result.Add(sector.NeglectedTurns == 0 ? sector : sector with { NeglectedTurns = 0 });",
+    "with": "result.Add(sector);" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/LoamForecast.cs",
+    "name": "a warded sector can still be chosen as the weakest contributor",
+    "find": "var candidates = component\n            .Where(id => world.Sectors.First(s => s.SectorId == id).WardenBindingId is null)\n            .ToList();",
+    "with": "var candidates = component.ToList();" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/FadePolicy.cs",
+    "name": "contagion pressure never adds to this turn's decay",
+    "find": "+ pressureMilli;",
+    "with": "+ 0;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/FadePolicy.cs",
+    "name": "a surge is rolled but never scales the decay sum",
+    "find": "if (surge) scaled = scaled * LoamPolicy.SurgeDecayMultiplierMilli / 1000;",
+    "with": "if (false) scaled = scaled * LoamPolicy.SurgeDecayMultiplierMilli / 1000;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/Habitability.cs",
+    "name": "a structure still under construction already counts as a loam source",
+    "find": "if (structureId is not { } id || constructionTurnsRemaining is > 0) return false;",
+    "with": "if (structureId is not { } id) return false;" },
+
+  { "file": "src/FusionRpg.Core/World/Loam/Habitability.cs",
+    "name": "any known structure counts as a loam source, not only LoamSource-kind ones",
+    "find": "return StructureCatalog.IsKnown(id) && StructureCatalog.Get(id).Kind == StructureKind.LoamSource;",
+    "with": "return StructureCatalog.IsKnown(id);" },
+
+  { "file": "src/FusionRpg.Core/World/Intel/IntelRecorder.cs",
+    "name": "a dowser's reach is effectively unlimited",
+    "find": "for (var step = 0; step < DowserSightLanes && frontier.Count > 0; step++)",
+    "with": "for (var step = 0; step < 999 && frontier.Count > 0; step++)" },
+
+  { "file": "src/FusionRpg.Core/World/Intel/IntelRecorder.cs",
+    "name": "prospecting reveals barren ground too",
+    "find": ".Where(s => reached.Contains(s.SectorId) && Habitability.For(s))",
+    "with": ".Where(s => reached.Contains(s.SectorId))" },
+
+  { "file": "src/FusionRpg.Core/World/Intel/IntelRecorder.cs",
+    "name": "any stance at all counts as a dowser",
+    "find": "if (!string.Equals(entity.Stance, DowserStance, StringComparison.Ordinal)) continue;",
+    "with": "if (false) continue;" },
+
+  { "file": "src/FusionRpg.Core/World/Movement/ClaimResolver.cs",
+    "name": "capturing a warded sector keeps the binding alive",
+    "find": "WardenBindingId = null",
+    "with": "" }
+]

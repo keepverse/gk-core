@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/action-enrich/spec-action-base.md (AE1.1)",
+    "note": "Working value, not a validated balance decision. basicAttack.basePowerMilli is per-mille of PowerMath.One: the basic attack's base at the power pin (P(20)=680 whole units). Measured as median Setup.Atk of the 13 battle-golden actors (BaseAtk(1)=15 x2, BaseAtk(2)=19 x3, BaseAtk(5)=30 x4, BaseAtk(6)=34 x2, BaseAtk(10)=49 x2; sorted [15,15,19,19,19,30,30,30,30,34,34,49,49], median 30) divided by P(20)/1000: 30/0.68 = 44.1 per-mille units -> basePowerMilli 44118; see tasks/evidence-fragments/AE1.1.md.",
+    "rebalance": "Never hand-edit this file. A balance pass republishes action-base.v{n+1}.json; every prior version stays on disk for revert.",
+    "untuned": true,
+    "tunedBy": "the A20 synthetic-loadout sweep once the action program's holder wiring (T74) lands"
+  },
+  "basicAttack": {
+    "basePowerMilli": 44118
+  }
+}

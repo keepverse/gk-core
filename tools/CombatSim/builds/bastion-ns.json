@@ -1,0 +1,14 @@
+{
+  "name": "BASTION-ns",
+  "description": "BASTION posture \u2014 points are shares; Theta sets the absolute budget. | Shield-free copy of the simulated-search allocation. The closed form is single-phase, so a depleting pool is the one thing that makes rounds non-identical; keeping a shield-free twin is what separates \"the math is wrong\" from \"the math omits a phase\".",
+  "element": "fire",
+  "points": {
+    "Bulwark": 15.048070677559497,
+    "Fortitude": 36.79922904934844,
+    "Precision": 21.583473333374908,
+    "Ferocity": 26.569226939717144
+  },
+  "hpPerLadder": 15,
+  "damagePerLadder": 1.5,
+  "shieldPerLadder": 2
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "version": 3,
+  "_meta": {
+    "owner": "docs/architecture/action-corpus/spec-distribution-planner.md (A-S1) §3 step 1",
+    "default": "full-live-seed-roster",
+    "note": "Full action seeding over the live creature species seed folder. Every subject receives five planned briefs so the five action categories can be represented without collapsing the roster to the legacy runtime catalog.",
+    "v3Note": "The live source contains 904 species and 227 consolidated family namespaces. Counts are configuration, not code: changing them requires regenerating the model-free plan before proposal stages run.",
+    "generalTier2026_09_11": "generalCount was 25 (5 per category), which the sealed ideal (action-corpus-ideal.md §17) sizes at 500 (100 per category); it carried no per-category reach against 1,135 family and 4,520 species briefs. Raised to 1000 (200 per category), the owner's upper bound, so the general tier is a real comparison set for the family and signature tiers. `version` moved 2 -> 3 because the plan's own corpusHash folds this number in, and a count change that did not move the hash would let a stale plan pass the runner's freshness check."
+  },
+  "mode": "full",
+  "generalCount": 1000,
+  "perFamilyCount": 5,
+  "perSpeciesCount": 5,
+  "multiplicativePairs": [["atom.keen-edge", "atom.cruelty"]],
+  "familyMotifMax": 6,
+  "avoidNeighbourK": 3
+}

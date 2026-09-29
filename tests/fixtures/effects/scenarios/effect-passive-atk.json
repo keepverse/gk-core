@@ -1,0 +1,34 @@
+{
+  "id": "effect-passive-atk",
+  "seed": 42,
+  "steps": [
+    { "op": "clear" },
+    {
+      "op": "grant",
+      "grant": {
+        "grantId": "live-passive",
+        "effectId": "fx.passive_atk_flat",
+        "ownerKey": "match",
+        "overlay": { "flat": 10.0 }
+      }
+    },
+    { "op": "expectPlan", "golden": "passive_atk.plan.json" },
+    { "op": "withdraw", "grantId": "live-passive" },
+    {
+      "op": "expectPlan",
+      "expect": {
+        "contractVersion": 2,
+        "trigger": "OnRemoved",
+        "actions": [
+          {
+            "seq": 1,
+            "action": "ModifyStat",
+            "effectId": "fx.passive_atk_flat",
+            "grantId": "live-passive",
+            "params": { "channel": "atk", "flat": 10, "remove": true }
+          }
+        ]
+      }
+    }
+  ]
+}

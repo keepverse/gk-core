@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "dumpCompleteness": {
+    "maxCountMismatches": 0
+  },
+  "basisHistogram": {
+    "minObservedOrStatedSharePermille": 700,
+    "maxBlockedSharePermille": 30
+  },
+  "_note": "Starting values, tuned from play (ssot-power-scale.md §5.3's own precedent) — declared here per P2 ('a metric without a target is an opinion'), not derived from a formula. Measured against the real 904-species dump 2026-09-01 (seed-to-concrete T1.10): observed+stated = 719/904 = 795‰, blocked = 15/904 = 17‰ — both targets currently pass with headroom. `maxCountMismatches` is structural (0, always), not a balance number: any mismatch between the manifest's declared counts and the actual file contents is a corrupted dump, never a tuning choice."
+}

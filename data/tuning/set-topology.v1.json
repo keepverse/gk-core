@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/species-gear-chain/spec-set-species-binding.md § The set-planning system (revision 2, owner ruling 2026-09-21)",
+    "note": "The three set TOPOLOGY CLASSES of decisions.md's 2026-09-10 'Set topology classes' row and item/ssot-sets.md 3.4, as data. A `set` entry's `setClass` is RESOLVED from its own declared topology -- the count of DISTINCT member roles and the threshold list -- against these rows by seedsmith.adapters.items.setgen.topology: most-restrictive-first, no default, no fallback, and a shape no row admits is a refusal naming the entry rather than a silent bucket. memberRoleMin / memberRoleSet / bonusTierCeiling are the numbers the decision row names. They are NOT the generator heuristic the same decision row RETIRED (the universal four-member default and the six-role cap) -- those live in data/tuning/set-charm-gen.v1.json's own `setShape` block, a different owner, and this file neither reads nor restates them. The universal 'every set has a threshold at 2' rule is likewise NOT here: set-charm-gen owns it as `setShape.mandatoryThresholdPieces`, and topology.py READS it from there rather than copying it (tunables-ssot.md 2: a number two domains need belongs to whichever owns the concept).",
+    "rebalance": "Never hand-edit. `python tools/tuning/publish.py set-topology <key>=<value>` writes v{n+1}; the old version stays on disk for revert."
+  },
+  "sources": [
+    "docs/architecture/decisions.md 141 (Set topology classes, 2026-09-10)",
+    "docs/architecture/item/ssot-sets.md 3.4",
+    "docs/architecture/ideas/crafting-coverage-engine.md (Proposed classes and defaults)",
+    "docs/architecture/species-gear-chain/spec-set-species-binding.md rev 2"
+  ],
+
+  "resolutionOrder": ["unique-species", "family", "general"],
+
+  "classes": [
+    {
+      "id": "unique-species",
+      "memberRoleMin": 10,
+      "memberRoleSet": [10, 15],
+      "bonusTierCeiling": 2,
+      "thresholdTemplate": "identity-then-full",
+      "note": "A species-bound unique-creature kit. memberRoleSet is a CLOSED parameterization, never a floor: ten is a signature kit, fifteen is a complete kit, and a twelve-role set is not a unique-species set. `identity-then-full` is the design's 'always exactly two cumulative thresholds (2 and the template's final member count)' said as a template rather than as a number: the only legal threshold list is the universal first threshold followed by the template's own member-role count, and its length must equal bonusTierCeiling."
+    },
+    {
+      "id": "family",
+      "memberRoleMin": 5,
+      "bonusTierCeiling": 3,
+      "thresholdTemplate": "ascending",
+      "note": "A coherent declared-family set. Deliberately NO memberRoleSet: the design's 'five' is the class's lowest member-role count, and a later set-progression template may add roles -- which is the planner's row, not this file's. Its identity contract (a declared requiredFamilyId) is item module 25's field, deliberately not duplicated here."
+    },
+    {
+      "id": "general",
+      "memberRoleMin": 2,
+      "bonusTierCeiling": 4,
+      "thresholdTemplate": "ascending",
+      "note": "The class with no identity selector, and the shape of every shipped four-distinct-role entry. `ascending` means any strictly increasing list of at most bonusTierCeiling thresholds that starts at the universal first threshold and tops out no higher than the distinct member-role count."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/actor-hub-ssot.md",
+    "note": "Extracted byte-identical from StatusPolicy.cs (tunables-ssot.md M.4, 2026-08-23). power-plan.md T3.1 (done 2026-08-24): resistFromPowerRatio 0->1.0. T3.2 (done 2026-08-24): added netFactorScale (audit F4 -- netFactor = 1 + delta/netFactorScale, replacing a raw-delta cliff where +2 gave 2.0x and one retired world gave 25x); applyScaleK is no longer scaled by matchPower (audit F3, code-side change in ResistanceEvaluator.cs, not a tuning value). progressionPowerStubDefault now backs only progression.realm (progression.power reads Theta via IPowerIndexProvider) -- SSOT: progression.realm stays 1.0 permanently. categoryResistCap MOVED to data/tuning/derived-stats.v1.json (cap-consolidation, T1, 2026-08-24) -- it was clamped a second time here after DerivedComposer already applied it at compose, making a raised value a silent no-op. One key now, not two.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py status <dotted.key>=<value> [...] writes status.v{n+1}.json; the old version stays on disk for revert.",
+    "applyShapeNote": "2026-08-25: applyShape/applyOffsetK added as a tuning-selectable shape, defaulting to the shipped behaviour (sigmoid at offset 0) so nothing moves. A sigmoid is 0.5 at delta=0 for EVERY scale and steepness, so an unequipped attacker landed every status on a coin flip and a cc at parity was a permanent lock (measured, tools/CombatSim). Raising applyOffsetK moves the neutral point while keeping the status soft-counterable; applyShape=linearFromZero matches the evasion chain's rate contests instead and makes it hard-counterable. Both reachable, neither imposed."
+  },
+  "applyScaleK": 100.0,
+  "applyScaleFloor": 1.0,
+  "resistFromPowerRatio": 1.0,
+  "minNetFactor": 0.0,
+  "maxNetFactor": 10000.0,
+  "netFactorScale": 10.0,
+  "progressionPowerStubDefault": 1.0,
+  "procDepthLimitDefault": 6,
+  "applySteepnessDefault": 1.0,
+  "applyShape": "sigmoid",
+  "applyOffsetK": 0.0
+}

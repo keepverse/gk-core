@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\FusionRpg.Core.Tests.Shared\CoreTests.Shared.props" />
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>FusionRpg.Core.Tests</RootNamespace>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
+    <Compile Include="$(GkFusionRoot)src\FusionRpg.Injector\Hud\ActorHudCache.cs" Link="Hud\ActorHudCache.cs" />
+    <Compile Include="$(GkFusionRoot)src\FusionRpg.Injector\Stats\InjectorDerivedOverride.cs" Link="Stats\InjectorDerivedOverride.cs" />
+    <Compile Include="$(GkFusionRoot)src\FusionRpg.Injector\Hud\ActorHudUniqueFlags.cs" Link="Hud\ActorHudUniqueFlags.cs" />
+    <None Include="Goldens\actor-hud\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

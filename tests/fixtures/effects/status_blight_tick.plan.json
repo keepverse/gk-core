@@ -1,0 +1,13 @@
+{
+  "contractVersion": 2,
+  "trigger": "OnTimer",
+  "actions": [
+    {
+      "action": "ApplyResourceDelta",
+      "effectId": "fx.overlay_damage",
+      "grantId": "blight",
+      "params": { "channel": "hp", "amount": -12, "targetPtr": "Z1" }
+    }
+  ],
+  "skipped": []
+}

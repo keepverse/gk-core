@@ -1,0 +1,28 @@
+# Test-substrate baseline (ratchet). One line per exempt file: path : code[,code]
+# A listed file with no remaining violation fails the gate — remove its line when fixed.
+# Adding a line is a review event: state why, get owner sign-off. See docs/contributing/testing-standard.md.
+# Generated 2026-09-12 by scripts/guard-test-substrate.ps1 -UpdateBaseline.
+tests/FusionRpg.AtomImporter.Tests/RealColdProcessTests.cs : swallowed-delete
+tests/FusionRpg.AtomImporter.Tests/SeedScannerTests.cs : swallowed-delete
+tests/FusionRpg.AtomImporter.Tests/ValidateGateCiTests.cs : swallowed-delete
+tests/FusionRpg.Data.Tests/CreatureSpeciesImportCliTests.cs : swallowed-delete, temp-store
+tests/FusionRpg.Data.Tests/LegacyMonoMigratorTests.cs : temp-store
+tests/FusionRpg.Data.Tests/RpgStoreSmokeTests.cs : temp-store
+tests/FusionRpg.Guard.Tests/ActorHubGuardTests.cs : swallowed-delete
+tests/FusionRpg.Guard.Tests/ClassSystemGuardTests.cs : swallowed-delete
+tests/FusionRpg.Guard.Tests/DalGuardTests.cs : swallowed-delete
+tests/FusionRpg.Guard.Tests/FunnelDeltaGuardTests.cs : swallowed-delete
+tests/FusionRpg.Guard.Tests/LawnRepositionSingleWriterGuardTests.cs : swallowed-delete
+tests/FusionRpg.Guard.Tests/MovementPayloadNoUnityGuardTests.cs : swallowed-delete
+tests/FusionRpg.Guard.Tests/PowerGuardTests.cs : swallowed-delete
+tests/FusionRpg.Guard.Tests/SecondaryNoUnityGuardTests.cs : swallowed-delete
+tests/FusionRpg.Guard.Tests/StatTaxonomyGuardTests.cs : swallowed-delete
+tests/FusionRpg.Launcher.Tests/GameProfileCatalogTests.cs : swallowed-delete
+tests/FusionRpg.Launcher.Tests/GameProfileMatrixTests.cs : swallowed-delete
+tests/FusionRpg.Launcher.Tests/LauncherAuditTests.cs : swallowed-delete
+tests/FusionRpg.Launcher.Tests/LoaderInstallUpdateTests.cs : swallowed-delete
+tests/FusionRpg.Launcher.Tests/LoaderManifestLoadTests.cs : swallowed-delete
+tests/FusionRpg.Launcher.Tests/MelonHostGapTests.cs : swallowed-delete
+tests/FusionRpg.Launcher.Tests/PlayerPackOverlayProbeTests.cs : swallowed-delete
+tests/FusionRpg.Launcher.Tests/PlayerPackProbeTests.cs : swallowed-delete
+tests/FusionRpg.Launcher.Tests/PortPickerTests.cs : swallowed-delete

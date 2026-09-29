@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/action-corpus/spec-innate-picker.md (A-S6) §3.3",
+    "note": "These weights are untuned placeholders -- all five w_t ship flat at the neutral default 1000, at which `score` exactly reproduces the lexicographic rank tuple (roleLeanMatch, motifCoverage, elementMatch, categoryScarcity, -rungCeiling) in priority order -- spec SS3.3's own stated identity ('the neutral value reproduces the simplest defensible behaviour exactly', the same precedent A-S0/A-T1/A-S1/A-R1 already used this session), tested directly (WeightDefaultTests over generated candidate permutations). The first smoke batch, once A-S3/A-S4 exist and this module can run against real accepted rows rather than synthetic fixtures, is the evidence any of these five move.",
+    "rebalance": "Re-tune wRoleLeanMatchMilli/wMotifCoverageMilli/wElementMatchMilli/wCategoryScarcityMilli/wRungCeilingMilli by editing this file, never in code -- innate_picker/derive.py carries no numeric weight literal (scripts/audit-magic-numbers.py does not cover Python paths; the module's own AST-based test enforces the same zero-literal rule directly). A new version bumps `version` and keeps this one on disk for revert."
+  },
+  "wRoleLeanMatchMilli": 1000,
+  "wMotifCoverageMilli": 1000,
+  "wElementMatchMilli": 1000,
+  "wCategoryScarcityMilli": 1000,
+  "wRungCeilingMilli": 1000
+}

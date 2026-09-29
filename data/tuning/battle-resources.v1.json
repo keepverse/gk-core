@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/battle-tempo/spec-battle-resources.md",
+    "note": "battle-tempo battle-resources (2026-09-05). The share of BaseHp(theta) each of the six actor resource pools gets as its max, per-mille. A PROJECTION of the shipped ladder, never a second curve (spec S2.2): resource.max.{id} = BaseHp(theta) * poolShareMilli[id] / 1000, so the only new numbers in the whole module are the six shares below. hp is absent on purpose -- it mirrors BattleActorSetup.MaxHp directly (spec S2.6) rather than deriving, because two disagreeing HP maxima is worse than an incomplete row.",
+    "rebalance": "Never hand-edit this file. python tools/tuning/publish.py battle-resources <dotted.key>=<value> [...] writes battle-resources.v{n+1}.json; the old version stays on disk for revert.",
+    "balanceStatus": "UNMEASURED placeholders, shipped per the same posture action-timing.v1.json and reaction-lane.v1.json already used in this program: 'shipping a guess is fine, calling it balance is not'. The shares are DELIBERATELY UNIFORM -- no measurement exists that would justify making poise scarcer than qi, and inventing a differentiation we cannot defend would be worse than an honest flat placeholder. Per-id rows exist so a balance pass can differentiate later as a config edit, never a schema change.",
+    "sizing": "500 per-mille against the shipped pin (BaseHp(20) = 680, power-scale.v2.json curve.pinValue) gives a pool of 340 at theta=20. reaction-lane.v1.json's poiseSpend is 100, so a pinned actor affords ~3 counters in a battle. That is the only sanity anchor behind this number -- it is a starting point for RL3's sizing pass, not a balance decision.",
+    "regenIsAbsentOnPurpose": "There is no regen block, and that is a design position rather than an omission (spec S2.5). ResourceChannelReader.RegenPerTick rounds the channel to a whole long, and a battle round runs several hundred ticks (action-timing.v1.json: basic attack alone is 150 windup + 50 recovery), so the SMALLEST expressible non-zero rate accrues ~300 poise per round against a spend of 100 -- three counters a round, which erases the scarcity poise exists to create. resource-hub-ssot.md S11 says the same thing from the design side: pools 'refill AT REST', and a battle is not a rest. Giving regen a tuning row here would invite a balance pass to set it to 1 and quietly break the mechanism. A sub-tick unit is a named follow-up (spec S10.1) and regen earns its rows then."
+  },
+  "poolShareMilli": {
+    "stamina": 500,
+    "hunger": 500,
+    "spirit": 500,
+    "qi": 500,
+    "poise": 500
+  }
+}

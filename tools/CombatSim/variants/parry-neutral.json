@@ -1,0 +1,12 @@
+{
+  "name": "parry-neutral",
+  "description": "Where the parry/block neutral point sits inside its [0, 950] clamp. At the shipped 1000 it sits ON the cap, so strength is inert. Research: modern WoW made block a flat 30% proportion after absolute block value stopped scaling.",
+  "scenario": "evasion",
+  "variants": [
+    { "name": "v0-shipped-1000", "note": "neutral ON the cap; strength inert", "set": [] },
+    { "name": "v1-750", "note": "parry removes 75% by default", "set": ["combat.parryNeutralShareKPm=750"] },
+    { "name": "v2-500", "note": "parry removes 50% by default", "set": ["combat.parryNeutralShareKPm=500"] },
+    { "name": "v3-300", "note": "parry removes 30% by default (WoW block)", "set": ["combat.parryNeutralShareKPm=300"] },
+    { "name": "v4-0", "note": "parry removes nothing without strength", "set": ["combat.parryNeutralShareKPm=0"] }
+  ]
+}

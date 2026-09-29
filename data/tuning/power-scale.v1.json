@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "_meta": {
+    "owner": "docs/architecture/power/ssot-power-scale.md",
+    "note": "The Theta ladder: P(Theta) = C + A*Theta + B*Theta(Theta-1)/2, integer per-mille (SSOT S4). A is DERIVED from the pin P(20)=680 at load, never authored. bMilli=0 shipped Phase 1-3 so P(Theta) was byte-identical to BattleRuleset.BaseHp (80 + 30*Theta) -- zero golden movement while every consumer migrated onto the ladder. Superseded 2026-08-24 by power-scale.v2.json (T4.2, bMilli=400, the decided starting dial, SSOT S4.5) -- both hosts now load v2. This file stays on disk unmodified as the revert target: pointing a host back here and un-bumping RulesetVersion restores every pre-dial hash byte-identically, no code change (PS-7).",
+    "rebalance": "Never hand-edit this file. A balance pass changes bMilli only and republishes power-scale.v{n+1}.json; every prior version stays on disk for revert (power-guard, wave 4, checks the pin holds for every version on disk)."
+  },
+  "curve": { "cMilli": 80000, "bMilli": 0, "pinIndex": 20, "pinValue": 680 },
+  "weights": {
+    "WdMilli": 1000,
+    "WaMilli": 25000,
+    "WrMilli": 250,
+    "WzMilli": 1000,
+    "WmMilli": 5000,
+    "WwMilli": 5000,
+    "WfMilli": 25000
+  },
+  "channels": {
+    "atk":     { "cMilli": 12000, "pinValue": 92 },
+    "defense": { "cMilli": 2000,  "pinValue": 22 }
+  }
+}

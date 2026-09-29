@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "sourceRef": "docs/architecture/item/spec-strain-splice-gen.md (module 21, strain-splice-gen)",
+  "ownershipNote": "This file holds ONLY the numbers module 16 does not already own. `maxCombosPerActor` (the per-actor Strain/Splice backstop), `resonance.attunedTierBonus` (D22-as-amended's enhanced tier), `strainSplice.ingredientCount` (D20's four), `structuralCeiling` and the fifteen `socketCeiling` rows all shipped in data/tuning/sockets.v1.json when module 16 took ownership of it, and repeating any of them here would mint a second source of truth for a value the C# parser already refuses to default. spec-strain-splice-gen.md's Project-structure row (`data/tuning/strain-splice.v1.json -- per-actor cap, affinity tier bonus`) is STALE BY ONE MODULE and is corrected here rather than obeyed literally.",
+  "recipe": {
+    "minTierPlan": [1, 1, 2, 2],
+    "minTierPlanNote": "The insert tier each of D20's four ingredients must meet. The model picks the four FAMILIES; this plan is how deterministic code turns that pick into `min_tier`, which spec-strain-splice-gen.md's P1 table assigns to code, not to the model. Length must equal sockets.v1.json's strainSplice.ingredientCount and every entry must fall inside insertTiers.count -- both checked at load. Ascending on purpose: the plan is zipped onto the ingredient multiset sorted by family id, so the assignment is one deterministic function of the model's answer and a re-run over the same answer is byte-identical.",
+    "baseTier": {
+      "strain": 1,
+      "splice": 1
+    },
+    "baseTierNote": "The tier a combination grants BEFORE D22-as-amended's attuned +1 (sockets.v1.json resonance.attunedTierBonus). Strain and Splice start EQUAL because nothing in D20 prices one above the other -- a Splice is two aptitude lines fused, not a bigger number -- and inventing a gap here would be a balance decision wearing a default's clothes. Split into two keys anyway, because a balance pass separating them is exactly the change this file exists to make cheap. NOT a ceiling: a granted tier is unbounded above (sockets.v1.json structuralCeilingNote), and nothing clamps it."
+  },
+  "learnability": {
+    "catalogueSizeBar": 45,
+    "catalogueSizeBarNote": "ssot-sockets.md 4.4 sized the learnable combination catalogue at ~45 (25 generated resonances + <=20 words). 25 + 102 = 127 is 2.8x that. REPORTED, NEVER ENFORCED: this is a design bar for a report, not a cap on content, and a threshold that refused the 102nd combination would be a hard content ceiling of exactly the kind AGENTS.md forbids. Exceeding it emits a NOTE naming module 20's two mitigations (compendium reveal, socket-UI preview) as REQUIREMENTS -- spec-strain-splice-gen.md's own promotion of them from niceties."
+  },
+  "distinctness": {
+    "exactDuplicateNamesMax": 0,
+    "nearDuplicateRateMaxPermille": 5,
+    "distinctnessNote": "Thresholds for the two name-distinctness gates over the generated 102. exactDuplicateNamesMax 0 is structural -- two combinations sharing a name are indistinguishable in the compendium module 20 owes, which is the one surface the learnability debt above is paid on. nearDuplicateRateMaxPermille 5 is module 13's own shipped value, carried rather than re-derived so the two generated item populations are judged on one bar. At n=102 a rate of 5 permille is 0 pairs, so the gate is effectively 'no near-duplicates' at this population size -- said here because a granularity effect that is not written down gets rediscovered as a bug (module 13 recorded the same effect at n=100)."
+  }
+}
