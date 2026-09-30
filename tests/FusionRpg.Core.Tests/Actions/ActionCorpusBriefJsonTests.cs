@@ -96,7 +96,7 @@ public class ActionCorpusBriefJsonTests
     public void ARealShippedBriefsKindHintParses()
     {
         var repoRoot = RepoRoot();
-        var path = Path.Combine(repoRoot, "data", "seed", "actions", "committed-round-2.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "actions", "committed-round-2.json");
         var briefs = ActionCorpusBriefJson.Parse(File.ReadAllText(path));
 
         var cabbagepult2 = briefs.Single(b => b.Id == "action.species.cabbagepult.002");

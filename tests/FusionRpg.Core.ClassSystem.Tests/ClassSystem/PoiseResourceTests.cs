@@ -50,7 +50,7 @@ public class PoiseResourceTests
     public void Roster_and_ResourceIds_agree_in_order()
     {
         var repoRoot = FindRepoRoot();
-        var rosterPath = Path.Combine(repoRoot, "data", "seed", "resources", "roster.json");
+        var rosterPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "resources", "roster.json");
         using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(rosterPath));
         var rosterIds = doc.RootElement.GetProperty("entries").EnumerateArray()
             .Select(e => (Id: e.GetProperty("id").GetString()!, Ordinal: e.GetProperty("ordinal").GetInt32()))
@@ -68,7 +68,7 @@ public class PoiseResourceTests
     {
         var repoRoot = FindRepoRoot();
 
-        var rosterPath = Path.Combine(repoRoot, "data", "seed", "resources", "roster.json");
+        var rosterPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "resources", "roster.json");
         using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(rosterPath));
         var stamina = doc.RootElement.GetProperty("entries").EnumerateArray()
             .First(e => e.GetProperty("id").GetString() == "stamina");
@@ -105,7 +105,7 @@ public class PoiseResourceTests
             "An exhaustion debuff must never touch a channel feeding its own resource's regen.",
             hubText, StringComparison.Ordinal);
 
-        var rosterPath = Path.Combine(repoRoot, "data", "seed", "resources", "roster.json");
+        var rosterPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "resources", "roster.json");
         using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(rosterPath));
         var poiseNote = doc.RootElement.GetProperty("entries").EnumerateArray()
             .First(e => e.GetProperty("id").GetString() == "poise")
@@ -119,7 +119,7 @@ public class PoiseResourceTests
         Assert.Equal(6, DerivedStatChannels.ResourceIds.Count);
 
         var repoRoot = FindRepoRoot();
-        var rosterPath = Path.Combine(repoRoot, "data", "seed", "resources", "roster.json");
+        var rosterPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "resources", "roster.json");
         using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(rosterPath));
         Assert.Equal(6, doc.RootElement.GetProperty("entries").GetArrayLength());
 

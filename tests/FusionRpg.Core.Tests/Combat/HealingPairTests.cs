@@ -5,6 +5,7 @@ using FusionRpg.Core.Effects;
 using FusionRpg.Core.Stats.Derived;
 using FusionRpg.Core.Status;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Combat;
 
@@ -254,7 +255,7 @@ public class HealingPairTests
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            var candidate = Path.Combine(new[] { dir.FullName, "data", "seed", "items" }.Concat(relativeUnderData).ToArray());
+            var candidate = Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed", "items" }.Concat(relativeUnderData).ToArray());
             if (File.Exists(candidate)) return File.ReadAllText(candidate);
             dir = dir.Parent;
         }

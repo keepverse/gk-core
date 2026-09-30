@@ -21,10 +21,10 @@ public class AffixComposerTests
         var root = RepoRoot();
         var files = new[]
         {
-            Path.Combine(root, "data", "seed", "effects", "affixes", "all.json"),
-            Path.Combine(root, "data", "seed", "atoms", "fx-board.json"),
-            Path.Combine(root, "data", "seed", "atoms", "fx-core.json"),
-            Path.Combine(root, "data", "seed", "atoms", "fx-status.json"),
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "effects", "affixes", "all.json"),
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "fx-board.json"),
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "fx-core.json"),
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "fx-status.json"),
         }.Where(File.Exists).Select(f => (f, File.ReadAllText(f))).ToArray();
 
         var collected = AtomSeedFile.Collect(files);

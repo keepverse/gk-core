@@ -1,6 +1,7 @@
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Match;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Match;
 
@@ -63,12 +64,12 @@ public class UniqueEquipmentAtomMappingTests
         var root = RepoRoot();
         var files = new (string Path, string Json)[]
         {
-            (Path.Combine(root, "data", "seed", "atoms", "fx-core.json"),
-                File.ReadAllText(Path.Combine(root, "data", "seed", "atoms", "fx-core.json"))),
-            (Path.Combine(root, "data", "seed", "atoms", "fx-status.json"),
-                File.ReadAllText(Path.Combine(root, "data", "seed", "atoms", "fx-status.json"))),
-            (Path.Combine(root, "data", "seed", "containers", "unique-equip.json"),
-                File.ReadAllText(Path.Combine(root, "data", "seed", "containers", "unique-equip.json"))),
+            (Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "fx-core.json"),
+                File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "fx-core.json"))),
+            (Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "fx-status.json"),
+                File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "fx-status.json"))),
+            (Path.Combine(KeepverseRoots.Content(), "data", "seed", "containers", "unique-equip.json"),
+                File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "containers", "unique-equip.json"))),
         };
 
         var result = AtomSeedFile.Collect(files);

@@ -92,8 +92,8 @@ public class RelicRowMigrationTests : IDisposable
     {
         var root = RepoRoot();
         var files = Directory
-            .GetFiles(Path.Combine(root, "data", "seed", "atoms"), "fx-*.json", SearchOption.AllDirectories)
-            .Concat(new[] { Path.Combine(root, "data", "seed", "containers", "unique-equip.json") })
+            .GetFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms"), "fx-*.json", SearchOption.AllDirectories)
+            .Concat(new[] { Path.Combine(KeepverseRoots.Content(), "data", "seed", "containers", "unique-equip.json") })
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (f, File.ReadAllText(f)))
             .ToArray();

@@ -2,6 +2,7 @@ using FusionRpg.Core.Creatures.Materialise;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Power;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures.Materialise;
 
@@ -132,11 +133,11 @@ public class SpeciesRollPreviewTests
     public void Two_real_players_get_differing_previews_from_the_real_committed_species_effects_content()
     {
         var repoRoot = FusionRpg.TestSupport.ContentRoot.Path;
-        var atomFiles = Directory.GetFiles(Path.Combine(repoRoot, "data", "seed", "atoms"), "*.json")
+        var atomFiles = Directory.GetFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms"), "*.json")
             .Where(f => !Path.GetFileName(f).Equals("vocabulary.json", StringComparison.OrdinalIgnoreCase));
-        var affixFiles = Directory.GetFiles(Path.Combine(repoRoot, "data", "seed", "effects", "affixes"), "*.json");
+        var affixFiles = Directory.GetFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "effects", "affixes"), "*.json");
         var speciesEffectFiles = Directory.GetFiles(
-            Path.Combine(repoRoot, "data", "seed", "creatures", "species-effects"), "*.json", SearchOption.AllDirectories);
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species-effects"), "*.json", SearchOption.AllDirectories);
 
         var files = atomFiles.Concat(affixFiles).Concat(speciesEffectFiles)
             .Select(f => (Path: f, Json: File.ReadAllText(f)));

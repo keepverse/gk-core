@@ -119,7 +119,7 @@ public class CreatureSpeciesImportCliTests : IDisposable
     public void A_stale_committed_file_refuses_the_whole_import_and_writes_nothing()
     {
         var repoRoot = FindRepoRoot();
-        var realOutDir = Path.Combine(repoRoot, "data", "generated", "creatures");
+        var realOutDir = Path.Combine(KeepverseRoots.Content(), "data", "generated", "creatures");
         var scratchOutDir = Path.Combine(_dbDir, "stale-generated");
         Directory.CreateDirectory(scratchOutDir);
 

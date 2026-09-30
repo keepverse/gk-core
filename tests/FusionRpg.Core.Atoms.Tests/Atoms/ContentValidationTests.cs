@@ -383,7 +383,7 @@ public class ContentValidationTests
     {
         var root = RepoRoot();
         var files = new[] { "atoms", "containers" }
-            .Select(d => Path.Combine(root, "data", "seed", d))
+            .Select(d => Path.Combine(KeepverseRoots.Content(), "data", "seed", d))
             .Where(Directory.Exists)
             .SelectMany(d => Directory.GetFiles(d, "*.json", SearchOption.AllDirectories))
             .OrderBy(f => f, StringComparer.Ordinal)

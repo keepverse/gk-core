@@ -221,7 +221,7 @@ public class EligibilityAxisTests
     public void The_real_family_map_json_is_the_live_species_relation()
     {
         var repoRoot = FindRepoRoot();
-        var mapPath = Path.Combine(repoRoot, "data", "seed", "actions", "_generated", "family-map.json");
+        var mapPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "actions", "_generated", "family-map.json");
         var map = FamilyMap.Parse(File.ReadAllText(mapPath));
 
         // Liveness + the relation's defining property.
@@ -230,7 +230,7 @@ public class EligibilityAxisTests
         Assert.All(map.Values, v => Assert.NotEmpty(v));
 
         // Every key is a shipped species id (the projection cannot invent one).
-        var indexPath = Path.Combine(repoRoot, "data", "seed", "creatures", "species", "_index.json");
+        var indexPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species", "_index.json");
         var species = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(indexPath))!
             .Keys.Select(k => k.ToLowerInvariant()).ToHashSet(StringComparer.Ordinal);
         var unknown = map.Keys.Where(k => !species.Contains(k)).ToList();

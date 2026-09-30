@@ -50,7 +50,7 @@ public class DecisionsGateTests
         Assert.Equal(6, DerivedStatChannels.ResourceIds.Count);
         Assert.Contains("poise", DerivedStatChannels.ResourceIds);
 
-        var rosterPath = Path.Combine(repoRoot, "data", "seed", "resources", "roster.json");
+        var rosterPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "resources", "roster.json");
         var rosterIds = ExtractRosterIdsInOrdinalOrder(rosterPath);
         Assert.Equal(DerivedStatChannels.ResourceIds, rosterIds);
     }

@@ -91,14 +91,14 @@ public class MilestoneTrackTests
         // a track naming anything else is a content gap the lookup would throw on.
         var root = FindRepoRoot();
         using var milestones = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            root, "data", "seed", "items", "enhancement-milestones", "milestones.json")));
+            KeepverseRoots.Content(), "data", "seed", "items", "enhancement-milestones", "milestones.json")));
         var known = milestones.RootElement.GetProperty("entries").EnumerateArray()
             .Select(e => e.GetProperty("runtimeFamily").GetString()!)
             .ToHashSet(StringComparer.Ordinal);
 
         var violations = new List<string>();
         foreach (var file in Directory.EnumerateFiles(
-                     Path.Combine(root, "data", "seed", "items", "base-types"), "*.json"))
+                     Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types"), "*.json"))
         {
             using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(file));
             foreach (var entry in doc.RootElement.GetProperty("entries").EnumerateArray())

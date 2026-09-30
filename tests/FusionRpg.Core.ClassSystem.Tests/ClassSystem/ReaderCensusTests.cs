@@ -74,7 +74,7 @@ public class ReaderCensusTests
         // gk-core/scripts/audit-reader-census.py's own SCOPE docstring for why 29, not familyRead's full 48).
         // Parsed independently here, not through the script's own --crosscheck text output.
         var repoRoot = FindRepoRoot();
-        var catalogPath = Path.Combine(repoRoot, "data", "seed", "derived-stats", "catalog.json");
+        var catalogPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "derived-stats", "catalog.json");
         Assert.True(File.Exists(catalogPath), "missing " + catalogPath);
         using var catalogDoc = JsonDocument.Parse(File.ReadAllText(catalogPath));
 

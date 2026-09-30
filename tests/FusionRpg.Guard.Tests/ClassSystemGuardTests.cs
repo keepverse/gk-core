@@ -335,8 +335,8 @@ public class ClassSystemGuardTests
     static string NewFixture()
     {
         var dir = Path.Combine(Path.GetTempPath(), "fusionrpg-classsystemguard-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Path.Combine(dir, "data", "seed", "aptitudes"));
-        Directory.CreateDirectory(Path.Combine(dir, "data", "seed", "derived-stats"));
+        Directory.CreateDirectory(Path.Combine(KeepverseRoots.Content(), "data", "seed", "aptitudes"));
+        Directory.CreateDirectory(Path.Combine(KeepverseRoots.Content(), "data", "seed", "derived-stats"));
         return dir;
     }
 

@@ -6,6 +6,7 @@ using FusionRpg.Data;
 using Xunit;
 using FusionRpg.Data.Tests;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -41,8 +42,8 @@ public class CreatureLawnDeployAtomPushTests : IDisposable
         var root = RepoRoot();
         var files = new[]
         {
-            Path.Combine(root, "data", "seed", "atoms", "trait-critical-hunter.json"),
-            Path.Combine(root, "data", "seed", "containers", "trait-critical-hunter.json"),
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "trait-critical-hunter.json"),
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "containers", "trait-critical-hunter.json"),
         }.Select(f => (f, File.ReadAllText(f))).ToArray();
 
         var collected = AtomSeedFile.Collect(files);

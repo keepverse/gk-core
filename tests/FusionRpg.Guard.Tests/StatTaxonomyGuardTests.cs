@@ -170,7 +170,7 @@ Assert.Contains("P1 ", stderr, StringComparison.Ordinal);
     static string NewFixture()
     {
         var dir = Path.Combine(Path.GetTempPath(), "fusionrpg-statpairsguard-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Path.Combine(dir, "data", "seed", "derived-stats"));
+        Directory.CreateDirectory(Path.Combine(KeepverseRoots.Content(), "data", "seed", "derived-stats"));
         return dir;
     }
 

@@ -83,7 +83,7 @@ public class AtomPushServicePatronCallbackTests : IDisposable
     void SeedRealPatronAuraContent()
     {
         var root = RepoRoot();
-        var atomsPath = Path.Combine(root, "data", "seed", "atoms", "patron-aura.json");
+        var atomsPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "patron-aura.json");
         var collected = AtomSeedFile.Collect(new[] { (atomsPath, File.ReadAllText(atomsPath)) });
         Assert.True(collected.IsOk, string.Join("; ", collected.Errors));
         // The exact count (12 today, one per element x power/defense) is a growing content fact, never

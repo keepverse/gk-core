@@ -1,6 +1,7 @@
 using FusionRpg.Core.Creatures.Generation;
 using FusionRpg.Core.Stats.Aptitudes;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures;
 
@@ -177,7 +178,7 @@ public class SpeciesBuildPlannerTests
         // The acceptance test (spec's own success criterion #2) — pass/fail, not a report. Reads the
         // real classified anchors and the real shipped tuning, exactly as gk-forge/tools/CreatureBuildPlanGen does.
         var repoRoot = RepoRoot();
-        var seedRoot = Path.Combine(repoRoot, "data", "seed", "creatures", "species");
+        var seedRoot = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species");
         var realTuning = SpeciesBuildTuningLoader.Parse(
             File.ReadAllText(Path.Combine(repoRoot, "data", "tuning", "species-build.v6.json")));
 
@@ -196,7 +197,7 @@ public class SpeciesBuildPlannerTests
         var signals = LeanSignals.Compute(
             BuildFavourMeasurer.RosterPopulation(resolved),
             BaseStatDump.Parse(File.ReadAllText(Path.Combine(
-                repoRoot, "data", "seed", "creatures", "_dump", "type-base-stats.json"))),
+                KeepverseRoots.Content(), "data", "seed", "creatures", "_dump", "type-base-stats.json"))),
             CreatureThreatTuningLoader.Parse(File.ReadAllText(Path.Combine(
                 repoRoot, "data", "tuning", "creature-threat.v2.json"))).Thresholds);
 
@@ -387,7 +388,7 @@ public class SpeciesBuildPlannerTests
             File.ReadAllText(Path.Combine(repoRoot, "data", "tuning", "species-build.v6.json")));
         var anchors = new List<AnchorRow>();
         foreach (var file in Directory.GetFiles(
-                     Path.Combine(repoRoot, "data", "seed", "creatures", "species"), "*.json",
+                     Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species"), "*.json",
                      SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
         {
             if (Path.GetFileName(file).StartsWith('_')) continue;
@@ -397,7 +398,7 @@ public class SpeciesBuildPlannerTests
         var signals = LeanSignals.Compute(
             BuildFavourMeasurer.RosterPopulation(resolved),
             BaseStatDump.Parse(File.ReadAllText(Path.Combine(
-                repoRoot, "data", "seed", "creatures", "_dump", "type-base-stats.json"))),
+                KeepverseRoots.Content(), "data", "seed", "creatures", "_dump", "type-base-stats.json"))),
             CreatureThreatTuningLoader.Parse(File.ReadAllText(Path.Combine(
                 repoRoot, "data", "tuning", "creature-threat.v2.json"))).Thresholds);
 

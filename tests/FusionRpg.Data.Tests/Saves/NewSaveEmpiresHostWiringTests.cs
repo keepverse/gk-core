@@ -5,6 +5,7 @@ using FusionRpg.Core.Commanders;
 using FusionRpg.Core.Saves;
 using FusionRpg.Data;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Saves;
 
@@ -21,7 +22,7 @@ public class NewSaveEmpiresHostWiringTests
     {
         var testsDir = Path.GetDirectoryName(here)!;
         var root = Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));
-        return Path.Combine(root, "data", "seed", "saves", "_registry", "new-save-empires.v1.json");
+        return Path.Combine(KeepverseRoots.Content(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json");
     }
 
     [Fact]

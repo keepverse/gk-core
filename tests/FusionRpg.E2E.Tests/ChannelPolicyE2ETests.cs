@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using FusionRpg.Data.Tests;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.E2E.Tests;
 
@@ -29,7 +30,7 @@ public class ChannelPolicyE2ETests
         // defaults.json restates the code defaults on purpose (documentation-as-data, zero design
         // decision) — safe to run against the shared fixture's real store.
         var root = RepoRoot();
-        var files = Directory.GetFiles(Path.Combine(root, "data", "seed", "channel-policy"), "*.json")
+        var files = Directory.GetFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "channel-policy"), "*.json")
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (f, File.ReadAllText(f)))
             .ToArray();

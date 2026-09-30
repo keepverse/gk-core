@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using FusionRpg.Core.Commanders;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Commanders;
 
@@ -21,7 +22,7 @@ public static class ShippedCommanders
     {
         var testsDir = Path.GetDirectoryName(here)!;
         var root = Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));
-        var path = Path.Combine(root, "data", "seed", "commanders", "_registry", "default-commanders.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json");
         return DataCommanderDirectory.Parse(File.ReadAllText(path));
     }
 }

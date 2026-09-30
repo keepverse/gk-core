@@ -115,7 +115,7 @@ public class UniqueActorXpUnlockRollTests : IAsyncLifetime
     static void SeedThroughTheRealImportPath(RpgStore store)
     {
         var root = RepoRoot();
-        var atomsPath = Path.Combine(root, "data", "seed", "atoms", "generated", "family-expand.g-life.json");
+        var atomsPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "generated", "family-expand.g-life.json");
         var collected = AtomSeedFile.Collect(new[] { (atomsPath, File.ReadAllText(atomsPath)) });
         Assert.True(collected.IsOk, string.Join("; ", collected.Errors));
         store.UpsertAtoms(collected.Content.Atoms);
@@ -128,7 +128,7 @@ public class UniqueActorXpUnlockRollTests : IAsyncLifetime
         var briefs = new List<ActionCorpusBrief>();
         foreach (var file in new[] { "committed-round-1.json", "committed-round-2.json", "authored-basics.json" })
         {
-            var path = Path.Combine(root, "data", "seed", "actions", file);
+            var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "actions", file);
             if (File.Exists(path)) briefs.AddRange(ActionCorpusBriefJson.Parse(File.ReadAllText(path)));
         }
 

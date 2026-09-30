@@ -20,7 +20,7 @@ internal static class DungeonRegistryHubTestBootstrap
     public static void Init()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !Directory.Exists(Path.Combine(dir.FullName, "data", "seed", "dungeon")))
+        while (dir is not null && !Directory.Exists(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon")))
             dir = dir.Parent;
         if (dir is null) throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
 

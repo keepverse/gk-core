@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using FusionRpg.Data.Tests;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.E2E.Tests;
 
@@ -44,7 +45,7 @@ public class ContentBootE2ETests
     {
         var root = RepoRoot();
         var files = new[] { "elements" }
-            .Select(d => Path.Combine(root, "data", "seed", d))
+            .Select(d => Path.Combine(KeepverseRoots.Content(), "data", "seed", d))
             .SelectMany(d => Directory.GetFiles(d, "*.json"))
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (f, File.ReadAllText(f)))

@@ -25,6 +25,7 @@ using FusionRpg.Core.World.Ai;
 using FusionRpg.Core.World.Growth;
 using FusionRpg.Core.World.Loam;
 using FusionRpg.Data.Policies;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.E2E.Tests;
 
@@ -49,7 +50,7 @@ internal static class ContractTuningTestBootstrap
             var dir = new DirectoryInfo(AppContext.BaseDirectory);
             while (dir is not null)
             {
-                var candidate = Path.Combine(dir.FullName, "data", "seed", area, "_registry", file);
+                var candidate = Path.Combine(KeepverseRoots.Content(), "data", "seed", area, "_registry", file);
                 if (File.Exists(candidate)) return candidate;
                 dir = dir.Parent;
             }
