@@ -133,7 +133,17 @@ public static class KeepverseRoots
     {
         if (Env("KEEPVERSE_FUSION_ROOT") is { } env) return env;
         var (legacy, root) = Detected(start);
-        return legacy ? root : Path.Combine(root, "gk-fusion");
+        var sibling = legacy ? root : Path.Combine(root, "gk-fusion");
+        // Refuse rather than name a repository that is not there: this type's contract says
+        // "a root is never guessed", and Content() already does it for its pack. A standalone
+        // gk-core clone has no siblings by definition, so without this a caller gets a
+        // confident path into a directory that does not exist.
+        if (!Directory.Exists(sibling))
+            throw new DirectoryNotFoundException(
+                $"gk-fusion is not present at {sibling} (workspace at {root}); "
+                + "a sibling repository cannot be reached by walking upward, so set "
+                + "KEEPVERSE_FUSION_ROOT to point at it, or place it beside gk-core.");
+        return sibling;
     }
 
     /// <summary>
@@ -158,7 +168,17 @@ public static class KeepverseRoots
     {
         if (Env("KEEPVERSE_FORGE_ROOT") is { } env) return env;
         var (legacy, root) = Detected(start);
-        return legacy ? root : Path.Combine(root, "gk-forge");
+        var sibling = legacy ? root : Path.Combine(root, "gk-forge");
+        // Refuse rather than name a repository that is not there: this type's contract says
+        // "a root is never guessed", and Content() already does it for its pack. A standalone
+        // gk-core clone has no siblings by definition, so without this a caller gets a
+        // confident path into a directory that does not exist.
+        if (!Directory.Exists(sibling))
+            throw new DirectoryNotFoundException(
+                $"gk-forge is not present at {sibling} (workspace at {root}); "
+                + "a sibling repository cannot be reached by walking upward, so set "
+                + "KEEPVERSE_FORGE_ROOT to point at it, or place it beside gk-core.");
+        return sibling;
     }
 
     /// <summary>
@@ -177,7 +197,17 @@ public static class KeepverseRoots
     {
         if (Env("KEEPVERSE_WEB_ROOT") is { } env) return env;
         var (legacy, root) = Detected(start);
-        return legacy ? root : Path.Combine(root, "gk-web");
+        var sibling = legacy ? root : Path.Combine(root, "gk-web");
+        // Refuse rather than name a repository that is not there: this type's contract says
+        // "a root is never guessed", and Content() already does it for its pack. A standalone
+        // gk-core clone has no siblings by definition, so without this a caller gets a
+        // confident path into a directory that does not exist.
+        if (!Directory.Exists(sibling))
+            throw new DirectoryNotFoundException(
+                $"gk-web is not present at {sibling} (workspace at {root}); "
+                + "a sibling repository cannot be reached by walking upward, so set "
+                + "KEEPVERSE_WEB_ROOT to point at it, or place it beside gk-core.");
+        return sibling;
     }
 
     /// <summary>

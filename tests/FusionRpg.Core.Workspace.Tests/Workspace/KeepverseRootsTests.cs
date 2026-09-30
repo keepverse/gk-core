@@ -53,6 +53,13 @@ public sealed class KeepverseRootsTests
         // leaving it out is exactly how the fourth root went missing from this resolver in the
         // first place: the repository has one file in it, so nothing else refers to it.
         Directory.CreateDirectory(Path.Combine(ws, "gk-content", "content", "display"));
+        // The three sibling repositories, because Forge(), Web() and Fusion() now REFUSE when the
+        // repository they name is absent. That refusal is the point of naming them - but it means a
+        // fixture that omits one no longer exercises the happy path, it silently exercises the
+        // refusal path instead, and would report a fixture gap as if it were a resolver defect.
+        Directory.CreateDirectory(Path.Combine(ws, "gk-forge", "tools"));
+        Directory.CreateDirectory(Path.Combine(ws, "gk-web"));
+        Directory.CreateDirectory(Path.Combine(ws, "gk-fusion", "src"));
         return ws;
     }
 
@@ -343,10 +350,16 @@ public sealed class KeepverseRootsTests
             Directory.CreateDirectory(Path.Combine(bare, "gk-data"));
             try
             {
-                var missing = KeepverseRoots.Fusion(bare);
-                Assert.False(Directory.Exists(missing),
-                    "Fusion() named a root for a repository that does not exist; the caller must be "
-                    + "told the sibling is absent rather than handed a path that cannot resolve");
+                  // This used to assert only Assert.False(Directory.Exists(missing)), which is a
+                  // statement about the FIXTURE rather than about the resolver: a phantom path into
+                  // a directory that does not exist satisfies it, and so does a correct refusal. It
+                  // therefore passed no matter what Fusion() did, while its own comment demanded
+                  // that "the caller must be told the sibling is absent". Asserting the refusal - and
+                  // the two things a caller needs in order to act on it, WHICH repository is missing
+                  // and WHICH override redirects it - is what makes this test able to fail.
+                  var refused = Assert.Throws<DirectoryNotFoundException>(() => KeepverseRoots.Fusion(bare));
+                  Assert.Contains("gk-fusion", refused.Message, StringComparison.Ordinal);
+                  Assert.Contains("KEEPVERSE_FUSION_ROOT", refused.Message, StringComparison.Ordinal);
             }
             finally
             {
@@ -484,6 +497,70 @@ public sealed class KeepverseRootsTests
                 KeepverseRoots.Workspace(ws),
             };
             Assert.Equal(all.Length, all.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        }
+        finally
+        {
+            Directory.Delete(cleanup, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// The refusal, which is the reason this test exists at all.
+    ///
+    /// <para>A sibling repository is not reachable by walking upward, so a resolver that merely
+    /// concatenated the name would hand back a confident path into a directory that is not there.
+    /// In a standalone gk-core clone - the layout ADDITION 9 asks the workspace to support - that is
+    /// every call, and the failure it produces surfaces much later as a FileNotFound naming a
+    /// directory the caller has no way to create. This asserts the accessor says WHICH repository is
+    /// missing and HOW to redirect it: a refusal that only says "not found" is the same dead end
+    /// wearing a better coat.</para>
+    ///
+    /// <para>Each accessor is checked against its own absent repository, and each message is checked
+    /// for its own repository name. One accessor refusing correctly while another silently returned a
+    /// phantom path would leave the suite green, which is the outcome this is shaped against.</para>
+    /// </summary>
+    [Fact]
+    public void A_sibling_root_that_is_absent_is_refused_by_name()
+    {
+        foreach (var (folder, accessor, env) in new[]
+                 {
+                     ("gk-forge", (Func<string, string>)(s => KeepverseRoots.Forge(s)), "KEEPVERSE_FORGE_ROOT"),
+                     ("gk-web", (Func<string, string>)(s => KeepverseRoots.Web(s)), "KEEPVERSE_WEB_ROOT"),
+                     ("gk-fusion", (Func<string, string>)(s => KeepverseRoots.Fusion(s)), "KEEPVERSE_FUSION_ROOT"),
+                 })
+        {
+            var ws = WorkspaceLayout(out var cleanup);
+            try
+            {
+                Directory.Delete(Path.Combine(ws, folder), recursive: true);
+
+                var ex = Assert.Throws<DirectoryNotFoundException>(() => accessor(ws));
+                Assert.Contains(folder, ex.Message, StringComparison.Ordinal);
+                Assert.Contains(env, ex.Message, StringComparison.Ordinal);
+            }
+            finally
+            {
+                Directory.Delete(cleanup, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// The counterpart, so the refusal above cannot be satisfied by refusing everything. In a legacy
+    /// checkout every repository is the one directory, and the sibling accessors must keep returning
+    /// it - which is what makes them safe in production code that also has to run before the split is
+    /// finished. A rule that refuses whenever it cannot walk upward would break exactly that case.
+    /// </summary>
+    [Fact]
+    public void A_sibling_accessor_still_resolves_in_a_legacy_checkout_where_everything_is_one_directory()
+    {
+        var root = LegacyLayout(out var cleanup);
+        try
+        {
+            Assert.Equal(root, KeepverseRoots.Forge(root));
+            Assert.Equal(root, KeepverseRoots.Web(root));
+            Assert.Equal(root, KeepverseRoots.Fusion(root));
+            Assert.Equal(root, KeepverseRoots.AuthoredContent(root));
         }
         finally
         {
