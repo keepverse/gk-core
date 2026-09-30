@@ -14,6 +14,7 @@ using FusionRpg.Core.Power;
 using FusionRpg.Data;
 using FusionRpg.Data.Sqlite;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Items;
 
@@ -673,7 +674,7 @@ public class ItemCardStoreTests : IDisposable
 
         // The REAL string catalog, the same file the Server loads at boot.
         var strings = DisplayStringCatalog.Parse(File.ReadAllText(
-            Path.Combine(RepoRoot(), "content", "display", "en.json")));
+            Path.Combine(KeepverseRoots.AuthoredContent(), "content", "display", "en.json")));
         var corpus = Corpus() with { LookupString = strings };
 
         var input = _store.GetItemCardInput(f.InstanceId, corpus, Wearer(f))!;

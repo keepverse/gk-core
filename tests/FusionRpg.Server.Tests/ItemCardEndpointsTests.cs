@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using Xunit;
 using FusionRpg.Data.Tests;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -249,7 +250,7 @@ public class ItemCardEndpointsTests : IAsyncLifetime
             // ⭐ item-content T6: N2's real string catalog, so block 10 resolves a real authored
             // flavour sentence rather than emitting a bare key for the browser to fake.
             LookupString: DisplayStringCatalogFile.Load(
-                Path.Combine(RepoRoot(), "content", "display", "en.json")));
+                Path.Combine(KeepverseRoots.AuthoredContent(), "content", "display", "en.json")));
 
         var port = GetFreeTcpPort();
         var baseUrl = $"http://127.0.0.1:{port}";
@@ -875,7 +876,7 @@ public class ItemCardEndpointsTests : IAsyncLifetime
     public void TheStringCatalog_resolvesARealAuthoredFlavourSentenceAndNeverInventsOne()
     {
         var lookup = DisplayStringCatalogFile.Load(
-            Path.Combine(RepoRoot(), "content", "display", "en.json"));
+            Path.Combine(KeepverseRoots.AuthoredContent(), "content", "display", "en.json"));
 
         var text = lookup("flavor.unique.carrion-spitter");
         Assert.False(string.IsNullOrWhiteSpace(text));
@@ -888,7 +889,7 @@ public class ItemCardEndpointsTests : IAsyncLifetime
         // A key with no row, and a catalog file that is not there at all: both answer null.
         Assert.Null(lookup("flavor.unique.never-authored"));
         Assert.Null(DisplayStringCatalogFile.Load(
-            Path.Combine(RepoRoot(), "content", "display", "no-such-language.json"))("anything"));
+            Path.Combine(KeepverseRoots.AuthoredContent(), "content", "display", "no-such-language.json"))("anything"));
     }
 
     /// <summary>

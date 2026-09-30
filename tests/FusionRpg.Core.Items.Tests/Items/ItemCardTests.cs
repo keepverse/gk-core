@@ -12,6 +12,7 @@ using FusionRpg.Core.Items.Uniques;
 using FusionRpg.Core.Power;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -817,7 +818,7 @@ public class ItemCardTests
     /// loads and the same one <c>DisplayCheck</c> validates keys against.</summary>
     static readonly Lazy<Func<string, string?>> ShippedStringCatalog = new(() =>
         DisplayStringCatalog.Parse(
-            File.ReadAllText(Path.Combine(RepoRoot(), "content", "display", "en.json"))));
+            File.ReadAllText(Path.Combine(KeepverseRoots.AuthoredContent(), "content", "display", "en.json"))));
 
     [Fact]
     public void A_unique_distinguishes_its_identity_lines_from_its_variance_line()
@@ -1755,7 +1756,7 @@ public class ItemCardTests
     {
         // The real corpus, against the real gk-content/content/display/en.json -- the two rules that are green
         // today, pinned so they stay green.
-        var en = JsonDocument.Parse(File.ReadAllText(Path.Combine(RepoRoot(), "content", "display", "en.json")));
+        var en = JsonDocument.Parse(File.ReadAllText(Path.Combine(KeepverseRoots.AuthoredContent(), "content", "display", "en.json")));
         var keys = en.RootElement.EnumerateObject().Select(p => p.Name).ToHashSet(StringComparer.Ordinal);
 
         var findings = DisplayContentRules.Check(RealFamilyFacts(), Templates.Value.Values.ToList(), keys);

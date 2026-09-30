@@ -2,6 +2,7 @@ using FusionRpg.Core.Actions.Corpus;
 using FusionRpg.Core.Items.Display;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -45,7 +46,7 @@ public class GrantedActionTextTests
             .ToList();
 
     static Func<string, string?> RealStrings() => DisplayStringCatalog.Parse(
-        File.ReadAllText(Path.Combine(RepoRoot(), "content", "display", "en.json")));
+        File.ReadAllText(Path.Combine(KeepverseRoots.AuthoredContent(), "content", "display", "en.json")));
 
     [Fact]
     public void Every_committed_action_carries_a_description_key_that_resolves_to_real_prose()

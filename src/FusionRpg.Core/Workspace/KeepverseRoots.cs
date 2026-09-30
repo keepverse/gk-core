@@ -76,6 +76,32 @@ public static class KeepverseRoots
         return legacy ? root : Path.Combine(root, "gk-core");
     }
 
+    /// <summary>
+    /// Root of the AUTHORED content tree — <c>content/</c>, the display strings and other text the
+    /// owner writes by hand.
+    ///
+    /// <para><b>This is a fourth root, and it was missing until the first test asked for it.</b> The
+    /// other three are gk-core (code and tuning), the gk-data pack (the derived corpus) and
+    /// gk-workflow (the process). <c>content/</c> is neither: it is a separate repository, gk-content,
+    /// which holds exactly ONE file in this migration — <c>gk-content/content/display/en.json</c>. A tree with
+    /// one file is why it went unnoticed, and the symptom was 178 test failures naming a path under
+    /// the workspace root, because <see cref="Content"/> returned the gk-data pack and
+    /// <c>content/</c> is not inside the pack.
+    ///
+    /// <para>Worth stating plainly because it is a contract error rather than only a missing method:
+    /// <c>workspace_roots.py</c> lists <c>content</c> among the paths that
+    /// <c>content_root()</c> resolves, which was true before the split and is false after it. The
+    /// Python resolver is not wrong in practice — seedsmith reads <c>gk-data/packs/fusion/data/seed</c>, not
+    /// <c>content/</c> — but its docstring names a path the split moved out from under it, and that
+    /// is the same sentence a future reader would trust.
+    /// </para></summary>
+    public static string AuthoredContent(string? start = null)
+    {
+        if (Env("KEEPVERSE_AUTHORED_CONTENT_ROOT") is { } env) return env;
+        var (legacy, root) = Detected(start);
+        return legacy ? root : Path.Combine(root, "gk-content");
+    }
+
     /// <summary>Root holding <c>docs/</c> and <c>tasks/</c>.</summary>
     public static string Workspace(string? start = null) =>
         Env("KEEPVERSE_WORKSPACE_ROOT") ?? Detected(start).Root;
@@ -117,6 +143,8 @@ public static class KeepverseRoots
         // paths because that is the pack the corpus ships as.
         var contentOverride = Env("KEEPVERSE_CONTENT_ROOT");
         var coreOverride = Env("KEEPVERSE_CORE_ROOT");
+        var authoredOverride = Env("KEEPVERSE_AUTHORED_CONTENT_ROOT");
+        Add(authoredOverride);
         Add(contentOverride);
         Add(coreOverride);
         if (found.Count > 0) return found;
@@ -128,6 +156,9 @@ public static class KeepverseRoots
             Add(detected.Root);
             return found;
         }
+        // Authored content first: it is a distinct repository, and a caller asking for "content"
+        // must not be handed the derived pack that happens to share the word.
+        Add(Path.Combine(detected.Root, "gk-content"));
         Add(Path.Combine(detected.Root, "gk-data", "packs", Env("KEEPVERSE_PACK") ?? DefaultPack));
         Add(Path.Combine(detected.Root, "gk-core"));
         return found;

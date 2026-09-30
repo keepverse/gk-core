@@ -49,6 +49,10 @@ public sealed class KeepverseRootsTests
         Directory.CreateDirectory(Path.Combine(ws, "gk-core", "data", "tuning"));
         Directory.CreateDirectory(Path.Combine(ws, "gk-data", "packs", "fusion", "data", "seed"));
         Directory.CreateDirectory(Path.Combine(ws, "gk-data", "packs", "fusion", "data", "generated"));
+        // gk-content holds the authored content/ tree. It is easy to leave out of a fixture, and
+        // leaving it out is exactly how the fourth root went missing from this resolver in the
+        // first place: the repository has one file in it, so nothing else refers to it.
+        Directory.CreateDirectory(Path.Combine(ws, "gk-content", "content", "display"));
         return ws;
     }
 
@@ -154,12 +158,18 @@ public sealed class KeepverseRootsTests
         try
         {
             var roots = KeepverseRoots.Roots(ws);
-            // Two, not one: SeedImportRunner.FindUp is handed gk-data/packs/fusion/data/seed and gk-core/data/tuning by different
+            // Three, not one: SeedImportRunner.FindUp is handed gk-data/packs/fusion/data/seed and gk-core/data/tuning by different
             // callers and they live in different repositories after the split, so it cannot be told
-            // which root owns a path. Trying both lets the filesystem decide.
-            Assert.Equal(2, roots.Count);
+            // which root owns a path. Trying them all lets the filesystem decide. Authored content
+            // (gk-content) is in the list because gk-content/content/display/en.json lives there and is NOT
+            // inside the gk-data pack, despite sharing the word.
+            Assert.Equal(3, roots.Count);
+            Assert.Contains(Path.Combine(ws, "gk-content"), roots);
             Assert.Contains(Path.Combine(ws, "gk-data", "packs", "fusion"), roots);
             Assert.Contains(Path.Combine(ws, "gk-core"), roots);
+            // Authored content is offered BEFORE the derived pack, so a caller asking for "content"
+            // is handed the authored tree rather than the corpus that shares the word.
+            Assert.Equal(Path.Combine(ws, "gk-content"), roots[0]);
             // Deduplicated: content-first ordering must not offer the same directory twice in a
             // legacy checkout, where both roots are one path.
             Assert.Equal(roots.Count, new HashSet<string>(roots, StringComparer.OrdinalIgnoreCase).Count);
@@ -234,4 +244,46 @@ public sealed class KeepverseRootsTests
             Directory.Delete(elsewhere, recursive: true);
         }
     }
+
+    [Fact]
+    public void Authored_content_is_its_own_root_and_is_not_inside_the_content_pack()
+    {
+        var ws = WorkspaceLayout(out var cleanup);
+        try
+        {
+            // The defect this root was added for: gk-content/content/display/en.json lives in gk-content, and
+            // Content() returns the gk-data pack, so a caller handed the pack for a "content" path
+            // was looking one repository away from the file. 178 test failures named a path under
+            // the workspace root before this root existed.
+            Assert.Equal(Path.Combine(ws, "gk-content"), KeepverseRoots.AuthoredContent(ws));
+            Assert.NotEqual(KeepverseRoots.Content(ws), KeepverseRoots.AuthoredContent(ws));
+
+            // And the file is reachable from the authored root, not from the pack.
+            var file = Path.Combine(KeepverseRoots.AuthoredContent(ws), "content", "display", "en.json");
+            File.WriteAllText(file, "{}\n");
+            Assert.True(File.Exists(file));
+            Assert.False(File.Exists(Path.Combine(
+                KeepverseRoots.Content(ws), "content", "display", "en.json")),
+                "the pack must not be able to answer for the authored tree");
+        }
+        finally
+        {
+            Directory.Delete(cleanup, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Authored_content_collapses_to_the_repo_root_in_a_legacy_checkout()
+    {
+        var root = LegacyLayout(out var cleanup);
+        try
+        {
+            Assert.Equal(root, KeepverseRoots.AuthoredContent(root));
+        }
+        finally
+        {
+            Directory.Delete(cleanup, recursive: true);
+        }
+    }
+
 }
