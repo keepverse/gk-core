@@ -60,6 +60,12 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from keepverse_roots import (  # noqa: E402  (the resolver lives beside this tool, not on sys.path)
+    authored_content_root, content_root, core_root, forge_root, fusion_root, web_root,
+    workspace_root,
+)
+
 TOOL_ID = "run-guards"
 EXIT_OK = 0
 EXIT_FAILED = 1
@@ -198,12 +204,29 @@ def resolve_ci_range(tier: str, ci_range: str, root: Path) -> str:
 
 
 def resolve_guard_args(guard_id: str, row: dict, tier: str, ci_range: str, local_args: dict,
-                       is_git: bool) -> list[str]:
+                       is_git: bool, extension: str = ".py") -> list[str]:
     """The argv for one guard: the registry's `args` for the tier, plus the caller's local exceptions.
 
     A `{ciRange}` placeholder with no range DROPS ITSELF AND THE SWITCH BESIDE IT. Keeping the switch
     without its value would hand a guard `-Range` and nothing after it, and the failure would be an
     argparse error from a guard that never had a chance to run.
+    LOCAL ARGS ARE WRITTEN IN THE GUARD'S OWN DIALECT, which is what `extension` is for. They used to
+    be emitted as `-Key` unconditionally, the PowerShell spelling, because that is what the retired
+    `.ps1` guards took - while the runner dispatched `.py` guards through `sys.executable`. So a Python
+    guard received `-GameDir` where argparse wanted `--game-dir`, and the failure was an
+    `unrecognized arguments` exit 2 reported as a red guard. Measured: `game-profile` exited 2 with
+    `the following arguments are required: --game-dir, --profile` while the runner had in fact passed
+    both values, spelled the old way.
+
+    That wiring was never exercised after the split, because until this runner could resolve a sibling
+    repository's script the guard was unreachable and the runner refused before dispatching anything.
+    Fixing reachability exposed the defect underneath it, which is the usual shape of this class: the
+    first fix makes a previously dead path live, and the dead path was never right.
+
+    Converting a camelCase key to kebab-case was considered and REJECTED, because it is wrong here
+    anyway: `ExpectedProfile` becomes `--expected-profile`, and the guard's flag is `--profile`. A value
+    whose real flag differs from its key cannot be derived from the key, so the caller states it.
+
     """
     resolved: list[str] = []
     for raw in (row.get("args") or {}).get(tier, []):
@@ -223,8 +246,9 @@ def resolve_guard_args(guard_id: str, row: dict, tier: str, ci_range: str, local
         resolved.append(arg)
     # The one caller-supplied exception: machine-local values (the game dir) that must never be
     # committed. Everything else comes from the registry.
+    switch = "--" if extension.lower() == ".py" else "-"
     for key, value in sorted((local_args.get(guard_id) or {}).items()):
-        resolved.extend([f"-{key}", str(value)])
+        resolved.extend([f"{switch}{key}", str(value)])
     return resolved
 
 
@@ -271,6 +295,60 @@ def check_selection(guards: list[str], catalog: dict, tier: str, only: list[str]
                       "CI selected no gating guards; an evidence-free guard run is RED")
 
 
+def _guard_script_bases(root: Path) -> tuple[Path, ...]:
+    """EVERY repository that could own a registry guard script, THIS ONE FIRST.
+
+    The enforcement registry names 29 guards, all with a bare `scripts/<file>` path and no repository
+    qualifier, because there was one repository when they were written. Measured on this registry: 23
+    resolve in gk-core, 4 live in gk-fusion (`single-writer`, `funnel-delta`, `game-profile`,
+    `injector-compile`) and 2 in gk-workflow at the workspace root (`session-boundary`,
+    `doc-citations`). Joining every one onto gk-core made the runner refuse before running anything:
+
+        REFUSED [catalog]: GUARD-SCRIPT-MISSING
+          guard script missing: game-profile -> scripts/guard-game-profile.py
+
+    That refusal reached the deploy tool, which passed its game-profile precondition through here, so
+    **no deploy could run at all**. A catalog that cannot name its own files is not a finding about a
+    guard; it is a finding about the reader, reported in the vocabulary of the thing it misread.
+
+    Every accessor is wrapped because several RAISE when their subject is absent. A runner that dies
+    because gk-forge is missing has turned a sibling's absence into this run's outcome, and it would
+    do it as a traceback rather than a named refusal.
+    """
+    bases: list[Path] = [root]
+    for accessor in (core_root, forge_root, fusion_root, web_root, workspace_root,
+                     content_root, authored_content_root):
+        try:
+            base = accessor(root)
+        except Exception:
+            continue
+        if base:
+            base = Path(base)
+            if base not in bases and base.is_dir():
+                bases.append(base)
+    return tuple(bases)
+
+
+def resolve_guard_script(root: Path, script: str) -> tuple[Path, Path] | None:
+    """The guard script, and the repository that owns it, or None when no repository has it.
+
+    BOTH are returned because they have to agree. This runner executes every child with the ROOT as its
+    working directory, on the recorded reasoning that a Python guard is a plain script that opens
+    relative paths and fails closed when measured from elsewhere. Resolving a gk-fusion guard's file and
+    then running it from gk-core would hand it a working directory with no `src/FusionRpg.Injector` in
+    it, and the guard would report a red that is a measurement artefact. For a gk-core-owned guard this
+    is unchanged, because the local root answers first.
+    """
+    rel = str(script).replace("\\", "/").strip()
+    if not rel:
+        return None
+    for base in _guard_script_bases(root):
+        candidate = base / rel
+        if candidate.is_file():
+            return base, candidate
+    return None
+
+
 def check_scripts_exist(root: Path, guards: list[str], catalog: dict) -> None:
     """Every selected guard's FILE must exist, checked BEFORE any guard runs.
 
@@ -278,10 +356,14 @@ def check_scripts_exist(root: Path, guards: list[str], catalog: dict) -> None:
     half-way through a batch whose earlier guards have already been reported.
     """
     for guard_id in guards:
-        script = root / str(catalog[guard_id]["script"])
-        if not script.is_file():
+        if resolve_guard_script(root, catalog[guard_id]["script"]) is None:
+            # The message names every repository consulted. One that named a single directory sends the
+            # reader to add a file to a directory the script was never going to be in - which is exactly
+            # what happened when this said "scripts/run_guards.py does not exist" and the tool that
+            # exists with that name lives in a different repository.
             raise Refusal("catalog", "GUARD-SCRIPT-MISSING",
-                          f"guard script missing: {guard_id} -> {catalog[guard_id]['script']}")
+                          f"guard script missing: {guard_id} -> {catalog[guard_id]['script']}; searched "
+                          + ", ".join(str(b) for b in _guard_script_bases(root)))
 
 
 def missing_interpreters(selected_scripts: list[str], only: list[str]) -> list[str]:
@@ -339,8 +421,21 @@ def dispatch(root: Path, guards: list[str], catalog: dict, tier: str, ci_range: 
     is_git = repo_is_git(root)
     for guard_id in guards:
         row = catalog[guard_id]
-        script = root / str(row["script"])
-        argv = resolve_guard_args(guard_id, row, tier, ci_range, local_args, is_git)
+        found = resolve_guard_script(root, row["script"])
+        if found is None:
+            # check_scripts_exist refuses on this before dispatch, so reaching here means the file
+            # vanished between the two passes. Recorded as a red row rather than an exception, because a
+            # vanished file is a fact about the tree and not about the runner.
+            report.results.append({"id": guard_id, "tier": row["tier"], "status": row["status"],
+                                   "script": str(row["script"]), "argv": [],
+                                   "exit": EXIT_UNDISPATCHABLE, "seconds": 0.0,
+                                   "stderr": f"script vanished after the catalog check: {row['script']}"})
+            report.undispatchable.append(guard_id)
+            continue
+        # The working directory is the OWNING repository, not gk-core - see resolve_guard_script.
+        script_base, script = found
+        argv = resolve_guard_args(guard_id, row, tier, ci_range, local_args, is_git,
+                                  script.suffix)
         extension = script.suffix.lower()
         started = time.monotonic()
         if extension == ".py":
@@ -362,7 +457,8 @@ def dispatch(root: Path, guards: list[str], catalog: dict, tier: str, ci_range: 
             report.undispatchable.append(guard_id)
             continue
         try:
-            proc = subprocess.run(command, capture_output=True, text=True, timeout=timeout, cwd=str(root))
+            proc = subprocess.run(command, capture_output=True, text=True, timeout=timeout,
+                                 cwd=str(script_base))
             code, stderr = proc.returncode, (proc.stderr or "")
         except subprocess.TimeoutExpired:
             code = EXIT_UNDISPATCHABLE
