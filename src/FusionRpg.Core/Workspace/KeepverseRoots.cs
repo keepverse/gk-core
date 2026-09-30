@@ -137,6 +137,50 @@ public static class KeepverseRoots
     }
 
     /// <summary>
+    /// Root of gk-forge: the generator and audit tools (<c>tools/CreatureSpeciesGen</c>,
+    /// <c>tools/ItemSeedValidator</c>, <c>tools/DominanceBaseline</c>, and the Python tree under
+    /// <c>tools/seedsmith</c>).
+    ///
+    /// <para><b>Why this is a sibling and needs a name.</b> Same argument as <see cref="Fusion"/>:
+    /// a generator belongs to the repository that owns its output, so the tools moved to gk-forge,
+    /// while gk-core's tests legitimately RUN some of them and COMPILE against one
+    /// (<c>CorpusDumpTests</c>). A tool that runs is reachable as a process and needs no root; the
+    /// one that is compiled against needs its source tree, and there is no ancestor of gk-core that
+    /// contains it.
+    ///
+    /// <para><b>It is NOT an excuse to compile against gk-forge.</b> That is still forbidden by
+    /// this repository's AGENTS.md, and naming the root makes the one honest exception visible
+    /// rather than hiding it behind a hop count: <c>CorpusDumpTests</c> is the only caller that
+    /// needs types, and it is recorded as an open topology item rather than treated as settled.
+    /// </para>
+    /// </summary>
+    public static string Forge(string? start = null)
+    {
+        if (Env("KEEPVERSE_FORGE_ROOT") is { } env) return env;
+        var (legacy, root) = Detected(start);
+        return legacy ? root : Path.Combine(root, "gk-forge");
+    }
+
+    /// <summary>
+    /// Root of gk-web: the browser control room. The npm package sits one level down, at
+    /// <c>web/fusion-rpg-web/</c>, so a caller wanting sources wants
+    /// <c>Path.Combine(Web(), "web", "fusion-rpg-web")</c> — which is exactly the shape the guard
+    /// tests were already writing by hand.
+    ///
+    /// <para>Named for the same reason as <see cref="Fusion"/> and <see cref="Forge"/>: after the
+    /// split a path like <c>web/fusion-rpg-web/src/stages/world/fixtures/…</c> resolves against no
+    /// ancestor of gk-core, and the two roots it could plausibly belong to - gk-core and gk-web -
+    /// are siblings. Guessing between siblings is how a guard ends up asserting against a file that
+    /// never existed.</para>
+    /// </summary>
+    public static string Web(string? start = null)
+    {
+        if (Env("KEEPVERSE_WEB_ROOT") is { } env) return env;
+        var (legacy, root) = Detected(start);
+        return legacy ? root : Path.Combine(root, "gk-web");
+    }
+
+    /// <summary>
     /// The roots a relative path should be tried against, in order, deduplicated.
     ///
     /// <para><b>This is the one deliberate difference from the Python resolver, and it exists because

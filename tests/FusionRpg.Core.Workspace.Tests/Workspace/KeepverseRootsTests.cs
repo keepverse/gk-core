@@ -395,4 +395,100 @@ public sealed class KeepverseRootsTests
         }
     }
 
+    /// <summary>
+    /// gk-forge and gk-web are the two remaining sibling repositories a gk-core path can belong to,
+    /// and neither had a name until a guard test asked for one. Both assertions are here for the same
+    /// reason as Fusion: a sibling needs an accessor, because no ancestor of gk-core contains it, and
+    /// a hop count that happens to work today is a statement about where the file used to live.
+    ///
+    /// <para>The legacy half is asserted too, and it is not a formality. In a legacy checkout every
+    /// root collapses to the single repository, which is what makes these accessors safe to keep in
+    /// production code that also has to run before the split is finished.</para>
+    /// </summary>
+    [Fact]
+    public void A_workspace_names_the_gkforge_and_gkweb_siblings()
+    {
+        var ws = WorkspaceLayout(out var cleanup);
+        try
+        {
+            Assert.Equal(Path.Combine(ws, "gk-forge"), KeepverseRoots.Forge(ws));
+            Assert.Equal(Path.Combine(ws, "gk-web"), KeepverseRoots.Web(ws));
+        }
+        finally
+        {
+            Directory.Delete(cleanup, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_legacy_checkout_resolves_forge_and_web_to_the_one_repository()
+    {
+        var root = LegacyLayout(out var cleanup);
+        try
+        {
+            Assert.Equal(root, KeepverseRoots.Forge(root));
+            Assert.Equal(root, KeepverseRoots.Web(root));
+        }
+        finally
+        {
+            Directory.Delete(cleanup, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void An_env_override_for_forge_and_web_wins_over_detection()
+    {
+        var ws = WorkspaceLayout(out var cleanup);
+        var prevForge = Environment.GetEnvironmentVariable("KEEPVERSE_FORGE_ROOT");
+        var prevWeb = Environment.GetEnvironmentVariable("KEEPVERSE_WEB_ROOT");
+        try
+        {
+            var elsewhere = Path.Combine(cleanup, "elsewhere");
+            Directory.CreateDirectory(elsewhere);
+            Environment.SetEnvironmentVariable("KEEPVERSE_FORGE_ROOT", elsewhere);
+            Environment.SetEnvironmentVariable("KEEPVERSE_WEB_ROOT", elsewhere);
+            Assert.Equal(elsewhere, KeepverseRoots.Forge(ws));
+            Assert.Equal(elsewhere, KeepverseRoots.Web(ws));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("KEEPVERSE_FORGE_ROOT", prevForge);
+            Environment.SetEnvironmentVariable("KEEPVERSE_WEB_ROOT", prevWeb);
+            Directory.Delete(cleanup, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// Non-vacuity, and the reason this is a separate test rather than an extra line in the one
+    /// above. Asserting each accessor equals its expected sibling still passes if two of them
+    /// answered with the same directory, and it passes if one answered with the workspace root - the
+    /// path below it simply stops resolving, which is a failure the suite would report as a
+    /// confusing FileNotFoundException far from its cause. This asserts the four siblings are
+    /// distinct from each other and from the workspace root, which is the question they exist to
+    /// answer.
+    /// </summary>
+    [Fact]
+    public void Core_AuthoredContent_Content_Fusion_Forge_and_Web_are_seven_distinct_places()
+    {
+        var ws = WorkspaceLayout(out var cleanup);
+        try
+        {
+            var all = new[]
+            {
+                KeepverseRoots.Core(ws),
+                KeepverseRoots.AuthoredContent(ws),
+                KeepverseRoots.Content(ws),
+                KeepverseRoots.Fusion(ws),
+                KeepverseRoots.Forge(ws),
+                KeepverseRoots.Web(ws),
+                KeepverseRoots.Workspace(ws),
+            };
+            Assert.Equal(all.Length, all.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        }
+        finally
+        {
+            Directory.Delete(cleanup, recursive: true);
+        }
+    }
+
 }
