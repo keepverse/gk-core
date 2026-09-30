@@ -267,11 +267,18 @@ public sealed class VerificationTopologyTests
     public void Generated_seed_guard_sees_a_change_in_an_earlier_commit_of_the_range()
     {
         var root = Path.Combine(Path.GetTempPath(), "verification-topology-seed-range-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items"));
+        // The fixture belongs to `root`, which is the tree the guard is pointed at with --root. This
+        // used to write into KeepverseRoots.Content() - the real gk-data pack - and then
+        // `git add data/seed/items/row.json` inside `root`, where the file did not exist. Two
+        // consequences: the guard saw no generated edit at all, and the `git add` failed, so the test
+        // failed while leaving a 72-byte row.json behind in a PRIVATE repository, untracked and
+        // undeleted, for every future run. Every other fixture in this file is built inside `root`
+        // for the same reason.
+        Directory.CreateDirectory(Path.Combine(root, "data", "seed", "items"));
         Directory.CreateDirectory(Path.Combine(root, "tools", "seedsmith", "seedsmith", "adapters", "items"));
         try
         {
-            File.WriteAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "row.json"),
+            File.WriteAllText(Path.Combine(root, "data", "seed", "items", "row.json"),
                 "{\"_meta\":{\"model\":\"fixture\",\"promptVersion\":1,\"batch\":\"one\"},\"value\":1}\n");
             File.WriteAllText(Path.Combine(root, "tools", "seedsmith", "seedsmith", "adapters", "items", "generator.py"),
                 "# fixture generator\n");
@@ -281,7 +288,7 @@ public sealed class VerificationTopologyTests
             AssertGit(root, "config", "user.name", "Topology Test");
             AssertGit(root, "add", ".");
             AssertGit(root, "commit", "-m", "base");
-            File.WriteAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "row.json"),
+            File.WriteAllText(Path.Combine(root, "data", "seed", "items", "row.json"),
                 "{\"_meta\":{\"model\":\"fixture\",\"promptVersion\":1,\"batch\":\"one\"},\"value\":2}\n");
             AssertGit(root, "add", "data/seed/items/row.json");
             AssertGit(root, "commit", "-m", "generated edit");
