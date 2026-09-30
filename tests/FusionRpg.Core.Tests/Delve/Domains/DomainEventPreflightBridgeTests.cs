@@ -6,6 +6,7 @@ using FusionRpg.Core.Dungeon.Registry;
 using FusionRpg.Core.Dungeon.Tuning;
 using FusionRpg.Core.Tests.Dungeon;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Domains;
 
@@ -27,7 +28,7 @@ public class DomainEventPreflightBridgeTests
 
     static IReadOnlyList<string> ReadRealItemDropBands()
     {
-        var path = Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "items", "_registry", "bands.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "bands.v1.json");
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
         return doc.RootElement.GetProperty("dropBand").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetString()!).ToList();

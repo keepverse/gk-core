@@ -4,6 +4,7 @@ using FusionRpg.Core.Dungeon.Registry;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Tests.Dungeon;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Events;
 
@@ -28,7 +29,7 @@ public class EventSeedContentTests
 
     static IReadOnlyList<string> ReadRealItemDropBands()
     {
-        var path = Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "items", "_registry", "bands.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "bands.v1.json");
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
         return doc.RootElement.GetProperty("dropBand").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetString()!).ToList();
@@ -55,7 +56,7 @@ public class EventSeedContentTests
     {
         var rows = EventSeedFile.LoadAll(DungeonTestFiles.EventsDir());
         var catalog = EventCatalog.Load(rows, EventKinds, RepeatScopes, OutcomeOrdinals, DropBands, OverrideTags, NoStatus).Catalog;
-        var suppliesDir = Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "dungeon", "supplies");
+        var suppliesDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "supplies");
         var tagsCarried = SupplyOverrideTagSeedFile.LoadAllOverrideTags(suppliesDir);
 
         Assert.Empty(catalog.All.Where(e => e.SupplyOverride is not null));
@@ -83,7 +84,7 @@ public class EventSeedContentTests
     [Fact]
     public void LoadAll_on_a_missing_directory_returns_empty_not_throws()
     {
-        var rows = EventSeedFile.LoadAll(Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "dungeon", "does-not-exist"));
+        var rows = EventSeedFile.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "does-not-exist"));
         Assert.Empty(rows);
     }
 
@@ -114,7 +115,7 @@ public class EventSeedContentTests
         var catalog = EventCatalog.Load(rows, EventKinds, RepeatScopes, OutcomeOrdinals, DropBands, OverrideTags, NoStatus).Catalog;
 
         var atoms = AtomSeedFile.Collect(
-            Directory.EnumerateFiles(Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "atoms"), "*.json", SearchOption.AllDirectories)
+            Directory.EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms"), "*.json", SearchOption.AllDirectories)
                 .OrderBy(p => p, StringComparer.Ordinal)
                 .Select(p => (p, File.ReadAllText(p))));
         Assert.Empty(atoms.Errors);

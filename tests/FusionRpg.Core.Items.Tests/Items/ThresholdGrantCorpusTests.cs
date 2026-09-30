@@ -1,6 +1,7 @@
 using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Thresholds;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -12,7 +13,7 @@ namespace FusionRpg.Core.Tests.Items;
 /// </summary>
 public class ThresholdGrantCorpusTests
 {
-    static string ItemsDir() => Path.Combine(ThresholdGrantTests.RepoRoot(), "data", "seed", "items");
+    static string ItemsDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "items");
 
     internal static IReadOnlyList<SetDef> Sets() =>
         Directory.EnumerateFiles(Path.Combine(ItemsDir(), "sets"), "*.json")

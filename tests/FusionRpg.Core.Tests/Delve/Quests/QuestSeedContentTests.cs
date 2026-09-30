@@ -2,6 +2,7 @@ using FusionRpg.Core.Delve.Quests;
 using FusionRpg.Core.Dungeon.Registry;
 using FusionRpg.Core.Tests.Dungeon;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Quests;
 
@@ -40,7 +41,7 @@ public class QuestSeedContentTests
     [Fact]
     public void LoadAll_on_a_missing_directory_returns_empty_not_throws()
     {
-        var rows = QuestSeedFile.LoadAll(Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "dungeon", "does-not-exist"));
+        var rows = QuestSeedFile.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "does-not-exist"));
         Assert.Empty(rows);
     }
 

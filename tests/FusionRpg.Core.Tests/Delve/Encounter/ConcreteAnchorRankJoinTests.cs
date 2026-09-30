@@ -3,6 +3,7 @@ using FusionRpg.Core.Creatures.Generation;
 using FusionRpg.Core.Delve.Encounter;
 using FusionRpg.Core.Tests.Dungeon;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Encounter;
 
@@ -19,7 +20,7 @@ public class ConcreteAnchorRankJoinTests
     public void The_real_corpus_join_carries_each_anchors_own_rank()
     {
         var anchorRank = new Dictionary<string, string?>(StringComparer.Ordinal);
-        var seedRoot = Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "creatures", "species");
+        var seedRoot = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species");
         foreach (var file in Directory.GetFiles(seedRoot, "*.json", SearchOption.AllDirectories))
         {
             if (Path.GetFileName(file).StartsWith('_')) continue;

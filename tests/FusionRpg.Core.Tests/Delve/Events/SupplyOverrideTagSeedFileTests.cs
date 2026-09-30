@@ -2,12 +2,13 @@ using FusionRpg.Core.Delve.Events;
 using FusionRpg.Core.Delve.Pack;
 using FusionRpg.Core.Tests.Dungeon;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Events;
 
 public class SupplyOverrideTagSeedFileTests
 {
-    static string SuppliesDir() => Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "dungeon", "supplies");
+    static string SuppliesDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "supplies");
 
     [Fact]
     public void LoadAllOverrideTags_null_directory_throws()

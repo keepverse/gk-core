@@ -7,6 +7,7 @@ using System.Text.Json.Nodes;
 using FusionRpg.Core.Dungeon.Registry;
 using FusionRpg.Core.Narrative.Vocabulary;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Narrative.Vocabulary;
 
@@ -40,7 +41,7 @@ public class NarrativeTuningTests
     {
         NarrativeRegistryHub.Configure(NarrativeFixtureFiles.RegistryDir());
         var disposition = Path.Combine(
-            NarrativeFixtureFiles.RepoRoot(), "data", "seed", "dungeon", "_registry", "disposition.v1.json");
+            KeepverseRoots.Content(), "data", "seed", "dungeon", "_registry", "disposition.v1.json");
         DispositionCatalog.Configure(DispositionCatalog.Parse(File.ReadAllText(disposition)));
     }
 

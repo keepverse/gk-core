@@ -6,6 +6,7 @@ using FusionRpg.Core.Items.Consumables;
 using FusionRpg.Core.Items.Materials;
 using FusionRpg.Core.Tests.Dungeon;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Pack;
 
@@ -25,7 +26,7 @@ public class PackFootprintTableTests
         return DungeonTuningLoader.Parse(File.ReadAllText(DungeonTestFiles.DungeonTuningPath()), registries);
     }
 
-    static string BaseTypesDir() => Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "items", "base-types");
+    static string BaseTypesDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types");
 
     static PackTuning FixtureTuning() => new(
         RoleCells: new Dictionary<ItemRole, int> { [ItemRole.Sense] = 1, [ItemRole.CoreGuard] = 4 },

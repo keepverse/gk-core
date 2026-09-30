@@ -9,6 +9,7 @@ using Xunit;
 // `FusionRpg.Core.Delve.Encounter` -- an unqualified `Encounter.Build(...)` is ambiguous with the
 // enclosing namespace segment. `using static` sidesteps it, matching `EncounterTests.cs`'s own fix.
 using static FusionRpg.Core.Delve.Encounter.Encounter;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Encounter;
 
@@ -135,7 +136,7 @@ public class EncounterSeedContentTests
     [Fact]
     public void LoadAll_on_a_missing_directory_returns_empty_not_throws()
     {
-        var rows = EncounterSeedFile.LoadAll(Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "dungeon", "does-not-exist"), ThreatTuning);
+        var rows = EncounterSeedFile.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "does-not-exist"), ThreatTuning);
         Assert.Empty(rows);
     }
 

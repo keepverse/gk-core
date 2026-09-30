@@ -2,6 +2,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items.Thresholds;
 using System.Text.Json;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -205,7 +206,7 @@ public class CharmCarryCorpusTests
         // has not bitten: no charm in the corpus authors one. The day one does, the gate refuses by
         // name rather than passing — CharmCarryTests covers that arm.
         var json = Directory
-            .EnumerateFiles(Path.Combine(CharmCarryTests.RepoRoot(), "data", "seed", "items", "charms"), "*.json")
+            .EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "charms"), "*.json")
             .Select(File.ReadAllText)
             .ToList();
 
@@ -222,7 +223,7 @@ public class CharmCarryCorpusTests
         // hold is the §3.7 envelope: every shipped charm carries a `frameHint` inside that vocabulary,
         // so the gate's check has a well-formed value to read.
         var json = Directory
-            .EnumerateFiles(Path.Combine(CharmCarryTests.RepoRoot(), "data", "seed", "items", "charms"), "*.json")
+            .EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "charms"), "*.json")
             .Where(p => !Path.GetFileName(p).Equals("resonance.json", StringComparison.Ordinal)
                      && !Path.GetFileName(p).EndsWith(".ledger.json", StringComparison.Ordinal))
             .Select(p => System.Text.Json.JsonDocument.Parse(File.ReadAllText(p)))

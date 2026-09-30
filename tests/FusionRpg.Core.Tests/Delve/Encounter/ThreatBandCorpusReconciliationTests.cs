@@ -3,6 +3,7 @@ using FusionRpg.Core.Creatures.Generation;
 using FusionRpg.Core.Delve.Encounter;
 using FusionRpg.Core.Tests.Dungeon;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Encounter;
 
@@ -22,7 +23,7 @@ public class ThreatBandCorpusReconciliationTests
 
     static Dictionary<string, AnchorRow> RealAnchors()
     {
-        var seedRoot = Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "creatures", "species");
+        var seedRoot = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species");
         var byId = new Dictionary<string, AnchorRow>(StringComparer.Ordinal);
         foreach (var file in Directory.GetFiles(seedRoot, "*.json", SearchOption.AllDirectories))
         {

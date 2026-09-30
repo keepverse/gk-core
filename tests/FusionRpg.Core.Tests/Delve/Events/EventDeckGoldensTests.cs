@@ -14,6 +14,7 @@ using FusionRpg.Core.Power;
 using FusionRpg.Core.Stats.Derived;
 using FusionRpg.Core.Tests.Dungeon;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Events;
 
@@ -66,7 +67,7 @@ public class EventDeckGoldensTests
     {
         // The item registry's own `dropBand` vocabulary — D3.1's own citation: "this module has no
         // business owning" it, so it is read from the real committed file, never a literal.
-        var path = Path.Combine(Root, "data", "seed", "items", "_registry", "bands.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "bands.v1.json");
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
         var band = doc.RootElement.GetProperty("dropBand");
         var order = band.GetProperty("enum").EnumerateArray().Select(e => e.GetString()!).ToList();
@@ -81,7 +82,7 @@ public class EventDeckGoldensTests
     /// (`AtomSeedFile.Collect`). <c>IsOk</c> is asserted by its own test below rather than here, so a
     /// content defect reports as a named failure instead of a type-initializer error.</summary>
     static readonly SeedCollectResult SeedContent = AtomSeedFile.Collect(
-        Directory.EnumerateFiles(Path.Combine(Root, "data", "seed", "atoms"), "*.json", SearchOption.AllDirectories)
+        Directory.EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms"), "*.json", SearchOption.AllDirectories)
             .OrderBy(p => p, StringComparer.Ordinal)
             .Select(p => (p, File.ReadAllText(p))));
 

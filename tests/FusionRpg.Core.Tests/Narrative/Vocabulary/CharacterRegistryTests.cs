@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using FusionRpg.Core.Narrative.Vocabulary;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Narrative.Vocabulary;
 
@@ -99,7 +100,7 @@ public class CharacterRegistryTests
     [Fact]
     public void The_committed_doctrine_file_parses_and_configures()
     {
-        var path = Path.Combine(NarrativeFixtureFiles.RepoRoot(), "data", "seed", "narrative", "_registry", "doctrines.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "narrative", "_registry", "doctrines.v1.json");
         Assert.True(File.Exists(path), path);
 
         var rows = DoctrineCatalog.Parse(File.ReadAllText(path));

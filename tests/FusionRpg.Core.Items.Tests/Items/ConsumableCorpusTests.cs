@@ -3,6 +3,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items.Consumables;
 using FusionRpg.Core.Items.Drops;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -18,7 +19,7 @@ namespace FusionRpg.Core.Tests.Items;
 public class ConsumableCorpusTests
 {
     static string Seed(params string[] parts) =>
-        Path.Combine(new[] { ConsumableTests.RepoRoot(), "data", "seed" }.Concat(parts).ToArray());
+        Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed" }.Concat(parts).ToArray());
 
     static readonly IReadOnlyList<ConsumableSeed> Corpus = LoadCorpus();
     static readonly IReadOnlyDictionary<string, string> FamilyKinds = LoadFamilyKinds();

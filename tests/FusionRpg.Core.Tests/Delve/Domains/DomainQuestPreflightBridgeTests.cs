@@ -6,6 +6,7 @@ using FusionRpg.Core.Dungeon.Tuning;
 using FusionRpg.Core.Items.Drops;
 using FusionRpg.Core.Tests.Dungeon;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Domains;
 
@@ -34,7 +35,7 @@ public class DomainQuestPreflightBridgeTests
 
     static IReadOnlyList<string> ReadRealItemDropBands()
     {
-        var path = Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "items", "_registry", "bands.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "bands.v1.json");
         using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
         return doc.RootElement.GetProperty("dropBand").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetString()!).ToList();
@@ -112,10 +113,10 @@ public class DomainQuestPreflightBridgeTests
         var eventCatalog = RealEventCatalog();
         var questCatalog = RealQuestCatalog();
         var lootTables = LootCorpusReader.Merge(
-            Directory.EnumerateFiles(Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "loot"), "*.json")
+            Directory.EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "loot"), "*.json")
                 .Select(p => LootCorpusReader.Parse(File.ReadAllText(p))))
             .Tables.ToDictionary(t => t.TableId, StringComparer.Ordinal);
-        var baseTypes = BaseTypeSeedFile.LoadAll(Path.Combine(DungeonTestFiles.RepoRoot(), "data", "seed", "items", "base-types"));
+        var baseTypes = BaseTypeSeedFile.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types"));
         IReadOnlyList<string> BaseTypesFor(string frame, string role) =>
             baseTypes.Where(b => b.Frame == frame && b.Role == role).Select(b => b.Id).OrderBy(id => id, StringComparer.Ordinal).ToList();
 
