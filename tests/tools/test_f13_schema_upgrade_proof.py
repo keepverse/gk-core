@@ -35,8 +35,17 @@ from pathlib import Path
 from unittest import mock
 
 REPO = Path(__file__).resolve().parents[2]
+
+# The tool under test is the WORKSPACE ROOT's, not this repository's, and this suite raised at
+# COLLECTION because of it: `_spec.loader.exec_module(...)` read a path that does not exist in gk-core.
+# A suite that cannot be collected is a suite that runs zero tests, and a collection error can abort
+# the whole pytest run - which is how this stayed invisible.
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import workspace_root  # noqa: E402
+
+_WORKSPACE = workspace_root(REPO)
 SCRIPT = Path(os.environ.get("F13_PROOF_SCRIPT",
-                             REPO / "tasks" / "reports" / "f13_schema_upgrade_proof.py")).resolve()
+                             _WORKSPACE / "tasks/reports/f13_schema_upgrade_proof.py")).resolve()
 SUITE = REPO / "tests" / "tools" / "test_f13_schema_upgrade_proof.py"
 RUN_TIMEOUT = 300
 
