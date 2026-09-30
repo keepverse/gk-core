@@ -154,6 +154,7 @@
         "Balance/**"
       ],
       "references": [
+        "$(GkForgeRoot)tools/DominanceBaseline/DominanceBaseline.csproj",
         "src/FusionRpg.Core/FusionRpg.Core.csproj",
         "tools/CombatSim/CombatSim.csproj",
         "tools/DominanceBaseline/DominanceBaseline.csproj",
@@ -467,13 +468,10 @@
         "Goldens/actor-hud/**"
       ],
       "references": [
+        "src/FusionRpg.Bridge/FusionRpg.Bridge.csproj",
         "src/FusionRpg.Core/FusionRpg.Core.csproj"
       ],
-      "links": [
-        "src/FusionRpg.Injector/Hud/ActorHudCache.cs",
-        "src/FusionRpg.Injector/Stats/InjectorDerivedOverride.cs",
-        "src/FusionRpg.Injector/Hud/ActorHudUniqueFlags.cs"
-      ],
+      "links": [],
       "content": [
         "Goldens\\actor-hud\\**\\*"
       ],
