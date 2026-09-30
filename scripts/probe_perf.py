@@ -75,7 +75,24 @@ from typing import Any
 TOOL_ID = "probe-perf"
 
 REPO = Path(__file__).resolve().parent.parent
-OUT_DIR = REPO / "docs" / "research" / "perf"
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from keepverse_roots import root_carrying  # noqa: E402  (the insert above must run first)
+
+# The published baselines are the WORKSPACE ROOT's: `docs/research/perf` holds 70 of them there and
+# gk-core has no `docs/` directory at all, so `REPO / "docs" / "research" / "perf"` was a path that
+# could not exist and the compatibility test that asserts a baseline is published there failed with an
+# empty list rather than a wrong path. `docs/` is development documentation, which the workspace root
+# owns.
+#
+# `root_carrying` and not `workspace_root`, for the reason the suite's own docstring gives: this tool is
+# also run against a MUTANT written to a temporary directory, and `workspace_root()` RAISES for a
+# temporary directory because no workspace is above it - which would stop the module importing at all
+# and kill every case in the suite. `root_carrying` walks ancestors and tests existence, so it cannot
+# raise: it answers with the real owner here, and with None under a mutant, where the local root is the
+# correct answer anyway.
+_OUT_ROOT = root_carrying(REPO, "docs/research/perf") or REPO
+OUT_DIR = _OUT_ROOT / "docs" / "research" / "perf"
 BASELINE_PREFIX = "_baseline-"
 
 DEFAULT_BASE_URL = "http://127.0.0.1:5088"

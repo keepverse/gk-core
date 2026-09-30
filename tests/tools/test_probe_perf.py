@@ -44,6 +44,9 @@ from pathlib import Path
 from unittest import mock
 
 REPO = Path(__file__).resolve().parents[2]
+
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import root_carrying  # noqa: E402
 SCRIPT = Path(os.environ.get("PROBE_PERF_SCRIPT", REPO / "scripts" / "probe_perf.py")).resolve()
 SUITE = Path(__file__).resolve()
 RUN_TIMEOUT = 300
@@ -564,8 +567,14 @@ class Surface(unittest.TestCase):
         real tool and for every mutant, and still pins the rule.
         """
         code = code_without_docstrings(SCRIPT)
+        # The rule is UNCHANGED - derived from the SCRIPT, never from the working directory - and the
+        # expectation is still built FROM `SCRIPT` so a mutant in a temporary directory holds. What
+        # changed is which root the script's own repository hands the tree to: `docs/` is the WORKSPACE
+        # ROOT's, and gk-core has no `docs/` directory at all.
         self.assertIn("Path(__file__).resolve().parent.parent", code)
-        self.assertEqual(p.OUT_DIR, SCRIPT.resolve().parent.parent / "docs" / "research" / "perf")
+        self.assertEqual(p.OUT_DIR,
+                         (root_carrying(SCRIPT.resolve().parent.parent, "docs/research/perf")
+                          or SCRIPT.resolve().parent.parent) / "docs" / "research" / "perf")
         for cwd_derivation in ("Path.cwd()", "os.getcwd()"):
             self.assertNotIn(cwd_derivation, code,
                                  f"OUT_DIR must not follow the working directory ({cwd_derivation})")
