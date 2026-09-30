@@ -197,20 +197,33 @@ def display_fill(hp: float, max_hp: float) -> tuple[float, float]:
 
 
 def run_setup_script(base_url: str) -> None:
-    """Run the sibling setup-shield-bar-lab.ps1 (owned by another lane; no Python port exists yet).
+    """Run the sibling lab-setup script, which is a PYTHON tool now.
 
-    The original invoked it with `& "$PSScriptRoot\\setup-shield-bar-lab.ps1" -BaseUrl $BaseUrl`.
+    Two things were stale here and both were the retirement rather than the split.
+
+    The sibling is `setup_shield_bar_lab.py`. `setup-shield-bar-lab.ps1` is gone - the port landed as
+    `setup_shield_bar_lab.py` - and this function still named it, so every `-Setup` run refused
+    SETUP-FAILED with "the sibling setup script does not exist". Its docstring claimed "no Python port
+    exists yet", which had stopped being true.
+
+    And it SHELLED OUT TO `pwsh`, which the ps1 ruling forbids: this repository is retiring PowerShell,
+    and a Python tool that shells back out to an interpreter is a wrapper, not a port. Neither suite
+    tested for it - they assert the tool answers no PowerShell-SPELLED parameter and states why
+    PowerShell was retired, which is a different claim from "does not invoke the interpreter". The two
+    probes each carried their own copy of this function, so the stale spelling was in both.
+
+    The flag moves too: the port takes `--base-url`, not `-BaseUrl`.
     """
-    sibling = Path(__file__).resolve().parent / "setup-shield-bar-lab.ps1"
+    sibling = Path(__file__).resolve().parent / "setup_shield_bar_lab.py"
     if not sibling.is_file():
         raise Refusal("SETUP-FAILED",
                       f"the sibling setup script does not exist: {sibling}")
     try:
         proc = _RUN(
-            ["pwsh", "-NoProfile", "-NonInteractive", "-File", str(sibling), "-BaseUrl", base_url],
+            [sys.executable, str(sibling), "--base-url", base_url],
             capture_output=True, text=True, timeout=SETUP_TIMEOUT_SEC)
-    except FileNotFoundError as error:
-        raise Refusal("SETUP-FAILED", f"pwsh is not on PATH: {error}") from error
+    except FileNotFoundError as error:  # pragma: no cover - sys.executable is this process
+        raise Refusal("SETUP-FAILED", f"this interpreter could not be re-invoked: {error}") from error
     except subprocess.TimeoutExpired as expired:
         raise Refusal("SETUP-FAILED",
                       f"{sibling.name} did not finish within {SETUP_TIMEOUT_SEC}s") from expired

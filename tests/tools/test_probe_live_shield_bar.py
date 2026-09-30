@@ -48,6 +48,25 @@ _PRISTINE = {"_URLOPEN": pslb._URLOPEN, "_SLEEP": pslb._SLEEP, "_RUN": pslb._RUN
              "_MONOTONIC": pslb._MONOTONIC, "lib_URLOPEN": lib._URLOPEN}
 
 
+def _code_without_docstrings(path: Path) -> str:
+    """The tool's CODE, with docstrings and comments stripped.
+
+    This suite's other cases read the raw source, which is right for them and wrong for this one: the
+    fix's own docstring has to explain that it no longer shells out to `pwsh`, so the token appears in
+    the file on purpose - and a substring assertion over raw source would fail on the very comment that
+    documents the fix. This is the same AST approach `test_probe_perf.py` uses, for the same reason and
+    with no new dependency; `ast` is already imported by this module.
+    """
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            if (node.body and isinstance(node.body[0], ast.Expr)
+                    and isinstance(node.body[0].value, ast.Constant)
+                    and isinstance(node.body[0].value.value, str)):
+                node.body.pop(0)
+    return ast.unparse(ast.fix_missing_locations(tree))
+
+
 class SeamGuard(unittest.TestCase):
     def tearDown(self) -> None:
         if lib._URLOPEN is not _PRISTINE["lib_URLOPEN"]:
@@ -319,6 +338,24 @@ class Surface(SeamGuard):
         self.assertIn("lib.get_debug_max_event_id", source)
         self.assertNotIn("def get_max_event_id", source,
                          "the event-id binary search was reimplemented locally")
+
+    def test_it_does_NOT_shell_out_to_a_PowerShell_interpreter(self) -> None:
+        """The ps1 ruling, which neither suite was testing.
+
+        These suites assert the tool answers no PowerShell-SPELLED parameter and states why PowerShell
+        was retired. Those are real and they are not this. `run_setup_script` shelled out to `pwsh` to
+        run `setup-shield-bar-lab.ps1`, and nothing noticed: the sibling `.ps1` had been ported to
+        `.py`, so the call refused SETUP-FAILED every time, and a refusal reads as "the precondition was
+        not met" rather than "this tool still depends on a retired interpreter".
+
+        Asserted over the SOURCE rather than by running it, because the property is that the
+        interpreter is never named - running the recipe needs a live server, and a test that cannot run
+        is a test that cannot catch this.
+        """
+        code = _code_without_docstrings(SCRIPT)
+        for token in ("pwsh", "powershell", "-NoProfile", "-File "):
+            self.assertNotIn(token, code,
+                             f"the tool still shells back out to a retired interpreter ({token!r})")
 
     def test_it_answers_no_PowerShell_spelled_parameter(self) -> None:
         for flag in ("-BaseUrl", "-Setup", "-WaitDrawSec"):
