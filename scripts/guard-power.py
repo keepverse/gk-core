@@ -61,7 +61,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from cscan import strip_whole_line_comments  # noqa: E402
+from keepverse_roots import workspace_root  # noqa: E402
 
 GUARD_ID = "power"
 VERDICT_OK = "POWER GUARD OK — one ladder, pin holds, no private f(level)"
@@ -323,7 +325,16 @@ def check(root: Path, *, g1_allowlist: list[str] | None = None,
     power_dir = root.joinpath(*POWER_DIR)
     if not power_dir.is_dir():
         raise Refusal("CORE-POWER-MISSING", str(power_dir))
-    inventory_path = root.joinpath(*INVENTORY)
+    # The power inventory is developer documentation, so it lives in gk-workflow - and gk-workflow
+    # is an ANCESTOR of this repository, not this repository. Resolving it against `root` asks
+    # gk-core for a document it does not hold, which is why this guard refused with
+    # INVENTORY-MISSING on a path that exists. The monorepo had one root and the question did not
+    # arise; nine repositories make "which root owns this file" the first question, not the last.
+    #
+    # `root` is still what the G1-G3 source scans walk, because src/FusionRpg.Core/Power IS this
+    # repository's. One guard legitimately reads from two repositories, which is why the root is
+    # named per file rather than once for the whole run.
+    inventory_path = workspace_root(root).joinpath(*INVENTORY)
     if not inventory_path.is_file():
         raise Refusal("INVENTORY-MISSING", str(inventory_path))
     try:

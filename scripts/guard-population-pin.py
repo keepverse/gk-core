@@ -36,6 +36,8 @@ from collections import defaultdict
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from keepverse_roots import forge_root  # noqa: E402
 
 #: Structural, not a balance number a pass would tune (spec's own §"The threshold"): measured
 #: 2026-09-18 against content-reading C# tests, 502 assertions below 10, dominated by 0-3
@@ -112,7 +114,10 @@ def find_marker(lines: "list[str]", line_index: int) -> "tuple[str, str] | None"
 
 def _owner_token_exists(token: str, repo_root: Path) -> bool:
     pat = re.compile(r"\b" + re.escape(token) + r"\b")
-    for root in (repo_root / "src", repo_root / "tools" / "seedsmith" / "seedsmith"):
+    # src/ is gk-core's; tools/seedsmith/ is gk-forge's, and gk-forge is a SIBLING, so the second
+    # scan root has never existed since the split. Half the audit was scanning nothing and saying
+    # so in a line a reader would take for a summary of what it covered.
+    for root in (repo_root / "src", forge_root(repo_root) / "tools" / "seedsmith" / "seedsmith"):
         if not root.is_dir():
             continue
         for path in root.rglob("*"):

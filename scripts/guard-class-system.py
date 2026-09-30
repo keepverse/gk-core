@@ -65,6 +65,8 @@ import re
 import sys
 from collections import Counter
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from keepverse_roots import content_root  # noqa: E402
 
 GUARD_ID = "class-system"
 VERDICT_OK = ("CLASS-SYSTEM GUARD OK — aptitude ids collision-free, edges registered, no atk "
@@ -233,8 +235,16 @@ def csharp_sources(src: Path) -> list[Path]:
 
 def check(root: Path) -> dict:
     root = root.resolve()
-    roster_doc = _read_json(root.joinpath(*ROSTER), "aptitudes roster.json")
-    catalog_doc = _read_json(root.joinpath(*CATALOG), "catalog.json")
+    # data/seed/** is the gk-data content PACK; data/tuning/** is THIS
+    # repository's. One guard reading two repositories is why the root is
+    # named per path - the monorepo had one root and never asked.
+    pack = content_root(root)
+    roster_doc = _read_json(pack.joinpath(*ROSTER), "aptitudes roster.json")
+    # data/seed/** is the gk-data content PACK; data/tuning/** is THIS
+    # repository's. One guard reading two repositories is why the root is
+    # named per path - the monorepo had one root and never asked.
+    pack = content_root(root)
+    catalog_doc = _read_json(pack.joinpath(*CATALOG), "catalog.json")
 
     roster_entries = roster_doc.get("entries") if isinstance(roster_doc, dict) else None
     catalog_entries = catalog_doc.get("entries") if isinstance(catalog_doc, dict) else None

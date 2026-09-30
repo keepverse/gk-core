@@ -43,6 +43,8 @@ import json
 import re
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from keepverse_roots import forge_root  # noqa: E402
 
 
 class VocabularyMirrorError(ValueError):
@@ -263,7 +265,11 @@ def main(argv=None) -> int:
         print(f"VOCABULARY MIRROR GUARD: EXIT_CANNOT_RUN -- manifest not found: {manifest_path}", file=sys.stderr)
         return 2
 
-    seedsmith_root = repo_root / "tools" / "seedsmith"
+    # seedsmith is gk-forge's Python tree, and gk-forge is a SIBLING of gk-core, so no number of
+    # ".." hops from a gk-core subdirectory reaches it. The walk-up that stood here returned a
+    # path that has not existed since the split, and every V4 mirror check then reported "did not
+    # resolve" - nine of them - which reads as a vocabulary problem and is a ROOT problem.
+    seedsmith_root = forge_root(repo_root) / "tools" / "seedsmith"
     if str(seedsmith_root) not in sys.path:
         sys.path.insert(0, str(seedsmith_root))
 

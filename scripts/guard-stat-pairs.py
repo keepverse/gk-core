@@ -59,6 +59,8 @@ import argparse
 import json
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from keepverse_roots import content_root  # noqa: E402
 
 CATALOG_RELATIVE = ("data", "seed", "derived-stats", "catalog.json")
 
@@ -119,7 +121,10 @@ class Row:
 
 def load_rows(root: Path) -> tuple[list[Row], dict]:
     """Read the catalog and flatten it. Raises Refusal when the guard cannot run at all."""
-    catalog_path = root.joinpath(*CATALOG_RELATIVE)
+    # The derived-stats catalog is gk-data's, not this repository's. Resolving it against `root`
+    # asked gk-core for a file it does not hold, so the guard REFUSED instead of reporting - and
+    # refusing is the correct response to a missing subject that was never missing.
+    catalog_path = content_root(root).joinpath(*CATALOG_RELATIVE)
     if not catalog_path.is_file():
         raise Refusal("CATALOG-MISSING",
                       f"{catalog_path.as_posix()} does not exist, so the counterbalance rules have "
