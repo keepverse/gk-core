@@ -304,4 +304,95 @@ public sealed class KeepverseRootsTests
         }
     }
 
+    /// <summary>
+    /// gk-fusion is a SIBLING of gk-core, which is why this root had to be written rather than
+    /// reused: gk-workflow is an ancestor and Workspace() already named it, but nothing named the
+    /// Injector, and six tests were reading it through gk-core's own root.
+    ///
+    /// <para>The assertion that matters is the last one. A sibling is a real dependency, and a
+    /// dependency that cannot be satisfied should SAY SO - a resolver that returns a path for a
+    /// repository that is not there produces a missing-file error a long way from the cause, which
+    /// is how a wrong root reads as an absent file. The pack check already does this for Content();
+    /// this is the same discipline applied to the sibling.</para>
+    /// </summary>
+    [Fact]
+    public void The_fusion_root_is_its_own_sibling_and_is_not_confused_with_core()
+    {
+        var ws = WorkspaceLayout(out var cleanup);
+        try
+        {
+            Assert.Equal(Path.Combine(ws, "gk-fusion"), KeepverseRoots.Fusion(ws));
+            Assert.NotEqual(KeepverseRoots.Core(ws), KeepverseRoots.Fusion(ws));
+
+            // And the Injector's source is reachable from it, not from gk-core. The directory is
+            // created first: this is a synthetic workspace, and WriteAllText does not create the
+            // directories above it - which is the same reason a missing sibling surfaces as a
+            // DirectoryNotFoundException rather than as a message about the sibling.
+            var injector = Path.Combine(KeepverseRoots.Fusion(ws), "src", "FusionRpg.Injector", "Host");
+            Directory.CreateDirectory(injector);
+            var host = Path.Combine(injector, "RpgHost.cs");
+            File.WriteAllText(host, "// fixture\n");
+            Assert.True(File.Exists(host));
+            Assert.False(File.Exists(Path.Combine(
+                KeepverseRoots.Core(ws), "src", "FusionRpg.Injector", "Host", "RpgHost.cs")),
+                "gk-core must not be able to answer for the Injector");
+
+            // A workspace whose gk-fusion is ABSENT must not yield a root that is not there.
+            var bare = Path.Combine(cleanup, "..", "no-fusion-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(Path.Combine(bare, "gk-core"));
+            Directory.CreateDirectory(Path.Combine(bare, "gk-data"));
+            try
+            {
+                var missing = KeepverseRoots.Fusion(bare);
+                Assert.False(Directory.Exists(missing),
+                    "Fusion() named a root for a repository that does not exist; the caller must be "
+                    + "told the sibling is absent rather than handed a path that cannot resolve");
+            }
+            finally
+            {
+                Directory.Delete(bare, recursive: true);
+            }
+        }
+        finally
+        {
+            Directory.Delete(cleanup, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void The_fusion_root_collapses_to_the_repo_root_in_a_legacy_checkout()
+    {
+        var root = LegacyLayout(out var cleanup);
+        try
+        {
+            // In the monorepo there was one root, so the Injector and the core were the same
+            // directory - which is exactly why every read worked before the split and why a hop
+            // count was such a convincing way to write one afterwards.
+            Assert.Equal(root, KeepverseRoots.Fusion(root));
+        }
+        finally
+        {
+            Directory.Delete(cleanup, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void An_env_override_for_the_fusion_root_wins_over_detection()
+    {
+        var ws = WorkspaceLayout(out var cleanup);
+        var previous = Environment.GetEnvironmentVariable("KEEPVERSE_FUSION_ROOT");
+        try
+        {
+            var elsewhere = Path.Combine(cleanup, "elsewhere");
+            Directory.CreateDirectory(elsewhere);
+            Environment.SetEnvironmentVariable("KEEPVERSE_FUSION_ROOT", elsewhere);
+            Assert.Equal(elsewhere, KeepverseRoots.Fusion(ws));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("KEEPVERSE_FUSION_ROOT", previous);
+            Directory.Delete(cleanup, recursive: true);
+        }
+    }
+
 }
