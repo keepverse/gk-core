@@ -69,18 +69,74 @@ public class BootContentCopyRuleTests
     }
 
     /// <summary>Each rule's coverage as (base directory, exact file). A glob rule covers its directory;
-    /// a rule naming one file covers only that file.</summary>
+    /// a rule naming one file covers only that file.
+    ///
+    /// <para><b>Coverage is the path NEXT TO THE EXE, so this reads a rule's <c>&lt;Link&gt;</c> when it
+    /// has one.</b> The two attributes are different coordinate systems: <c>Include</c> is a source path
+    /// and <c>Link</c> is the output path, and the only thing a boot reader ever touches is the output
+    /// path. After the split, <c>Include</c> became <c>$(GkDataRoot)packs\fusion\data\seed\...</c> - an
+    /// MSBuild property this has no way to resolve - while <c>Link</c> stayed the plain
+    /// <c>data\seed\...</c> the guard compares against. Comparing the wrong one made every rewritten rule
+    /// invisible, and 17 swept folders plus 23 boot-read paths reported as uncovered while the sibling test
+    /// confirmed the files really were being copied. That test is the reason this is a parser fix and not a
+    /// missing-rules fix.</para>
+    ///
+    /// <para>A rule with no <c>&lt;Link&gt;</c> still uses its <c>Include</c>, which is what every rule in
+    /// the pre-split tree had. The contract this class asserts is unchanged by either: a boot-read path with
+    /// no covering rule is still uncovered, so deleting a copy rule still fails.</para></summary>
     public static IReadOnlyList<(string BaseDir, string? Exact)> CopyRules(string csprojSource)
     {
         var rules = new List<(string, string?)>();
         foreach (Match rule in Regex.Matches(csprojSource, @"<Content\s+Include=""(?<inc>[^""]+)"""))
         {
-            var include = rule.Groups["inc"].Value.Replace('\\', '/').TrimStart('.', '/');
-            var wildcard = include.IndexOfAny(new[] { '*', '%' });
-            if (wildcard < 0) rules.Add((include, include));
-            else rules.Add((include[..wildcard].TrimEnd('/'), null));
+            // The element's own body, up to its close. A <Link> is a child of the <Content> that
+            // declared it, so pairing them needs the element boundary rather than a global search -
+            // otherwise one rule's Link would be credited to the rule above it.
+            var tail = rule.Length < csprojSource.Length ? csprojSource[rule.Length..] : string.Empty;
+            var close = tail.IndexOf("</Content>", StringComparison.Ordinal);
+            var selfClose = tail.IndexOf("/>", StringComparison.Ordinal);
+            if (close < 0 || (selfClose >= 0 && selfClose < close)) close = selfClose;
+            var body = close < 0 ? tail : tail[..close];
+            var link = Regex.Match(body, @"<Link>(?<l>[^<]+)</Link>");
+
+            var spec = link.Success
+                ? link.Groups["l"].Value
+                : rule.Groups["inc"].Value;
+            var path = spec.Replace('\\', '/').TrimStart('.', '/');
+            var wildcard = path.IndexOfAny(new[] { '*', '%' });
+            if (wildcard < 0) rules.Add((path, path));
+            else rules.Add((path[..wildcard].TrimEnd('/'), null));
         }
         return rules;
+    }
+
+    /// <summary>The guard still bites: a rule that is not there is still uncovered. This exists because
+    /// the fix above makes the parser able to see rules written as MSBuild properties, and a parser that
+    /// suddenly matches more is exactly the kind of change that can also stop noticing a deletion. It is
+    /// asserted against a synthetic csproj rather than by editing the real one, so the proof is permanent
+    /// and does not depend on anyone remembering to break the build.</summary>
+    [Fact]
+    public void A_rule_that_is_absent_is_still_reported_uncovered()
+    {
+        const string csproj = """
+            <Project>
+              <ItemGroup>
+                <Content Include="$(GkDataRoot)packs\fusion\data\seed\dungeon\**\*.json">
+                  <Link>data\seed\dungeon\%(RecursiveDir)%(Filename)%(Extension)</Link>
+                </Content>
+              </ItemGroup>
+            </Project>
+            """;
+        var rules = CopyRules(csproj);
+
+        // Present: covered, by the Link rather than by the unresolvable Include.
+        Assert.True(Covered("data/seed/dungeon/rooms", rules), "the rule that exists must cover its own folder");
+        // Absent: a deleted rule's folder is uncovered.
+        Assert.False(Covered("data/seed/items/charms", rules), "a deleted rule must not be reported as covering");
+        // And the prefix semantics the class documents still hold: a rule covering a directory covers
+        // files beneath it, which is what makes a whole-tree rule sufficient.
+        Assert.True(Covered("data/seed/dungeon/_registry/room-kinds.v1.json", rules),
+                    "a directory rule must still cover files beneath it");
     }
 
     /// <summary>A boot read names either a file or a whole directory (`gk-data/packs/fusion/data/seed/loot`), so a rule covers
