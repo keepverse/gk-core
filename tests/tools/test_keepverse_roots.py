@@ -255,11 +255,43 @@ class TheEnvironmentOverrides(unittest.TestCase):
 
 
 class TheModule(unittest.TestCase):
-    def test_it_states_WHERE_THE_TWIN_LIVES_and_asks_for_them_to_agree(self) -> None:
+    def test_it_names_EVERY_copy_that_exists_and_asks_for_them_to_agree(self) -> None:
         head = MODULE_PATH.read_text(encoding="utf-8")
         self.assertIn("workspace_roots.py", head,
                       "the docstring must name the copy that has to be kept identical")
-        self.assertIn("keep the two identical", head.lower())
+        # THE CONTRACT IS "every copy on disk is named, and they are kept in step" - not a COUNT.
+        # A bare number is a population pin: it reads "two" today, fails the day a third copy lands,
+        # and the fix is to edit the number. That is precisely how this assertion drifted out of step -
+        # gk-fusion's copy was added, and neither this line nor the docstring was updated, so both went
+        # on saying two while three were on disk and ResolverCopyParityTests was already holding all
+        # three. The sibling set is walked instead, so a fourth copy cannot be added without this
+        # naming it.
+        copies: list[tuple[str, str]] = []
+        for repo in sorted(p for p in REPO.parent.iterdir()
+                           if p.is_dir() and p.name.startswith("gk-")):
+            for pattern in ("keepverse_roots.py", "workspace_roots.py"):
+                copies.extend((repo.name, hit.relative_to(repo).as_posix())
+                              for hit in repo.rglob(pattern)
+                              if hit.is_file() and "worktrees" not in hit.parts)
+        self.assertGreaterEqual(len(copies), 2,
+                                "fewer than two sibling copies were found, so this test is vacuous")
+        # The RELATIVE PATH, on a line of its own, not merely the repository's name. The first
+        # version of this assertion searched for the name and passed against a docstring I had
+        # deliberately broken - "gk-fusion, gk-forge and gk-web are siblings" is four paragraphs
+        # earlier, so the name was present no matter what the list said. That is what a mutation run
+        # is for: the assertion looked like a contract check and was a substring test.
+        # The docstring spells a copy WORKSPACE-relative - `gk-fusion/scripts/lib/keepverse_roots.py` -
+        # while the walk yields it repository-relative, so the pair is what is matched. Matching the
+        # bare relative path was the second wrong version of this assertion and it failed the
+        # UNMODIFIED file, which is the other way a contract check turns into a decoration.
+        lines = [line.strip() for line in head.splitlines()]
+        for repo_name, relative in copies:
+            self.assertTrue(
+                any(f"{repo_name}/{relative}" in line for line in lines),
+                f"the docstring does not list {repo_name}'s copy ({relative}) as an implementation")
+        low = head.lower()
+        self.assertIn("byte-identical", low,
+                      "the docstring must say how the copies are held in step, not only that they exist")
 
     def test_the_DOCSTRING_states_the_NEVER_GUESSED_contract(self) -> None:
         head = MODULE_PATH.read_text(encoding="utf-8").lower()
