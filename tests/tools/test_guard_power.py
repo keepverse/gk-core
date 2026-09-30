@@ -40,6 +40,12 @@ guard = importlib.util.module_from_spec(_spec)
 sys.modules["guard_power"] = guard
 _spec.loader.exec_module(guard)
 
+# The resolver, reached DIRECTLY rather than through the guard's namespace. `guard.root_carrying`
+# would work only as an incidental re-export of the guard's own import list, so a guard that stopped
+# importing it would break this test for a reason that has nothing to do with the inventory.
+sys.path.insert(0, str(SCRIPT.parent / "lib"))
+from keepverse_roots import root_carrying  # noqa: E402
+
 SNEAKY = "namespace X\n{\n    class Sneaky\n    {\n"
 # The signature MUST start its own line: the pattern anchors on line-start, so a one-line fixture
 # never reaches the check at all. `PowerGuardTests` documents the same trap.
@@ -371,7 +377,14 @@ class ClosedHoleOneAnUnlocatedScaleUsedToLicenseEverything(unittest.TestCase):
 
     def test_the_shipped_inventory_names_every_scale(self) -> None:
         # The hole is closed without reddening the tree, so this is what makes that claim true.
-        inventory = json.loads((REPO / "docs" / "architecture" / "power" / "inventory.json")
+        # THE SHIPPED INVENTORY IS gk-workflow'S. Read through the resolver rather than from `REPO`,
+        # which is gk-core - a repository with no `docs/architecture/power/` directory at all, so this
+        # raised FileNotFoundError and the test that exists to prove the G3 hole is closed could not
+        # run. The guard already reads this document from its owner (`subject_root` +
+        # `workspace_root`), so the test was the only thing still assuming the pre-split layout.
+        shipped = root_carrying(REPO, "docs/architecture/power/inventory.json")
+        self.assertIsNotNone(shipped, "the shipped power inventory was not found in any repository")
+        inventory = json.loads(shipped.joinpath("docs", "architecture", "power", "inventory.json")
                                .read_text(encoding="utf-8"))
         locations, unlocated = guard.inventory_locations(inventory)
         self.assertEqual([], unlocated)

@@ -83,11 +83,26 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
 import live_lawn_setup as lib  # noqa: E402  (the path insert above must run first)
+from keepverse_roots import web_root  # noqa: E402  (same lib, same reason)
 
 TOOL_ID = "prove-actor-hud-live"
 
 REPO = Path(__file__).resolve().parent.parent
-WEB_DIR = REPO / "web" / "fusion-rpg-web"
+
+# THE WEB TREE IS gk-web'S. This file's OWN DOCSTRING says so - it names
+# `gk-web/web/fusion-rpg-web` as one of the two Set-Location calls that were never restored -
+# while the constant beside it still pointed at `REPO / "web"`, which after the split is gk-core,
+# a repository with no `web` directory at all. The result was not a subtle miscount: the script
+# refused WEB-TREE-MISSING before it checked anything, so ten tests read that as a broken E2E
+# contract - including two that expected WORLD-HUD-UNSET and E2E-FAILED and got WEB-TREE-MISSING
+# instead, which is the refusal arriving early and being read as the wrong finding.
+#
+# The resolver names the owner, so it is asked. There is deliberately NO fallback here, unlike the
+# engine-root and sessions-root cases: a planted fixture genuinely can carry a tree that looks like
+# an owner, whereas the web application lives in exactly one repository and guessing which one
+# would be a way of running the wrong UI. If the resolver cannot answer, the existing
+# WEB-TREE-MISSING refusal is the right verdict, and it names the path it looked for.
+WEB_DIR = web_root(REPO) / "web" / "fusion-rpg-web"
 NPM_SCRIPT = "test:e2e:live"
 WORLD_HUD_KEY = "lawn.worldHud"
 HEALTH_TIMEOUT = 5

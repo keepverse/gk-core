@@ -63,8 +63,22 @@ def subject_root(root: Path, relative: tuple[str, ...], accessor) -> Path:
     Raises whatever the accessor raises when the subject is in neither place. Callers convert that
     into their own named refusal: this module resolves, it does not adjudicate.
     """
-    if not is_git_tree(root) and root.joinpath(*relative).exists():
-        return root          # a FIXTURE carries its own subject, and that is what is under test
+    if not is_git_tree(root):
+        # A FIXTURE IS THE WORLD. It owns the subject whether or not the subject is there.
+        #
+        # The `and root.joinpath(*relative).exists()` that used to sit here sent a fixture which
+        # DELIBERATELY omitted the subject to the accessor, and a temporary directory has no
+        # workspace above it - so the accessor raised and the caller reported WORKSPACE-ROOT-MISSING
+        # when the honest verdict was INVENTORY-MISSING. A test that plants a fixture without an
+        # inventory is testing exactly that refusal, and it was told the workspace could not be found
+        # instead. Four tests in test_guard_power.py read it that way.
+        #
+        # Nothing is weakened by dropping the existence test. A real tree - the only case where
+        # precedence could be abused to silence a guard - still goes to the accessor, so planting a
+        # file beside a real repository still cannot override the owner. The anti-silencing property
+        # was never about fixtures; a fixture is the thing under test, and it is supposed to be able
+        # to say "this document is absent".
+        return root
     return accessor(root)    # a REAL TREE resolves the owner, and never overrides it
 
 

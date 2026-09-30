@@ -64,7 +64,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from cscan import strip_whole_line_comments  # noqa: E402
 from guard_subjects import subject_root  # noqa: E402
-from keepverse_roots import RootNotFound, workspace_root  # noqa: E402
+from keepverse_roots import RootNotFound, root_carrying, workspace_root  # noqa: E402
 
 GUARD_ID = "power"
 VERDICT_OK = "POWER GUARD OK — one ladder, pin holds, no private f(level)"
