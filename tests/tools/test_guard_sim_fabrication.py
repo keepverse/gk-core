@@ -34,6 +34,7 @@ the message naming the `.py` a reader must edit, and the 8.3 path reconciliation
 
 from __future__ import annotations
 
+import pathlib
 import importlib.util
 import json
 import os
@@ -192,7 +193,23 @@ class CliSurface(TreeCase):
         """A private copy is a second stripper, and a second stripper is a second set of bugs."""
         source = SCRIPT.read_text(encoding="utf-8")
         self.assertIn("import cscan", source, "the guard must consume the shared scanner")
-        self.assertIs(guard.cscan, sys.modules["cscan"])
+        # THE SHARED FILE, not the module's IDENTITY. `assertIs(guard.cscan, sys.modules["cscan"])`
+        # reads as the same claim and is not: five suites in this tree each register
+        # `sys.modules["cscan"]` themselves - test_cscan, test_guard_dal, test_guard_funnel_delta,
+        # test_guard_single_writer, test_guard_test_substrate - so two module objects can exist for the
+        # ONE cscan.py, and the assertion then depends on load order. Measured: this test passes alone,
+        # passes in file context, and fails in the full suite, with the failure text reading
+        # `<module 'cscan' from ...gk-core/scripts/cscan.py> is not <module 'cscan' from
+        # ...gk-core/scripts/cscan.py>` - the same path on both sides.
+        #
+        # The property the docstring actually states is that the guard consumes the SHARED scanner
+        # rather than a private copy, and that is a question about the FILE the module was loaded from.
+        # A private copy would have a different `__file__`, so this is not weaker - it is the claim
+        # itself, expressed without the ordering coupling.
+        self.assertEqual(
+            pathlib.Path(guard.cscan.__file__).resolve(),
+            (REPO / "scripts" / "cscan.py").resolve(),
+            "the guard must consume the shared scanner, not a private copy of it")
         self.assertIn("strip_comments_preserving_layout", source)
 
 
