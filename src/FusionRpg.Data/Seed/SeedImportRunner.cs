@@ -1,4 +1,5 @@
 using FusionRpg.Core.Effects.Atoms;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Seed;
 
@@ -63,11 +64,34 @@ public sealed record SeedImportRunResult(SeedImportStatus Status, string? Detail
 /// </summary>
 public static class SeedImportRunner
 {
-    /// <summary>Walk up from <paramref name="startDir"/> looking for a directory ending in
-    /// <paramref name="segments"/> — the same walk the CLI always did to find <c>gk-data/packs/fusion/data/seed</c> and
-    /// <c>gk-core/data/tuning</c> from wherever it was run.</summary>
+    /// <summary>Find the directory ending in <paramref name="segments"/>, trying the detected
+    /// workspace roots first and then walking up from <paramref name="startDir"/>.
+    ///
+    /// <para><b>Why the roots come first.</b> The walk alone was a complete answer only while all
+    /// three roots were the legacy repository root. After the Keepverse split <c>gk-data/packs/fusion/data/seed</c> and
+    /// <c>gk-data/packs/fusion/data/generated</c> live in a <c>gk-data</c> pack while <c>gk-core/data/tuning</c> lives in
+    /// <c>gk-core</c>, so a program running from <c>gk-core/tests/.../bin</c> reaches
+    /// <c>gk-core/data/tuning</c> by luck and <c>gk-data/packs/fusion/data/seed</c> not at all. That is why the split built cleanly
+    /// and then failed every content-reading test at runtime with a <c>FileNotFoundException</c> on a
+    /// path that demonstrably exists. <see cref="KeepverseRoots.Roots"/> is that missing half: it
+    /// returns both candidate roots and lets the filesystem decide, so this method never has to know
+    /// whether a given <c>data/...</c> path is content or core.
+    ///
+    /// <para><b>The walk is kept, not replaced.</b> It still answers for anything outside the two roots
+    /// (<c>dist/FusionRpg.Server/data</c>, a caller-supplied directory, a checkout laid out some other
+    /// way), and in a legacy checkout the roots collapse to the repository root, so this returns
+    /// exactly what the old walk returned. A path matching nothing still returns <see langword="null"/>,
+    /// and this never throws: callers use it to ask "is it there", and a probe must not be the thing
+    /// that fails.
+    /// </para></summary>
     public static string? FindUp(string startDir, params string[] segments)
     {
+        foreach (var root in KeepverseRoots.Roots(startDir))
+        {
+            var candidate = Path.Combine(new[] { root }.Concat(segments).ToArray());
+            if (Directory.Exists(candidate)) return candidate;
+        }
+
         var dir = new DirectoryInfo(startDir);
         while (dir is not null)
         {
