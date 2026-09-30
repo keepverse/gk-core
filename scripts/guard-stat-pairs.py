@@ -60,6 +60,7 @@ import json
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from guard_subjects import subject_root  # noqa: E402
 from keepverse_roots import RootNotFound, content_root  # noqa: E402
 
 CATALOG_RELATIVE = ("data", "seed", "derived-stats", "catalog.json")
@@ -128,8 +129,10 @@ def load_rows(root: Path) -> tuple[list[Row], dict]:
     # RuntimeError, and this guard catches only its own Refusal - so a sibling that is simply not checked
     # out produced an unhandled exception and exit 1, the same code a real finding uses. The resolver owns
     # resolution; the guard owns the verdict, and "I cannot see my subject" is a verdict.
+    # Root-then-owner: a planted catalog is the subject, and only a root without one is resolved
+    # to gk-data. See scripts/lib/guard_subjects.py.
     try:
-        catalog_path = content_root(root).joinpath(*CATALOG_RELATIVE)
+        catalog_path = subject_root(root, CATALOG_RELATIVE, content_root).joinpath(*CATALOG_RELATIVE)
     except RootNotFound as exc:
         raise Refusal("CONTENT-ROOT-MISSING", str(exc)) from exc
     if not catalog_path.is_file():

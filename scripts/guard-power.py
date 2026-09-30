@@ -63,6 +63,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from cscan import strip_whole_line_comments  # noqa: E402
+from guard_subjects import subject_root  # noqa: E402
 from keepverse_roots import RootNotFound, workspace_root  # noqa: E402
 
 GUARD_ID = "power"
@@ -336,8 +337,10 @@ def check(root: Path, *, g1_allowlist: list[str] | None = None,
     # named per file rather than once for the whole run.
     # A missing workspace is a refusal, not a traceback - see guard-class-system.py for why the
     # distinction is load-bearing rather than cosmetic.
+    # Root-then-owner: a fixture carrying its own inventory.json is the subject under test, and
+    # only a root without one is resolved to gk-workflow. See scripts/lib/guard_subjects.py.
     try:
-        inventory_path = workspace_root(root).joinpath(*INVENTORY)
+        inventory_path = subject_root(root, INVENTORY, workspace_root).joinpath(*INVENTORY)
     except RootNotFound as exc:
         raise Refusal("WORKSPACE-ROOT-MISSING", str(exc)) from exc
     if not inventory_path.is_file():
