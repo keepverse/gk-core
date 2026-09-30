@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 SUMMARY = "the passive-tree catalog's staleness check"
-CHECK = ('dotnet', 'run', '--project', 'tools/TreeBinder', '--', '--check')
+CHECK = ('dotnet', 'run', '--project', '../gk-forge/tools/TreeBinder', '--', '--check')
 PREFLIGHT = ('dotnet',)
 WORKING_DIRECTORY = '.'
 FAIL_HINT = "TreeBinder --check found the generated catalog stale — run 'dotnet run --project tools/TreeBinder -- --seed data/seed/passive-tree --out data/generated/passive-tree' and commit the result"

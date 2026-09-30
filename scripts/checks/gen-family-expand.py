@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 SUMMARY = 'the family-expand generated-tree staleness check'
-CHECK = ('dotnet', 'run', '--project', 'tools/FamilyExpandGen', '--', '--check')
+CHECK = ('dotnet', 'run', '--project', '../gk-forge/tools/FamilyExpandGen', '--', '--check')
 PREFLIGHT = ('dotnet',)
 WORKING_DIRECTORY = '.'
 FAIL_HINT = "FamilyExpandGen --check found the generated tree stale — run 'dotnet run --project tools/FamilyExpandGen' and commit the result"

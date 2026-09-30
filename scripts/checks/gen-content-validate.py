@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 SUMMARY = 'the content validation gate (lint, power drift, atom validation)'
-CHECK = ('dotnet', 'run', '--project', 'tools/AtomImporter', '-c', 'Release', '--', '--check', '--validate', '--db', '__DB__')
+CHECK = ('dotnet', 'run', '--project', '../gk-forge/tools/AtomImporter', '-c', 'Release', '--', '--check', '--validate', '--db', '__DB__')
 PREFLIGHT = ('dotnet',)
 WORKING_DIRECTORY = '.'
 FAIL_HINT = 'content validation gate failed - see the lint / power drift lines above'

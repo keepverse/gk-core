@@ -43,6 +43,9 @@ import tempfile
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+from keepverse_roots import owning_base  # noqa: E402  (the insert above must run first)
+
 EXIT_OK = 0
 EXIT_FAILED = 1
 EXIT_REFUSED = 64
@@ -71,8 +74,32 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def resolve_owned(root: Path, relative: str) -> Path:
+    """`relative` against the repository that OWNS it: local root first, then a sibling.
+
+    A check runs its command inside a tree it names the way that tree is named next to the thing that
+    owns it - `web/fusion-rpg-web`, `tools/seedsmith`. `root` is gk-core, which after the split has no
+    `web/` directory at all, so `root / relative` was a path that could never exist and the web check
+    refused WORKING-DIRECTORY-MISSING (exit 64) before running a single command. That is not a subtle
+    miscount: it is the refusal arriving before the work, and a caller reads 64 as "the tool is
+    broken" rather than "the tree moved".
+
+    LOCAL ROOT FIRST, and that order is load-bearing. A check run against a fixture carries its own
+    tree, and that tree is what the fixture is testing; resolving the real workspace first would let
+    gk-core's or gk-web's answer a fixture's question.
+
+    The fallback is not a guess and makes nothing weaker: when no repository has the path the caller
+    gets `root / relative` exactly as before, so a path that exists nowhere is still reported by name
+    and still refuses.
+    """
+    if relative in (".", ""):
+        return root
+    base = owning_base(relative, root)
+    return (base / relative) if base is not None else (root / relative)
+
+
 def resolve_working_directory(root: Path, relative: str) -> Path:
-    path = root if relative in (".", "") else root / relative
+    path = resolve_owned(root, relative)
     if not path.is_dir():
         raise Refusal("WORKING-DIRECTORY-MISSING", str(path))
     return path
@@ -163,10 +190,47 @@ def execute(spec: dict, root: Path, timeout: int, command: tuple[str, ...] | Non
     ONLY defensible default here: the commands are independent, so running the rest after a red buys
     nothing and costs the operator the whole sequence's time on every failure.
     """
-    sequence = [tuple(command)] if command is not None else list(spec.get("checks") or ())
+    # FOURTEEN OF SIXTEEN WRAPPERS WERE RUNNING NOTHING AND REPORTING SUCCESS. `spec_from` accepts a
+    # wrapper that declares EITHER `CHECK` or `CHECKS`, and refuses one that declares neither - on the
+    # stated ground that "a wrapper whose spec is incomplete would otherwise be a check that runs an
+    # empty command and reports success". This line then read `spec["checks"]` alone, so for every
+    # wrapper using the singular `CHECK` the sequence was empty, `steps` was `[]`, `step_count` was 0,
+    # and the verdict was OK with exit 0.
+    #
+    # Measured on the population: 14 of 16 wrappers declared `CHECK` and executed nothing. The only two
+    # that did real work were `web_fusion-rpg-web.py`, which declares `CHECKS`, and
+    # `gen-content-validate.py`, which passes its command to `main` explicitly and so never relied on
+    # the spec. Every generator gate in the wrappers - creature contract, metrics, preflight, report,
+    # species, build plan, passive tree, items gate, structure contract, resource ownership, corpus
+    # dump, item seed validator, family expand, fusion recipe - had been green without running once.
+    #
+    # This is the class the audit brief asks about: a check that cannot see what it checks. It is worse
+    # than a red gate, because a red gate sends someone to look and a green one does not. And the
+    # evidence these gates exist to produce - generators `--check` byte-identical to the import SHA,
+    # goldens unchanged - was never produced at all.
+    #
+    # The refusal below is not reachable through `spec_from`, which already refuses a wrapper with
+    # neither declaration. It exists because `execute` is also called with hand-built specs by tests,
+    # and an empty sequence reached through one of those must not read as success either.
+    # `spec["check"]` is ONE argv tuple and `spec["checks"]` is a sequence OF argv tuples, so the
+    # singular branch has to be wrapped rather than spread. My first version of this read
+    # `list(spec.get("check") or ())`, which turned `('python', '-m', 'seedsmith', 'structures',
+    # 'contract', '--audit')` into six separate one-token commands; the run then tried to spawn bare
+    # `python` with no arguments and refused COMMAND-NOT-FOUND. An intercepted `run()` call is what
+    # showed `command: python` - six characters of argv standing in for a check.
+    if command is not None:
+        sequence = [tuple(command)]
+    else:
+        single = tuple(spec.get("check") or ())
+        many = [tuple(step) for step in (spec.get("checks") or ())]
+        sequence = many or ([single] if single else [])
+    if not sequence:
+        raise Refusal("WRAPPER-SPEC-INCOMPLETE",
+                      "the wrapper declared no CHECK and no CHECKS, so there is nothing to run; "
+                      "an empty sequence must never report a verdict")
     cwd = resolve_working_directory(root, spec.get("working_directory", "."))
     for relative in spec.get("required_paths", ()):
-        if not (root / relative).exists():
+        if not resolve_owned(root, relative).exists():
             raise Refusal("REQUIRED-PATH-MISSING",
                           f"{relative} is missing; the check cannot run until it exists")
     for tool in spec.get("preflight", ()):

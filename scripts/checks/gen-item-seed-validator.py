@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 SUMMARY = 'the item seed corpus validator'
-CHECK = ('dotnet', 'run', '--project', 'tools/ItemSeedValidator', '-c', 'Release')
+CHECK = ('dotnet', 'run', '--project', '../gk-forge/tools/ItemSeedValidator', '-c', 'Release')
 PREFLIGHT = ('dotnet',)
 WORKING_DIRECTORY = '.'
 FAIL_HINT = 'item seed corpus failed validation'

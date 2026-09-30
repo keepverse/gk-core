@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 SUMMARY = "the creature species generator's generated-tree staleness check"
-CHECK = ('dotnet', 'run', '--project', 'tools/CreatureSpeciesGen', '--', '--check')
+CHECK = ('dotnet', 'run', '--project', '../gk-forge/tools/CreatureSpeciesGen', '--', '--check')
 PREFLIGHT = ('dotnet',)
 WORKING_DIRECTORY = '.'
 FAIL_HINT = "CreatureSpeciesGen --check found the generated tree stale — run 'dotnet run --project tools/CreatureSpeciesGen' and commit the result"

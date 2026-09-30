@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 SUMMARY = "the creature build plan generator's staleness/band check"
-CHECK = ('dotnet', 'run', '--project', 'tools/CreatureBuildPlanGen', '--', '--check')
+CHECK = ('dotnet', 'run', '--project', '../gk-forge/tools/CreatureBuildPlanGen', '--', '--check')
 PREFLIGHT = ('dotnet',)
 WORKING_DIRECTORY = '.'
 FAIL_HINT = "CreatureBuildPlanGen --check found the plan stale or out of band — run 'dotnet run --project tools/CreatureBuildPlanGen' and commit the result"
