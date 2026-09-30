@@ -90,6 +90,12 @@ import cscan  # noqa: E402  (the shared scanner lives beside this tool)
 
 GUARD_ID = "test-content-root"
 EXIT_OK = 0
+# A REFUSAL IS NOT A FINDING, AND THIS GUARD SAID SO IN ITS OWN JSON. The handler below
+# already emits "verdict": "REFUSED" and a REFUSED banner, then returned EXIT_FAILED - so the
+# machine-readable verdict and the process exit code contradicted each other, and a caller
+# that trusted the exit code read a refusal as a broken tree. 64 is the convention the
+# other guards here already use for "I cannot run".
+EXIT_REFUSED = 64
 EXIT_FAILED = 1
 
 # The four names a Keepverse root resolves to. CLOSED vocabulary: `data`/`content` are the gk-data
@@ -367,7 +373,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"TEST CONTENT-ROOT GUARD REFUSED: {refusal.reason}", file=sys.stderr)
             if refusal.detail:
                 print(f"  {refusal.detail}", file=sys.stderr)
-        return EXIT_FAILED
+        return EXIT_REFUSED
 
     verdict = "FAIL" if result.failures else "OK"
     if args.json:
