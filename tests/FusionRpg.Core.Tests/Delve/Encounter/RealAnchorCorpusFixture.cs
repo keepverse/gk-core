@@ -21,10 +21,20 @@ internal static class RealAnchorCorpusFixture
 {
     static string RepoRoot()
     {
-        // Resolver contract (tasks/keepverse-split-plan.md "Resolver contract"; gk-core/tests/Shared/KeepverseRoots.cs):
-        // the content root, so every `gk-core/data/tuning` / `gk-data/packs/fusion/data/seed` read here stays valid once content
-        // moves to the gk-data pack. Hunting for that directory was a private, split-fragile root signal.
-        return FusionRpg.TestSupport.ContentRoot.Path;
+        // This is the ENGINE root, not the content root, and the difference is not cosmetic:
+        // every read below is ReadTuning("data", "tuning", ...), and gk-core/data/tuning lives in gk-core.
+        // The gk-data pack has no gk-core/data/tuning at all, so pointing this at the content root made
+        // every one of them look for gk-data/packs/fusion/data/tuning/... and miss. 109 tests in
+        // FusionRpg.Core.Tests failed through this one helper, because it runs from a
+        // [ModuleInitializer] and a static initializer that throws takes its whole fixture with it.
+        //
+        // It previously returned ContentRoot.Path, with a comment arguing that the content root was
+        // correct "so every gk-core/data/tuning / gk-data/packs/fusion/data/seed read here stays valid once content moves to the
+        // gk-data pack". That reasoning bundled two trees into one helper: gk-data/packs/fusion/data/seed does move to the
+        // pack, gk-core/data/tuning does not, and this helper has no gk-data/packs/fusion/data/seed read to justify the content
+        // root. Naming the root you actually mean is the whole fix; a comment rationalising the
+        // wrong one is how it survived review.
+        return KeepverseRoots.Core();
     }
 
     static string ReadTuning(params string[] relative) =>
