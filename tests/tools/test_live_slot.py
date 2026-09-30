@@ -36,8 +36,32 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import owning_base  # noqa: E402
+
+
+def _owned_tool(relative: str) -> Path:
+    """`relative`, in the repository that actually OWNS it. Raises when no repository does.
+
+    `owning_base` and not `root_carrying`: deploy-play.py is in gk-fusion, which is a SIBLING of
+    gk-core and is therefore unreachable by walking upward. `root_carrying` answers only for
+    ancestors, so it returned None for exactly the path it was asked about and the helper raised
+    during collection - an error, not a failure, which is worse because it stops the file running.
+
+    Local root first, so gk-core's own path is always gk-core's. Raising rather than defaulting is
+    deliberate: the fallback would be REPO / relative, which is the bug.
+    """
+    base = owning_base(relative, REPO)
+    if base is None:
+        raise RuntimeError(f"no repository in this workspace carries {relative!r}")
+    return base.joinpath(*relative.replace("\\", "/").split("/"))
 TOOL = REPO / "scripts" / "live_slot.py"
-DEPLOY = REPO / "scripts" / "deploy-play.py"
+# deploy-play.py is gk-fusion's, and a constant built from REPO names gk-core whatever moved - so
+# this pointed at a file that does not exist in gk-core and two tests raised FileNotFoundError on
+# it. Resolved through the tree, and raised rather than defaulted: a fallback would substitute
+# REPO / "scripts" / "deploy-play.py", which is exactly the bug.
+DEPLOY = _owned_tool("scripts/deploy-play.py")
 
 OWNER_URL = "http://127.0.0.1:5088"
 

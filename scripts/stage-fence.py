@@ -39,6 +39,28 @@ import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from keepverse_roots import RootNotFound, workspace_root  # noqa: E402  (the insert above first)
+
+
+def sessions_root(repo: Path = REPO_ROOT) -> Path:
+    """The repository that owns `tasks/sessions/` - local first, then the workspace.
+
+    This tool ships in gk-core and the session records are the WORKSPACE ROOT's: gk-core has no
+    `tasks/` directory at all, so `repo / "tasks" / "sessions" / "<id>.json"` named a path that could
+    never exist and every session failed FENCE-RECORD-MISSING against a directory nobody could
+    create by following the error's own advice.
+
+    Local first, then the workspace, and the order matters in both directions: a FIXTURE carries its
+    own `tasks/sessions`, and a planted record is the only mechanism by which a fence rule is proven
+    to fire, so resolving the workspace first would let a real session's fence answer a fixture's
+    question. This is the same rule `verify-change.py` already applies to the same records, which is
+    why it is written the same way rather than a third way.
+    """
+    if (repo / "tasks" / "sessions").is_dir():
+        return repo
+    return workspace_root(repo)
 # Windows caps a process command line near 32k characters; a busy fence is 250+ paths, which
 # overruns it. `--pathspec-from-file` passes the list on stdin instead, so the SIZE of a change
 # stops being a limit. `-A` is required because a path this commit deletes no longer matches.
@@ -53,7 +75,10 @@ def git(*args: str) -> subprocess.CompletedProcess:
 
 
 def fence_paths(session: str) -> list[str]:
-    record = REPO_ROOT / "tasks" / "sessions" / f"{session}.json"
+    try:
+        record = sessions_root() / "tasks" / "sessions" / f"{session}.json"
+    except RootNotFound as exc:
+        raise SystemExit(f"FENCE-RECORD-MISSING: no tasks/sessions/ in {REPO_ROOT} or above it: {exc}")
     if not record.is_file():
         raise SystemExit(f"FENCE-RECORD-MISSING: {record}")
     data = json.loads(record.read_text(encoding="utf-8"))

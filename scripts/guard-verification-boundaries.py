@@ -78,6 +78,8 @@ try:
         authored_content_root, content_root, core_root, forge_root, fusion_root, web_root,
         workspace_root,
     )
+    from keepverse_roots import owning_base as _shared_owning_base  # noqa: E402
+    from keepverse_roots import repo_bases as _shared_repo_bases  # noqa: E402
     RESOLVER_AVAILABLE = True
 except ImportError as _resolver_error:  # a planted fixture, or a repository missing its lib/
     RESOLVER_AVAILABLE = False
@@ -91,6 +93,7 @@ except ImportError as _resolver_error:  # a planted fixture, or a repository mis
         return None
     authored_content_root = content_root = core_root = _absent
     forge_root = fusion_root = web_root = workspace_root = _absent
+    _shared_owning_base = _shared_repo_bases = None
 
 EXIT_OK = 0
 EXIT_FAILED = 1
@@ -234,8 +237,15 @@ def relative_to(root: Path, path: Path) -> str:
         raise Refusal("PATH-OUTSIDE-ROOT", f"{path} is not under {root}") from exc
 
 
+# The accessor set this guard resolves siblings through, captured AFTER the fallback stubs above, so
+# a run without the resolver hands the shared helper a tuple of `_absent` and gets the fixture's
+# correct answer instead of the real workspace's.
+_GUARD_ACCESSORS = (core_root, forge_root, fusion_root, web_root, workspace_root,
+                    content_root, authored_content_root)
+
+
 def repo_bases(root: Path) -> tuple[Path, ...]:
-    """EVERY repository that could own a repo-relative path, THIS ONE FIRST.
+    """Every repository that could own a repo-relative path, THIS ONE FIRST.
 
     The registry writes its paths repository-relative - `tools/seedsmith/tests/...`,
     `src/FusionRpg.Launcher/...`, `.claude/cmdc-agents/scripts/...`, `data/seed/...` - because that
@@ -250,22 +260,18 @@ def repo_bases(root: Path) -> tuple[Path, ...]:
     and sends someone to fix the contract.
 
     ORDER IS THE CONTRACT: the local root answers first, so a repository's own path is always its own,
-    and a sibling's is only reached when the local root does not have it. Every accessor is wrapped
-    because several of them RAISE when their subject is absent - `content_root` refuses when the pack
-    is not there - and a guard must report its own findings rather than die on a sibling's absence.
+    and a sibling's is only reached when the local root does not have it.
+
+    THE ALGORITHM NOW LIVES IN THE SHARED RESOLVER, with this guard's own accessor tuple passed in
+    rather than the resolver's. That parameter is the whole reason this delegation is safe: this guard
+    imports the resolver OPTIONALLY, and in a copied fixture every accessor above is a stub returning
+    None, so handing the shared helper its own accessors would resolve a planted fixture against the
+    REAL workspace - the exact blindness this function exists to remove. The one-line fallback below is
+    that same case stated directly: with every accessor absent, nothing but `root` can be a base.
     """
-    bases: list[Path] = [root]
-    for accessor in (core_root, forge_root, fusion_root, web_root, workspace_root,
-                     content_root, authored_content_root):
-        try:
-            base = accessor(root)
-        except Exception:
-            continue                      # this repository is absent; that is not this guard's finding
-        if base:
-            base = Path(base)
-            if base not in bases and base.is_dir():
-                bases.append(base)
-    return tuple(bases)
+    if _shared_repo_bases is not None:
+        return _shared_repo_bases(root, _GUARD_ACCESSORS)
+    return (root,)
 
 
 def owning_base(rel: str, root: Path) -> Path | None:
@@ -277,13 +283,12 @@ def owning_base(rel: str, root: Path) -> Path | None:
     repositories consulted is the fixed set the split produced rather than a search upward until
     something is found.
     """
+    if _shared_owning_base is not None:
+        return _shared_owning_base(rel, root, _GUARD_ACCESSORS)
     rel = str(rel).replace("\\", "/").strip()
     if not rel:
         return None
-    for base in repo_bases(root):
-        if (base / rel).exists():
-            return base
-    return None
+    return root if (root / rel).exists() else None
 
 
 def resolved_path(rel: str, root: Path) -> Path:
