@@ -55,7 +55,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from cscan import strip_comments_preserving_layout  # noqa: E402
-from keepverse_roots import fusion_root  # noqa: E402
+from keepverse_roots import RootNotFound, fusion_root  # noqa: E402
 
 GUARD_ID = "clock-seam"
 VERDICT_OK = "CLOCK SEAM GUARD OK"
@@ -260,7 +260,12 @@ def check(root: Path, src_dir: str | None = None) -> dict:
     extra_roots: tuple[Path, ...] = ()
     files = source_files(src)
     if src_dir is None or src_dir == DEFAULT_SRC_DIR:
-        fusion = fusion_root(root)
+        # Named refusal rather than an unhandled RuntimeError; a sibling that is not checked out
+        # is a missing subject, which is what this guard already refuses on for a missing src/.
+        try:
+            fusion = fusion_root(root)
+        except RootNotFound as exc:
+            raise Refusal("FUSION-ROOT-MISSING", str(exc)) from exc
         if fusion.is_dir():
             extra_roots = (fusion,)
             files = files + source_files(fusion / "src")

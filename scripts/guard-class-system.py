@@ -66,7 +66,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
-from keepverse_roots import content_root  # noqa: E402
+from keepverse_roots import RootNotFound, content_root  # noqa: E402
 
 GUARD_ID = "class-system"
 VERDICT_OK = ("CLASS-SYSTEM GUARD OK — aptitude ids collision-free, edges registered, no atk "
@@ -235,15 +235,15 @@ def csharp_sources(src: Path) -> list[Path]:
 
 def check(root: Path) -> dict:
     root = root.resolve()
-    # data/seed/** is the gk-data content PACK; data/tuning/** is THIS
-    # repository's. One guard reading two repositories is why the root is
-    # named per path - the monorepo had one root and never asked.
-    pack = content_root(root)
+    # A MISSING SIBLING IS A REFUSAL, NOT A TRACEBACK. keepverse_roots raises RootNotFound, which is a
+    # RuntimeError, and this guard catches only its own Refusal - so a sibling that is simply not checked
+    # out produced an unhandled exception and exit 1, the same code a real finding uses. The resolver owns
+    # resolution; the guard owns the verdict, and "I cannot see my subject" is a verdict.
+    try:
+        pack = content_root(root)
+    except RootNotFound as exc:
+        raise Refusal("CONTENT-ROOT-MISSING", str(exc)) from exc
     roster_doc = _read_json(pack.joinpath(*ROSTER), "aptitudes roster.json")
-    # data/seed/** is the gk-data content PACK; data/tuning/** is THIS
-    # repository's. One guard reading two repositories is why the root is
-    # named per path - the monorepo had one root and never asked.
-    pack = content_root(root)
     catalog_doc = _read_json(pack.joinpath(*CATALOG), "catalog.json")
 
     roster_entries = roster_doc.get("entries") if isinstance(roster_doc, dict) else None

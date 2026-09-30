@@ -44,7 +44,7 @@ import re
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
-from keepverse_roots import forge_root  # noqa: E402
+from keepverse_roots import RootNotFound, forge_root  # noqa: E402
 
 
 class VocabularyMirrorError(ValueError):
@@ -269,7 +269,16 @@ def main(argv=None) -> int:
     # ".." hops from a gk-core subdirectory reaches it. The walk-up that stood here returned a
     # path that has not existed since the split, and every V4 mirror check then reported "did not
     # resolve" - nine of them - which reads as a vocabulary problem and is a ROOT problem.
-    seedsmith_root = forge_root(repo_root) / "tools" / "seedsmith"
+    # A MISSING SIBLING IS THIS GUARD'S "CANNOT RUN", not a crash. keepverse_roots raises
+    # RootNotFound (a RuntimeError) and nothing here catches it, so a repository that is simply not
+    # checked out produced an unhandled traceback and exit 1 - the same code a real finding uses.
+    # The named-code-and-return-2 path below is the convention this guard already had for a missing
+    # manifest; a missing sibling is the same class of condition and gets the same treatment.
+    try:
+        seedsmith_root = forge_root(repo_root) / "tools" / "seedsmith"
+    except RootNotFound as exc:
+        print(f"VOCABULARY MIRROR GUARD: EXIT_FORGE_ROOT_MISSING -- {exc}", file=sys.stderr)
+        return 2
     if str(seedsmith_root) not in sys.path:
         sys.path.insert(0, str(seedsmith_root))
 

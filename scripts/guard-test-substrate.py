@@ -82,7 +82,7 @@ from datetime import date
 from dataclasses import dataclass, field
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
-from keepverse_roots import forge_root, fusion_root  # noqa: E402
+from keepverse_roots import RootNotFound, forge_root, fusion_root  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import cscan  # noqa: E402  (the shared scanner lives beside this tool)
@@ -307,7 +307,11 @@ def sibling_roots(root: Path) -> list[Path]:
     for accessor in (fusion_root, forge_root):
         try:
             cand = accessor(root)
-        except Exception:      # a missing sibling is not an error here; the entry is simply absent
+        except RootNotFound:
+            # ONLY a missing sibling. A blanket `except Exception` here would convert any other
+            # failure - a typo in an accessor, a permissions error - into "that repository is absent",
+            # which is the silent-blindness shape in a different costume: the ratchet would shrink its
+            # own coverage and report the shrinkage as a clean run.
             continue
         if cand.is_dir() and cand.resolve() != base and cand.resolve() not in out:
             out.append(cand.resolve())

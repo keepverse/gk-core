@@ -63,7 +63,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from cscan import strip_whole_line_comments  # noqa: E402
-from keepverse_roots import workspace_root  # noqa: E402
+from keepverse_roots import RootNotFound, workspace_root  # noqa: E402
 
 GUARD_ID = "power"
 VERDICT_OK = "POWER GUARD OK — one ladder, pin holds, no private f(level)"
@@ -334,7 +334,12 @@ def check(root: Path, *, g1_allowlist: list[str] | None = None,
     # `root` is still what the G1-G3 source scans walk, because src/FusionRpg.Core/Power IS this
     # repository's. One guard legitimately reads from two repositories, which is why the root is
     # named per file rather than once for the whole run.
-    inventory_path = workspace_root(root).joinpath(*INVENTORY)
+    # A missing workspace is a refusal, not a traceback - see guard-class-system.py for why the
+    # distinction is load-bearing rather than cosmetic.
+    try:
+        inventory_path = workspace_root(root).joinpath(*INVENTORY)
+    except RootNotFound as exc:
+        raise Refusal("WORKSPACE-ROOT-MISSING", str(exc)) from exc
     if not inventory_path.is_file():
         raise Refusal("INVENTORY-MISSING", str(inventory_path))
     try:

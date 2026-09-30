@@ -37,7 +37,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
-from keepverse_roots import forge_root  # noqa: E402
+from keepverse_roots import RootNotFound, forge_root  # noqa: E402
 
 #: Structural, not a balance number a pass would tune (spec's own §"The threshold"): measured
 #: 2026-09-18 against content-reading C# tests, 502 assertions below 10, dominated by 0-3
@@ -117,7 +117,15 @@ def _owner_token_exists(token: str, repo_root: Path) -> bool:
     # src/ is gk-core's; tools/seedsmith/ is gk-forge's, and gk-forge is a SIBLING, so the second
     # scan root has never existed since the split. Half the audit was scanning nothing and saying
     # so in a line a reader would take for a summary of what it covered.
-    for root in (repo_root / "src", forge_root(repo_root) / "tools" / "seedsmith" / "seedsmith"):
+    # A missing gk-forge is a named condition, not an unhandled RuntimeError. Before this the guard
+    # printed "scanned: tests, tools/seedsmith/tests" - naming a scan root it could not open, which is
+    # a coverage claim about nothing.
+    try:
+        seedsmith_src = forge_root(repo_root) / "tools" / "seedsmith" / "seedsmith"
+    except RootNotFound as exc:
+        print(f"[{GUARD_ID}] EXIT_FORGE_ROOT_MISSING: {exc}", file=sys.stderr)
+        return 2
+    for root in (repo_root / "src", seedsmith_src):
         if not root.is_dir():
             continue
         for path in root.rglob("*"):

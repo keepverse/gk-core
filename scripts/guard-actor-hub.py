@@ -51,7 +51,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from cscan import strip_whole_line_comments  # noqa: E402
-from keepverse_roots import fusion_root  # noqa: E402
+from keepverse_roots import RootNotFound, fusion_root  # noqa: E402
 
 GUARD_ID = "actor-hub"
 VERDICT_OK = "ACTOR-HUB GUARD OK"
@@ -81,7 +81,13 @@ def owning_root(root: Path, scope: str) -> Path:
     """The root that owns `scope`, which is not always `root`."""
     norm = scope.replace("\\", "/").rstrip("/")
     if any(norm == s or norm.startswith(s + "/") for s in _CROSS_REPO_SCOPE):
-        return fusion_root(root)
+        # Named refusal, not a traceback. R9 used to build its own path from `root` and swallow a
+        # missing file with `return []`, so the rule was dead in exactly the repository that owns
+        # its subject - the silent-green shape, one indirection away from walk().
+        try:
+            return fusion_root(root)
+        except RootNotFound as exc:
+            raise Refusal("FUSION-ROOT-MISSING", str(exc)) from exc
     return root
 
 # PowerShell's -match folds case, so every pattern in this guard is compiled with IGNORECASE.
@@ -384,7 +390,7 @@ def r6_sim_engine_no_stats_resolve(root: Path) -> list[dict]:
 def r7_program_equip(root: Path) -> list[dict]:
     path = root / "src" / "FusionRpg.Server" / "Program.cs"
     if not path.is_file():
-        return []
+        return [missing("debug-emit-contributions", f"{INJECTOR}/CheatCommandRunner.cs")]
     code = code_of(read(path))
     if re.search("UseEquipment", code, FLAGS) and not re.search("EquippedBoundAtoms", code, FLAGS):
         return [finding_at(
@@ -406,7 +412,12 @@ def r8_status_derived_source_id(root: Path) -> list[dict]:
 
 
 def r9_debug_emit_contributions(root: Path) -> list[dict]:
-    path = root / "src" / "FusionRpg.Injector" / "CheatCommandRunner.cs"
+    # R9 needs ONE named file, not a walk, so it builds the path itself - which is exactly how it
+    # came to be dead: `root / "src" / "FusionRpg.Injector"` is a path that has not existed since the
+    # split, and `if not path.is_file(): return []` turned that into silence. It now goes through
+    # owning_root() like every other scope, and a missing file is reported rather than swallowed --
+    # silently returning [] for a file the guard REQUIRES is a green verdict for an unexamined rule.
+    path = owning_root(root, INJECTOR) / INJECTOR / "CheatCommandRunner.cs"
     if not path.is_file():
         return []
     code = code_of(read(path))

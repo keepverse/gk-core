@@ -60,7 +60,7 @@ import json
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
-from keepverse_roots import content_root  # noqa: E402
+from keepverse_roots import RootNotFound, content_root  # noqa: E402
 
 CATALOG_RELATIVE = ("data", "seed", "derived-stats", "catalog.json")
 
@@ -124,7 +124,14 @@ def load_rows(root: Path) -> tuple[list[Row], dict]:
     # The derived-stats catalog is gk-data's, not this repository's. Resolving it against `root`
     # asked gk-core for a file it does not hold, so the guard REFUSED instead of reporting - and
     # refusing is the correct response to a missing subject that was never missing.
-    catalog_path = content_root(root).joinpath(*CATALOG_RELATIVE)
+    # A MISSING SIBLING IS A REFUSAL, NOT A TRACEBACK. keepverse_roots raises RootNotFound, which is a
+    # RuntimeError, and this guard catches only its own Refusal - so a sibling that is simply not checked
+    # out produced an unhandled exception and exit 1, the same code a real finding uses. The resolver owns
+    # resolution; the guard owns the verdict, and "I cannot see my subject" is a verdict.
+    try:
+        catalog_path = content_root(root).joinpath(*CATALOG_RELATIVE)
+    except RootNotFound as exc:
+        raise Refusal("CONTENT-ROOT-MISSING", str(exc)) from exc
     if not catalog_path.is_file():
         raise Refusal("CATALOG-MISSING",
                       f"{catalog_path.as_posix()} does not exist, so the counterbalance rules have "
