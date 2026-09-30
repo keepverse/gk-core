@@ -201,7 +201,22 @@ def collect(base_url: str, duration_sec: float, poll_interval_sec: float, run_id
     started = _MONOTONIC()
     deadline = started + duration_sec
 
-    with jsonl_path.open("a", encoding="utf-8") as jsonl:
+    # OPENED LAZILY, ON THE FIRST WINDOW - so a run that captures nothing leaves NO FILE.
+    #
+    # Opening the JSONL up front in append mode creates it whether or not a single line is ever
+    # written, and that is a regression against the contract the C# suite pins:
+    # `Collector_exitsOne_whenNothingArrives` asserts the summary exists AND the JSONL does not, with
+    # the reason spelled out in the test - "nothing ever arrived -- no line was ever written". An
+    # empty file is an artefact of a run that observed nothing, and leaving one behind means a reader
+    # cannot tell "captured nothing" from "captured something and lost it" by looking at the
+    # directory. The summary already says `windowsCaptured: 0`; the file should agree by not existing.
+    #
+    # The port is what introduced this, and nothing caught it: this tool's own 31-test suite only
+    # covers the populated case, so the only test of the empty case lived in a different language and
+    # was failing on a missing .ps1 rather than on this behaviour. That is the argument for checking
+    # the CALLER too rather than trusting the callee's own suite.
+    jsonl = None
+    try:
         while _MONOTONIC() < deadline:
             try:
                 for window in poll_once(base_url, timeout):
@@ -215,6 +230,8 @@ def collect(base_url: str, duration_sec: float, poll_interval_sec: float, run_id
                         continue
                     seen.add(text)
                     captured.append(moment)
+                    if jsonl is None:
+                        jsonl = jsonl_path.open("a", encoding="utf-8")
                     jsonl.write(json.dumps({"runId": run_id, "t": text, "window": window},
                                            separators=(",", ":")) + "\n")
             except Refusal as refusal:
@@ -223,6 +240,9 @@ def collect(base_url: str, duration_sec: float, poll_interval_sec: float, run_id
             if remaining <= 0:
                 break
             _SLEEP(min(poll_interval_sec, max(MIN_SLEEP_SEC, remaining)))
+    finally:
+        if jsonl is not None:
+            jsonl.close()
 
     ended_utc = _NOW(timezone.utc)
     expected, dropped, rate = compute_drop_stats(captured, expected_interval_sec)

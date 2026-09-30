@@ -12,7 +12,7 @@ using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
-/// <summary>class-system-todo.md P9.1 — scripts/collect-class-system-realrun.ps1 against a REAL,
+/// <summary>class-system-todo.md P9.1 — scripts/collect_class_system_realrun.py against a REAL,
 /// minimal in-process host exposing the shipped PerfEndpoints.MapPerf/PerfWindowBuffer (no change to
 /// either — this collector is a new, class-system-owned CONSUMER of the already-public GET /api/perf/
 /// recent, per decisions.md "Class system real-data collection", 2026-08-27). Posts synthetic windows
@@ -149,11 +149,27 @@ public class RealRunCollectorTests
     static async Task<(int Exit, string Stdout, string Stderr)> RunCollector(string baseUrl, string runId, int durationSec, double pollIntervalSec, double expectedIntervalSec)
     {
         var repoRoot = FindRepoRoot();
-        var script = Path.Combine(repoRoot, "scripts", "collect-class-system-realrun.ps1");
+        // THE PORTED TOOL, AND THE PORTED TOOL'S FLAGS. This still shelled out to
+        // `collect-class-system-realrun.ps1` with `-BaseUrl`/`-DurationSec`/`-PollIntervalSec`/
+        // `-RunId`/`-ExpectedIntervalSec` - the PowerShell spellings - for a script that no longer
+        // exists anywhere in the workspace, so both tests failed on a missing file rather than on
+        // anything about the collector. The port landed `collect_class_system_realrun.py` WITH ITS
+        // OWN SUITE (31 tests, passing), and this caller was never moved across, so the coverage
+        // silently stopped covering the thing it was written for.
+        //
+        // Every default lines up, which is why `--out-dir` is not passed: the ported tool's
+        // `DEFAULT_OUT` is literally ("docs","research","class-system","real-runs") and it writes
+        // `<out>/<runId>.jsonl` and `<out>/<runId>.summary.json` - the two paths this test asserts
+        // on, at the same place.
+        var script = Path.Combine(repoRoot, "scripts", "collect_class_system_realrun.py");
+        Assert.True(File.Exists(script), $"the ported collector is missing: {script}");
         var psi = new ProcessStartInfo
         {
-            FileName = "powershell",
-            Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{script}\" -BaseUrl \"{baseUrl}\" -DurationSec {durationSec} -PollIntervalSec {pollIntervalSec.ToString(System.Globalization.CultureInfo.InvariantCulture)} -RunId \"{runId}\" -ExpectedIntervalSec {expectedIntervalSec.ToString(System.Globalization.CultureInfo.InvariantCulture)}",
+            FileName = "python",
+            Arguments = $"\"{script}\" --base-url \"{baseUrl}\" --duration {durationSec} "
+                + $"--poll-interval {pollIntervalSec.ToString(System.Globalization.CultureInfo.InvariantCulture)} "
+                + $"--run-id \"{runId}\" "
+                + $"--expected-interval {expectedIntervalSec.ToString(System.Globalization.CultureInfo.InvariantCulture)}",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
