@@ -694,6 +694,16 @@
       "guards": []
     },
     {
+      "id": "bridge-shared",
+      "kind": "owner",
+      "paths": [
+        "src/FusionRpg.Bridge/**"
+      ],
+      "project": "core",
+      "level": "module",
+      "guards": []
+    },
+    {
       "id": "core-creature-catalog-generator",
       "kind": "owner",
       "paths": [

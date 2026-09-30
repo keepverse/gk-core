@@ -365,7 +365,14 @@ def project_has_trait(root: Path, project_path: str, verification_id: str) -> bo
     boundary, reused per-member for a group (C7: "focused selection on a group runs only the members
     whose directory contains the trait"). Case-insensitive, because ``Select-String`` is.
     """
-    project_directory = (root / Path(project_path)).parent
+    # An ABSOLUTE project_path is already resolved against its owning repository, which is how the
+    # guard passes it now: this guard owns one repository and reads a registry whose paths belong to
+    # nine, so it resolves each one before asking this question. A relative path still resolves
+    # against `root`, unchanged, for every existing caller.
+    resolved = Path(project_path)
+    if not resolved.is_absolute():
+        resolved = root / resolved
+    project_directory = resolved.parent
     if not project_directory.is_dir():
         return False
     trait = re.compile(

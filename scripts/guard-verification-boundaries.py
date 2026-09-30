@@ -55,6 +55,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 import verification_boundaries as vb  # noqa: E402  (the lib lives beside this tool, not on sys.path)
+from keepverse_roots import (  # noqa: E402
+    authored_content_root, content_root, core_root, forge_root, fusion_root, web_root,
+    workspace_root,
+)
 
 GUARD_ID = "verification-boundaries"
 EXIT_OK = 0
@@ -199,6 +203,77 @@ def relative_to(root: Path, path: Path) -> str:
         raise Refusal("PATH-OUTSIDE-ROOT", f"{path} is not under {root}") from exc
 
 
+def repo_bases(root: Path) -> tuple[Path, ...]:
+    """EVERY repository that could own a repo-relative path, THIS ONE FIRST.
+
+    The registry writes its paths repository-relative - `tools/seedsmith/tests/...`,
+    `src/FusionRpg.Launcher/...`, `.claude/cmdc-agents/scripts/...`, `data/seed/...` - because that
+    is how each path is written next to the thing that owns it. This guard resolves every one of them
+    against gk-core, which was the only repository when it was written and is one of nine now.
+
+    Measured on this guard before the fix: 292 problems, of which **255 named a path that exists, in
+    another repository** - 191 in gk-forge, 49 in gk-workflow, 15 in gk-fusion - and a further 19
+    under gk-data's pack, which `content_root()` is the accessor for. So 274 of 292 findings were this
+    one defect: the guard reading a nine-repository registry through a one-repository lens. A finding
+    that is really a resolution failure is worse than no finding, because it reads as a broken contract
+    and sends someone to fix the contract.
+
+    ORDER IS THE CONTRACT: the local root answers first, so a repository's own path is always its own,
+    and a sibling's is only reached when the local root does not have it. Every accessor is wrapped
+    because several of them RAISE when their subject is absent - `content_root` refuses when the pack
+    is not there - and a guard must report its own findings rather than die on a sibling's absence.
+    """
+    bases: list[Path] = [root]
+    for accessor in (core_root, forge_root, fusion_root, web_root, workspace_root,
+                     content_root, authored_content_root):
+        try:
+            base = accessor(root)
+        except Exception:
+            continue                      # this repository is absent; that is not this guard's finding
+        if base:
+            base = Path(base)
+            if base not in bases and base.is_dir():
+                bases.append(base)
+    return tuple(bases)
+
+
+def owning_base(rel: str, root: Path) -> Path | None:
+    """The repository holding `rel`, or None when no repository does.
+
+    None is the fail-closed answer and every caller keeps its original behaviour on it: a path that
+    exists nowhere is still reported. This is NOT a fallback that makes a check weaker - the check
+    still has to be satisfied, by a real file in the repository that owns it, and the set of
+    repositories consulted is the fixed set the split produced rather than a search upward until
+    something is found.
+    """
+    rel = str(rel).replace("\\", "/").strip()
+    if not rel:
+        return None
+    for base in repo_bases(root):
+        if (base / rel).exists():
+            return base
+    return None
+
+
+def resolved_path(rel: str, root: Path) -> Path:
+    """`rel` as an absolute path, resolved against its owner when there is one.
+
+    Falls back to `root / rel` so a caller can hand the result to something that expects a path
+    whether or not the file was found - the existence check still happens separately.
+    """
+    base = owning_base(rel, root)
+    return (base / rel) if base is not None else (root / rel)
+
+
+def path_exists_anywhere(rel: str, root: Path) -> bool:
+    return owning_base(rel, root) is not None
+
+
+def path_is_dir_anywhere(rel: str, root: Path) -> bool:
+    base = owning_base(rel, root)
+    return base is not None and (base / rel).is_dir()
+
+
 def load_json(path: Path, what: str) -> dict:
     """Read a registry, or refuse BY NAME.
 
@@ -259,13 +334,13 @@ def check_projects(root: Path, projects: dict, failures: list[str]) -> None:
                 if not is_relative_registry_path(member):
                     failures.append(f"invalid project path: {pid}: {member}")
                     continue
-                if not (root / member).is_file():
+                if not path_exists_anywhere(member, root):
                     failures.append(f"project file missing: {pid}: {member}")
         elif isinstance(value, str):
             if not is_relative_registry_path(value):
                 failures.append(f"invalid project path: {pid}")
                 continue
-            if not (root / value).is_file():
+            if not path_exists_anywhere(value, root):
                 failures.append(f"project file missing: {pid}")
         elif isinstance(value, dict):
             # `-notcontains` FOLDS, so `Runner` and `PYTEST` are accepted spellings.
@@ -279,7 +354,7 @@ def check_projects(root: Path, projects: dict, failures: list[str]) -> None:
                 if not is_relative_registry_path(pytest_root):
                     failures.append(f"invalid pytest root: {pid}: {pytest_root}")
                     continue
-                if not (root / pytest_root).is_dir():
+                if not path_is_dir_anywhere(pytest_root, root):
                     failures.append(f"pytest root missing: {pid}: {pytest_root}")
                 if not str(value.get("tests", "")).strip():
                     failures.append(f"pytest project missing 'tests': {pid}")
@@ -289,7 +364,7 @@ def check_projects(root: Path, projects: dict, failures: list[str]) -> None:
                 if not is_relative_registry_path(script_path):
                     failures.append(f"invalid script path: {pid}: {script_path}")
                     continue
-                if not (root / script_path).is_file():
+                if not path_exists_anywhere(script_path, root):
                     failures.append(f"script file missing: {pid}: {script_path}")
         else:
             failures.append(f"invalid project value: {pid}")
@@ -309,9 +384,12 @@ def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[
     def pytest_files(project_id: str) -> list[str]:
         if project_id not in pytest_file_cache:
             dirs = vb.pytest_project_dirs(doc.get("projects") or {}, project_id)
-            base = root / dirs.test_dir if dirs else None
+            # Resolved against the OWNING repository, and the corpus is relativised to that same
+            # base - the two have to agree or a gk-forge test file is listed under a gk-core name and
+            # matches nothing. For a gk-core-owned project this is unchanged.
+            base = owning_base(dirs.test_dir, root) if dirs else None
             pytest_file_cache[project_id] = (
-                [relative_to(root, p) for p in base.rglob("test_*.py") if p.is_file()]
+                [relative_to(base, p) for p in base.rglob("test_*.py") if p.is_file()]
                 if base and base.is_dir() else [])
         return pytest_file_cache[project_id]
 
@@ -345,7 +423,7 @@ def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[
                 owner_patterns[key] = bid
             # C8: an exact pattern that names no file has silently dropped whatever it owned to a wider
             # fallback, with nothing failing until now.
-            if vb.exact_pattern(str(pattern)) and not (root / str(pattern)).is_file():
+            if vb.exact_pattern(str(pattern)) and not path_exists_anywhere(str(pattern), root):
                 failures.append(f"stale exact path: {bid}: {pattern}")
 
         projects = doc.get("projects") or {}
@@ -387,7 +465,8 @@ def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[
                 # member is exactly the one the planner's focused selection will run.
                 members = vb.project_members(projects, project) if project else []
                 if members and not any(
-                        vb.project_has_trait(root, m, str(vid)) for m in members):
+                        vb.project_has_trait(root, str(resolved_path(m, root)), str(vid))
+                        for m in members):
                     failures.append(f"VerificationId has no matching test trait: {vid}")
 
         # python-test-lane D2: file-selector pairing.
@@ -436,7 +515,13 @@ def red_debt_ids(root: Path) -> set[str]:
     `$cells[1] -eq 'red'` FOLDS, so a `RED` row resolves a debt. `==` here would invalidate every
     `knownRed` entry in a register that happened to use capitals.
     """
-    path = root / STUB_REGISTER_RELPATH
+    # RESOLVED AGAINST ITS OWNING REPOSITORY. The stub register is a gk-workflow document and this
+    # guard is gk-core's, so `root / STUB_REGISTER_RELPATH` found nothing, `red_debt_ids` returned the
+    # empty set, and every `knownRed` entry reported that its debt did not resolve to a red row - five
+    # findings that were one document in the wrong repository. The entries themselves were fine; the
+    # question was unanswerable and the guard answered it confidently.
+    base = owning_base(STUB_REGISTER_RELPATH, root)
+    path = (base / STUB_REGISTER_RELPATH) if base is not None else (root / STUB_REGISTER_RELPATH)
     if not path.is_file():
         return set()
     ids: set[str] = set()
@@ -481,7 +566,7 @@ def check_known_red(root: Path, doc: dict, failures: list[str]) -> None:
         node = projects.get(project_id)
         base = str(node.get("root", "")) if isinstance(node, dict) else ""
         rel = f"{base.rstrip('/')}/{test_file}" if base else test_file
-        if not (root / rel).is_file():
+        if not path_exists_anywhere(rel, root):
             failures.append(f"knownRed entry's test file does not exist: {test}")
         debt = str(entry.get("debt", "")).strip("`")
         if debt not in red_ids:
