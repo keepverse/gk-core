@@ -37,6 +37,11 @@ public class SpeciesCatalogDiffTests
 
     static string ReadTuning(params string[] relative) => File.ReadAllText(Path.Combine(new[] { RepoRoot() }.Concat(relative).ToArray()));
 
+    /// <summary>The seed corpus, which the split put in the gk-data pack. A separate reader rather
+    /// than a changed <see cref="ReadTuning"/>: that one is right for data/tuning/**, which is
+    /// gk-core's own, and re-rooting it would break every tuning read that shares it.</summary>
+    static string ReadContent(params string[] relative) => File.ReadAllText(Path.Combine(new[] { KeepverseRoots.Content() }.Concat(relative).ToArray()));
+
     static readonly AptitudeTuning RealAptitudes = AptitudeTuningLoader.Parse(ReadTuning("data", "tuning", "aptitudes.v2.json"));
     static readonly CreatureShapeTuning RealShape = CreatureShapeTuningLoader.Parse(ReadTuning("data", "tuning", "creature-shape.v1.json"));
     static readonly CreatureThreatTuning RealThreat = CreatureThreatTuningLoader.Parse(ReadTuning("data", "tuning", "creature-threat.v2.json"));
@@ -51,7 +56,7 @@ public class SpeciesCatalogDiffTests
         var indexPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species", "_index.json");
         var index = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(indexPath))!;
         var relPath = index[speciesId];
-        return AnchorRowReader.ReadAll(ReadTuning("data", "seed", "creatures", "species", relPath.Replace('/', Path.DirectorySeparatorChar)))
+        return AnchorRowReader.ReadAll(ReadContent("data", "seed", "creatures", "species", relPath.Replace('/', Path.DirectorySeparatorChar)))
             .Single(a => a.SpeciesId == speciesId);
     }
 

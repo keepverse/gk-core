@@ -3,6 +3,7 @@ using FusionRpg.Contracts;
 using FusionRpg.Core.Creatures;
 using FusionRpg.Core.Progression;
 using FusionRpg.Core.Effects.Atoms;
+using FusionRpg.Core.Workspace;
 using FusionRpg.Data.Sqlite;
 using Microsoft.Data.Sqlite;
 using Xunit;
@@ -309,10 +310,14 @@ public sealed class OnboardingCheckpointStoreTests : IDisposable
     [Fact]
     public void Level_four_mints_one_player_owned_dave_item_and_replays_without_duplicates()
     {
-        var repo = Directory.GetParent(AppContext.BaseDirectory)!.Parent!.Parent!.Parent!.Parent!.Parent!.FullName;
-        var atomPath = Path.Combine(repo, "data", "seed", "atoms", "fx-core.json");
-        var containerPath = Path.Combine(repo, "data", "seed", "containers", "first-clear-grants.json");
-        var rarityPath = Path.Combine(repo, "data", "seed", "rarity", "ladder.v1.json");
+        // This counted five Parent! hops up from bin/Debug/net8.0 to land on gk-core, then joined
+        // "data/seed" onto it - a repository that has no data/seed. The hop count is a layout
+        // restated as arithmetic, so it is correct only while the output path is exactly four
+        // directories deep, and it names a root rather than asking which one owns the file.
+        var contentRoot = KeepverseRoots.Content();
+        var atomPath = Path.Combine(contentRoot, "data", "seed", "atoms", "fx-core.json");
+        var containerPath = Path.Combine(contentRoot, "data", "seed", "containers", "first-clear-grants.json");
+        var rarityPath = Path.Combine(contentRoot, "data", "seed", "rarity", "ladder.v1.json");
         var collected = AtomSeedFile.Collect(new[]
         {
             (atomPath, File.ReadAllText(atomPath)),

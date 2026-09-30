@@ -38,7 +38,7 @@ public class ActionCorpusRealContentQualityTests : IDisposable
         _store = _testStore.Store;
 
         // The one real atom seed file backing the two families the real corpus can actually reach.
-        var atomsPath = RepoPath("data", "seed", "atoms", "generated", "family-expand.g-life.json");
+        var atomsPath = SeedPath("data", "seed", "atoms", "generated", "family-expand.g-life.json");
         var collect = AtomSeedFile.Collect(new[] { (atomsPath, File.ReadAllText(atomsPath)) });
         Assert.True(collect.IsOk, string.Join("; ", collect.Errors));
         var atomResult = _store.UpsertAtoms(collect.Content.Atoms);
@@ -47,12 +47,12 @@ public class ActionCorpusRealContentQualityTests : IDisposable
 
     public void Dispose() => _testStore.Dispose();
 
-    static string RepoRoot([CallerFilePath] string here = "")
-    {
-        return KeepverseRoots.Core();
-    }
-
-    static string RepoPath(params string[] parts) => Path.Combine(new[] { RepoRoot() }.Concat(parts).ToArray());
+    /// <summary>Path into the authored seed corpus, which the split put in the gk-data pack.
+    /// Both of this file's reads are data/seed/**, so the helper is named for the corpus rather than
+    /// for a repository: the old name said "repo" while resolving gk-core, which is a repository with
+    /// no data/seed at all, and its unused [CallerFilePath] parameter implied a search that never
+    /// happened.</summary>
+    static string SeedPath(params string[] parts) => Path.Combine(new[] { KeepverseRoots.Content() }.Concat(parts).ToArray());
 
     static ActionCorpusCostTemplate CostTemplate() => new(
         new Dictionary<ActionCategory, ActionCorpusCostTemplateRow>
@@ -77,7 +77,7 @@ public class ActionCorpusRealContentQualityTests : IDisposable
     {
         var briefs = new List<ActionCorpusBrief>();
         foreach (var f in new[] { "committed-round-1.json", "committed-round-2.json" })
-            briefs.AddRange(ActionCorpusBriefJson.Parse(File.ReadAllText(RepoPath("data", "seed", "actions", f))));
+            briefs.AddRange(ActionCorpusBriefJson.Parse(File.ReadAllText(SeedPath("data", "seed", "actions", f))));
         return briefs;
     }
 

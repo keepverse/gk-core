@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using FusionRpg.Core.Actions.Seeding;
+using FusionRpg.Core.Workspace;
 using Xunit;
 
 namespace FusionRpg.Core.Tests.Actions;
@@ -82,10 +83,12 @@ public class ActionSeedingEnablerPayoffTests
         Assert.NotEmpty(pairings.EnablersOf("atom.chill-punisher"));
     }
 
-    static string ShippedPairingsPath([CallerFilePath] string here = "")
+    static string ShippedPairingsPath()
     {
-        var testsDir = Path.GetDirectoryName(here)!;
-        var repo = Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));
-        return Path.Combine(repo, "data", "seed", "actions", "pairings.json");
+        // This walked up three levels from [CallerFilePath] and joined "data/seed" onto the result,
+        // which named gk-core - a repository with no data/seed at all. The seed corpus is the gk-data
+        // pack, so the path has to come from the root that owns it. A fixed number of ".." is a
+        // repository layout restated in a test, and it stops being true the moment a file moves.
+        return Path.Combine(KeepverseRoots.Content(), "data", "seed", "actions", "pairings.json");
     }
 }
