@@ -7,6 +7,7 @@ using FusionRpg.Core.Items.Display;
 using FusionRpg.Core.Items.Surfaces;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -30,19 +31,14 @@ namespace FusionRpg.Core.Tests.Items;
 /// </summary>
 public class ArmouryCompareBandAndUnitTests
 {
-    static string FindDataDir()
-    {
-        var dir = AppContext.BaseDirectory;
-        for (var i = 0; i < 10; i++)
-        {
-            var candidate = Path.Combine(dir, "data");
-            if (Directory.Exists(candidate)) return candidate;
-            var up = Path.GetFullPath(Path.Combine(dir, "..", "..", "..", "..", "data"));
-            if (Directory.Exists(up)) return up;
-            dir = Path.GetFullPath(Path.Combine(dir, ".."));
-        }
-        throw new DirectoryNotFoundException("could not locate data/ above " + AppContext.BaseDirectory);
-    }
+    /// <summary>The <c>data</c> directory: the pack holds gk-data/packs/fusion/data/seed and gk-data/packs/fusion/data/generated, gk-core
+    /// holds gk-core/data/tuning. Callers join "seed" or "tuning" onto this with no "data" segment,
+    /// so the segment has to survive the change of repository - an earlier version returned
+    /// the pack root and every read became &lt;pack&gt;/seed/... and missed.
+    /// FamilyExpansionTests is the one caller that reads TUNING through this helper, and it
+    /// must not: gk-core/data/tuning is in gk-core. That single site is why this helper could not
+    /// simply be collapsed.</summary>
+    static string FindDataDir() => Path.Combine(KeepverseRoots.Content(), "data");
 
     static long? FlatReferenceBase(string channel) => channel switch
     {
