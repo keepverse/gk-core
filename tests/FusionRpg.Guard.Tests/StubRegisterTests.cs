@@ -25,7 +25,7 @@ public sealed class StubRegisterTests
     /// <summary>The rows of the `## Rows` table: every pipe line whose first cell looks like `SR-nn`.</summary>
     static IReadOnlyList<string[]> Rows()
     {
-        var path = Path.Combine(RepoRoot(), RegisterPath);
+        var path = Path.Combine(KeepverseRoots.Workspace(), RegisterPath);
         Assert.True(File.Exists(path), $"the stub register is missing: {RegisterPath}");
 
         var rows = new List<string[]>();
@@ -109,7 +109,7 @@ public sealed class StubRegisterTests
     [Fact]
     public void Every_open_solid_row_waits_on_a_module_of_the_enforcement_program()
     {
-        var violations = OpenSolidRowsWithoutAModule(Rows(), EnforcementMap.ModuleIds(RepoRoot()));
+        var violations = OpenSolidRowsWithoutAModule(Rows(), EnforcementMap.ModuleIds());
         Assert.True(violations.Count == 0, string.Join("\n  ", violations));
     }
 

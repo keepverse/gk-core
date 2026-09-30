@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -7,6 +8,17 @@ namespace FusionRpg.Guard.Tests;
 /// The typed view of <c>gk-core/scripts/enforcement-registry.v1.json</c> (solid-enforcement
 /// <c>enforcement-registry</c>) and the one parser of the map's module table. Both are shared so the
 /// meta-test and any later module read the same shape instead of re-parsing.
+///
+/// <para><b>The root is resolved here, not passed in, and that is the fix.</b> This used to take a
+/// single <c>repoRoot</c> argument, which was true before the Keepverse split, when one repository
+/// held both this registry and the capability map. After the split they are in DIFFERENT
+/// repositories - <c>scripts/enforcement-registry.v1.json</c> was placed in gk-core and
+/// <c>docs/architecture/solid-enforcement-map.md</c> in gk-workflow, confirmed against the staging
+/// report rather than assumed - so one argument could only ever be right for one of them. Callers
+/// dutifully passed their own repository root and the other read failed on a path that
+/// demonstrably exists elsewhere. The parameter is KEPT, as an explicit override, because the
+/// falsifiers need to aim it at a directory that does not hold the file; it is simply no longer
+/// how a normal caller resolves a root.</para>
 /// </summary>
 sealed class EnforcementRegistry
 {
@@ -16,8 +28,12 @@ sealed class EnforcementRegistry
 
     static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
 
-    public static EnforcementRegistry Load(string repoRoot) =>
-        FromJson(File.ReadAllText(Path.Combine(repoRoot, "scripts", "enforcement-registry.v1.json")));
+    /// <summary>Loads gk-core's own registry, which is where the ownership rules placed it.</summary>
+    public static EnforcementRegistry Load() => Load(KeepverseRoots.Core());
+
+    /// <summary>Explicit-root overload, for a falsifier that must read a registry from a fixture.</summary>
+    public static EnforcementRegistry Load(string coreRoot) =>
+        FromJson(File.ReadAllText(Path.Combine(coreRoot, "scripts", "enforcement-registry.v1.json")));
 
     /// <summary>Used by the falsifiers to build a deliberately broken registry in memory — never on disk.</summary>
     public static EnforcementRegistry FromJson(string json) =>
@@ -49,12 +65,22 @@ sealed class RegistryInvariant
 /// module ids. The registry's R3 checks a backlog guard against this set, and a JSON copy would be a
 /// DRY defect, so the table is the source. The parser fails LOUDLY if the table cannot be found rather
 /// than returning an empty set, which would make R3 pass vacuously.
+///
+/// <para><b>This file lives in gk-workflow, not gk-core</b> — developer documentation, which the
+/// workspace ownership rule gives to gk-workflow — while <see cref="EnforcementRegistry"/> in this
+/// same file reads a gk-core path. See that type for why each accessor resolves its own root instead
+/// of taking one. The parameter is retained so the falsifier can aim it at a directory with no map
+/// and assert the loud failure.</para>
 /// </summary>
 static class EnforcementMap
 {
-    public static IReadOnlySet<string> ModuleIds(string repoRoot)
+    /// <summary>Reads the capability map from gk-workflow, where the ownership rules placed it.</summary>
+    public static IReadOnlySet<string> ModuleIds() => ModuleIds(KeepverseRoots.Workspace());
+
+    /// <summary>Explicit-root overload, for the falsifier that must fail on a directory with no map.</summary>
+    public static IReadOnlySet<string> ModuleIds(string workspaceRoot)
     {
-        var path = Path.Combine(repoRoot, "docs", "architecture", "solid-enforcement-map.md");
+        var path = Path.Combine(workspaceRoot, "docs", "architecture", "solid-enforcement-map.md");
         if (!File.Exists(path))
             throw new InvalidOperationException($"cannot find the capability map at {path}");
 

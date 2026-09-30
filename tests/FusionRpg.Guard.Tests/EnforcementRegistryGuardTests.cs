@@ -71,7 +71,7 @@ public sealed class EnforcementRegistryGuardTests
     public void R1_every_guard_on_disk_is_catalogued_and_every_entry_script_exists()
     {
         var root = RepoRoot();
-        var reg = EnforcementRegistry.Load(root);
+        var reg = EnforcementRegistry.Load();
         var violations = R1Violations(reg, DiskGuards(root), script => File.Exists(Path.Combine(root, script)));
         Assert.True(violations.Count == 0, "R1: " + Join(violations));
     }
@@ -144,7 +144,7 @@ public sealed class EnforcementRegistryGuardTests
     [Fact]
     public void R2_tier_and_status_are_closed_vocabularies()
     {
-        var reg = EnforcementRegistry.Load(RepoRoot());
+        var reg = EnforcementRegistry.Load();
         var violations = R2Violations(reg);
         Assert.True(violations.Count == 0, "R2: " + Join(violations));
         // The pin, with its reason: two tiers and two statuses, each a reviewed change to add.
@@ -165,8 +165,8 @@ public sealed class EnforcementRegistryGuardTests
     public void R3_backlog_guard_names_a_module_in_the_map()
     {
         var root = RepoRoot();
-        var reg = EnforcementRegistry.Load(root);
-        var violations = R3Violations(reg, EnforcementMap.ModuleIds(root));
+        var reg = EnforcementRegistry.Load();
+        var violations = R3Violations(reg, EnforcementMap.ModuleIds());
         Assert.True(violations.Count == 0, "R3: " + Join(violations));
     }
 
@@ -182,7 +182,7 @@ public sealed class EnforcementRegistryGuardTests
     [Fact]
     public void R4_a_local_guard_states_why_it_cannot_run_in_ci()
     {
-        var reg = EnforcementRegistry.Load(RepoRoot());
+        var reg = EnforcementRegistry.Load();
         var violations = R4Violations(reg);
         Assert.True(violations.Count == 0, "R4: " + Join(violations));
     }
@@ -209,7 +209,7 @@ public sealed class EnforcementRegistryGuardTests
     public void R5_a_gating_ci_guard_is_actually_run()
     {
         var root = RepoRoot();
-        var reg = EnforcementRegistry.Load(root);
+        var reg = EnforcementRegistry.Load();
         var runner = Path.Combine(root, "scripts", "run_guards.py");
         var violations = R5Violations(
             reg,
@@ -247,7 +247,7 @@ public sealed class EnforcementRegistryGuardTests
     [Fact]
     public void R6_every_invariant_is_guarded_xor_carries_a_reason()
     {
-        var reg = EnforcementRegistry.Load(RepoRoot());
+        var reg = EnforcementRegistry.Load();
         var violations = R6Violations(reg);
         Assert.True(violations.Count == 0, "R6: " + Join(violations));
     }
@@ -269,7 +269,7 @@ public sealed class EnforcementRegistryGuardTests
     [Fact]
     public void R8_every_catalog_guard_is_named_by_an_invariant()
     {
-        var reg = EnforcementRegistry.Load(RepoRoot());
+        var reg = EnforcementRegistry.Load();
         var violations = R8Violations(reg);
         Assert.True(violations.Count == 0, "R8: " + Join(violations));
     }

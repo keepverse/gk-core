@@ -515,7 +515,23 @@ def _check_session_fence(root: Path, session: str, normalized: Sequence[str]) ->
     """Every planned path must be inside the session's declared fence."""
     if not SESSION_ID_PATTERN.match(session):
         raise Refusal("SESSION-ID-INVALID", session)
-    record_path = root / "tasks" / "sessions" / f"{session}.json"
+    # Session records are WORKSPACE state, not repository state. `root` is the repository being
+    # verified - gk-core - and gk-core has no tasks/ directory at all, so resolving the record from
+    # `root` could only ever raise SESSION-RECORD-MISSING and refuse every fenced plan. The split
+    # gave task records and session records to gk-workflow, whose root is the workspace that
+    # CONTAINS this repository; that asymmetry is the same one KeepverseRoots.Workspace() exists to
+    # express on the C# side, and keepverse_roots.workspace_root() is its Python half.
+    #
+    # This mattered more than a wrong path. Because the record was unresolvable here, the fence
+    # check could not distinguish "no record" from "record outside the fence", so the guard suite's
+    # failure count came to depend on which repository the harness was pointed at rather than on
+    # what it was checking. Resolving from the owning root is what makes the answer mean anything.
+    try:
+        from keepverse_roots import workspace_root
+        sessions_root = workspace_root(root)
+    except Exception as exc:  # noqa: BLE001 - a resolver failure must refuse, never guess
+        raise Refusal("SESSION-ROOT-UNRESOLVABLE", f"{root}: {exc}") from exc
+    record_path = sessions_root / "tasks" / "sessions" / f"{session}.json"
     if not record_path.is_file():
         raise Refusal("SESSION-RECORD-MISSING", str(record_path))
     try:
