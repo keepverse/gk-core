@@ -12,6 +12,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
+    <!-- The shared bridge types are a real assembly now, not sources compiled in from the host
+         repository. See src/FusionRpg.Bridge/FusionRpg.Bridge.csproj. -->
+    <ProjectReference Include="..\..\src\FusionRpg.Bridge\FusionRpg.Bridge.csproj" />
     <!-- creature-seed module 1 (spec-corpus-dump.md) puts CorpusDumpTests.cs here, and its fixture
          is a small in-memory RpgStore rather than the 520MB live database — so this test project
          needs the DAL and the tool's own writer/reader, same shape FusionRpg.Data.Tests already
@@ -45,9 +48,6 @@
          DLLs (FUSIONRPG_GAME_DIR) to build at all. Same pattern as FusionRpg.Launcher.Tests' link
          of FileRpgConfig.cs. PatronAuraOverlay.cs itself was removed 2026-09-06 (patron-absorption,
          `seed-to-concrete` T6.2) — its combat math moved to the compiled-atom grant path. -->
-    <Compile Include="$(GkFusionRoot)src\FusionRpg.Injector\Stats\InjectorDerivedOverride.cs" Link="Injector\InjectorDerivedOverride.cs" />
-    <Compile Include="$(GkFusionRoot)src\FusionRpg.Injector\Hud\ActorHudCache.cs" Link="Injector\ActorHudCache.cs" />
-    <Compile Include="$(GkFusionRoot)src\FusionRpg.Injector\Hud\ActorHudUniqueFlags.cs" Link="Injector\ActorHudUniqueFlags.cs" />
     <Compile Include="..\FusionRpg.Data.Tests\DataTestStore.cs" Link="TestSupport\DataTestStore.cs" />
   </ItemGroup>
   <ItemGroup>

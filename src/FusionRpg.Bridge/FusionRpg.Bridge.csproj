@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    FusionRpg.Bridge — the shared surface between the engine core and the game host.
+
+    WHY THIS ASSEMBLY EXISTS. Three Unity-free types — ActorHudCache, ActorHudUniqueFlags and
+    InjectorDerivedOverride — are per-pointer state that BOTH sides must agree on: the core's HUD
+    and status logic reads it, and the host's observe, capture and stat-apply paths write it. They
+    lived in the host repository (gk-fusion) purely because of where their NAMESPACE read best,
+    not because they needed a game. Three gk-core test projects therefore compiled them in through
+    `$(GkFusionRoot)`, which meant a standalone clone of gk-core could not build at all — 12 CS2001
+    "source file not found" errors, measured — while gk-core's own AGENTS.md says plainly:
+
+        Never compile against gk-forge or gk-fusion.
+
+    So the compile-link contradicted the rule that gives the rule its reason. This module is the
+    third option, and the only one that satisfies the rule, the build and the test at once.
+
+    THE NAMING RULE, and it is not cosmetic. Nothing here may be named after the game it happens
+    to serve. These types know about pointers, HUD snapshots and derived-stat overrides; they know
+    nothing about plants, zombies, or which loader host is running. A name carrying the game's name
+    would make a shared contract look like host code, and the next person would move it back - and
+    the split would break again in the same place. The repo's own vocabulary already spells this
+    "creature" rather than "zombie" for exactly this reason, and the rule is stated in AGENTS.md.
+
+    DEPENDENCY DIRECTION. This assembly references FusionRpg.Core and nothing else, so it can be
+    referenced by FusionRpg.Core's own test projects (as it is) and by the host (as it will be)
+    without either compiling the other. It does NOT reference FusionRpg.Contracts directly: Core
+    already brings it, and a second edge would be a cycle waiting to happen.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>FusionRpg.Bridge</RootNamespace>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <!-- This module is the shared contract, so it must never reach for Unity, the loader, or a
+         game assembly. The guard is a build error rather than a review comment, because a guard
+         that only warns is a guard that gets ignored. -->
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FusionRpg.Core\FusionRpg.Core.csproj" />
+  </ItemGroup>
+
+</Project>

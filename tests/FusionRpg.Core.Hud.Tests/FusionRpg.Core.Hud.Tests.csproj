@@ -10,9 +10,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
-    <Compile Include="$(GkFusionRoot)src\FusionRpg.Injector\Hud\ActorHudCache.cs" Link="Hud\ActorHudCache.cs" />
-    <Compile Include="$(GkFusionRoot)src\FusionRpg.Injector\Stats\InjectorDerivedOverride.cs" Link="Stats\InjectorDerivedOverride.cs" />
-    <Compile Include="$(GkFusionRoot)src\FusionRpg.Injector\Hud\ActorHudUniqueFlags.cs" Link="Hud\ActorHudUniqueFlags.cs" />
+    <!-- The shared bridge types are a real assembly now, not sources compiled in from the host
+         repository. See src/FusionRpg.Bridge/FusionRpg.Bridge.csproj. -->
+    <ProjectReference Include="..\..\src\FusionRpg.Bridge\FusionRpg.Bridge.csproj" />
     <None Include="Goldens\actor-hud\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

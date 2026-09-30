@@ -1,6 +1,6 @@
 using FusionRpg.Core.Hud;
 using FusionRpg.Core.Stats.Derived;
-using FusionRpg.Injector.Stats;
+using FusionRpg.Bridge.Stats;
 using Xunit;
 
 namespace FusionRpg.Core.Tests.Hud;

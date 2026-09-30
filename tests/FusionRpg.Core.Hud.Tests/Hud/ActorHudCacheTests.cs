@@ -1,5 +1,5 @@
 using FusionRpg.Core.Hud;
-using FusionRpg.Injector.Hud;
+using FusionRpg.Bridge.Hud;
 using Xunit;
 
 namespace FusionRpg.Core.Tests.Hud;

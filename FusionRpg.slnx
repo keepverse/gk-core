@@ -2,6 +2,8 @@
   <Folder Name="/src/">
     <Project Path="src/FusionRpg.Contracts/FusionRpg.Contracts.csproj" />
     <Project Path="src/FusionRpg.Core/FusionRpg.Core.csproj" />
+    <Project Path="src/FusionRpg.Bridge/FusionRpg.Bridge.csproj" />
+
     <Project Path="src/FusionRpg.CheatCore/FusionRpg.CheatCore.csproj" />
     <Project Path="src/FusionRpg.Data/FusionRpg.Data.csproj" />
     <Project Path="src/FusionRpg.Server/FusionRpg.Server.csproj" />
