@@ -33,6 +33,9 @@ from pathlib import Path
 from unittest import mock
 
 REPO = Path(__file__).resolve().parents[2]
+
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import fusion_root  # noqa: E402
 SCRIPT = Path(os.environ.get("PHASE9_GATE_SCRIPT",
                              REPO / "scripts" / "gate_class_system_phase9.py")).resolve()
 SUITE = REPO / "tests" / "tools" / "test_gate_class_system_phase9.py"
@@ -342,7 +345,13 @@ class TheRealTree(SeamGuard):
     def test_it_is_NOT_wired_into_the_deploy(self) -> None:
         """Deliberate, and pinned here as well as in C#: wiring a gate whose expected verdict is NOT
         READY into a throw-on-failure pipeline would break the run for an honestly-expected state."""
-        text = (REPO / "scripts" / "deploy-play.py").read_text(encoding="utf-8")
+        # deploy-play.py is gk-fusion's. This is a NEGATIVE assertion - the readiness gate must not be
+        # wired into the deploy - and a negative assertion against a file that does not exist passes
+        # for the wrong reason: `read_text` raised here, so the gate was never checked against anything.
+        # Read the deploy script where it actually lives, so the refusal means what it says.
+        deploy = fusion_root(REPO) / "scripts" / "deploy-play.py"
+        self.assertTrue(deploy.is_file(), f"the deploy script to audit is not there: {deploy}")
+        text = deploy.read_text(encoding="utf-8")
         for token in ("gate-class-system-phase9", "gate_class_system_phase9"):
             self.assertNotIn(token, text.lower(),
                              f"the readiness gate is wired into deploy-play.py ({token!r})")
