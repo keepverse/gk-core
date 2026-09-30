@@ -76,7 +76,7 @@ public class RarityPowerBudgetStoreTests : IDisposable
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector")))
+            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core")))
                 return ItemRarityTuning.Parse(File.ReadAllText(
                     Path.Combine(dir.FullName, "data", "tuning", "item-rarity.v1.json")));
             dir = dir.Parent;

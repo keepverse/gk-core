@@ -26,6 +26,7 @@ using FusionRpg.Core.World.Ai;
 using FusionRpg.Core.World.Growth;
 using FusionRpg.Core.World.Loam;
 using FusionRpg.Data.Policies;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests;
 
@@ -157,7 +158,7 @@ internal static class ContractTuningTestBootstrap
         // never from the CWD. v2 (AE1.4): the shipped version production loads.
         FusionRpg.Core.Actions.ActionBaseTuningHub.Configure(
             FusionRpg.Core.Actions.ActionBaseTuningLoader.Parse(
-                File.ReadAllText(Path.Combine(FindRepoRoot(), "data", "tuning", "action-base.v2.json"))));
+                File.ReadAllText(Path.Combine(CoreRoot(), "data", "tuning", "action-base.v2.json"))));
         SummoningTuningHub.Configure(DefaultSummoning);
         WorldAiPolicy.Configure(DefaultAi);
         VfxTuningHub.Configure(DefaultVfx);
@@ -168,14 +169,14 @@ internal static class ContractTuningTestBootstrap
         // empires from it and an empty save is named from it, so every store test needs it.
         FusionRpg.Core.Narrative.LeadNamesHub.Configure(FusionRpg.Core.Narrative.LeadNames.Parse(
                 File.ReadAllText(Path.Combine(
-                    FindRepoRoot(), "data", "seed", "narrative", "_registry", "names.en.v1.json"))));
+                    ContentRoot(), "data", "seed", "narrative", "_registry", "names.en.v1.json"))));
         ItemsTuningHub.Configure(DefaultItems);
         // commander-identity SE4.2/SE4.3: the process-wide commander directory, read from the real
         // authored registry exactly like production does (Core never touches a path).
         FusionRpg.Core.Commanders.CommanderDirectoryHub.Configure(
             FusionRpg.Core.Commanders.DataCommanderDirectory.Parse(
                 File.ReadAllText(Path.Combine(
-                    FindRepoRoot(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json"))));
+                    ContentRoot(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json"))));
         // test-substrate TVB-F16: `RpgStore.WorldTurnHubInputsForUnlocked` reads `AptitudeTuningHub.Tuning`,
         // so the first Data-level district assault ever COMMITTED through the store threw before it fought
         // (`DistrictAssaultResolver.BuildAnimateSetups` -> `CommitWorldTurn`'s `HubInputsFor`). Configured
@@ -189,7 +190,7 @@ internal static class ContractTuningTestBootstrap
         FusionRpg.Core.Saves.NewSaveEmpiresHub.Configure(
             FusionRpg.Core.Saves.NewSaveEmpires.Parse(
                 File.ReadAllText(Path.Combine(
-                    FindRepoRoot(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json"))));
+                    ContentRoot(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json"))));
     }
 
     public static readonly ContractTuning DefaultContracts = new(
@@ -814,12 +815,32 @@ internal static class ContractTuningTestBootstrap
         new RungRow(10, 5, 5, 3, 12407, 18151, 3518, new[] { "scopeSplit", "riderStatus", "condition", "sequence", "consumption", "reaction", "restriction" }),
     });
 
+    // ── workspace roots ───────────────────────────────────────────────────────────────────────────
+    // The split moved gk-data/packs/fusion/data/seed and gk-data/packs/fusion/data/generated into a gk-data pack and left gk-core/data/tuning in
+    // gk-core, so ONE repo root no longer answers for both. Before the split FindRepoRoot() was
+    // correct for every read above; after it, the gk-data/packs/fusion/data/seed reads pointed into gk-core and threw.
+    // That is not a cosmetic path problem. This is a [ModuleInitializer]: it runs at ASSEMBLY LOAD,
+    // so one unresolvable file failed every test in every assembly that links this file.
+    // FusionRpg.Core.ClassSystem.Tests measured 238 of 238 red in the workspace with gk-data
+    // PRESENT - a green-looking repository that could not run a single test.
+    // KeepverseRoots is the one resolver; these two helpers are the only place the roots are named,
+    // and each is resolved once because five reads share it.
+    private static string? _contentRoot;
+    private static string? _coreRoot;
+
+    /// <summary>Root the authored content registries resolve from: a gk-data pack after the split,
+    /// the repository root before it.</summary>
+    private static string ContentRoot() => _contentRoot ??= KeepverseRoots.Content();
+
+    /// <summary>Root the authored tuning files resolve from: gk-core after the split.</summary>
+    private static string CoreRoot() => _coreRoot ??= KeepverseRoots.Core();
+
     static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) return dir.FullName;
+            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
             dir = dir.Parent;
         }
         throw new DirectoryNotFoundException("repo root");
@@ -829,7 +850,7 @@ internal static class ContractTuningTestBootstrap
     /// literal, so publishing a new version cannot break a test (TVB-F16).</summary>
     static string FindShippedAptitudesTuning()
     {
-        var tuningDir = Path.Combine(FindRepoRoot(), "data", "tuning");
+        var tuningDir = Path.Combine(CoreRoot(), "data", "tuning");
         var best = Directory.GetFiles(tuningDir, "aptitudes.v*.json")
             .Select(f => (Path: f, V: int.TryParse(
                 Path.GetFileNameWithoutExtension(f).Split(".v").Last(), out var v) ? v : -1))

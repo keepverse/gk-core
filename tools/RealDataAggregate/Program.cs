@@ -186,7 +186,7 @@ sealed class Options
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector")))
+            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core")))
                 return Path.Combine(dir.FullName, "dist", "FusionRpg.Server", "data", "rpg-hot.sqlite");
             dir = dir.Parent;
         }

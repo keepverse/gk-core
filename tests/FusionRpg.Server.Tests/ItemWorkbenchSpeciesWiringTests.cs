@@ -69,7 +69,7 @@ public class ItemWorkbenchSpeciesWiringTests : IDisposable
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) return dir.FullName;
+            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
             dir = dir.Parent;
         }
         throw new DirectoryNotFoundException("repo root");

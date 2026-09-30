@@ -139,7 +139,7 @@ public class UniqueActorXpUnlockRollTests : IAsyncLifetime
         var dir = new DirectoryInfo(Path.GetDirectoryName(here)!);
         while (dir is not null)
         {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) return dir.FullName;
+            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
             dir = dir.Parent;
         }
 

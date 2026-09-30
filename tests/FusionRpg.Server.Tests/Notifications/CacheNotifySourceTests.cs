@@ -53,7 +53,7 @@ public class CacheNotifySourceTests : IDisposable
     {
         if (_deploymentHierarchyConfigured) return;
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector")))
+        while (dir is not null && !Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core")))
             dir = dir.Parent;
         if (dir is null) throw new InvalidOperationException("could not find repo root above " + AppContext.BaseDirectory);
         var json = File.ReadAllText(Path.Combine(dir.FullName, "data", "tuning", "deployment-hierarchy.v5.json"));
