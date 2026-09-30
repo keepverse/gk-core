@@ -2,6 +2,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using FusionRpg.Core.Tests.TestSupport;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Balance;
 
@@ -45,13 +46,7 @@ public class ProvePredictorTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     [Fact]

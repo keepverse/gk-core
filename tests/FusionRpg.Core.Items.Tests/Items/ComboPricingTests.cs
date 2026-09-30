@@ -5,6 +5,7 @@ using FusionRpg.Core.Items.Materials;
 using FusionRpg.Core.Items.Power;
 using FusionRpg.Core.Items.Sockets;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -292,14 +293,7 @@ public class ComboPricingTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root not found");
+        return KeepverseRoots.Core();
     }
 
     static string Digest() => new('a', 64);

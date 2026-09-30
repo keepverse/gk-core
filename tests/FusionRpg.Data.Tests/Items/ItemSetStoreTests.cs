@@ -4,6 +4,7 @@ using FusionRpg.Core.Items.Thresholds;
 using FusionRpg.Data;
 using FusionRpg.Data.Sqlite;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Items;
 
@@ -27,18 +28,11 @@ public class ItemSetStoreTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static IReadOnlyList<SetDef> Corpus() =>
-        Directory.EnumerateFiles(Path.Combine(RepoRoot(), "data", "seed", "items", "sets"), "*.json")
+        Directory.EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "sets"), "*.json")
             .Where(p => !Path.GetFileName(p).EndsWith(".ledger.json", StringComparison.Ordinal))
             .OrderBy(p => p, StringComparer.Ordinal)
             .SelectMany(p => SetCorpus.Parse(File.ReadAllText(p)))

@@ -7,6 +7,7 @@ using FusionRpg.Core.Items.Sockets;
 using FusionRpg.Core.Power;
 using FusionRpg.Data;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Items;
 
@@ -144,13 +145,7 @@ public class EquipProjectionSocketsTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     [Fact]

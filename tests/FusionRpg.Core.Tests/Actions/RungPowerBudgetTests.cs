@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using FusionRpg.Core.Actions.Rungs;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Actions;
 
@@ -17,8 +18,7 @@ public class RungPowerBudgetTests
 
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;                          // tests/.../Actions
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));    // repo root
+        return KeepverseRoots.Core();
     }
 
     static RungTable ShippedV2() =>

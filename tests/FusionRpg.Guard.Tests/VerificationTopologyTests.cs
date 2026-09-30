@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -18,13 +19,7 @@ public sealed class VerificationTopologyTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "scripts", "run_guards.py"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static string Read(params string[] parts) =>

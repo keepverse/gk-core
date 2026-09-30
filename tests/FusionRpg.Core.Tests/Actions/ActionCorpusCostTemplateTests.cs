@@ -3,6 +3,7 @@ using FusionRpg.Core.Actions;
 using FusionRpg.Core.Actions.Corpus;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Actions;
 
@@ -36,8 +37,7 @@ public class ActionCorpusCostTemplateTests
 
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;                      // tests/.../Actions
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));  // repo root
+        return KeepverseRoots.Core();
     }
 
     /// <summary>The inline mirror above proves the loader's own contract; this proves the actually-

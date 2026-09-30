@@ -6,6 +6,7 @@ using FusionRpg.Core.Items.Power;
 using FusionRpg.Core.Items.Sockets;
 using Xunit;
 using Xunit.Abstractions;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -52,13 +53,7 @@ public class ChaffChassisWatchTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     /// <summary>The shipped ten rungs, verbatim from `gk-data/packs/fusion/data/seed/rarity/ladder.v1.json` — written out,
@@ -102,7 +97,7 @@ public class ChaffChassisWatchTests
     /// prices the family's WORST tier instead, which is the bound a watch wants.</summary>
     static IReadOnlyDictionary<string, IReadOnlyList<AtomRow>> AtomsByFamily()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "atoms");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms");
         var files = Directory.EnumerateFiles(dir, "*.json", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (Path: f, Json: File.ReadAllText(f)))
@@ -120,7 +115,7 @@ public class ChaffChassisWatchTests
     /// authoring fields — see the class doc for why not through the Core parser's model.</summary>
     static IReadOnlyList<(string Id, string Shape, IReadOnlyList<string> Grants)> Combinations()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "combinations");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "combinations");
         var result = new List<(string, string, IReadOnlyList<string>)>();
         foreach (var file in new[] { "splices.json", "strains.json" })
         {
@@ -146,7 +141,7 @@ public class ChaffChassisWatchTests
     /// the first cut of this measurement priced only 36 of the 82 combinations.</summary>
     static IReadOnlyDictionary<string, ChannelPoolRow> PoolsById()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "channel-pools", "pools.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "channel-pools", "pools.v1.json");
         var read = ChannelPoolFile.TryParse(File.ReadAllText(path), out var pools);
         Assert.True(read.IsOk, $"the channel-pool catalog did not parse: {read}");
         return pools.GroupBy(p => p.PoolId, StringComparer.Ordinal)

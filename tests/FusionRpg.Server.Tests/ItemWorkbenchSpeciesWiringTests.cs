@@ -8,6 +8,7 @@ using FusionRpg.Core.Items.Thresholds;
 using FusionRpg.Data;
 using FusionRpg.Data.Tests;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -54,7 +55,7 @@ public class ItemWorkbenchSpeciesWiringTests : IDisposable
         // assembly is a separate process from Core.Tests' own ContractTuningTestBootstrap).
         MaterialCatalog.ConfigureTrophyRegistry(
             MaterialCatalog.ParseTrophyRegistryIds(
-                File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "items", "materials", "trophy-registry.json"))));
+                File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "materials", "trophy-registry.json"))));
 
         for (var i = 0; i < RarityLadder.RungIds.Count; i++)
             Assert.True(_store.UpsertRarity(new RarityRow(RarityLadder.RungIds[i], (i + 1) * 10, 3, 0, 1, 5)).Ok);
@@ -66,13 +67,7 @@ public class ItemWorkbenchSpeciesWiringTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static string Tuning(string file) => File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", file));

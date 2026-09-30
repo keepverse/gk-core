@@ -3,6 +3,7 @@ using FusionRpg.Data;
 using FusionRpg.Data.Sqlite;
 using Microsoft.Data.Sqlite;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Items;
 
@@ -37,7 +38,7 @@ public class CharmCarryStoreTests : IDisposable
         throw new DirectoryNotFoundException("repo root");
     }
 
-    static string CharmsDir() => Path.Combine(RepoRoot(), "data", "seed", "items", "charms");
+    static string CharmsDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "charms");
 
     static IReadOnlyList<CharmDef> Corpus() =>
         Directory.EnumerateFiles(CharmsDir(), "*.json")

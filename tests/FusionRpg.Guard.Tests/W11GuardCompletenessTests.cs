@@ -1,4 +1,5 @@
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -59,14 +60,6 @@ public class W11GuardCompletenessTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "Directory.Build.props")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not find repo root");
+        return KeepverseRoots.Core();
     }
 }

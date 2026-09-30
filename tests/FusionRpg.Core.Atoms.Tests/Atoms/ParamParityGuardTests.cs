@@ -1,5 +1,6 @@
 using FusionRpg.Core.Effects.Atoms;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Atoms;
 
@@ -155,13 +156,7 @@ public class ParamParityGuardTests
     // already use in Guard.Tests, generalised to any src/ path rather than only gk-fusion/src/FusionRpg.Injector.
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     // ---- the real check, against the live registry --------------------------------------------------

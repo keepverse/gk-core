@@ -7,6 +7,7 @@ using FusionRpg.Core.Stats.Derived;
 using FusionRpg.Core.World;
 using FusionRpg.Data;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Delve;
 
@@ -43,11 +44,7 @@ public class DelveWildTransactionTests : IDisposable
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !Directory.Exists(Path.Combine(dir.FullName, "data", "seed", "dungeon")))
-            dir = dir.Parent;
-        if (dir is null) throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
-        return dir.FullName;
+        return KeepverseRoots.Core();
     }
 
     // ---- fixtures (mirrors DelveAttritionSettlementTests.cs's own shape) ----

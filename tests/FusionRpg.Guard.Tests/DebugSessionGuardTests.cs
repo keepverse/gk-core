@@ -1,4 +1,5 @@
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -48,10 +49,6 @@ public class DebugSessionGuardTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "FusionRpg.slnx")))
-            dir = dir.Parent;
-        Assert.NotNull(dir);
-        return dir!.FullName;
+        return KeepverseRoots.Core();
     }
 }

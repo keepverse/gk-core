@@ -6,6 +6,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Data;
 using FusionRpg.Data.Tests;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.E2E.Tests;
 
@@ -137,14 +138,7 @@ public class UnlockTuningActivationTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("could not find repo root (no src/FusionRpg.Injector above test bin)");
+        return KeepverseRoots.Core();
     }
 
     /// <summary>
@@ -170,13 +164,13 @@ public class UnlockTuningActivationTests
 
         // The real import path for the basics file: its own atom source (the same one
         // ActionCorpusImporterTests seeds for this file) plus the shipped cost template.
-        var atomsPath = Path.Combine(RepoRoot(), "data", "seed", "atoms", "fx-core.json");
+        var atomsPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "fx-core.json");
         var collected = AtomSeedFile.Collect(new[] { (atomsPath, File.ReadAllText(atomsPath)) });
         Assert.True(collected.IsOk, string.Join("; ", collected.Errors));
         Assert.Empty(store.UpsertAtoms(collected.Content.Atoms).Rejected);
 
         var briefs = ActionCorpusBriefJson.Parse(File.ReadAllText(
-            Path.Combine(RepoRoot(), "data", "seed", "actions", "authored-basics.json")));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "actions", "authored-basics.json")));
         var template = ActionCorpusCostTemplateLoader.Parse(File.ReadAllText(
             Path.Combine(RepoRoot(), "data", "tuning", "action-corpus-cost-templates.v2.json")));
         var imported = ActionCorpusImporter.Import(store, briefs, template, RungPolicy.Table);

@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.E2E.Tests;
 
@@ -79,8 +80,6 @@ public class ContractFixtureTests : IAsyncLifetime
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md"))) dir = dir.Parent;
-        return dir?.FullName ?? throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 }

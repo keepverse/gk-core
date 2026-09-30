@@ -2,6 +2,7 @@ using System.Linq;
 using FusionRpg.Core.Creatures;
 using FusionRpg.Core.Creatures.Generation;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures;
 
@@ -28,7 +29,7 @@ public class SummonPoolPlantabilityTests
     /// <summary>Every committed generated species, through the same reader and mapper the hosts use.</summary>
     static IReadOnlyList<CreatureSpeciesDef> RealRoster()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "generated", "creatures");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "generated", "creatures");
         var roster = new List<CreatureSpeciesDef>();
         foreach (var file in Directory.EnumerateFiles(dir, "*.json")
                      .Where(f => !Path.GetFileName(f).StartsWith("_", StringComparison.Ordinal))
@@ -132,13 +133,6 @@ public class SummonPoolPlantabilityTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "data", "generated", "creatures"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("could not locate the repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 }

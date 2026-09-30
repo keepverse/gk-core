@@ -9,6 +9,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.E2E.Tests;
 
@@ -136,13 +137,6 @@ public class UniqueActorXpUnlockRollTests : IAsyncLifetime
 
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var dir = new DirectoryInfo(Path.GetDirectoryName(here)!);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("could not find the repo root above the E2E test sources");
+        return KeepverseRoots.Core();
     }
 }

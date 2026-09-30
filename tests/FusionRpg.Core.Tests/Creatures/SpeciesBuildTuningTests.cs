@@ -11,14 +11,7 @@ public class SpeciesBuildTuningTests
 {
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "Directory.Build.props")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     static string ShippedJson() =>

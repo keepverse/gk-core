@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -124,10 +125,7 @@ public class UniqueActorAtomRepushTests : IAsyncLifetime
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md")))
-            dir = dir.Parent;
-        return dir?.FullName ?? throw new InvalidOperationException("repository root not found");
+        return KeepverseRoots.Core();
     }
 
     async Task PostEventAsync(string kind, string? matchKey, object payload)

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FusionRpg.Core.Items;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -21,18 +22,12 @@ public class RarityOverlapSimulatorTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static List<RarityRungWindow> LoadWindows()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "rarity", "ladder.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "rarity", "ladder.v1.json");
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
         return doc.RootElement.GetProperty("entries").EnumerateArray()
             .Select(e => (

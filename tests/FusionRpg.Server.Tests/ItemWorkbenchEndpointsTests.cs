@@ -19,6 +19,7 @@ using Xunit;
 using Xunit.Abstractions;
 using FusionRpg.Data.Tests;
 using FusionRpg.Server;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -89,7 +90,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
             Path.Combine(RepoRoot(), "data", "tuning", "power-scale.v2.json")));
         var rarity = ItemRarityTuning.Parse(File.ReadAllText(Tuning("item-rarity.v1.json")));
         _recipes = MaterialRecipeCatalog.Load(
-            Directory.EnumerateFiles(Path.Combine(RepoRoot(), "data", "seed", "items", "recipes"), "*.json")
+            Directory.EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "recipes"), "*.json")
                 .OrderBy(f => f, StringComparer.Ordinal).Select(File.ReadAllText),
             _materials);
 
@@ -150,7 +151,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
         // the roll deterministic and restore the shipped value afterwards.
         DeploymentHierarchyTuningHub.Configure(_deployment);
         var classForBaseType = BaseTypeSocketMaxCorpus.LoadClassById(
-            Path.Combine(RepoRoot(), "data", "seed", "items", "base-types"));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types"));
         _craftWear = new CraftWearSource(
             (baseTypeId, rungIndex) =>
                 classForBaseType(baseTypeId) is { Length: > 0 } cls &&
@@ -215,14 +216,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static string Tuning(string file) => Path.Combine(RepoRoot(), "data", "tuning", file);
@@ -577,7 +571,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
     static (string Id, string Class) FirstRealBaseType()
     {
         foreach (var file in Directory.EnumerateFiles(
-                     Path.Combine(RepoRoot(), "data", "seed", "items", "base-types"), "*.json",
+                     Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types"), "*.json",
                      SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
         {
             using var doc = JsonDocument.Parse(File.ReadAllText(file));
@@ -681,7 +675,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
         Catalog().Recipes.Values.First(r => r.Operation == CraftOperation.Repair).RecipeId;
 
     static MaterialRecipeCatalog Catalog() => MaterialRecipeCatalog.Load(
-        Directory.EnumerateFiles(Path.Combine(RepoRoot(), "data", "seed", "items", "recipes"), "*.json")
+        Directory.EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "recipes"), "*.json")
             .OrderBy(f => f, StringComparer.Ordinal).Select(File.ReadAllText),
         MaterialTuning.Parse(File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", SocketTuningFiles.Materials))));
 
@@ -1604,7 +1598,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
     {
         var rows = new Dictionary<(string, int), (string, long, long)>();
         using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "seed", "atoms", "generated", "family-expand.milestones.json")));
+            KeepverseRoots.Content(), "data", "seed", "atoms", "generated", "family-expand.milestones.json")));
         foreach (var e in doc.RootElement.GetProperty("entries").EnumerateArray())
         {
             var family = e.GetProperty("family").GetString()!;
@@ -1622,7 +1616,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
     {
         var set = new HashSet<string>(StringComparer.Ordinal);
         using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "seed", "items", "enhancement-milestones", "milestones.json")));
+            KeepverseRoots.Content(), "data", "seed", "items", "enhancement-milestones", "milestones.json")));
         foreach (var e in doc.RootElement.GetProperty("entries").EnumerateArray())
             set.Add(e.GetProperty("runtimeFamily").GetString()!);
         return set;
@@ -1732,7 +1726,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
     [Fact]
     public void The_production_milestone_lookups_read_the_same_corpus_facts_as_the_tested_ones()
     {
-        var baseTypesDir = Path.Combine(RepoRoot(), "data", "seed", "items", "base-types");
+        var baseTypesDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types");
 
         // 1) The track reader is a CONTRACT over the drop reader's own ids, not a population: every base
         // type the drop path can draw must carry a track, and a track must ascend by atLevel (the
@@ -1819,7 +1813,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
     {
         var result = new List<AffixFamilySource>();
         foreach (var path in Directory.EnumerateFiles(
-                     Path.Combine(RepoRoot(), "data", "seed", "items", "affix-families"), "*.json"))
+                     Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "affix-families"), "*.json"))
         {
             using var doc = JsonDocument.Parse(File.ReadAllText(path));
             foreach (var e in doc.RootElement.GetProperty("entries").EnumerateArray())
@@ -1834,10 +1828,10 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
     }
 
     static FamilyOverrides LoadForgeOverrides() => FamilyOverrides.Parse(File.ReadAllText(Path.Combine(
-        RepoRoot(), "data", "seed", "items", "_registry", "family-overrides.v1.json")));
+        KeepverseRoots.Content(), "data", "seed", "items", "_registry", "family-overrides.v1.json")));
 
     static RoleRelocationTable LoadForgeRelocation() => RoleRelocationTable.Parse(File.ReadAllText(Path.Combine(
-        RepoRoot(), "data", "seed", "items", "_registry", "role-relocation.v1.json")));
+        KeepverseRoots.Content(), "data", "seed", "items", "_registry", "role-relocation.v1.json")));
 
     static PowerTuning ForgePower() => PowerTuning.Build(
         1, 1, 80_000, 0, 20, 680, 1000, 25000, 250, 1000, 5000, 5000, 25000);
@@ -1849,7 +1843,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
     static IReadOnlyList<(string RecipeId, string OutputRef, int Grade)> ForgeRows()
     {
         using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "seed", "items", "recipes", "recipes.json")));
+            KeepverseRoots.Content(), "data", "seed", "items", "recipes", "recipes.json")));
         return doc.RootElement.GetProperty("entries").EnumerateArray()
             .Where(e => e.GetProperty("operation").GetString() == "forge")
             .Select(e => (
@@ -1868,7 +1862,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
     {
         var bench = ForgeBench();
         _store.ImportBaseTypes(BaseTypeSeedFile.LoadAll(
-            Path.Combine(RepoRoot(), "data", "seed", "items", "base-types")));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types")));
         var minted = 0;
         foreach (var (recipeId, outputRef, grade) in ForgeRows())
         {
@@ -1897,7 +1891,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
     {
         var bench = ForgeBench();
         _store.ImportBaseTypes(BaseTypeSeedFile.LoadAll(
-            Path.Combine(RepoRoot(), "data", "seed", "items", "base-types")));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types")));
         var (recipeId, _, grade) = ForgeRows()[0];
         var itemLevel = grade * _materials.ItemLevelPerGrade - 1;
         Fund(_recipes.Resolve(recipeId, new RecipeContext(0, 0, itemLevel, "humanoid", 0)));
@@ -1923,7 +1917,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
     {
         var bench = ForgeBench();
         _store.ImportBaseTypes(BaseTypeSeedFile.LoadAll(
-            Path.Combine(RepoRoot(), "data", "seed", "items", "base-types")));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types")));
         var (recipeId, _, _) = ForgeRows()[0];
         var soulsBefore = _store.GetSoulBalance(_playerId).Balance;
         var outcome = bench.Forge(_playerId, recipeId, "wb-forge-broke");
@@ -1973,7 +1967,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
         var bench = new ItemWorkbench(_store, _materials, _recipes, _enhancement, _sockets,
             forgeMintCells: ForgeCells(), forgePowerTuning: shippedPower);
         _store.ImportBaseTypes(BaseTypeSeedFile.LoadAll(
-            Path.Combine(RepoRoot(), "data", "seed", "items", "base-types")));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types")));
 
         var row = ForgeRows().Single(r => r.RecipeId == "recipe.001");
         var itemLevel = row.Grade * _materials.ItemLevelPerGrade - 1;
@@ -2022,7 +2016,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
     static IReadOnlyList<string> RerollRows(string operation)
     {
         using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "seed", "items", "recipes", "recipes.json")));
+            KeepverseRoots.Content(), "data", "seed", "items", "recipes", "recipes.json")));
         return doc.RootElement.GetProperty("entries").EnumerateArray()
             .Where(e => e.GetProperty("operation").GetString() == operation)
             .Select(e => e.GetProperty("id").GetString()!)
@@ -2220,7 +2214,7 @@ public class ItemWorkbenchEndpointsTests : IAsyncLifetime
             "repair",
         };
         using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "seed", "items", "recipes", "recipes.json")));
+            KeepverseRoots.Content(), "data", "seed", "items", "recipes", "recipes.json")));
         var stranded = doc.RootElement.GetProperty("entries").EnumerateArray()
             .Select(e => e.GetProperty("operation").GetString()!)
             .Distinct(StringComparer.Ordinal)

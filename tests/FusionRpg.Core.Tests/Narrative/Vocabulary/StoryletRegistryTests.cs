@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using FusionRpg.Core.Narrative.Vocabulary;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Narrative.Vocabulary;
 
@@ -16,13 +17,7 @@ static class NarrativeFixtureFiles
 {
     public static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "data", "seed", "dungeon"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     public static string RegistryDir() => Path.Combine(RepoRoot(), "tests", "fixtures", "narrative", "_registry");

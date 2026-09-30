@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using FusionRpg.Data.Tests;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -71,7 +72,7 @@ public class ItemInsertElementTests : IAsyncLifetime
         // The 25 resonances, GENERATED from the element roster exactly as the server seeds them.
         _store.SeedComboRecipes(ResonanceGenerator.Generate(_sockets));
 
-        _gems = GemInsertCorpus.Load(Path.Combine(RepoRoot(), "data", "seed", "items", "gems"));
+        _gems = GemInsertCorpus.Load(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "gems"));
 
         SeedItem();
 
@@ -244,13 +245,7 @@ public class ItemInsertElementTests : IAsyncLifetime
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException("repo root not found from " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     static string Tuning(string file) => Path.Combine(RepoRoot(), "data", "tuning", file);

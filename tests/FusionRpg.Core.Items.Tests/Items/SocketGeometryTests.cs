@@ -5,6 +5,7 @@ using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Drops;
 using FusionRpg.Core.Items.Sockets;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -18,10 +19,7 @@ public class SocketGeometryTests
 {
     static string RepoRoot()
     {
-        var dir = AppContext.BaseDirectory;
-        while (dir is not null && !File.Exists(Path.Combine(dir, "CONTRIBUTING.md")))
-            dir = Path.GetDirectoryName(dir);
-        return dir ?? throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 
     static string TuningPath => Path.Combine(RepoRoot(), "data", "tuning", SocketTuningFiles.Current);
@@ -135,7 +133,7 @@ public class SocketGeometryTests
     public void The_shipped_corpus_never_exceeds_a_role_ceiling()
     {
         var tuning = Shipped();
-        var root = Path.Combine(RepoRoot(), "data", "seed", "items", "base-types");
+        var root = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types");
         var checkedCount = 0;
 
         foreach (var file in Directory.EnumerateFiles(root, "*.json", SearchOption.AllDirectories))

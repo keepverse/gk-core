@@ -5,6 +5,7 @@ using System.Linq;
 using FusionRpg.Core.Narrative;
 using FusionRpg.TestSupport;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Narrative;
 
@@ -19,7 +20,7 @@ namespace FusionRpg.Core.Tests.Narrative;
 public class LeadNamesTests
 {
     static string ShippedPath() => Path.Combine(
-        ContentRoot.Path, "data", "seed", "narrative", "_registry", "names.en.v1.json");
+        KeepverseRoots.Content(), "data", "seed", "narrative", "_registry", "names.en.v1.json");
 
     static LeadNames Shipped() => LeadNames.Parse(File.ReadAllText(ShippedPath()));
 

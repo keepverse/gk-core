@@ -42,7 +42,7 @@ public class GrantedActionTextTests
     static IReadOnlyList<ActionCorpusBrief> RealBriefs() =>
         CommittedCorpus
             .SelectMany(f => ActionCorpusBriefJson.Parse(
-                File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "actions", f))))
+                File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "actions", f))))
             .ToList();
 
     static Func<string, string?> RealStrings() => DisplayStringCatalog.Parse(

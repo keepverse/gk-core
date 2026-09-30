@@ -1,6 +1,7 @@
 using FusionRpg.Core.Items.Sockets;
 using FusionRpg.Server;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -16,13 +17,7 @@ public sealed class BaseTypeSocketMaxCorpusTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException("repo root not found from " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     static SocketTuning Shipped() =>

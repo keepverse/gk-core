@@ -4,6 +4,7 @@ using FusionRpg.Core.Narrative.Hosts;
 using FusionRpg.Core.Power;
 using FusionRpg.Core.World;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Narrative.Hosts;
 
@@ -232,8 +233,7 @@ public sealed class HostContentThetaTests
 
     static string RepoRoot([System.Runtime.CompilerServices.CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;                               // tests/.../Narrative/Hosts
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", "..", ".."));   // repo root
+        return KeepverseRoots.Core();
     }
 
     static string NewTempRoot()

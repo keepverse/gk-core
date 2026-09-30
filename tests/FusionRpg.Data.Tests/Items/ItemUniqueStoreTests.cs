@@ -3,6 +3,7 @@ using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Uniques;
 using FusionRpg.Data;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Items;
 
@@ -27,9 +28,7 @@ public class ItemUniqueStoreTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = AppContext.BaseDirectory;
-        while (dir is not null && !File.Exists(Path.Combine(dir, "CONTRIBUTING.md"))) dir = Path.GetDirectoryName(dir);
-        return dir!;
+        return KeepverseRoots.Core();
     }
 
     static UniqueTuning Tuning() =>

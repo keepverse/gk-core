@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using FusionRpg.Core.World;
 using FusionRpg.Core.World.StructureSeed;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests;
 
@@ -18,5 +19,5 @@ internal static class StructureCatalogTestBootstrap
     [ModuleInitializer]
     public static void Init() => StructureCatalog.Configure(StructureCorpus.Load(CorpusRoot()));
 
-    static string CorpusRoot() => Path.Combine(ContentRoot.Path, "data", "seed", "structures");
+    static string CorpusRoot() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "structures");
 }

@@ -6,6 +6,7 @@ using FusionRpg.Data;
 using Xunit;
 using FusionRpg.Data.Tests;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -76,7 +77,7 @@ public class WalkingSkeletonTests : IDisposable
     /// <summary>Seam 1 — the real dump row, read off disk, not hardcoded blind.</summary>
     static (int Hp, int Attack, int Armor) RealDumpRow()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "creatures", "creature", "zombie", "epic.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "creature", "zombie", "epic.json");
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
 
         foreach (var entry in doc.RootElement.GetProperty("entries").EnumerateArray())

@@ -2,6 +2,7 @@ using FusionRpg.Contracts;
 using FusionRpg.Core.ActorSurface;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.ActorSurface;
 
@@ -91,14 +92,6 @@ public sealed class DerivedAuditCoverageTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "RiseOfSummoner.sln"))
-                || File.Exists(Path.Combine(dir.FullName, "data", "tuning", "derived-stat-catalog.v3.json")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 }

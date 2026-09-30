@@ -2,6 +2,7 @@ using FusionRpg.Contracts;
 using FusionRpg.Core;
 using FusionRpg.Core.Match;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests;
 
@@ -177,14 +178,6 @@ public class MatchDataBanGuardTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            var candidate = Path.Combine(dir.FullName, "src", "FusionRpg.Core", "FusionRpg.Core.csproj");
-            if (File.Exists(candidate)) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new InvalidOperationException("Could not locate FusionRpg.Core.csproj from " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 }

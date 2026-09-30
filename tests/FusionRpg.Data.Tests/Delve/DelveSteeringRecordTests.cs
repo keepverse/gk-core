@@ -6,6 +6,7 @@ using FusionRpg.Data;
 using FusionRpg.Data.Sqlite;
 using Microsoft.Data.Sqlite;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Delve;
 
@@ -37,10 +38,7 @@ public sealed class DelveSteeringRecordTests : IDisposable
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !Directory.Exists(Path.Combine(dir.FullName, "data", "seed", "dungeon")))
-            dir = dir.Parent;
-        return dir?.FullName ?? throw new DirectoryNotFoundException("could not locate repo root");
+        return KeepverseRoots.Core();
     }
 
     const ulong Seed = 41UL;

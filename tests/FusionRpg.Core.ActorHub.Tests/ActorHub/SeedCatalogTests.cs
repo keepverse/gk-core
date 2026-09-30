@@ -2,6 +2,7 @@ using System.Text.Json;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.ActorHub;
 
@@ -214,5 +215,5 @@ public class SeedCatalogTests
         return result;
     }
 
-    static string FindCatalogPath() => Path.Combine(ContentRoot.Path, "data", "seed", "derived-stats", "catalog.json");
+    static string FindCatalogPath() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "derived-stats", "catalog.json");
 }

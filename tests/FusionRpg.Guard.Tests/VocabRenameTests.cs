@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -130,14 +131,7 @@ sys.stdout.buffer.write(json.dumps(report, sort_keys=True).encode("utf-8"))
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "scripts", "vocab-rename.py"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("could not find the repo root with scripts/vocab-rename.py");
+        return KeepverseRoots.Core();
     }
 
     sealed record Result(JsonElement Root)

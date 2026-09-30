@@ -1,5 +1,6 @@
 using FusionRpg.Core.Items.Materials;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -12,13 +13,7 @@ public class PotentialTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static DeploymentHierarchyTuning Shipped() => DeploymentHierarchyTuningLoader.Parse(

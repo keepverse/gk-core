@@ -2,6 +2,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Drops;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -19,13 +20,7 @@ public class EquipmentContainerBuildTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static AtomRow Atom(string familyId, string variant, int tier) => new()
@@ -193,15 +188,15 @@ public class EquipmentContainerBuildTests
     [Fact]
     public void Against_the_real_shipped_corpus_a_real_role_frame_pair_yields_a_non_empty_pool()
     {
-        var families = AffixFamilySeedFile.LoadAll(Path.Combine(RepoRoot(), "data", "seed", "items", "affix-families"));
+        var families = AffixFamilySeedFile.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "affix-families"));
         var overrides = FamilyOverrides.Parse(File.ReadAllText(
-            Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "family-overrides.v1.json")));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "family-overrides.v1.json")));
         var relocation = RoleRelocationTable.Parse(File.ReadAllText(
-            Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "role-relocation.v1.json")));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "role-relocation.v1.json")));
         var cells = RoleFamilyTable.Derive(families, overrides, relocation);
 
         var atomFiles = new[] { "atoms", "containers" }
-            .Select(d => Path.Combine(RepoRoot(), "data", "seed", d))
+            .Select(d => Path.Combine(KeepverseRoots.Content(), "data", "seed", d))
             .Where(Directory.Exists)
             .SelectMany(d => Directory.GetFiles(d, "*.json", SearchOption.AllDirectories))
             .Where(f => !string.Equals(Path.GetFileName(f), "vocabulary.json", StringComparison.OrdinalIgnoreCase))

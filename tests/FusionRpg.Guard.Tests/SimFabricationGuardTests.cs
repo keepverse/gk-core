@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -8,14 +9,22 @@ namespace FusionRpg.Guard.Tests;
 /// and against planted violations. A rule never seen to fail is not known to work, so every rule the
 /// guard claims gets a deliberately broken input and the same message is expected back.
 ///
-/// <para><b>FINDINGS ARE READ FROM <c>stdout + stderr</c> THROUGHOUT THIS FILE</b>, and that is
-/// the point rather than a convenience. The guard reports its findings on STDERR - the port
-/// standard, so a caller reading stdout alone gets the reading line and the verdict and nothing
-/// that could be mistaken for a finding - while the PowerShell original printed everything
-/// through <c>Write-Host</c>, which is stdout. The five planted-violation assertions moved from
-/// <c>stdout</c> to <c>stdout + stderr</c> when the port landed, and went red saying so with an
-/// empty string where the finding should have been. The OK line stays on <c>stdout</c> alone: it is
-/// the report, and a report that had to be read from stderr would be a finding.</para>
+/// <para><b>FINDINGS ARE READ FROM <c>stdout + stderr</c> THROUGHOUT THIS FILE</b>, and that is
+
+/// the point rather than a convenience. The guard reports its findings on STDERR - the port
+
+/// standard, so a caller reading stdout alone gets the reading line and the verdict and nothing
+
+/// that could be mistaken for a finding - while the PowerShell original printed everything
+
+/// through <c>Write-Host</c>, which is stdout. The five planted-violation assertions moved from
+
+/// <c>stdout</c> to <c>stdout + stderr</c> when the port landed, and went red saying so with an
+
+/// empty string where the finding should have been. The OK line stays on <c>stdout</c> alone: it is
+
+/// the report, and a report that had to be read from stderr would be a finding.</para>
+
 /// <para><b>Half A</b> is the scenario corpus: a verdict must read back through the same query path
 /// the web FE uses, so a read whose route is <c>/api/test/snapshot</c> — or any <c>/api/test/*</c>
 /// or <c>/api/sim/*</c> route — is a fabricated read-back and must be refused by name.
@@ -28,14 +37,7 @@ public sealed class SimFabricationGuardTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "Directory.Build.props")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not find repo root with Directory.Build.props");
+        return KeepverseRoots.Core();
     }
 
     static (int Exit, string Stdout, string Stderr) RunGuard(

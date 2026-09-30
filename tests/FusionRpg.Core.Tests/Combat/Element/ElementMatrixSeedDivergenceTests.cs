@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FusionRpg.TestSupport;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Combat.Element;
 
@@ -19,7 +20,7 @@ namespace FusionRpg.Core.Tests.Combat.Element;
 public class ElementMatrixSeedDivergenceTests
 {
     static string SeedPath =>
-        Path.Combine(ContentRoot.Path, "data", "seed", "elements", "matrices.json");
+        Path.Combine(KeepverseRoots.Content(), "data", "seed", "elements", "matrices.json");
 
     [Fact]
     public void The_combat_and_shield_blocks_are_identical_or_carry_an_explicit_divergence_note()

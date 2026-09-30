@@ -6,6 +6,7 @@ using FusionRpg.Core.Actions.Rungs;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Data.Sqlite;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Actions;
 
@@ -48,8 +49,7 @@ public class ActionCorpusRealContentQualityTests : IDisposable
 
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;                       // tests/.../Actions
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", "..")); // repo root
+        return KeepverseRoots.Core();
     }
 
     static string RepoPath(params string[] parts) => Path.Combine(new[] { RepoRoot() }.Concat(parts).ToArray());

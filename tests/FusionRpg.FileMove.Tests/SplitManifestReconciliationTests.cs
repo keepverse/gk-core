@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FusionRpg.Tools.FileMove;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.FileMove.Tests;
 
@@ -214,14 +215,6 @@ public class SplitManifestReconciliationTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null
-               && !File.Exists(Path.Combine(dir.FullName, "tests", "core-test-projects.v1.json")))
-        {
-            dir = dir.Parent;
-        }
-
-        return dir?.FullName
-            ?? throw new InvalidOperationException("repo root not found (no tests/core-test-projects.v1.json above " + AppContext.BaseDirectory + ")");
+        return KeepverseRoots.Core();
     }
 }

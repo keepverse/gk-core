@@ -7,6 +7,7 @@ using FusionRpg.Core.Stats.Derived;
 using FusionRpg.Data;
 using FusionRpg.Data.Tests;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -41,13 +42,7 @@ public class AtomPushServiceOwnersForSaveTests : IDisposable
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not find repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     static readonly CreatureSpeciesDef CatalogSpecies = CreatureSpeciesCatalog.All.First(s =>

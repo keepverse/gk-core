@@ -5,6 +5,7 @@ using FusionRpg.Core.Stats.Aptitudes;
 using FusionRpg.Data;
 using FusionRpg.Data.Sqlite;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests;
 
@@ -168,13 +169,7 @@ public class AllocationStoreTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static readonly AptitudeTuning RealTuning = AptitudeTuningLoader.Parse(

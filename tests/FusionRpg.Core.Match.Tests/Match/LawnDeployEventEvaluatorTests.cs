@@ -1,5 +1,6 @@
 using FusionRpg.Core.Match;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Match;
 
@@ -204,12 +205,6 @@ public class LawnDeployEventEvaluatorTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not find repo root (no src/FusionRpg.Injector above test bin)");
+        return KeepverseRoots.Core();
     }
 }

@@ -1,4 +1,5 @@
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -199,12 +200,6 @@ public class EntityFields12PlusGuardTests
 
     static string FindRepoRoot()
     {
-        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (System.IO.Directory.Exists(System.IO.Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new System.IO.DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 }

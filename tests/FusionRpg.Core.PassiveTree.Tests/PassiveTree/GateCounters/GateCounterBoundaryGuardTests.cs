@@ -1,4 +1,5 @@
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.PassiveTree.GateCounters;
 
@@ -51,10 +52,7 @@ public class GateCounterBoundaryGuardTests
 
     static string RepoRoot()
     {
-        var dir = Directory.GetCurrentDirectory();
-        while (dir is not null && !File.Exists(Path.Combine(dir, "CONTRIBUTING.md")))
-            dir = Directory.GetParent(dir)?.FullName;
-        return dir ?? throw new InvalidOperationException("could not locate repo root from " + Directory.GetCurrentDirectory());
+        return KeepverseRoots.Core();
     }
 
     [Theory]

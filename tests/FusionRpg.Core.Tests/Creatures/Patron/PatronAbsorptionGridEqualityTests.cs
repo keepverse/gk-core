@@ -3,6 +3,7 @@ using FusionRpg.Core.Creatures.Patron;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Power;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures.Patron;
 
@@ -43,7 +44,7 @@ public class PatronAbsorptionGridEqualityTests
 
     static IReadOnlyList<AtomRow> LoadRealPatronAuraAtoms()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "atoms", "patron-aura.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms", "patron-aura.json");
         var collected = AtomSeedFile.Collect(new[] { (path, File.ReadAllText(path)) });
         if (!collected.IsOk)
             throw new InvalidOperationException(string.Join("; ", collected.Errors));

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Data.Sqlite;
 using Xunit;
 using Xunit.Abstractions;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.E2E.Tests;
 
@@ -188,7 +189,7 @@ public class RpgSimProcessHostTests
     static void SeedSpeciesRoster(string dataDir)
     {
         Directory.CreateDirectory(dataDir);
-        var dir = Path.Combine(RepoRoot(), "data", "generated", "creatures");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "generated", "creatures");
         var species = Directory.EnumerateFiles(dir, "*.json")
             .Where(p => !Path.GetFileName(p).StartsWith('_'))
             .Select(ConcreteSpeciesSeedReader.ParseFile)
@@ -226,14 +227,7 @@ public class RpgSimProcessHostTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("could not find repo root (no src/FusionRpg.Injector above test bin)");
+        return KeepverseRoots.Core();
     }
 
     static string FindScenariosDir()

@@ -2,6 +2,7 @@ using FusionRpg.Core.Commanders;
 using FusionRpg.Core.Saves;
 using FusionRpg.Core.World;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests;
 
@@ -142,7 +143,7 @@ public class ParentOfTests : IDisposable
     {
         var previous = CommanderDirectoryHub.Current;
         var authored = DataCommanderDirectory.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json")));
+            KeepverseRoots.Content(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json")));
         CommanderDirectoryHub.Configure(authored.WithSource(new UniqueCommanderSource(authored, _store)));
         try
         {
@@ -169,13 +170,7 @@ public class ParentOfTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     [Fact]

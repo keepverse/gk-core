@@ -10,6 +10,7 @@ using FusionRpg.Core.Stats.Derived;
 using FusionRpg.Data;
 using FusionRpg.Data.Tests;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -42,13 +43,7 @@ public class DelveRoomEncounterTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 
     static string ReadTuning(string name) =>
@@ -66,7 +61,7 @@ public class DelveRoomEncounterTests : IDisposable
         var power = PowerTuningLoader.Parse(ReadTuning("power-scale.v2.json"));
         var shape = CreatureShapeTuningLoader.Parse(ReadTuning("creature-shape.v1.json"));
         var species = new List<ConcreteSpecies>();
-        var speciesDir = Path.Combine(RepoRoot(), "data", "seed", "creatures", "species");
+        var speciesDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species");
         foreach (var file in Directory.GetFiles(speciesDir, "*.json", SearchOption.AllDirectories)
                      .OrderBy(f => f, StringComparer.Ordinal))
         {
@@ -98,15 +93,15 @@ public class DelveRoomEncounterTests : IDisposable
     static RealInputs LoadReal()
     {
         var threat = CreatureThreatTuningLoader.Parse(ReadTuning("creature-threat.v2.json"));
-        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(RepoRoot(), "data", "seed", "dungeon", "_registry"));
+        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "_registry"));
         var tuning = EncounterTuningLoader.Parse(
             ReadTuning("encounter.v1.json"), registries,
             threat.Thresholds.Select(t => t.Id).ToList());
         var dungeon = DungeonTuningLoader.Parse(ReadTuning("dungeon.v3.json"), registries);
         var encounters = EncounterSeedFile.LoadAllById(
-            Path.Combine(RepoRoot(), "data", "seed", "dungeon", "encounters"), threat);
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "encounters"), threat);
         var corpus = EncounterCorpusBuilder.Build(
-            Path.Combine(RepoRoot(), "data", "seed", "creatures", "species"),
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species"),
             AptitudeTuningLoader.Parse(ReadTuning("aptitudes.v2.json")),
             PowerTuningLoader.Parse(ReadTuning("power-scale.v2.json")),
             CreatureShapeTuningLoader.Parse(ReadTuning("creature-shape.v1.json")),
@@ -171,7 +166,7 @@ public class DelveRoomEncounterTests : IDisposable
         // empty result for the refused species proves the admission filter, not the slot filter.
         // (The real corpus carries this same shape; synthetic anchors isolate it deterministically.)
         var threat = CreatureThreatTuningLoader.Parse(ReadTuning("creature-threat.v2.json"));
-        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(RepoRoot(), "data", "seed", "dungeon", "_registry"));
+        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "_registry"));
         var tuning = EncounterTuningLoader.Parse(
             ReadTuning("encounter.v1.json"), registries,
             threat.Thresholds.Select(t => t.Id).ToList());
@@ -239,7 +234,7 @@ public class DelveRoomEncounterTests : IDisposable
     public void A_room_whose_admitted_pool_is_empty_refuses_loudly()
     {
         var threat = CreatureThreatTuningLoader.Parse(ReadTuning("creature-threat.v2.json"));
-        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(RepoRoot(), "data", "seed", "dungeon", "_registry"));
+        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "_registry"));
         var tuning = EncounterTuningLoader.Parse(
             ReadTuning("encounter.v1.json"), registries,
             threat.Thresholds.Select(t => t.Id).ToList());

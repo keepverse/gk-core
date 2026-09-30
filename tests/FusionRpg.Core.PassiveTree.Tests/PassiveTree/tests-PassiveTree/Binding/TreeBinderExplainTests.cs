@@ -5,6 +5,7 @@ using FusionRpg.Core.PassiveTree.Binding;
 using FusionRpg.Core.PassiveTree.Catalog;
 using FusionRpg.Core.Power;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.PassiveTree.Binding;
 
@@ -18,10 +19,7 @@ public class TreeBinderExplainTests
 {
     static string RepoRoot()
     {
-        var dir = Directory.GetCurrentDirectory();
-        while (dir is not null && !File.Exists(Path.Combine(dir, "CONTRIBUTING.md")))
-            dir = Directory.GetParent(dir)?.FullName;
-        return dir ?? throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 
     static PowerTuning RealPowerTuning() =>

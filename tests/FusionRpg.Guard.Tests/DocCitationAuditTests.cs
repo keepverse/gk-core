@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -32,15 +33,7 @@ print(json.dumps([[f["ref"], f["sev"]] for f in findings]))
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "scripts", "audit-doc-citations.py")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not find repository root with scripts/audit-doc-citations.py");
+        return KeepverseRoots.Core();
     }
 
     static string Audit(string markdown)

@@ -1,5 +1,6 @@
 using FusionRpg.Core.Items.Drops;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -15,13 +16,7 @@ public class BaseTypeSeedFileTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     string NewTempDir()
@@ -126,7 +121,7 @@ public class BaseTypeSeedFileTests
     [Fact]
     public void LoadAll_reads_the_real_shipped_corpus()
     {
-        var rows = BaseTypeSeedFile.LoadAll(Path.Combine(RepoRoot(), "data", "seed", "items", "base-types"));
+        var rows = BaseTypeSeedFile.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types"));
 
         // Program.cs's own boot comment cites "the 740-entry base-type corpus" -- a loose lower bound,
         // not an exact pin, since the corpus grows; this proves the real tree is actually being read,

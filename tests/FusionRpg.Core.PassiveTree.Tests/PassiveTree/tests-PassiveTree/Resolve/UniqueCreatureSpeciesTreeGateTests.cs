@@ -2,6 +2,7 @@ using FusionRpg.Core.PassiveTree.Resolve;
 using FusionRpg.Core.PassiveTree.State;
 using FusionRpg.Core.Stats.Aptitudes;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.PassiveTree.Resolve;
 
@@ -20,13 +21,7 @@ public class UniqueCreatureSpeciesTreeGateTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static readonly AptitudeTuning RealAptitudeTuning = AptitudeTuningLoader.Parse(

@@ -3,6 +3,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items.Mutation;
 using FusionRpg.Core.Items.Sockets;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -276,16 +277,13 @@ public class SocketOperationsTests
 
     static string RepoRoot()
     {
-        var dir = AppContext.BaseDirectory;
-        while (dir is not null && !File.Exists(Path.Combine(dir, "CONTRIBUTING.md")))
-            dir = Path.GetDirectoryName(dir);
-        return dir ?? throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 
     [Fact]
     public void The_shipped_gem_corpus_carries_only_concrete_elements_or_omni_or_none()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "gems");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "gems");
         var seen = 0;
 
         foreach (var file in Directory.EnumerateFiles(dir, "*.json"))
@@ -318,7 +316,7 @@ public class SocketOperationsTests
         // forwarding an element pick into a gem's affinity (`39fbed34`, cause 8b/3), so the offender
         // set is now EMPTY. The assertion is the CONTRACT this test's own name states — no shipped gem
         // declares `omni` — never a count over a growing corpus (population-pin SE3.3, 2026-09-19).
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "gems");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "gems");
         var offenders = new List<string>();
 
         foreach (var file in Directory.EnumerateFiles(dir, "*.json"))
@@ -342,7 +340,7 @@ public class SocketOperationsTests
         // resurrected `sockwords.json` is a regression, and the 2026-09-20 merge did raise a
         // modify/delete conflict on this very path. The retired kind's own removal from
         // `KindCatalog.cs` and the ledger record's content are SSH2.6's tests' subject, not this one's.
-        var path = Path.Combine(RepoRoot(), "data", "seed", "items", "socket-words", "sockwords.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "socket-words", "sockwords.json");
         Assert.False(File.Exists(path),
             "the legacy sockwords.json was retired by SSH2.6 (combogen-migrate --write); it must not come back");
 
@@ -350,6 +348,6 @@ public class SocketOperationsTests
         // retirement indistinguishable from a hand deletion (SSH2.6's own boundary: "a verb, never a
         // hand deletion").
         Assert.True(File.Exists(Path.Combine(
-            RepoRoot(), "data", "seed", "items", "socket-words", "combogen-migrate.ledger.json")));
+            KeepverseRoots.Content(), "data", "seed", "items", "socket-words", "combogen-migrate.ledger.json")));
     }
 }

@@ -2,6 +2,7 @@ using System.Linq;
 using System.Text.Json;
 using FusionRpg.Core.Tests.TestSupport;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures;
 
@@ -18,13 +19,7 @@ public class CreatureQualityReportTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "tools", "CreatureQualityReport"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     /// <summary>A tiny, real-shaped synthetic seed tree: one clean plant, one clean zombie, one

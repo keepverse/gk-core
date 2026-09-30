@@ -1,5 +1,6 @@
 using FusionRpg.Core.Narrative.Vocabulary;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Narrative.Vocabulary;
 
@@ -22,17 +23,11 @@ public sealed class RegistryReconciliationTests
         File.ReadAllText(Path.Combine(RepoRoot(), "tests", "fixtures", "narrative", "_registry", name));
 
     static string Committed(string name) =>
-        File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "narrative", "_registry", name));
+        File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "narrative", "_registry", name));
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "data", "seed", "dungeon"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     /// <summary>Rewrites a keyed-object vocabulary as the ARRAY of rows the adapter emits, each row carrying

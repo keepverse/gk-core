@@ -86,7 +86,7 @@ public class ItemCardEndpointsTests : IAsyncLifetime
     static string RepoRoot() => ContentRoot.Path;
 
     static string Seed(params string[] parts) =>
-        Path.Combine(new[] { RepoRoot(), "data", "seed" }.Concat(parts).ToArray());
+        Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed" }.Concat(parts).ToArray());
 
     /// <summary>This assembly's own configured ladder, reused rather than rebuilt — the module
     /// initializer already hands <c>PowerTuningHub</c> exactly this, so a second inline copy here

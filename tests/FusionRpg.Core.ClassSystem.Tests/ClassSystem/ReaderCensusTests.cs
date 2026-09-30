@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using FusionRpg.Core.Tests.TestSupport;
 using System.Linq;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.ClassSystem;
 
@@ -200,13 +201,6 @@ public class ReaderCensusTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            var script = Path.Combine(dir.FullName, "scripts", "audit-reader-census.py");
-            if (File.Exists(script)) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not find repo root with scripts/audit-reader-census.py");
+        return KeepverseRoots.Core();
     }
 }

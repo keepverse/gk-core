@@ -3,6 +3,7 @@ using FusionRpg.Core.Creatures;
 using FusionRpg.Core.Stats.Derived;
 using FusionRpg.Data;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests;
 
@@ -99,7 +100,7 @@ public class CreatureLawnDeployCommanderRefusalTests : IDisposable
     {
         var previous = FusionRpg.Core.Commanders.CommanderDirectoryHub.Current;
         var authored = FusionRpg.Core.Commanders.DataCommanderDirectory.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json")));
+            KeepverseRoots.Content(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json")));
         FusionRpg.Core.Commanders.CommanderDirectoryHub.Configure(
             authored.WithSource(new FusionRpg.Core.Commanders.UniqueCommanderSource(authored, _store)));
         try
@@ -130,12 +131,6 @@ public class CreatureLawnDeployCommanderRefusalTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 }

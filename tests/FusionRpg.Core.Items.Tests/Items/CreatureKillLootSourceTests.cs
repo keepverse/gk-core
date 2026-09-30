@@ -3,6 +3,7 @@ using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Drops;
 using FusionRpg.Core.Items.Materials;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -83,19 +84,12 @@ public class CreatureKillLootSourceTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static LootCorpus CreatureCorpus() => LootCorpusReader.Merge(new[]
     {
-        LootCorpusReader.Parse(File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "loot", "tables-creature.json"))),
+        LootCorpusReader.Parse(File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "loot", "tables-creature.json"))),
     });
 
     [Fact]

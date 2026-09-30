@@ -3,6 +3,7 @@ using FusionRpg.Core.Actions;
 using FusionRpg.Core.Actions.Rungs;
 using FusionRpg.Core.Effects.Atoms;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Actions;
 
@@ -31,8 +32,7 @@ public class ActionBudgetLiveTests : IDisposable
 
     public void Dispose() => _testStore.Dispose();
 
-    static string RepoRoot([CallerFilePath] string here = "") =>
-        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", ".."));
+    static string RepoRoot([CallerFilePath] string here = "") => KeepverseRoots.Core();
 
     /// <summary>The newest published rung table — discovered, never named, so a future publish does not
     /// make this test read a stale version.</summary>

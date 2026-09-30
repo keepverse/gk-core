@@ -2,6 +2,7 @@ using System.Text.Json;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items.Consumables;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -17,14 +18,7 @@ public class ConsumableTests
 {
     internal static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     internal static string TuningJson() =>

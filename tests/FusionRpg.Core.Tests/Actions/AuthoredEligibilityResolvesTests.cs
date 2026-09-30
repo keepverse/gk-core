@@ -3,6 +3,7 @@ using System.Text.Json;
 using FusionRpg.Core.Actions;
 using FusionRpg.Core.Actions.Eligibility;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Actions;
 
@@ -23,8 +24,7 @@ public class AuthoredEligibilityResolvesTests
 {
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;                        // tests/.../Actions
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));  // repo root
+        return KeepverseRoots.Core();
     }
 
     sealed record Authored(string Id, string Scope, string? ScopeKey);
@@ -32,7 +32,7 @@ public class AuthoredEligibilityResolvesTests
     /// <summary>Every committed action entry, read from the real seed files rather than a fixture.</summary>
     static List<Authored> AuthoredRows()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "actions");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "actions");
         var rows = new List<Authored>();
 
         foreach (var file in new[] { "committed-round-1.json", "committed-round-2.json" })
@@ -57,7 +57,7 @@ public class AuthoredEligibilityResolvesTests
 
     static IReadOnlyDictionary<string, IReadOnlyList<string>> RealFamilyMap() =>
         FamilyMap.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "seed", "actions", "_generated", "family-map.json")));
+            KeepverseRoots.Content(), "data", "seed", "actions", "_generated", "family-map.json")));
 
     /// <summary>The family ids a `family`-scoped row may name: the live map's values UNION the
     /// `families.v1.json` compatibility registry, matching `vocab.py:load_family_map_keys` exactly.
@@ -66,7 +66,7 @@ public class AuthoredEligibilityResolvesTests
     static HashSet<string> LoadableFamilyIds()
     {
         var families = RealFamilyMap().Values.SelectMany(v => v).ToList();
-        var registryPath = Path.Combine(RepoRoot(), "data", "seed", "creatures", "_registry", "families.v1.json");
+        var registryPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "_registry", "families.v1.json");
         if (File.Exists(registryPath))
         {
             using var doc = JsonDocument.Parse(File.ReadAllText(registryPath));
@@ -102,7 +102,7 @@ public class AuthoredEligibilityResolvesTests
         var rows = AuthoredRows();
         var families = LoadableFamilyIds();
 
-        var indexPath = Path.Combine(RepoRoot(), "data", "seed", "creatures", "species", "_index.json");
+        var indexPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species", "_index.json");
         var species = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(indexPath))!
             .Keys.Select(k => k.ToLowerInvariant())
             .ToHashSet(StringComparer.Ordinal);

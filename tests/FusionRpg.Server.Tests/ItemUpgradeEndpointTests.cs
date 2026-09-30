@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -74,7 +75,7 @@ public class ItemUpgradeEndpointTests : IAsyncLifetime
         _sockets = SocketTuning.Parse(File.ReadAllText(Tuning(SocketTuningFiles.Current)));
         var rarity = ItemRarityTuning.Parse(File.ReadAllText(Tuning("item-rarity.v1.json")));
         _recipes = MaterialRecipeCatalog.Load(
-            Directory.EnumerateFiles(Path.Combine(RepoRoot(), "data", "seed", "items", "recipes"), "*.json")
+            Directory.EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "recipes"), "*.json")
                 .OrderBy(f => f, StringComparer.Ordinal).Select(File.ReadAllText),
             _materials);
         for (var i = 0; i < RarityLadder.RungIds.Count; i++)
@@ -215,7 +216,7 @@ public class ItemUpgradeEndpointTests : IAsyncLifetime
         const string armourRole = "core-guard";
 
         var docs = Directory.EnumerateFiles(
-                Path.Combine(RepoRoot(), "data", "seed", "items", "base-types"),
+                Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types"),
                 "*.json", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(File.ReadAllText);
@@ -326,7 +327,7 @@ public class ItemUpgradeEndpointTests : IAsyncLifetime
         const string armourRole = "core-guard";
 
         var docs = Directory.EnumerateFiles(
-                Path.Combine(RepoRoot(), "data", "seed", "items", "base-types"),
+                Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types"),
                 "*.json", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(File.ReadAllText);
@@ -380,7 +381,7 @@ public class ItemUpgradeEndpointTests : IAsyncLifetime
         // The craft-wear source Program.cs builds: class off the shipped base-type corpus, rung off the
         // ladder, both maxes off the deployment-hierarchy derivations.
         var classForBaseType = BaseTypeSocketMaxCorpus.LoadClassById(
-            Path.Combine(RepoRoot(), "data", "seed", "items", "base-types"));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types"));
         var deployment = DeploymentHierarchyTuningLoader.Parse(
             File.ReadAllText(Tuning("deployment-hierarchy.v5.json")));
         var rungIndex = RarityLadder.RungIndexOf(Rung);
@@ -610,14 +611,7 @@ public class ItemUpgradeEndpointTests : IAsyncLifetime
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static int GetFreeTcpPort()

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -156,13 +157,6 @@ public class ClassSystemPhase9ReadinessGateTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            var script = Path.Combine(dir.FullName, "scripts", "gate_class_system_phase9.py");
-            if (File.Exists(script)) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not find repo root with scripts/gate_class_system_phase9.py");
+        return KeepverseRoots.Core();
     }
 }

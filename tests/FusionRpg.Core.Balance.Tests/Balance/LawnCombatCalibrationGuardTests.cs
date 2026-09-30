@@ -3,6 +3,7 @@ using FusionRpg.Core.Actions;
 using FusionRpg.Core.Actions.Corpus;
 using FusionRpg.Core.Battle;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Balance;
 
@@ -34,8 +35,7 @@ public class LawnCombatCalibrationGuardTests
 
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;                        // tests/.../Balance
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));    // repo root
+        return KeepverseRoots.Core();
     }
 
     static BattleResourceTuning LoadBattleResourcesV2() =>

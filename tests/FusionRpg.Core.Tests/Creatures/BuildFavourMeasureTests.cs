@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using FusionRpg.Core.Creatures.Generation;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures;
 
@@ -220,7 +221,7 @@ public class BuildFavourMeasureTests
         // aptitude and has exactly one shape, so both histograms sum to the measured count. No
         // literal count is pinned anywhere here — the population is a reading.
         using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "generated", "creatures", "_species-build-measure.json")));
+            KeepverseRoots.Content(), "data", "generated", "creatures", "_species-build-measure.json")));
         var root = doc.RootElement;
         var speciesCount = root.GetProperty("speciesCount").GetInt64();
         static long Sum(JsonElement obj) => obj.EnumerateObject().Sum(p => p.Value.GetInt64());
@@ -242,7 +243,7 @@ public class BuildFavourMeasureTests
         // `leanSignalsMissing` joins the same way: every entry names a species the plan carries and a
         // signal in the closed set. Envelope only — how MANY are missing is a reading.
         using var planDoc = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "generated", "creatures", "_species-build-plan.json")));
+            KeepverseRoots.Content(), "data", "generated", "creatures", "_species-build-plan.json")));
         var planned = new HashSet<string>(
             planDoc.RootElement.EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
         foreach (var missing in root.GetProperty("leanSignalsMissing").EnumerateArray())
@@ -264,7 +265,7 @@ public class BuildFavourMeasureTests
         // keyed to the primary); the balance publish keys it to the species, so at least one primary
         // must now carry two or more.
         using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "generated", "creatures", "_species-build-measure.json")));
+            KeepverseRoots.Content(), "data", "generated", "creatures", "_species-build-measure.json")));
         var leanByPrimary = doc.RootElement.GetProperty("leanByPrimary");
 
         var withSeveral = leanByPrimary.EnumerateObject()

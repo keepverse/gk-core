@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -16,15 +17,7 @@ public sealed class DocBoundaryTests
 {
     private static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "scripts", "verify-change.py")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not find repository root with scripts/verify-change.py");
+        return KeepverseRoots.Core();
     }
 
     /// <summary>

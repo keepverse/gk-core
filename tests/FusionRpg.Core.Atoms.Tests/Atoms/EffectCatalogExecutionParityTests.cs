@@ -3,6 +3,7 @@ using FusionRpg.Core.Effects;
 using FusionRpg.Core.Effects.Atoms;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Atoms;
 
@@ -37,7 +38,7 @@ public class EffectCatalogExecutionParityTests
     {
         if (_cachedCatalog is not null) return _cachedCatalog;
 
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "atoms");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms");
         var files = Directory.GetFiles(dir, "fx-*.json", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (f, File.ReadAllText(f)))

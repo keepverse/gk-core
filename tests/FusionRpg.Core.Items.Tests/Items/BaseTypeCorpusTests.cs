@@ -3,6 +3,7 @@ using FusionRpg.Core.Items.Sockets;
 using FusionRpg.Core.Balance.Guards;
 using FusionRpg.Core.Items;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -15,20 +16,14 @@ public class BaseTypeCorpusTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static JsonDocument LoadClasses() =>
-        JsonDocument.Parse(File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "classes.v3.json")));
+        JsonDocument.Parse(File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "classes.v3.json")));
 
     static FrameLeanTable LoadLeans() =>
-        FrameLean.Parse(File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "frame-lean.v1.json")));
+        FrameLean.Parse(File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "frame-lean.v1.json")));
 
     static readonly string[] HybridCoreRoleIds =
     {
@@ -40,7 +35,7 @@ public class BaseTypeCorpusTests
 
     static List<LiveEntry> LoadCorpus()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "base-types");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types");
         var result = new List<LiveEntry>();
         foreach (var path in Directory.EnumerateFiles(dir, "*.json", SearchOption.AllDirectories))
         {
@@ -168,7 +163,7 @@ public class BaseTypeCorpusTests
     [Fact]
     public void Band_letters_are_a_and_b_today()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "base-types");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types");
         var bands = new HashSet<string>();
         foreach (var path in Directory.EnumerateFiles(dir, "*.json", SearchOption.AllDirectories))
         {

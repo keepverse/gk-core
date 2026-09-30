@@ -34,17 +34,11 @@ public class ItemCardTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static string Seed(params string[] parts) =>
-        Path.Combine(new[] { RepoRoot(), "data", "seed" }.Concat(parts).ToArray());
+        Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed" }.Concat(parts).ToArray());
 
     /// <summary>The same tuning shape every other instantiation test in this suite uses.</summary>
     static readonly PowerTuning Tuning = PowerTuning.Build(
@@ -1299,7 +1293,7 @@ public class ItemCardTests
     /// unread.</summary>
     static readonly Lazy<IReadOnlyDictionary<string, ChannelPoolRow>> Pools = new(() =>
     {
-        var json = File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "channel-pools", "pools.v1.json"));
+        var json = File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "channel-pools", "pools.v1.json"));
         var read = ChannelPoolFile.TryParse(json, out var rows);
         Assert.True(read.IsOk, read.ToString());
         return rows.ToDictionary(p => p.PoolId, StringComparer.Ordinal);

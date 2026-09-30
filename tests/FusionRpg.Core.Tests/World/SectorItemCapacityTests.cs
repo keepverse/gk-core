@@ -4,6 +4,7 @@ using FusionRpg.Core.World.Siege;
 using FusionRpg.Core.World.StructureSeed;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.World;
 
@@ -14,7 +15,7 @@ namespace FusionRpg.Core.Tests.World;
 /// </summary>
 public class SectorItemCapacityTests
 {
-    static string RealCorpusRoot() => Path.Combine(ContentRoot.Path, "data", "seed", "structures");
+    static string RealCorpusRoot() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "structures");
 
     static void RestoreRealCorpus() => StructureCatalog.Configure(StructureCorpus.Load(RealCorpusRoot()));
 

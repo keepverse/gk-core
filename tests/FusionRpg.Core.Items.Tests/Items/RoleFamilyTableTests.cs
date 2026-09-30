@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FusionRpg.Core.Items;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -13,18 +14,12 @@ public class RoleFamilyTableTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static List<AffixFamilySource> LoadFamilies()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "affix-families");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "affix-families");
         var result = new List<AffixFamilySource>();
         foreach (var path in Directory.EnumerateFiles(dir, "*.json"))
         {
@@ -43,10 +38,10 @@ public class RoleFamilyTableTests
     }
 
     static FamilyOverrides LoadOverrides() =>
-        FamilyOverrides.Parse(File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "family-overrides.v1.json")));
+        FamilyOverrides.Parse(File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "family-overrides.v1.json")));
 
     static RoleRelocationTable LoadRelocation() =>
-        RoleRelocationTable.Parse(File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "role-relocation.v1.json")));
+        RoleRelocationTable.Parse(File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "role-relocation.v1.json")));
 
     static IReadOnlyList<RoleFamilyCell> Derive() => RoleFamilyTable.Derive(LoadFamilies(), LoadOverrides(), LoadRelocation());
 
@@ -89,7 +84,7 @@ public class RoleFamilyTableTests
         var byId = families.ToDictionary(f => f.FamilyId, f => f.Roles, StringComparer.Ordinal);
 
         var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "seed", "items", "_registry", "role-relocation.v1.json")));
+            KeepverseRoots.Content(), "data", "seed", "items", "_registry", "role-relocation.v1.json")));
         var rows = doc.RootElement.GetProperty("relocations").EnumerateArray()
             .Select(r => (
                 Dropped: r.GetProperty("droppedRole").GetString()!,

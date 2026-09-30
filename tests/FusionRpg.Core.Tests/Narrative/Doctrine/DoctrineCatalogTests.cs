@@ -2,6 +2,7 @@ using System.Reflection;
 using FusionRpg.Core.Narrative.Doctrine;
 using FusionRpg.Core.Narrative.Vocabulary;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Narrative.Doctrine;
 
@@ -18,19 +19,13 @@ namespace FusionRpg.Core.Tests.Narrative.Doctrine;
 [Trait("Guard", "narrative")]
 public sealed class DoctrineCatalogTests
 {
-    static string RegistryDir() => Path.Combine(RepoRoot(), "data", "seed", "narrative", "_registry");
+    static string RegistryDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "narrative", "_registry");
 
     static string CommittedText() => File.ReadAllText(Path.Combine(RegistryDir(), "doctrines.v1.json"));
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "data", "seed", "dungeon"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     static IReadOnlyList<DoctrineDef> Parse() => DoctrineCatalog.Parse(CommittedText());

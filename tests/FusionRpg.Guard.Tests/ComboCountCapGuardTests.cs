@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -171,12 +172,6 @@ public class ComboCountCapGuardTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root not found from " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 }

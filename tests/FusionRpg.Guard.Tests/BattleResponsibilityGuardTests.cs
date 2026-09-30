@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -28,14 +29,7 @@ public sealed class BattleResponsibilityGuardTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "Directory.Build.props")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static (int Exit, string Output) RunGuard(string? root = null, string? registryPath = null)

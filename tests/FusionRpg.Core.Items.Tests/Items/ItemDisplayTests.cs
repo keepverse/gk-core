@@ -3,6 +3,7 @@ using FusionRpg.Core.Effects.Atoms.Generation;
 using FusionRpg.Core.Items.Display;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -14,18 +15,12 @@ public class ItemDisplayTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static List<DisplayTemplateRow> LoadAllTemplates()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "display-templates");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "display-templates");
         return Directory.EnumerateFiles(dir, "*.json")
             .SelectMany(f => DisplayTemplates.Parse(File.ReadAllText(f)))
             .ToList();
@@ -56,7 +51,7 @@ public class ItemDisplayTests
         Assert.NotEmpty(templates);
 
         var templated = templates.Select(r => r.RuntimeFamily).ToHashSet(StringComparer.Ordinal);
-        var familyDir = Path.Combine(RepoRoot(), "data", "seed", "items", "affix-families");
+        var familyDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "affix-families");
         var families = Directory.EnumerateFiles(familyDir, "*.json")
             .Where(f => !Path.GetFileName(f).StartsWith('_'))
             .SelectMany(f => AffixFamilyFile.Read(Path.GetFileName(f), File.ReadAllText(f)))
@@ -119,7 +114,7 @@ public class ItemDisplayTests
             "atom.elemental-power",
         };
 
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "affix-families");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "affix-families");
         var byId = Directory.EnumerateFiles(dir, "*.json")
             .SelectMany(f => FusionRpg.Core.Effects.Atoms.Generation.AffixFamilyFile.Read(
                 Path.GetFileName(f), File.ReadAllText(f)))

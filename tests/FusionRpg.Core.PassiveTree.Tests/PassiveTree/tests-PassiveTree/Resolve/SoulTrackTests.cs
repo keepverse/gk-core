@@ -5,6 +5,7 @@ using FusionRpg.Core.PassiveTree.Resolve;
 using FusionRpg.Core.Power;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.PassiveTree.Resolve;
 
@@ -14,10 +15,7 @@ public class SoulTrackTests
 {
     static string RepoRoot()
     {
-        var dir = Directory.GetCurrentDirectory();
-        while (dir is not null && !File.Exists(Path.Combine(dir, "CONTRIBUTING.md")))
-            dir = Directory.GetParent(dir)?.FullName;
-        return dir ?? throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 
     static PowerTuning RealPowerTuning() =>

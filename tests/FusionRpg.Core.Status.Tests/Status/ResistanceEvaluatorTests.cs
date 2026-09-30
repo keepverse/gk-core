@@ -2,6 +2,7 @@ using System.Linq;
 using FusionRpg.Core.Status;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Status;
 
@@ -109,13 +110,7 @@ public class ResistanceEvaluatorTests
 
     static string RepoRootForThisFile()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (System.IO.Directory.Exists(System.IO.Path.Combine(dir.FullName, "data", "tuning"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new System.IO.DirectoryNotFoundException("data/tuning");
+        return KeepverseRoots.Core();
     }
 
     [Fact]

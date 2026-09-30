@@ -4,6 +4,7 @@ using FusionRpg.Core.Effects.Atoms.Power;
 using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Uniques;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -20,14 +21,7 @@ public class UniqueTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     internal static UniqueTuning Tuning() =>

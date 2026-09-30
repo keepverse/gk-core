@@ -8,6 +8,7 @@ using FusionRpg.Core.World;
 using FusionRpg.Core.World.Intel;
 using FusionRpg.Core.World.Turn;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Narrative.Doctrine;
 
@@ -40,20 +41,14 @@ public sealed class DoctrineReadingTests
         // and the threshold itself is read from the committed tuning file, never a literal here.
         NarrativeRegistryHub.Configure(Path.Combine(RepoRoot(), "tests", "fixtures", "narrative", "_registry"));
         DispositionCatalog.Configure(DispositionCatalog.Parse(File.ReadAllText(
-            Path.Combine(RepoRoot(), "data", "seed", "dungeon", "_registry", "disposition.v1.json"))));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "_registry", "disposition.v1.json"))));
         NarrativeTuningHub.Configure(NarrativeTuningLoader.Parse(
             File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", "narrative.v2.json"))));
     }
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "data", "seed", "dungeon"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     static string SpeciesOf(ElementTypeId element) =>

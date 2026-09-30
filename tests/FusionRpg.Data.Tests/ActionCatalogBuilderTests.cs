@@ -4,6 +4,7 @@ using FusionRpg.Core.Actions.Rungs;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Data.Sqlite;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests;
 
@@ -101,8 +102,7 @@ public class ActionCatalogBuilderTests : IDisposable
 
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;                          // tests/FusionRpg.Data.Tests
-        return Path.GetFullPath(Path.Combine(testsDir, "..", ".."));          // repo root
+        return KeepverseRoots.Core();
     }
 
     static RungTable ShippedV2RungTable() =>

@@ -3,6 +3,7 @@ using System.Reflection;
 using FusionRpg.SquadHarness.Tests.TestSupport;
 using FusionRpg.Tools.SquadHarness;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.SquadHarness.Tests;
 
@@ -165,12 +166,6 @@ public class DeterminismTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 }

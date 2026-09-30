@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using FusionRpg.Core.Diagnostics;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Diagnostics;
 
@@ -77,13 +78,6 @@ public class LawnPerfBudgetSectionShareTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "scripts", "collect-class-system-realrun.ps1")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 }

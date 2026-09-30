@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using FusionRpg.Core.Actions.Ai;
 using FusionRpg.Core.Battle.Board;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Actions.Ai;
 
@@ -16,13 +17,7 @@ public class SiegeKeyMigrationTests
 {
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var dir = new DirectoryInfo(Path.GetDirectoryName(here)!);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static string ReadTuning(string fileName) => File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", fileName));

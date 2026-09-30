@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items.Sockets;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -17,14 +18,7 @@ public class ComboPricingBootTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static string TuningDir => Path.Combine(RepoRoot(), "data", "tuning");
@@ -50,7 +44,7 @@ public class ComboPricingBootTests
         var strainSplice = StrainSpliceTuning.Parse(
             File.ReadAllText(Path.Combine(TuningDir, SocketTuningFiles.StrainSplice)), sockets);
 
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "combinations");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "combinations");
         var entries = new List<CombinationEntry>();
         var grants = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
         foreach (var file in Directory.GetFiles(dir, "*.json").OrderBy(f => f, StringComparer.Ordinal))

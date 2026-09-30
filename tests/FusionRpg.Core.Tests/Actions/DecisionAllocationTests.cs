@@ -9,6 +9,7 @@ using FusionRpg.Core.Battle.Timeline;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Actions;
 
@@ -501,8 +502,7 @@ public class DecisionAllocationTests
 
     static string FindRepoRoot([System.Runtime.CompilerServices.CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));
+        return KeepverseRoots.Core();
     }
 
     /// <summary>`SelectionScratch`'s own re-entry assumption, asserted rather than assumed: a nested

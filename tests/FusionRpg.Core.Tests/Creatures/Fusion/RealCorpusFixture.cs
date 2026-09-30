@@ -5,6 +5,7 @@ using FusionRpg.Core.Stats.Aptitudes;
 using FusionRpg.Data;
 using FusionRpg.Data.Tests;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures.Fusion;
 
@@ -40,7 +41,7 @@ internal static class RealCorpusFixture
 
     static IReadOnlyList<CreatureSpeciesDef> Build()
     {
-        var seedRoot = Path.Combine(RepoRoot(), "data", "seed", "creatures", "species");
+        var seedRoot = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species");
         var anchors = new List<AnchorRow>();
         foreach (var file in Directory.GetFiles(seedRoot, "*.json", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
         {

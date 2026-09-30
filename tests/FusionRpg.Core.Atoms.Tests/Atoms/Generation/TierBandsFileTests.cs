@@ -1,6 +1,7 @@
 using FusionRpg.Core.Effects.Atoms.Generation;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Atoms.Generation;
 
@@ -99,5 +100,5 @@ public class TierBandsFileTests
         Assert.True(version >= 3, $"expected the real tuning dir to resolve to v3+, got {name}");
     }
 
-    static string FindRealTuningDir() => Path.Combine(ContentRoot.Path, "data", "seed", "items", "_tuning");
+    static string FindRealTuningDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_tuning");
 }

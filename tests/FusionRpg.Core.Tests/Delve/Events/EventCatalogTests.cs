@@ -4,6 +4,7 @@ using FusionRpg.Core.Dungeon.Registry;
 using FusionRpg.Core.Effects.Atoms;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Events;
 
@@ -22,7 +23,7 @@ public class EventCatalogTests
 
     static IReadOnlyList<string> ReadRealItemDropBands()
     {
-        var path = Path.Combine(ContentRoot.Path, "data", "seed", "items", "_registry", "bands.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "bands.v1.json");
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
         return doc.RootElement.GetProperty("dropBand").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetString()!).ToList();

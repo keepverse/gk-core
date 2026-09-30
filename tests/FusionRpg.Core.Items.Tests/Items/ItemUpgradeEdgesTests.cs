@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FusionRpg.Core.Items.Mutation;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -16,13 +17,7 @@ public class ItemUpgradeEdgesTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     /// <summary>
@@ -36,7 +31,7 @@ public class ItemUpgradeEdgesTests
     [Fact]
     public void The_shipped_corpus_edges_parse_and_close_on_a_real_base_type_in_the_same_frame()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "base-types");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types");
         var docs = Directory.EnumerateFiles(dir, "*.json", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(File.ReadAllText)

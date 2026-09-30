@@ -3,6 +3,7 @@ using FusionRpg.Core.Creatures;
 using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Materials;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -15,14 +16,7 @@ public class MaterialCorpusTests
 {
     internal static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     internal static string TuningJson() =>
@@ -42,7 +36,7 @@ public class MaterialCorpusTests
     }
 
     internal static IEnumerable<string> RecipeCorpus() =>
-        Directory.EnumerateFiles(Path.Combine(RepoRoot(), "data", "seed", "items", "recipes"), "*.json")
+        Directory.EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "recipes"), "*.json")
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(File.ReadAllText);
 
@@ -133,7 +127,7 @@ public class MaterialCorpusTests
         // mirrors it because Core never reads a file. A drift is a silent 2x price change, so it is
         // a red test instead.
         using var doc = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "bands.v1.json")));
+            File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "bands.v1.json")));
 
         var costBand = doc.RootElement.GetProperty("costBand");
         Assert.True(doc.RootElement.GetProperty("frozen").GetBoolean(), "bands.v1.json must still be frozen");
@@ -473,7 +467,7 @@ public class MaterialCorpusTests
         // resolve (IsKnown) but stay deliberately non-issuable, exactly as before. Recorded in
         // tasks/item-todo.md P4.1; measured here so it cannot quietly change size again.
         using var doc = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "items", "materials", "materials.json")));
+            File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "materials", "materials.json")));
 
         var runtimeIds = doc.RootElement.GetProperty("entries").EnumerateArray()
             .Select(e => e.GetProperty("runtimeId").GetString()!).ToList();

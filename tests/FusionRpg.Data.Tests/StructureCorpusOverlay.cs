@@ -1,5 +1,6 @@
 using FusionRpg.Core.World.StructureSeed;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests;
 
@@ -28,7 +29,7 @@ namespace FusionRpg.Data.Tests;
 internal static class StructureCorpusOverlay
 {
     /// <summary>The committed corpus root — read, never written. The one place this project names it.</summary>
-    public static string RealCorpusRoot() => Path.Combine(ContentRoot.Path, "data", "seed", "structures");
+    public static string RealCorpusRoot() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "structures");
 
     /// <summary>
     /// A freshly loaded real corpus with <paramref name="extraRows"/> appended, ready for

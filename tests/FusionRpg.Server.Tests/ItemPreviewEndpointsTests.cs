@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using FusionRpg.Data.Tests;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -54,18 +55,11 @@ public class ItemPreviewEndpointsTests : IAsyncLifetime
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static string Seed(params string[] parts) =>
-        Path.Combine(new[] { RepoRoot(), "data", "seed" }.Concat(parts).ToArray());
+        Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed" }.Concat(parts).ToArray());
 
     static readonly PowerTuning Power = PowerAndAptitudeTuningTestBootstrap.DefaultPower;
 

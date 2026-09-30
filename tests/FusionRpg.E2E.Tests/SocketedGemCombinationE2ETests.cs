@@ -7,6 +7,7 @@ using FusionRpg.Core.Items.Sockets;
 using FusionRpg.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.E2E.Tests;
 
@@ -293,12 +294,6 @@ public class SocketedGemCombinationE2ETests : IAsyncLifetime
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not find repo root");
+        return KeepverseRoots.Core();
     }
 }

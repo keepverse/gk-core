@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 // This assembly does not reference FusionRpg.Core, so it cannot use the production
 // KeepverseRoots; the test-support resolver that Directory.Build.props links into every
@@ -143,7 +144,7 @@ Assert.Contains("P1 ", stderr, StringComparison.Ordinal);
         var fixture = NewFixture();
         try
         {
-            var realCatalogPath = Path.Combine(ContentRoot.Resolve(), "data", "seed", "derived-stats", "catalog.json");
+            var realCatalogPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "derived-stats", "catalog.json");
             var root = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(realCatalogPath))!.AsObject();
             var entries = root["entries"]!.AsArray();
 
@@ -203,13 +204,6 @@ Assert.Contains("P1 ", stderr, StringComparison.Ordinal);
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            var script = Path.Combine(dir.FullName, "Directory.Build.props");
-            if (File.Exists(script)) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not find repo root with Directory.Build.props");
+        return KeepverseRoots.Core();
     }
 }

@@ -2,6 +2,7 @@ using FusionRpg.Contracts;
 using FusionRpg.Core.Battle;
 using FusionRpg.Core.Match.Ai;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Match.Ai;
 
@@ -118,10 +119,6 @@ public class ILawnBoardViewTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "FusionRpg.slnx")))
-            dir = dir.Parent;
-        Assert.NotNull(dir);
-        return dir!.FullName;
+        return KeepverseRoots.Core();
     }
 }

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -22,15 +23,7 @@ public sealed class NarrativeGuardContractTests
 {
     private static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "Directory.Build.props")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not find repository root with scripts/guard-narrative.py");
+        return KeepverseRoots.Core();
     }
 
     private static (int Exit, string Stdout, string Stderr) RunGuard(string root, string registryPath)

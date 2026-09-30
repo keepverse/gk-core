@@ -1,5 +1,6 @@
 using FusionRpg.Core.Items;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -13,18 +14,12 @@ public class SlotRolesTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static IReadOnlyList<ItemRoleDef> LoadRegistry()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "core.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "core.v1.json");
         return ItemRoleRegistry.Parse(File.ReadAllText(path));
     }
 
@@ -41,7 +36,7 @@ public class SlotRolesTests
     {
         // The two-sources-of-truth guard: a roles.v1.json would look just as authoritative as
         // core.v1.json's own roles.list, and this program refuses that pattern everywhere else.
-        var path = Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "roles.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "roles.v1.json");
         Assert.False(File.Exists(path), "a second roles registry must never exist");
     }
 
@@ -194,7 +189,7 @@ public class SlotRolesTests
     {
         foreach (var file in new[] { "humanoid-standard.json", "plant-standard.json" })
         {
-            var path = Path.Combine(RepoRoot(), "data", "seed", "items", "base-types", file);
+            var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types", file);
             using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
             foreach (var entry in doc.RootElement.GetProperty("entries").EnumerateArray())
             {

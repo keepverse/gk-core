@@ -7,6 +7,7 @@ using FusionRpg.Core.World.Siege;
 using FusionRpg.Core.World.StructureSeed;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.World;
 
@@ -22,7 +23,7 @@ public class WonderCatalogTests
         SchemaVersion: 1, Version: 1,
         UniqueExistenceCap: new WonderUniqueExistenceCapTuning(Sector: 7, Empire: 11));
 
-    static string RealCorpusRoot() => Path.Combine(ContentRoot.Path, "data", "seed", "structures");
+    static string RealCorpusRoot() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "structures");
 
     static string RepoRoot() => ContentRoot.Path;
 

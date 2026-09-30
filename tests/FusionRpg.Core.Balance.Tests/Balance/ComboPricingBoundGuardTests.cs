@@ -2,6 +2,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items.Materials;
 using FusionRpg.Core.Items.Sockets;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Balance;
 
@@ -27,18 +28,11 @@ public class ComboPricingBoundGuardTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root not found above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     static string TuningDir => Path.Combine(RepoRoot(), "data", "tuning");
-    static string SeedDir => Path.Combine(RepoRoot(), "data", "seed");
+    static string SeedDir => Path.Combine(KeepverseRoots.Content(), "data", "seed");
 
     static IEnumerable<(string Path, string Json)> SeedJson(string directory) =>
         Directory.Exists(directory)

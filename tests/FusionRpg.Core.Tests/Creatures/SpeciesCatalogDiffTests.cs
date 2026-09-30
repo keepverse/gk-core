@@ -5,6 +5,7 @@ using FusionRpg.Core.Stats.Aptitudes;
 using FusionRpg.Data;
 using FusionRpg.Data.Tests;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures;
 
@@ -47,7 +48,7 @@ public class SpeciesCatalogDiffTests
     /// `"pea.json"` breaks the moment the pipeline it exercises does its own job correctly.</summary>
     static AnchorRow RealAnchor(string speciesId)
     {
-        var indexPath = Path.Combine(RepoRoot(), "data", "seed", "creatures", "species", "_index.json");
+        var indexPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species", "_index.json");
         var index = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(indexPath))!;
         var relPath = index[speciesId];
         return AnchorRowReader.ReadAll(ReadTuning("data", "seed", "creatures", "species", relPath.Replace('/', Path.DirectorySeparatorChar)))

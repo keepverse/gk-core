@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using FusionRpg.Core.Creatures.Generation;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures;
 
@@ -49,8 +50,7 @@ public class VariantCountBandTests
 
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;                        // tests/.../Creatures
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));  // repo root
+        return KeepverseRoots.Core();
     }
 
     /// <summary>Every anchor row in the shipped corpus, resolved through <c>_index.json</c> — the same
@@ -58,7 +58,7 @@ public class VariantCountBandTests
     /// hardcoded paths broke when the pipeline moved a species between family files.</summary>
     static List<AnchorRow> AllAnchorRows()
     {
-        var speciesDir = Path.Combine(RepoRoot(), "data", "seed", "creatures", "species");
+        var speciesDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species");
         var index = JsonSerializer.Deserialize<Dictionary<string, string>>(
             File.ReadAllText(Path.Combine(speciesDir, "_index.json")))!;
 

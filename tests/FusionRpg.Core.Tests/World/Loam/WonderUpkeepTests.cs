@@ -4,6 +4,7 @@ using FusionRpg.Core.World.StructureSeed;
 using FusionRpg.Core.World.Turn;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.World.Loam;
 
@@ -46,7 +47,7 @@ public class WonderUpkeepTests
 
     // ---- in-memory corpus scaffolding (same shape as WonderEmpireEffectsTests; writes nothing) ----
 
-    static string RealCorpusRoot() => Path.Combine(ContentRoot.Path, "data", "seed", "structures");
+    static string RealCorpusRoot() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "structures");
 
     static string FindRepoRoot() => CoreRoot.Path;
 

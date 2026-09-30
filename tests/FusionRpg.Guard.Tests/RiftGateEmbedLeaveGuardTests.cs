@@ -1,4 +1,5 @@
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -61,11 +62,7 @@ public class RiftGateEmbedMarkerGuardTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "src")))
-            dir = dir.Parent;
-        Assert.NotNull(dir);
-        return dir!.FullName;
+        return KeepverseRoots.Core();
     }
 }
 
@@ -142,10 +139,6 @@ public class RiftGateLeaveControlGuardTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "src")))
-            dir = dir.Parent;
-        Assert.NotNull(dir);
-        return dir!.FullName;
+        return KeepverseRoots.Core();
     }
 }

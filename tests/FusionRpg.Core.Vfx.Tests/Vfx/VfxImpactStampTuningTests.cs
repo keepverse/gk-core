@@ -2,6 +2,7 @@ using FusionRpg.Core.Vfx;
 using FusionRpg.Contracts;
 using System.Text.Json;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Vfx;
 
@@ -146,13 +147,6 @@ public class VfxImpactStampTuningTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "FusionRpg.slnx"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 }

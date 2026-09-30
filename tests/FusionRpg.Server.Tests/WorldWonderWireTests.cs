@@ -18,6 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using FusionRpg.Server.Tests.Notifications;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -60,7 +61,7 @@ public class WorldWonderWireTests : IAsyncLifetime
     RpgStore _store = null!;
     WebApplication _app = null!;
     HttpClient _http = null!;
-    readonly string _realCorpusRoot = Path.Combine(FindRepoRootStatic(), "data", "seed", "structures");
+    readonly string _realCorpusRoot = Path.Combine(KeepverseRoots.Content(), "data", "seed", "structures");
     static bool _policiesConfigured;
 
     static void ConfigurePoliciesOnce()
@@ -287,13 +288,7 @@ public class WorldWonderWireTests : IAsyncLifetime
 
     static string FindRepoRootStatic()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException("could not find repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     // ---- catalog identity: every row names scope/rarity/cost/cap ----------------------------------

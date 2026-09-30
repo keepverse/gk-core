@@ -5,6 +5,7 @@ using FusionRpg.Core.Stats.Derived;
 using FusionRpg.Core.Stats.Derived.Subsystems;
 using FusionRpg.Contracts;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.ClassSystem;
 
@@ -169,13 +170,7 @@ public class DistributionReconcileVerdictTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     sealed class FixedPowerIndexProvider : IPowerIndexProvider

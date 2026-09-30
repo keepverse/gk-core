@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FusionRpg.Core.Items;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -12,17 +13,11 @@ public class FrameLeanTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static string RawJson() =>
-        File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "frame-lean.v1.json"));
+        File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "frame-lean.v1.json"));
 
     static FrameLeanTable Load() => FrameLean.Parse(RawJson());
 

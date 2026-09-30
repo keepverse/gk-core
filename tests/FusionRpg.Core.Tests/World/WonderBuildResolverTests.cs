@@ -6,6 +6,7 @@ using FusionRpg.Core.World.StructureSeed;
 using FusionRpg.Core.World.Turn;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.World;
 
@@ -59,7 +60,7 @@ public class WonderBuildResolverTests
         StructureId = structureId, RelicInstanceIds = relicIds,
     };
 
-    static string RealCorpusRoot() => Path.Combine(ContentRoot.Path, "data", "seed", "structures");
+    static string RealCorpusRoot() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "structures");
 
     static void RestoreRealCorpus() => StructureCatalog.Configure(StructureCorpus.Load(RealCorpusRoot()));
 

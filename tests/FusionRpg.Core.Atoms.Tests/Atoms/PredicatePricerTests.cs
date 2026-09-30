@@ -2,6 +2,7 @@ using System.Text.Json;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Effects.Atoms.Power;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Atoms;
 
@@ -327,12 +328,6 @@ public class PredicatePricerTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException("could not find repo root from " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 }

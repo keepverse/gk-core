@@ -3,6 +3,7 @@ using System.Text.Json;
 using FusionRpg.Core.Stats.Aptitudes;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.ClassSystem;
 
@@ -14,14 +15,7 @@ public class AptitudeTuningTests
 {
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "Directory.Build.props")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException("could not locate repo root (Directory.Build.props not found above " + AppContext.BaseDirectory + ")");
+        return KeepverseRoots.Core();
     }
 
     static string ShippedJson() =>

@@ -59,18 +59,11 @@ public class ItemCardStoreTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static string Seed(params string[] parts) =>
-        Path.Combine(new[] { RepoRoot(), "data", "seed" }.Concat(parts).ToArray());
+        Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed" }.Concat(parts).ToArray());
 
     /// <summary>The same tuning shape every other instantiation test uses, pinned at Θ_content 20 so
     /// <c>contentScale</c> is exactly ×1.000 and a frozen number is the atom's own roll.</summary>
@@ -654,7 +647,7 @@ public class ItemCardStoreTests : IDisposable
         // which is a content gap in a sibling pipeline and not this test's subject.
         var briefs = new[] { "committed-round-1.json", "committed-round-2.json" }
             .SelectMany(file => ActionCorpusBriefJson.Parse(
-                File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "actions", file))))
+                File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "actions", file))))
             .ToList();
         var costTemplate = ActionCorpusCostTemplateLoader.Parse(File.ReadAllText(
             Path.Combine(RepoRoot(), "data", "tuning", "action-corpus-cost-templates.v1.json")));

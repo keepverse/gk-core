@@ -1,5 +1,6 @@
 using FusionRpg.Core.Vfx;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Vfx;
 
@@ -166,15 +167,7 @@ public class UnitFrameTests
 
     static string FindRepoRoot()
     {
-        var dir = AppContext.BaseDirectory;
-        while (!string.IsNullOrEmpty(dir))
-        {
-            if (File.Exists(Path.Combine(dir, "Directory.Build.props")))
-                return dir;
-            dir = Directory.GetParent(dir)?.FullName ?? "";
-        }
-
-        throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 
     [Fact]

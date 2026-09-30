@@ -3,6 +3,7 @@ using FusionRpg.Core.Effects.Atoms.Power;
 using FusionRpg.Core.Stats;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Atoms;
 
@@ -331,7 +332,7 @@ public class EntityFieldsTwelvePlusTests
 
     static SeedContent LoadCoefficientSeedFile(out IReadOnlyList<SeedError> errors)
     {
-        var path = Path.Combine(ContentRoot.Path, "data", "seed", "power", "coefficients.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "power", "coefficients.v1.json");
         var result = AtomSeedFile.Collect(new[] { (path, File.ReadAllText(path)) });
         errors = result.Errors;
         return result.Content;

@@ -2,6 +2,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Effects.Atoms.Generation;
 using FusionRpg.Core.Items.Gems;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -16,25 +17,19 @@ public class GemContainerBuildTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static readonly Lazy<IReadOnlyDictionary<string, AtomRow>> RealAtomsById = new(() =>
     {
-        var tierBandsDir = Path.Combine(RepoRoot(), "data", "seed", "items", "_tuning");
+        var tierBandsDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_tuning");
         var tierBandsPath = Directory.GetFiles(tierBandsDir, "tier-bands.v*.json")
             .Select(f => (Path: f, Version: int.Parse(Path.GetFileNameWithoutExtension(f)["tier-bands.v".Length..])))
             .OrderByDescending(t => t.Version).First().Path;
         var tierBands = TierBandsFile.Read(File.ReadAllText(tierBandsPath));
 
         var families = new List<FamilyEntryInput>();
-        var famDir = Path.Combine(RepoRoot(), "data", "seed", "items", "affix-families");
+        var famDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "affix-families");
         foreach (var file in Directory.GetFiles(famDir, "*.json").OrderBy(f => f, StringComparer.Ordinal))
         {
             if (Path.GetFileName(file).StartsWith('_')) continue;
@@ -57,7 +52,7 @@ public class GemContainerBuildTests
 
     static IReadOnlyList<GemSeed> RealGemSeeds()
     {
-        var gemsDir = Path.Combine(RepoRoot(), "data", "seed", "items", "gems");
+        var gemsDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "gems");
         var seeds = new List<GemSeed>();
         foreach (var file in Directory.GetFiles(gemsDir, "g*.json").OrderBy(f => f, StringComparer.Ordinal))
             seeds.AddRange(GemCorpus.Parse(File.ReadAllText(file)));

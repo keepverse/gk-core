@@ -2,6 +2,7 @@ using FusionRpg.Core.Creatures;
 using FusionRpg.Core.Creatures.Generation;
 using FusionRpg.Core.Tests.Creatures.Fusion;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures;
 
@@ -41,7 +42,7 @@ public class SpeciesBuildPlanCatalogRealFileTests
 
     static IReadOnlyDictionary<string, IReadOnlyDictionary<string, long>> LoadRealPlan()
     {
-        var path = Path.Combine(RepoRoot(), "data", "generated", "creatures", "_species-build-plan.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "generated", "creatures", "_species-build-plan.json");
         return SpeciesBuildPlanReader.Parse(File.ReadAllText(path));
     }
 

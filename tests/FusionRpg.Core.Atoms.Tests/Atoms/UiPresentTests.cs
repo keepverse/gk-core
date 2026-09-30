@@ -6,6 +6,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Effects.Atoms.Power;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Atoms;
 
@@ -208,14 +209,7 @@ public class UiPresentTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     // ---- §2b.1: the two vocabularies, neither a tuning table ------------------------------------
@@ -559,7 +553,7 @@ public class UiPresentTests
 
     static SeedContent LoadCoefficientSeedFile(out IReadOnlyList<SeedError> errors)
     {
-        var path = Path.Combine(ContentRoot.Path, "data", "seed", "power", "coefficients.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "power", "coefficients.v1.json");
         var result = AtomSeedFile.Collect(new[] { (path, File.ReadAllText(path)) });
         errors = result.Errors;
         return result.Content;

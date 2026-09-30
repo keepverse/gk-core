@@ -4,6 +4,7 @@ using FusionRpg.Core.Effects;
 using FusionRpg.Core.Effects.Atoms;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Atoms;
 
@@ -38,7 +39,7 @@ public class MigrationParityTests
     /// </summary>
     static IReadOnlyList<AtomRow> SeedRows()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "atoms");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms");
         var files = Directory.GetFiles(dir, "fx-*.json", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (f, File.ReadAllText(f)))
@@ -214,7 +215,7 @@ public class MigrationParityTests
         // amendment), not silently. `patron.aura` is no longer "a Passive with no triggers and no
         // actions" — it carries 12 real stat.derived atoms (one per element × power/defense), each
         // resolved via the new externalRef ValueSpec marker, never an invented magnitude.
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "containers");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "containers");
         var files = Directory.GetFiles(dir, "*.json").Select(f => (f, File.ReadAllText(f))).ToArray();
 
         var collected = AtomSeedFile.Collect(files);

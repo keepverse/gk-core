@@ -1,6 +1,7 @@
 using FusionRpg.Core.ActorSurface;
 using FusionRpg.Core.Status;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Status;
 
@@ -83,15 +84,6 @@ public class StatusCatalogParityTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "RiseOfSummoner.sln"))
-                || File.Exists(Path.Combine(dir.FullName, "data", "tuning", "status-catalog.v1.json")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 }

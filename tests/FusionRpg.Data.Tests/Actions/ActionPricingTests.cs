@@ -4,6 +4,7 @@ using FusionRpg.Core.Actions.Rungs;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Effects.Atoms.Power;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Actions;
 
@@ -30,8 +31,7 @@ public class ActionPricingTests : IDisposable
 
     public void Dispose() => _testStore.Dispose();
 
-    static string RepoRoot([CallerFilePath] string here = "") =>
-        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", ".."));
+    static string RepoRoot([CallerFilePath] string here = "") => KeepverseRoots.Core();
 
     static RungTable ShippedRungTable() =>
         RungTableLoader.Parse(

@@ -3,6 +3,7 @@ using FusionRpg.Core.Effects.Atoms.Power;
 using FusionRpg.Data;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Power;
 
@@ -45,7 +46,7 @@ public class PowerTableSeedTests : IDisposable
     /// the boot import makes (`SeedScanner` sweep -> `ImportContent`).</summary>
     static SeedContent ShippedPowerSeed()
     {
-        var files = Directory.EnumerateFiles(Path.Combine(RepoRoot(), "data", "seed", "power"), "*.json")
+        var files = Directory.EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "power"), "*.json")
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (f, File.ReadAllText(f)))
             .ToList();
@@ -143,7 +144,7 @@ public class PowerTableSeedTests : IDisposable
     /// sweep reaches under <c>gk-data/packs/fusion/data/seed/atoms</c>.</summary>
     static SeedContent ShippedAtomCorpus()
     {
-        var root = Path.Combine(RepoRoot(), "data", "seed", "atoms");
+        var root = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms");
         var files = Directory.EnumerateFiles(root, "*.json", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (f, File.ReadAllText(f)))

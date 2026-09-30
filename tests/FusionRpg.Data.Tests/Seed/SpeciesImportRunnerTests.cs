@@ -1,6 +1,7 @@
 using FusionRpg.Data.Seed;
 using FusionRpg.TestSupport;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Seed;
 
@@ -35,7 +36,7 @@ public class SpeciesImportRunnerTests : IDisposable
         Directory.Delete(_dir, recursive: true);
     }
 
-    static string CommittedTree => Path.Combine(ContentRoot.Path, "data", "generated", "creatures");
+    static string CommittedTree => Path.Combine(KeepverseRoots.Content(), "data", "generated", "creatures");
 
     static string FirstCommittedSpeciesFile() =>
         Directory.EnumerateFiles(CommittedTree, "*.json")

@@ -11,6 +11,7 @@ using FusionRpg.Core.Effects;
 using FusionRpg.Core.Effects.Atoms;
 using Xunit;
 using RegexMatch = System.Text.RegularExpressions.Match;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Actions;
 
@@ -373,12 +374,6 @@ public class ResolvableHereTests
 
     static string FindRepoRoot()
     {
-        var dir = AppContext.BaseDirectory;
-        for (var i = 0; i < 12 && dir != null; i++)
-        {
-            if (Directory.Exists(Path.Combine(dir, "data", "tuning"))) return dir;
-            dir = Directory.GetParent(dir)?.FullName;
-        }
-        throw new InvalidOperationException("repo root not found by walking up from " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 }

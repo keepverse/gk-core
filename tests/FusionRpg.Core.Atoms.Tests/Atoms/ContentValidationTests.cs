@@ -3,6 +3,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Effects.Atoms.Power;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Atoms;
 
@@ -453,7 +454,7 @@ public class ContentValidationTests
     /// families). Loads the real, already-shipped `gk-data/packs/fusion/data/seed/channel-pools/pools.v1.json` once.</summary>
     static Func<string, ChannelPoolRow?> RealLookupPool()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "channel-pools", "pools.v1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "channel-pools", "pools.v1.json");
         var rejection = ChannelPoolFile.TryParse(File.ReadAllText(path), out var pools);
         Assert.True(rejection.IsOk, rejection.Detail);
         var byId = pools.ToDictionary(p => p.PoolId, StringComparer.Ordinal);

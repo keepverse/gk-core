@@ -6,6 +6,7 @@ using FusionRpg.Core.Items;
 using FusionRpg.Core.World;
 using FusionRpg.Data;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Delve;
 
@@ -37,13 +38,7 @@ public class DelvePackSettlementTests : IDisposable
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static WorldState BuildGraph(string worldId) => new()

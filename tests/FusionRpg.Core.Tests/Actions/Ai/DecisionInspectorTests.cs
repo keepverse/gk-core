@@ -10,6 +10,7 @@ using FusionRpg.Core.Battle.Timeline;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Actions.Ai;
 
@@ -227,8 +228,7 @@ public class DecisionInspectorTests
 
     static string RepoRoot([System.Runtime.CompilerServices.CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", "..", ".."));
+        return KeepverseRoots.Core();
     }
 
     /// <summary>§3: recording is an OBSERVER, so wiring a sink moves no intent — the record is built

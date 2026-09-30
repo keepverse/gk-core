@@ -3,6 +3,7 @@ using FusionRpg.Core.Items.Sockets;
 using FusionRpg.Data;
 using FusionRpg.Data.Tests;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -26,14 +27,7 @@ public class CombinationImportTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static SocketTuning Sockets() => SocketTuning.Parse(
@@ -50,7 +44,7 @@ public class CombinationImportTests : IDisposable
     /// must do the same.</summary>
     static ComboContainerBuild.ComboContainerLookups Atoms(RpgStore store)
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "atoms");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms");
         var files = Directory.EnumerateFiles(dir, "*.json", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (Path: f, Json: File.ReadAllText(f)));
@@ -72,7 +66,7 @@ public class CombinationImportTests : IDisposable
         var log = new List<string>();
         var result = CombinationBoot.Seed(
             _store, sockets, strainSplice, archetypes,
-            Path.Combine(RepoRoot(), "data", "seed", "items", "combinations"), Atoms(_store), log.Add);
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "combinations"), Atoms(_store), log.Add);
 
         // Every row on disk became a recipe or a named refusal, and the shipped corpus refuses none.
         Assert.True(result.Partitioned);

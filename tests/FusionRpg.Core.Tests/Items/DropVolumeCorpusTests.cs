@@ -3,6 +3,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Drops;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -17,7 +18,7 @@ public class DropVolumeCorpusTests
 {
     static string RepoRoot() => DropVolumeTests.RepoRoot();
 
-    static string LootDir() => Path.Combine(RepoRoot(), "data", "seed", "loot");
+    static string LootDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "loot");
 
     internal static LootCorpus Corpus() => LootCorpusReader.Merge(
         Directory.EnumerateFiles(LootDir(), "*.json")
@@ -35,7 +36,7 @@ public class DropVolumeCorpusTests
             File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", "item-rarity.v1.json")));
 
         using var doc = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "rarity", "ladder.v1.json")));
+            File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "rarity", "ladder.v1.json")));
 
         var rungs = new List<RarityRung>();
         foreach (var e in doc.RootElement.GetProperty("entries").EnumerateArray())
@@ -53,7 +54,7 @@ public class DropVolumeCorpusTests
 
     internal static IReadOnlyDictionary<(string Frame, string Role), List<string>> BaseTypes()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "base-types");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types");
         var map = new Dictionary<(string, string), List<string>>();
         foreach (var path in Directory.EnumerateFiles(dir, "*.json", SearchOption.AllDirectories))
         {
@@ -259,7 +260,7 @@ public class DropVolumeCorpusTests
         // The grant container lives in gk-data/packs/fusion/data/seed/containers/ — an OWNED folder of SeedScanner — so
         // it imports through the standard AtomSeedFile path like every other container, rather than
         // through a second writer beside the drop tables.
-        var containerDir = Path.Combine(RepoRoot(), "data", "seed", "containers");
+        var containerDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "containers");
         var rarities = new Dictionary<string, string>(StringComparer.Ordinal);
         var noRolls = new HashSet<string>(StringComparer.Ordinal);
         foreach (var path in Directory.EnumerateFiles(containerDir, "*.json"))
@@ -324,7 +325,7 @@ public class DropVolumeCorpusTests
         // gk-data/packs/fusion/data/seed/items/drop-tables/, and it holds 315 entries of four kinds whose payload
         // machinery does not exist. The refusal must be BY NAME, per kind, naming the owning module
         // — never a silent drop.
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "drop-tables");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "drop-tables");
         var counts = new Dictionary<DropEntryKind, int>();
         var tables = 0;
 

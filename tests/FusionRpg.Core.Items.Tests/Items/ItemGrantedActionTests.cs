@@ -12,6 +12,7 @@ using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Grants;
 using FusionRpg.Core.Items.Power;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -28,13 +29,7 @@ public class ItemGrantedActionTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static ItemPowerTuning LoadPowerTuning() =>
@@ -750,7 +745,7 @@ public class ItemGrantedActionTests
 
     static List<BaseTypeEntry> LoadBaseTypes()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "base-types");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types");
         var result = new List<BaseTypeEntry>();
         foreach (var path in Directory.EnumerateFiles(dir, "*.json", new EnumerationOptions
         {
@@ -775,7 +770,7 @@ public class ItemGrantedActionTests
     [Fact]
     public void No_shipped_base_type_authors_a_granted_action()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "base-types");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types");
         foreach (var path in Directory.EnumerateFiles(dir, "*.json", new EnumerationOptions
         {
             RecurseSubdirectories = true,
@@ -918,14 +913,14 @@ public class ItemGrantedActionTests
 
     static readonly Lazy<(IReadOnlyList<AtomRow> All, Dictionary<string, List<AtomRow>> ByFamily, Dictionary<string, AtomRow> ById)> RealItemAtoms = new(() =>
     {
-        var tierBandsDir = Path.Combine(RepoRoot(), "data", "seed", "items", "_tuning");
+        var tierBandsDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_tuning");
         var tierBandsPath = Directory.GetFiles(tierBandsDir, "tier-bands.v*.json")
             .Select(f => (Path: f, Version: int.Parse(Path.GetFileNameWithoutExtension(f)["tier-bands.v".Length..])))
             .OrderByDescending(t => t.Version).First().Path;
         var tierBands = TierBandsFile.Read(File.ReadAllText(tierBandsPath));
 
         var families = new List<FamilyEntryInput>();
-        var famDir = Path.Combine(RepoRoot(), "data", "seed", "items", "affix-families");
+        var famDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "affix-families");
         foreach (var file in Directory.GetFiles(famDir, "*.json").OrderBy(f => f, StringComparer.Ordinal))
         {
             if (Path.GetFileName(file).StartsWith('_')) continue;
@@ -956,7 +951,7 @@ public class ItemGrantedActionTests
 
     static ActionCorpusBrief RealWeaponBrief()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "actions", "committed-round-1.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "actions", "committed-round-1.json");
         var briefs = ActionCorpusBriefJson.Parse(File.ReadAllText(path));
         // `action.family.nut.001` "Hardened Penetration" -- attack category, both atom families are
         // real `stat.modify`/`stat.derived` channel families (`atom.carapace`, `atom.elpw-pierce`)

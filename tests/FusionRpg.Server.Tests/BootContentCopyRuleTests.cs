@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -38,13 +39,7 @@ public class BootContentCopyRuleTests
 
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var dir = new DirectoryInfo(Path.GetDirectoryName(here)!);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Server"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not find the repo root above the test sources");
+        return KeepverseRoots.Core();
     }
 
     static string ProgramSource() =>

@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using FusionRpg.Core.Battle;
 using FusionRpg.Core.Power;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Power;
 
@@ -161,12 +162,6 @@ public class BattleMagnitudeParityTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "data", "tuning"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("data/tuning");
+        return KeepverseRoots.Core();
     }
 }

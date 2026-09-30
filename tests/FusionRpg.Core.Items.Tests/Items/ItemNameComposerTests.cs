@@ -2,6 +2,7 @@ using System.Text.Json;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -14,18 +15,12 @@ public class AffixNameTableTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static JsonElement FindFamily(string familyId)
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "affix-families");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "affix-families");
         foreach (var path in Directory.EnumerateFiles(dir, "*.json"))
         {
             var doc = JsonDocument.Parse(File.ReadAllText(path));
@@ -40,7 +35,7 @@ public class AffixNameTableTests
     [Fact]
     public void Every_family_has_a_name_word_for_every_band_its_tier_range_reaches()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "affix-families");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "affix-families");
         foreach (var path in Directory.EnumerateFiles(dir, "*.json"))
         {
             using var doc = JsonDocument.Parse(File.ReadAllText(path));
@@ -123,7 +118,7 @@ public class AffixNameTableTests
     [Fact]
     public void Every_band_keyed_family_resolves_a_word_at_every_tier()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "affix-families");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "affix-families");
         foreach (var path in Directory.EnumerateFiles(dir, "*.json"))
         {
             if (Path.GetFileName(path).StartsWith('_')) continue;

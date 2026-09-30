@@ -2,6 +2,7 @@ using FusionRpg.Core.Creatures.Generation;
 using FusionRpg.Core.Delve.Loot;
 using FusionRpg.Core.Items.Drops;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Loot;
 
@@ -16,8 +17,7 @@ namespace FusionRpg.Core.Tests.Delve.Loot;
 /// </summary>
 public class DungeonLootTableSeedFileTests
 {
-    static string RepoRoot() =>
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+    static string RepoRoot() => KeepverseRoots.Core();
 
     static readonly string[] SixClimates = { "fire", "ice", "air", "earth", "light", "dark" };
     static readonly DungeonLootTableGen.Weights Weights = new(EquipmentWeight: 300, NothingWeight: 700);
@@ -25,7 +25,7 @@ public class DungeonLootTableSeedFileTests
     [Fact]
     public void The_committed_file_exists()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "loot", "tables-dungeon.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "loot", "tables-dungeon.json");
         Assert.True(File.Exists(path), $"expected {path} to exist — run DungeonLootTableGen.Build/.ToJson and commit the result");
     }
 
@@ -41,7 +41,7 @@ public class DungeonLootTableSeedFileTests
     [Fact]
     public void The_committed_file_matches_the_generator_no_hand_edits()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "loot", "tables-dungeon.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "loot", "tables-dungeon.json");
         var committed = File.ReadAllText(path).ToLf();
         var regenerated = DungeonLootTableGen.ToJson(DungeonLootTableGen.Build(SixClimates, Weights));
         Assert.Equal(regenerated, committed);
@@ -50,7 +50,7 @@ public class DungeonLootTableSeedFileTests
     [Fact]
     public void The_committed_file_parses_and_validates_through_the_real_reader_and_validator()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "loot", "tables-dungeon.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "loot", "tables-dungeon.json");
         var corpus = LootCorpusReader.Parse(File.ReadAllText(path));
         // The table count is a growing content population, never pinned (population-pin SE3.3,
         // 2026-09-19); the real contract is the validator call below.
@@ -67,7 +67,7 @@ public class DungeonLootTableSeedFileTests
     [Fact]
     public void Merged_with_the_real_item_corpus_the_whole_loot_directory_still_validates_with_no_id_collisions()
     {
-        var lootDir = Path.Combine(RepoRoot(), "data", "seed", "loot");
+        var lootDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "loot");
         var files = Directory.EnumerateFiles(lootDir, "tables*.json");
         var corpus = LootCorpusReader.Merge(files.Select(f => LootCorpusReader.Parse(File.ReadAllText(f))));
 

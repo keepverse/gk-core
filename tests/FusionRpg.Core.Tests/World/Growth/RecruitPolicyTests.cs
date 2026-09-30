@@ -4,6 +4,7 @@ using System.Linq;
 using FusionRpg.Core.World.Growth;
 using FusionRpg.Core.World.Turn;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.World.Growth;
 
@@ -130,10 +131,6 @@ public class RecruitPolicyTests
     // Matches WorldDeterminismGuardTests' own root-finding convention (gk-core/tests/FusionRpg.Guard.Tests).
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "FusionRpg.slnx")))
-            dir = dir.Parent;
-        Assert.NotNull(dir);
-        return dir!.FullName;
+        return KeepverseRoots.Core();
     }
 }

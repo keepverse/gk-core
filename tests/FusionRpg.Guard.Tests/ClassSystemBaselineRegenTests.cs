@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -196,16 +197,6 @@ public class ClassSystemBaselineRegenTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            // Marker: `Directory.Build.props`, the tracked MSBuild root file -- NOT a tool. This
-            // walked up for the regen SCRIPT, so deleting the script made the test unable to find
-            // the repository at all. Same convention as gk-forge/tools/DominanceBaseline and the other three
-            // class-system tools, whose `.ps1` marker had already been retired.
-            if (File.Exists(Path.Combine(dir.FullName, "Directory.Build.props"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not find repo root with Directory.Build.props");
+        return KeepverseRoots.Core();
     }
 }

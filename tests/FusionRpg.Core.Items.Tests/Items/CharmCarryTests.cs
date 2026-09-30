@@ -2,6 +2,7 @@ using System.Reflection;
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items.Thresholds;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -13,7 +14,7 @@ namespace FusionRpg.Core.Tests.Items;
 /// </summary>
 public class CharmCarryTests
 {
-    internal static string RepoRoot() => ThresholdGrantTests.RepoRoot();
+    internal static string RepoRoot() => KeepverseRoots.Core();
 
     internal static CharmAttunementTuning Tuning() => CharmAttunementTuning.Parse(
         File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", "charm-attunement.v1.json")));
@@ -400,7 +401,7 @@ public class CharmCarryTests
     }
 
     static IReadOnlyList<CharmResonanceRow> Resonance() => CharmResonance.DeriveTable(
-        File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "items", "charms", "resonance.json")));
+        File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "charms", "resonance.json")));
 
     [Fact]
     public void Resonance_tiers_come_from_module_12s_evaluator_and_are_cumulative()

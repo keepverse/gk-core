@@ -11,6 +11,7 @@ using FusionRpg.Core.Stats.Derived;
 using FusionRpg.Data;
 using FusionRpg.Data.Sqlite;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Saves;
 
@@ -200,13 +201,7 @@ public class SpecimenOwnershipTests : System.IDisposable
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(System.AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "data", "seed", "dungeon"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not find repo root above " + System.AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     // ---- SE4.25: the last two ownership sites (species XP from a specimen source; item equip) ----

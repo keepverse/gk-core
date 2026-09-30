@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -12,14 +13,7 @@ public class TestSubstrateGuardTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "Directory.Build.props")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not find repo root with Directory.Build.props");
+        return KeepverseRoots.Core();
     }
 
     static (int exit, string stdout, string stderr) RunGuard(string root, string? baselinePath = null)
@@ -232,7 +226,7 @@ public class TestSubstrateGuardTests
                 [Fact]
                 public void Copies()
                 {
-                    var realRoot = Path.Combine(ContentRoot.Path, "data", "seed", "structures");
+                    var realRoot = Path.Combine(KeepverseRoots.Content(), "data", "seed", "structures");
                     var tmp = Path.Combine(Path.GetTempPath(), "cargo-probe-test-" + Guid.NewGuid().ToString("N"));
                     Directory.CreateDirectory(tmp);
                     foreach (var path in Directory.EnumerateFiles(realRoot, "*.json", SearchOption.AllDirectories))
@@ -269,7 +263,7 @@ public class TestSubstrateGuardTests
                 [Fact]
                 public void Appends()
                 {
-                    var real = StructureCorpus.Load(Path.Combine(ContentRoot.Path, "data", "seed", "structures"));
+                    var real = StructureCorpus.Load(Path.Combine(KeepverseRoots.Content(), "data", "seed", "structures"));
                     StructureCatalog.Configure(real.WithRows(real.Rows.ToArray()));
                 }
             }

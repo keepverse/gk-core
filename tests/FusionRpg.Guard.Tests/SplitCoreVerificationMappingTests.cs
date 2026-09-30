@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -177,15 +178,7 @@ public sealed class SplitCoreVerificationMappingTests
 
     private static string RepoRoot()
     {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            if (File.Exists(Path.Combine(directory.FullName, "scripts", "verify-change.py")))
-                return directory.FullName;
-            directory = directory.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not find repository root with scripts/verify-change.py");
+        return KeepverseRoots.Core();
     }
 
     private static (int Exit, string Stdout, string Stderr) RunPlanner(IEnumerable<string> paths)

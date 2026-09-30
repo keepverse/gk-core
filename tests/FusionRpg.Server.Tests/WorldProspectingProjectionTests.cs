@@ -10,6 +10,7 @@ using Xunit;
 using FusionRpg.Data.Tests;
 using FusionRpg.Data.Sqlite;
 using FusionRpg.Server.Tests.Notifications;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -135,12 +136,6 @@ public class WorldProspectingProjectionTests : IAsyncLifetime
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException("could not find repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 }

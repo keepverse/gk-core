@@ -3,6 +3,7 @@ using FusionRpg.Core.Items.Materials;
 using FusionRpg.Core.Items.Sockets;
 using FusionRpg.Data;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Items;
 
@@ -30,21 +31,14 @@ public class MaterialSpendTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static MaterialTuning Tuning() => MaterialTuning.Parse(
         File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", SocketTuningFiles.Materials)));
 
     static MaterialRecipeCatalog Catalog() => MaterialRecipeCatalog.Load(
-        Directory.EnumerateFiles(Path.Combine(RepoRoot(), "data", "seed", "items", "recipes"), "*.json")
+        Directory.EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "recipes"), "*.json")
             .OrderBy(f => f, StringComparer.Ordinal).Select(File.ReadAllText),
         Tuning());
 

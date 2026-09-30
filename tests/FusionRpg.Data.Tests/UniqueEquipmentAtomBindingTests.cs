@@ -1,6 +1,7 @@
 using FusionRpg.Core.Effects.Atoms;
 using Xunit;
 using FusionRpg.TestSupport;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests;
 
@@ -34,8 +35,8 @@ public class UniqueEquipmentAtomBindingTests : IDisposable
 
     void ImportRealSeedTree()
     {
-        var atomsDir = Path.Combine(RepoRoot(), "data", "seed", "atoms");
-        var containersDir = Path.Combine(RepoRoot(), "data", "seed", "containers");
+        var atomsDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms");
+        var containersDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "containers");
         var files = Directory.GetFiles(atomsDir, "fx-*.json", SearchOption.AllDirectories)
             .Concat(new[] { Path.Combine(containersDir, "unique-equip.json") })
             .OrderBy(f => f, StringComparer.Ordinal)

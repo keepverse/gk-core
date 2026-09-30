@@ -1,6 +1,7 @@
 using System.IO;
 using FusionRpg.Core.World;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.World;
 
@@ -14,11 +15,7 @@ public class WorldTuningLoaderTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "FusionRpg.slnx")))
-            dir = dir.Parent;
-        Assert.NotNull(dir);
-        return dir!.FullName;
+        return KeepverseRoots.Core();
     }
 
     static string ValidMovementJson() =>

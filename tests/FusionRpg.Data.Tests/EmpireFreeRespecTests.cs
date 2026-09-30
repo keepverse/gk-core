@@ -10,6 +10,7 @@ using FusionRpg.Core.Saves;
 using FusionRpg.Data;
 using FusionRpg.Data.Sqlite;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests;
 
@@ -292,13 +293,7 @@ public class EmpireFreeRespecTests : IDisposable
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "Directory.Build.props"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     [Fact]

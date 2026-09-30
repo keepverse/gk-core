@@ -1,6 +1,7 @@
 using FusionRpg.Core.Actions;
 using FusionRpg.Core.Actions.Corpus;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Actions;
 
@@ -109,7 +110,6 @@ public class ActionCorpusBriefJsonTests
 
     static string RepoRoot([System.Runtime.CompilerServices.CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;                       // tests/.../Actions
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", "..")); // repo root
+        return KeepverseRoots.Core();
     }
 }

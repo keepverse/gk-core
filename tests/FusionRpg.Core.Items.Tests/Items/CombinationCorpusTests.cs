@@ -1,6 +1,7 @@
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items.Sockets;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -16,10 +17,7 @@ public class CombinationCorpusTests
 {
     static string RepoRoot()
     {
-        var dir = AppContext.BaseDirectory;
-        while (dir is not null && !File.Exists(Path.Combine(dir, "CONTRIBUTING.md")))
-            dir = Path.GetDirectoryName(dir);
-        return dir ?? throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 
     static SocketTuning Sockets() => SocketTuning.Parse(
@@ -30,7 +28,7 @@ public class CombinationCorpusTests
         Sockets());
 
     static string CombinationsDir() =>
-        Path.Combine(RepoRoot(), "data", "seed", "items", "combinations");
+        Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "combinations");
 
     static IReadOnlyList<CombinationEntry> ShippedEntries()
     {
@@ -169,7 +167,7 @@ public class CombinationCorpusTests
         // build too. A recipe the grid accepts but whose container cannot build (a grant family with no
         // atom) would seed, evaluate as firing, preview as firing — and bind nothing. The accepted set
         // is grid-valid ∩ buildable at every tier the ladder can grant.
-        var atomsDir = Path.Combine(RepoRoot(), "data", "seed", "atoms");
+        var atomsDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms");
         var atomFiles = Directory.EnumerateFiles(atomsDir, "*.json", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.Ordinal)
             .Select(f => (Path: f, Json: File.ReadAllText(f)));

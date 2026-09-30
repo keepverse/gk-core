@@ -13,6 +13,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Match.Ai;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Actions.Ai.Lawn;
 
@@ -230,8 +231,6 @@ public class LawnBattleViewTests
 
     static string RepoRoot([System.Runtime.CompilerServices.CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;
-        // Five levels: .../Actions/Ai/Lawn -> Ai -> Actions -> FusionRpg.Core.Tests -> tests -> repo.
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", "..", "..", ".."));
+        return KeepverseRoots.Core();
     }
 }

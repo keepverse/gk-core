@@ -5,6 +5,7 @@ using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Sockets;
 using FusionRpg.Core.Stats.Aptitudes;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -26,10 +27,7 @@ public class StrainSpliceGridTests
 {
     static string RepoRoot()
     {
-        var dir = AppContext.BaseDirectory;
-        while (dir is not null && !File.Exists(Path.Combine(dir, "CONTRIBUTING.md")))
-            dir = Path.GetDirectoryName(dir);
-        return dir ?? throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 
     static SocketTuning Sockets() => SocketTuning.Parse(
@@ -42,7 +40,7 @@ public class StrainSpliceGridTests
     /// <summary>The archetype axis, READ from module 13's registry — never declared in a test either.</summary>
     internal static IReadOnlyList<string> Archetypes()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "items", "_registry",
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry",
             "build-themes.v1.json");
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
         var seen = new List<string>();
@@ -171,7 +169,7 @@ public class StrainSpliceGridTests
 
         var total = 0;
         var corpusHosts = new HashSet<string>(StringComparer.Ordinal);
-        var root = Path.Combine(RepoRoot(), "data", "seed", "items", "base-types");
+        var root = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "base-types");
         foreach (var file in Directory.GetFiles(root, "*.json", SearchOption.AllDirectories))
         {
             using var doc = JsonDocument.Parse(File.ReadAllText(file));

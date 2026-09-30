@@ -3,6 +3,7 @@ using FusionRpg.Core.Creatures;
 using FusionRpg.Core.Creatures.Fusion;
 using FusionRpg.Core.Tests.Creatures.Fusion;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures;
 
@@ -360,7 +361,7 @@ public class CreatureRecipeCatalogTests
     [Fact]
     public void The_real_committed_seed_matches_a_fresh_deterministic_build_for_every_output()
     {
-        var path = Path.Combine(RepoRootForCommittedSeed(), "data", "generated", "creatures", "_fusion-recipes.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "generated", "creatures", "_fusion-recipes.json");
         Assert.True(File.Exists(path), $"missing committed seed at {path} — run `python tools/seedsmith/seedsmith/adapters/creatures/fusion/reconcile.py --deterministic-only`");
 
         var committed = FusionRecipeSeedReader.Parse(File.ReadAllText(path));
@@ -418,7 +419,7 @@ public class CreatureRecipeCatalogTests
         // the correct, honest result today, not a regression: `reconcile.py`'s own "no entry, not a
         // made-up one" rule for real. Closing this gap for real needs a fresh Checkpoint-8a-style
         // live-model vote against the new, larger candidate pools — tracked, not silently skipped.
-        var path = Path.Combine(RepoRootForCommittedSeed(), "data", "generated", "creatures", "_fusion-recipes.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "generated", "creatures", "_fusion-recipes.json");
         var committed = FusionRecipeSeedReader.Parse(File.ReadAllText(path));
 
         using (CreatureSpeciesCatalog.UseScoped(RealCorpusFixture.Snapshot))

@@ -3,6 +3,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Uniques;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -30,7 +31,7 @@ public class UniqueCorpusTests
         throw new DirectoryNotFoundException("repo root");
     }
 
-    static string Seed(params string[] parts) => Path.Combine(new[] { RepoRoot(), "data", "seed" }.Concat(parts).ToArray());
+    static string Seed(params string[] parts) => Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed" }.Concat(parts).ToArray());
 
     static readonly IReadOnlyList<UniqueSeed> Corpus = LoadCorpus();
     static readonly IReadOnlyDictionary<string, (string RoleId, ItemFrame Frame)> BaseTypes = LoadBaseTypes();

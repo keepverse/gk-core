@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using FusionRpg.Data.Tests;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -59,7 +60,7 @@ public class SocketHostForTests : IAsyncLifetime
         var surfaces = ItemSurfaceTuning.Parse(File.ReadAllText(Tuning("item-surfaces.v1.json")));
         var sockets = SocketTuning.Parse(File.ReadAllText(Tuning(SocketTuningFiles.Current)));
         var rarity = ItemRarityTuning.Parse(File.ReadAllText(Tuning("item-rarity.v1.json")));
-        var gems = GemInsertCorpus.Load(Path.Combine(RepoRoot(), "data", "seed", "items", "gems"));
+        var gems = GemInsertCorpus.Load(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "gems"));
 
         for (var i = 0; i < RarityLadder.RungIds.Count; i++)
             Assert.True(_store.UpsertRarity(new RarityRow(RarityLadder.RungIds[i], (i + 1) * 10, 3, 0, 1, 5)).Ok);
@@ -217,13 +218,7 @@ public class SocketHostForTests : IAsyncLifetime
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException("repo root not found from " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     static string Tuning(string file) => Path.Combine(RepoRoot(), "data", "tuning", file);

@@ -2,6 +2,7 @@ using FusionRpg.Core.Creatures.Generation;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
 using FusionRpg.Data.Tests;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures;
 
@@ -122,7 +123,7 @@ public class ConcreteSpeciesSeedReaderTests
 
     static IReadOnlyList<Core.Creatures.Generation.ConcreteSpecies> RealCommittedSpecies()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "generated", "creatures");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "generated", "creatures");
         var files = Directory.EnumerateFiles(dir, "*.json")
             .Where(p => !Path.GetFileName(p).StartsWith('_')) // skip _species-build-plan.json, _fusion-recipes.json
             .ToList();
@@ -201,7 +202,7 @@ public class ConcreteSpeciesSeedReaderTests
         // generations whatever the corpus size, and it fails the moment the reader or the serializer
         // drops the field.
         var anchorRank = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-        var anchorDir = Path.Combine(RepoRoot(), "data", "seed", "creatures", "species");
+        var anchorDir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species");
         foreach (var file in Directory.EnumerateFiles(anchorDir, "*.json", SearchOption.AllDirectories))
         {
             if (Path.GetFileName(file) == "_index.json") continue;
@@ -210,7 +211,7 @@ public class ConcreteSpeciesSeedReaderTests
         }
         Assert.NotEmpty(anchorRank);
 
-        var concreteDir = Path.Combine(RepoRoot(), "data", "generated", "creatures");
+        var concreteDir = Path.Combine(KeepverseRoots.Content(), "data", "generated", "creatures");
         var checkedFiles = 0;
         var disagreements = new List<string>();
         foreach (var file in Directory.EnumerateFiles(concreteDir, "*.json"))

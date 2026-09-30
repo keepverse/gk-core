@@ -14,6 +14,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Status;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Actions.Movement;
 
@@ -35,14 +36,7 @@ public class MovementPayloadTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "data", "tuning", "movement-payload.v1.json")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     static string ShippedJson() =>

@@ -5,6 +5,7 @@ using FusionRpg.Tools.RpgSim;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.E2E.Tests;
 
@@ -190,7 +191,7 @@ public class RpgApiFactory : WebApplicationFactory<Program>
     /// </summary>
     void SeedSpeciesRoster()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "generated", "creatures");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "generated", "creatures");
         var files = Directory.EnumerateFiles(dir, "*.json")
             .Where(p => !Path.GetFileName(p).StartsWith('_'));
         var species = files.Select(ConcreteSpeciesSeedReader.ParseFile).ToList();
@@ -211,13 +212,7 @@ public class RpgApiFactory : WebApplicationFactory<Program>
     // test's own bin output, so that marker alone stops the upward search one level too early.
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not find repo root (no src/FusionRpg.Injector above test bin)");
+        return KeepverseRoots.Core();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

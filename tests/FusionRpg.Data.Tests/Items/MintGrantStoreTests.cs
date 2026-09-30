@@ -7,6 +7,7 @@ using FusionRpg.Core.Items.Drops;
 using FusionRpg.Core.Power;
 using FusionRpg.Data.Sqlite;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Items;
 
@@ -305,13 +306,7 @@ public class MintGrantStoreTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static IReadOnlyList<RarityRung> RealLadder()
@@ -319,7 +314,7 @@ public class MintGrantStoreTests : IDisposable
         var tuning = ItemRarityTuning.Parse(
             File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", "item-rarity.v1.json")));
         using var doc = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "rarity", "ladder.v1.json")));
+            File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "rarity", "ladder.v1.json")));
 
         var rungs = new List<RarityRung>();
         foreach (var e in doc.RootElement.GetProperty("entries").EnumerateArray())

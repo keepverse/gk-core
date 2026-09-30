@@ -8,6 +8,7 @@ using FusionRpg.Core.Stats.Derived;
 using FusionRpg.Core.Stats.Derived.Subsystems;
 using Xunit;
 using LawnTreeAtomSource = FusionRpg.Core.PassiveTree.Resolve.TreeAtomSource;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Battle;
 
@@ -23,10 +24,7 @@ public class TreeAtomSourceParityTests
 {
     static string RepoRoot()
     {
-        var dir = Directory.GetCurrentDirectory();
-        while (dir is not null && !File.Exists(Path.Combine(dir, "CONTRIBUTING.md")))
-            dir = Directory.GetParent(dir)?.FullName;
-        return dir ?? throw new InvalidOperationException("repo root not found");
+        return KeepverseRoots.Core();
     }
 
     static PowerTuning RealPowerTuning() =>

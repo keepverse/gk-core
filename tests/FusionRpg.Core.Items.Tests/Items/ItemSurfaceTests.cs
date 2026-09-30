@@ -5,6 +5,7 @@ using FusionRpg.Core.Items.Surfaces;
 using FusionRpg.Core.Items.Thresholds;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -23,7 +24,7 @@ namespace FusionRpg.Core.Tests.Items;
 /// </summary>
 public class ItemSurfaceTests
 {
-    static string RepoRoot() => DropVolumeTests.RepoRoot();
+    static string RepoRoot() => KeepverseRoots.Core();
 
     static string TuningPath => Path.Combine(RepoRoot(), "data", "tuning", "item-surfaces.v1.json");
 

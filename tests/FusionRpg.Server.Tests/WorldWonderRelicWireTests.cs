@@ -18,6 +18,7 @@ using Xunit;
 using FusionRpg.Data.Tests;
 using FusionRpg.TestSupport;
 using FusionRpg.Server.Tests.Notifications;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -161,7 +162,7 @@ public class WorldWonderRelicWireTests : IAsyncLifetime
 
     // ---- fixture helpers -------------------------------------------------------------
 
-    static string RealCorpusRoot() => Path.Combine(ContentRoot.Path, "data", "seed", "structures");
+    static string RealCorpusRoot() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "structures");
 
     /// <summary>
     /// The shipped corpus plus this suite's two synthetic wonders, built **in memory** — the corpus is data,

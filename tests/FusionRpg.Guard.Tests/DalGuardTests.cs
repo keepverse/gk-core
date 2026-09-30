@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -144,13 +145,6 @@ public class DalGuardTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            var scripts = Path.Combine(dir.FullName, "Directory.Build.props");
-            if (File.Exists(scripts)) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not find repo root with Directory.Build.props");
+        return KeepverseRoots.Core();
     }
 }

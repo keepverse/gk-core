@@ -4,6 +4,7 @@ using FusionRpg.Core.Commanders;
 using FusionRpg.Core.World.Ai;
 using FusionRpg.Core.World.Ai.Utility;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.World.Ai;
 
@@ -124,13 +125,6 @@ public class WorldAiTuningTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core", "FusionRpg.Core.csproj")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 }

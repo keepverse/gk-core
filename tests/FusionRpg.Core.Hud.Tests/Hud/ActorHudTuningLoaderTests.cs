@@ -1,5 +1,6 @@
 using FusionRpg.Core.Hud;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Hud;
 
@@ -186,14 +187,6 @@ public sealed class ActorHudTuningLoaderTests
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "data", "tuning", "actor-hud.v1.json")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root with actor-hud.v1.json");
+        return KeepverseRoots.Core();
     }
 }

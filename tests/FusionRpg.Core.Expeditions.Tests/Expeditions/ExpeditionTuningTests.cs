@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using FusionRpg.Core.Expeditions;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Expeditions;
 
@@ -31,8 +32,7 @@ public class ExpeditionTuningTests
 
     static string RepoRoot([System.Runtime.CompilerServices.CallerFilePath] string here = "")
     {
-        var dir = Path.GetDirectoryName(here)!;                                        // tests/.../Expeditions
-        return Path.GetFullPath(Path.Combine(dir, "..", "..", ".."));                  // repo root
+        return KeepverseRoots.Core();
     }
 
     // ---- the committed file ------------------------------------------------------------------------

@@ -10,6 +10,7 @@ using FusionRpg.Core.Power;
 using FusionRpg.Core.World;
 using FusionRpg.Data;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Delve.Quests;
 
@@ -54,13 +55,7 @@ public class QuestRewardBankingCloseDelveTests : IDisposable
 
     static string FindRepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "data", "seed", "dungeon"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
     static readonly PowerTuning MintTuning = PowerTuning.Build(

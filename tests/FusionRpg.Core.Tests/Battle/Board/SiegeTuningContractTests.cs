@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json.Nodes;
 using FusionRpg.Core.Battle.Board;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Battle.Board;
 
@@ -86,7 +87,6 @@ public class SiegeTuningContractTests
 
     static string RepoRoot([System.Runtime.CompilerServices.CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;                 // tests/FusionRpg.Core.Tests/Battle/Board
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", "..", ".."));
+        return KeepverseRoots.Core();
     }
 }

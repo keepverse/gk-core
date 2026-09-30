@@ -3,6 +3,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Thresholds;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -18,7 +19,7 @@ public class ThresholdGrantTests
         File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", "item-frame-mix.v1.json")));
 
     internal static IReadOnlyList<ItemRoleDef> Registry() => ItemRoleRegistry.Parse(
-        File.ReadAllText(Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "core.v1.json")));
+        File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "core.v1.json")));
 
     internal static IReadOnlyDictionary<ItemRole, long> HybridCore() =>
         FrameMixPredicate.HybridCoreBudget(Registry());

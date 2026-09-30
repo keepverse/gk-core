@@ -2,6 +2,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items.Drops;
 using FusionRpg.Data;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Items;
 
@@ -31,20 +32,14 @@ public class LootContentViewStoreTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static DropVolumeTuning Tuning() => DropVolumeTuning.Parse(
         File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", "item-drop-volume.v1.json")));
 
     static LootCorpus ShippedCorpus() => LootCorpusReader.Merge(
-        Directory.EnumerateFiles(Path.Combine(RepoRoot(), "data", "seed", "loot"), "tables*.json")
+        Directory.EnumerateFiles(Path.Combine(KeepverseRoots.Content(), "data", "seed", "loot"), "tables*.json")
             .Select(p => LootCorpusReader.Parse(File.ReadAllText(p))));
 
     void SeedOneRarityRung(string rarityId, int ordinal, int dropWeight)

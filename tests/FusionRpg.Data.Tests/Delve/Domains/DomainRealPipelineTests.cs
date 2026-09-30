@@ -8,6 +8,7 @@ using FusionRpg.Core.Dungeon.Tuning;
 using FusionRpg.Core.Power;
 using FusionRpg.Core.Stats.Aptitudes;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Delve.Domains;
 
@@ -49,21 +50,15 @@ public class DomainRealPipelineTests : IDisposable
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "data", "seed", "dungeon"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
+        return KeepverseRoots.Core();
     }
 
-    static string DomainsDir() => Path.Combine(RepoRoot(), "data", "seed", "dungeon", "domains");
-    static string RoomsDir() => Path.Combine(RepoRoot(), "data", "seed", "dungeon", "rooms");
-    static string LayoutsDir() => Path.Combine(RepoRoot(), "data", "seed", "dungeon", "layouts");
-    static string EventsDir() => Path.Combine(RepoRoot(), "data", "seed", "dungeon", "events");
-    static string EncountersDir() => Path.Combine(RepoRoot(), "data", "seed", "dungeon", "encounters");
-    static string SpeciesDir() => Path.Combine(RepoRoot(), "data", "seed", "creatures", "species");
+    static string DomainsDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "domains");
+    static string RoomsDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "rooms");
+    static string LayoutsDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "layouts");
+    static string EventsDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "events");
+    static string EncountersDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "encounters");
+    static string SpeciesDir() => Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species");
 
     static readonly DungeonTuning RealDungeonTuning = DungeonTuningHub.Tuning;
     static readonly EncounterTuning RealEncounterTuning = EncounterTuningHub.Tuning;
@@ -102,7 +97,7 @@ public class DomainRealPipelineTests : IDisposable
         var repeatScopes = BandCatalog.Get("repeatScope").Members;
         var outcomeOrdinals = BandCatalog.Get("outcomeOrdinal").Members;
         var overrideTags = OverrideTagCatalog.All;
-        var dropBandsPath = Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "bands.v1.json");
+        var dropBandsPath = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "bands.v1.json");
         using var dropBandsDoc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(dropBandsPath));
         var dropBands = dropBandsDoc.RootElement.GetProperty("dropBand").GetProperty("enum")
             .EnumerateArray().Select(e => e.GetString()!).ToList();

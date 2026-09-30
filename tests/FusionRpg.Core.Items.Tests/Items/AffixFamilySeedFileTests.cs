@@ -1,5 +1,6 @@
 using FusionRpg.Core.Items;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -16,13 +17,7 @@ public class AffixFamilySeedFileTests
 {
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static string NewTempDir()
@@ -154,7 +149,7 @@ public class AffixFamilySeedFileTests
     [Fact]
     public void LoadAll_reads_the_real_shipped_corpus_and_RoleFamilyTable_derives_from_it()
     {
-        var dir = Path.Combine(RepoRoot(), "data", "seed", "items", "affix-families");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "affix-families");
         var rows = AffixFamilySeedFile.LoadAll(dir);
 
         // RoleFamilyTableTests.cs's own corpus-count pin: 98 at module 8's original build, up to 112+
@@ -163,9 +158,9 @@ public class AffixFamilySeedFileTests
         Assert.True(rows.Count >= 98, $"expected the real affix-family corpus to carry >=98 entries, got {rows.Count}");
 
         var overrides = FamilyOverrides.Parse(File.ReadAllText(
-            Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "family-overrides.v1.json")));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "family-overrides.v1.json")));
         var relocation = RoleRelocationTable.Parse(File.ReadAllText(
-            Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "role-relocation.v1.json")));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "role-relocation.v1.json")));
 
         // The real point of this reader: it must be USABLE by the real, already-shipped, already-tested
         // RoleFamilyTable.Derive without any further translation -- proving the two halves item module 8

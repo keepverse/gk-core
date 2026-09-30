@@ -4,6 +4,7 @@ using FusionRpg.Core.Items.Sockets;
 using FusionRpg.Core.Items.Uniques;
 using Xunit;
 using Xunit.Abstractions;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -23,17 +24,11 @@ public class GemTierTests
 
     static string RepoRoot()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Core"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("repo root");
+        return KeepverseRoots.Core();
     }
 
     static string Seed(params string[] parts) =>
-        Path.Combine(new[] { RepoRoot(), "data", "seed" }.Concat(parts).ToArray());
+        Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed" }.Concat(parts).ToArray());
 
     static SocketTuning ShippedSocketTuning() => SocketTuning.Parse(
         File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", SocketTuningFiles.Current)));
@@ -107,7 +102,7 @@ public class GemTierTests
     public void TierOfPowerBand_agrees_with_bands_v1_tierMap_key_for_key()
     {
         using var doc = JsonDocument.Parse(File.ReadAllText(
-            Path.Combine(RepoRoot(), "data", "seed", "items", "_registry", "bands.v1.json")));
+            Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "bands.v1.json")));
         var tierMap = doc.RootElement.GetProperty("powerBand").GetProperty("tierMap");
         var names = new List<string>();
         foreach (var band in tierMap.EnumerateObject())
@@ -151,7 +146,7 @@ public class GemTierTests
         foreach (var file in new[] { "strains.json", "splices.json" })
         {
             using var combos = JsonDocument.Parse(File.ReadAllText(
-                Path.Combine(RepoRoot(), "data", "seed", "items", "combinations", file)));
+                Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "combinations", file)));
             foreach (var entry in combos.RootElement.GetProperty("entries").EnumerateArray())
             {
                 var id = entry.GetProperty("id").GetString();
@@ -189,7 +184,7 @@ public class GemTierTests
         foreach (var file in new[] { "strains.json", "splices.json" })
         {
             using var combos = JsonDocument.Parse(File.ReadAllText(
-                Path.Combine(RepoRoot(), "data", "seed", "items", "combinations", file)));
+                Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "combinations", file)));
             foreach (var entry in combos.RootElement.GetProperty("entries").EnumerateArray())
             {
                 var recipe = ToRecipe(entry);

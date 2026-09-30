@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using FusionRpg.Core.Commanders;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Commanders;
 
@@ -16,15 +17,14 @@ public class CommanderDirectoryTests
 {
     static DataCommanderDirectory Shipped()
     {
-        var path = Path.Combine(RepoRoot(), "data", "seed", "commanders", "_registry",
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "commanders", "_registry",
             "default-commanders.v1.json");
         return DataCommanderDirectory.Parse(File.ReadAllText(path));
     }
 
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));
+        return KeepverseRoots.Core();
     }
 
     [Theory]

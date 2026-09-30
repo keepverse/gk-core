@@ -3,6 +3,7 @@ using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Uniques;
 using FusionRpg.Core.Power;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -55,7 +56,7 @@ public class UniqueContainerBuildTests
         throw new DirectoryNotFoundException("repo root");
     }
 
-    static string Seed(params string[] parts) => Path.Combine(new[] { RepoRoot(), "data", "seed" }.Concat(parts).ToArray());
+    static string Seed(params string[] parts) => Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed" }.Concat(parts).ToArray());
 
     static readonly IReadOnlyList<UniqueSeed> Corpus = LoadCorpus();
     static readonly IReadOnlyList<AtomRow> Atoms = LoadAtoms();
@@ -73,7 +74,7 @@ public class UniqueContainerBuildTests
     static IReadOnlyList<AtomRow> LoadAtoms()
     {
         var files = new[] { "atoms", "containers" }
-            .Select(d => Path.Combine(RepoRoot(), "data", "seed", d))
+            .Select(d => Path.Combine(KeepverseRoots.Content(), "data", "seed", d))
             .Where(Directory.Exists)
             .SelectMany(d => Directory.GetFiles(d, "*.json", SearchOption.AllDirectories))
             // data/seed/atoms/vocabulary.json is a pre-existing, already-documented defect (an empty

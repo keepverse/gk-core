@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using FusionRpg.Core.Commanders;
 using FusionRpg.Core.Saves;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Saves;
 
@@ -16,12 +17,11 @@ public class NewSaveEmpiresTests
 {
     static NewSaveEmpires Shipped() =>
         NewSaveEmpires.Parse(File.ReadAllText(Path.Combine(
-            RepoRoot(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json")));
+            KeepverseRoots.Content(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json")));
 
     static string RepoRoot([CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));
+        return KeepverseRoots.Core();
     }
 
     static string Registry(string empires) =>

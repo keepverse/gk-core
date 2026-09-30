@@ -5,6 +5,7 @@ using FusionRpg.Core.Actions;
 using FusionRpg.Core.Battle;
 using FusionRpg.Core.Tests.Battle;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Actions;
 
@@ -105,7 +106,6 @@ public class StanceSeamTests
 
     static string RepoRoot([System.Runtime.CompilerServices.CallerFilePath] string here = "")
     {
-        var testsDir = Path.GetDirectoryName(here)!;
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", ".."));
+        return KeepverseRoots.Core();
     }
 }

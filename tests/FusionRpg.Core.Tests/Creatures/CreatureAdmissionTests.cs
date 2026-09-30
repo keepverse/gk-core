@@ -1,6 +1,7 @@
 using FusionRpg.Core.Creatures;
 using FusionRpg.Core.Creatures.Generation;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures;
 
@@ -81,7 +82,7 @@ public class CreatureAdmissionTests
         // The whole contract, count-free: read each committed generated species the way the hosts do
         // (seed reader → shared mapper) and assert the admission rule agrees with the file's own mark
         // in both directions. Deliberately no assertion on how MANY are excluded — that is a reading.
-        var dir = Path.Combine(RepoRoot(), "data", "generated", "creatures");
+        var dir = Path.Combine(KeepverseRoots.Content(), "data", "generated", "creatures");
         var excluded = 0;
         var admitted = 0;
         // `_`-prefixed siblings in this tree are artifacts, not species (the build plan) — the same

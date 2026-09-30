@@ -3,6 +3,7 @@ using FusionRpg.Core.Creatures.Generation;
 using FusionRpg.Core.Power;
 using FusionRpg.Core.Stats.Aptitudes;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Delve.Encounter;
 
@@ -45,7 +46,7 @@ internal static class RealAnchorCorpusFixture
 
     static IReadOnlyList<ConcreteAnchor> Build()
     {
-        var seedRoot = Path.Combine(RepoRoot(), "data", "seed", "creatures", "species");
+        var seedRoot = Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species");
         var anchors = new List<AnchorRow>();
         foreach (var file in Directory.GetFiles(seedRoot, "*.json", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
         {

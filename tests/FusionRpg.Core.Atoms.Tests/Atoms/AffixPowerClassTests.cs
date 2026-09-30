@@ -7,6 +7,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items;
 using FusionRpg.TestSupport;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Atoms;
 
@@ -37,7 +38,7 @@ public class AffixPowerClassTests
     /// <summary>The registry file, read through the ordinary content root — the same resolution
     /// every other data-reading test here uses, so this proves the SHIPPED file, not a fixture.</summary>
     static string RegistryJson() =>
-        File.ReadAllText(Path.Combine(ContentRoot.Path, "data", "seed", "items", "_registry", "power-classes.v1.json"));
+        File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "_registry", "power-classes.v1.json"));
 
     [Fact]
     public void The_vocabulary_is_five_classes_with_consecutive_ordinals_from_zero()
