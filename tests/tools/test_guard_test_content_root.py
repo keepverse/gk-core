@@ -79,9 +79,17 @@ MISSES = "walk-misses-root"
 ROOT_SEGMENTS = {"data", "content", "docs", "tasks"}
 # A finding line is `rel:line: kind - prose`. The shape is the contract; the prose is not.
 PROBLEM_SHAPE = re.compile(r"^[^:]+:\d+: (walk-escapes-root|walk-misses-root) - .+$")
-# The exit-code vocabulary. Closed on purpose: a third value is a defect in the mapping, not an
-# extension of the contract.
-EXIT_VOCABULARY = {0, 1}
+# The exit-code vocabulary. Closed on purpose: a FOURTH value is a defect in the mapping, not an
+# extension of the contract. That is why this is a literal set and not one derived from the guard: a
+# set built from the tool under test can never fail, and this assertion is the only thing that notices
+# an exit code the contract does not have.
+#
+# 64 is in the contract because the guard's own header records putting it there. A refusal used to be
+# emitted as `"verdict": "REFUSED"` with a REFUSED banner and then returned EXIT_FAILED, which is the
+# conflation this vocabulary exists to catch: one code for "the tree is bad" and one for "I could not
+# look at the tree". It is EX_USAGE, the conventional code for a bad invocation. Adding it here is
+# recording a decision the tool already documents, not widening the contract to fit the tool.
+EXIT_VOCABULARY = {0, 1, 64}
 
 
 def fixture(body: str, decl: str = "") -> str:
@@ -222,7 +230,11 @@ class VerdictAndEnvelope(TreeCase):
         """A caller that reads `verdict == "FAIL"` as "the tree has a bad walk" would report a broken
         invocation as a bad tree, and a guard that cannot tell those apart trains people to ignore it."""
         code, payload = self.json_of("--root", str(Path(self._tmp.name) / "absent"))
-        self.assertEqual(code, 1)
+        # 64, NOT 1. Asserting 1 here would encode the exact conflation this test exists to catch: it
+        # is the only assertion that distinguishes "the tree has a bad walk" from "I could not look at
+        # the tree", and every other assertion in this file is about the first. A refusal that returned
+        # 1 would satisfy this line and defeat the four assertions below it.
+        self.assertEqual(code, 64)
         self.assertEqual(payload["verdict"], "REFUSED")
         self.assertEqual(payload["problems"], [], "a refusal must not invent findings")
         self.assertEqual(payload["files_scanned"], 0, "a refusal must not report a reading it never took")
@@ -300,7 +312,10 @@ class VerdictAndEnvelope(TreeCase):
 class Refusals(TreeCase):
     def test_a_missing_tests_directory_is_refused_by_name(self) -> None:
         code, out, err = self.invoke("--root", str(self.root))
-        self.assertEqual(code, 1, f"a missing tests/ must not read as a clean tree\n{out}\n{err}")
+        # 64, not 1 - see VerdictAndEnvelope.test_a_refusal_is_its_OWN_verdict_not_a_finding. What this
+        # test actually requires is "not clean", and 64 says that more precisely than 1 did, because 1
+        # is the code a bad tree gets. The message below is the requirement; the code is the guard's.
+        self.assertEqual(code, 64, f"a missing tests/ must not read as a clean tree\n{out}\n{err}")
         self.assertIn("TESTS-MISSING", out + err)
         self.assertIn("REFUSED", out + err, "the refusal is not announced as one")
 
@@ -619,7 +634,7 @@ class PathHandling(TreeCase):
         target = self.root / "not-a-tree"
         target.write_text("x", encoding="utf-8")
         code, out, err = self.invoke("--root", str(target), "--json")
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 64)   # a refusal, not a finding - see the note in VerdictAndEnvelope
         payload = json.loads(out[out.index("{"):])
         self.assertEqual(payload["verdict"], "REFUSED")
         self.assertIn("TESTS-MISSING", payload["reason"])
