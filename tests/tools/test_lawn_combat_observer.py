@@ -43,7 +43,15 @@ REPO = Path(__file__).resolve().parents[2]
 SCRIPT = Path(os.environ.get("LAWN_COMBAT_OBSERVER_SCRIPT",
                              REPO / "scripts" / "lawn_combat_observer.py")).resolve()
 SUITE = REPO / "tests" / "tools" / "test_lawn_combat_observer.py"
-REAL_TOOL = REPO / "tools" / "LawnCombatObserver"
+# The tool is gk-fusion's, so it is asked of its owner rather than of REPO. `REPO / "tools" /
+# LawnCombatObserver"` does not exist in gk-core, and this suite then GUARDED that absence:
+# every real-tool case begins `if not REAL_TOOL.is_dir(): return`. So the assertions that read the
+# tool's own source and assert its real flag names - the ones that would catch a flag renamed on
+# either side - were skipping, and the suite was green because it had stopped looking.
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import fusion_root  # noqa: E402
+
+REAL_TOOL = fusion_root(REPO) / "tools" / "LawnCombatObserver"
 RUN_TIMEOUT = 300
 
 _spec = importlib.util.spec_from_file_location("lawn_combat_observer", SCRIPT)

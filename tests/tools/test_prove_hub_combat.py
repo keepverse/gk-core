@@ -34,6 +34,11 @@ from pathlib import Path
 from unittest import mock
 
 REPO = Path(__file__).resolve().parents[2]
+
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import forge_root  # noqa: E402
+
+_FORGE = forge_root(REPO)
 SCRIPT = Path(os.environ.get("PROVE_HUB_COMBAT_SCRIPT",
                              REPO / "scripts" / "prove_hub_combat.py")).resolve()
 SUITE = REPO / "tests" / "tools" / "test_prove_hub_combat.py"
@@ -268,7 +273,11 @@ class Surface(SeamGuard):
     def test_the_flags_match_the_TOOLS_OWN_spelling(self) -> None:
         """Every flag this tool forwards is a flag `gk-forge/tools/ProveHubCombat` accepts. A rename on either
         side would otherwise surface as an argparse error from a subprocess."""
-        tool = REPO / "tools" / "ProveHubCombat" / "Program.cs"
+        # The tool is gk-forge's, and the next line SKIPS when this path is absent - which is what
+        # made a passing suite one that had stopped checking the tool's own flags. The suite's own
+        # docstring names `gk-forge/tools/ProveHubCombat` in three places, so the code contradicted its
+        # documentation for the fifth time in this program.
+        tool = _FORGE / "tools" / "ProveHubCombat" / "Program.cs"
         if not tool.is_file():
             self.skipTest("the tool source is not present")
         text = tool.read_text(encoding="utf-8", errors="replace")
