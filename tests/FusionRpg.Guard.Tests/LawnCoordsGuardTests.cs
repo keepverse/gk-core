@@ -59,7 +59,7 @@ public class LawnCoordsGuardTests
     [Fact]
     public void Fx_only_UnitFrameResolver_reads_BodyWorld_or_bounds()
     {
-        var fxDir = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", "Fx");
+        var fxDir = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Fx");
         var failures = new List<string>();
         foreach (var file in Directory.GetFiles(fxDir, "*.cs", SearchOption.TopDirectoryOnly))
         {
@@ -172,7 +172,7 @@ public class LawnCoordsGuardTests
 
     static IEnumerable<string> EnumerateInjectorCs()
     {
-        var root = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector");
+        var root = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector");
         return Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories)
             .Where(p => p.IndexOf($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) < 0
                         && p.IndexOf($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) < 0);
@@ -180,7 +180,7 @@ public class LawnCoordsGuardTests
 
     static string ReadInjector(string relative)
     {
-        var path = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", relative);
+        var path = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", relative);
         Assert.True(File.Exists(path), "missing " + path);
         return File.ReadAllText(path);
     }

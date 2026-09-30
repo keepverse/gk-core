@@ -11,7 +11,7 @@ namespace FusionRpg.Guard.Tests;
 /// </summary>
 public class DebugSessionCheatRestoreGuardTests
 {
-    static string Runtime() => File.ReadAllText(Path.Combine(RepoRoot(), "src", "FusionRpg.Injector", "DebugRuntime.cs"));
+    static string Runtime() => File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "DebugRuntime.cs"));
 
     [Fact]
     public void StartSession_snapshots_cheats_only_when_no_session_is_already_active()

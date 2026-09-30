@@ -58,7 +58,7 @@ public class InjectorSeedRegistryContentTests
     {
         // If RpgHost.cs ever stops reading this path, the csproj Content items above become dead
         // weight and this guard would be asserting a fact nobody depends on any more.
-        var path = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", "Host", "RpgHost.cs");
+        var path = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Host", "RpgHost.cs");
         var text = File.ReadAllText(path);
         Assert.Contains("\"data\", \"seed\", \"commanders\", \"_registry\", \"default-commanders.v1.json\"", text, StringComparison.Ordinal);
         Assert.Contains("\"data\", \"seed\", \"dungeon\", \"_registry\"", text, StringComparison.Ordinal);

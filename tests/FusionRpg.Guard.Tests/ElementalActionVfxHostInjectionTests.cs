@@ -17,7 +17,7 @@ public class ElementalActionVfxHostInjectionTests
     [Fact]
     public void Injector_host_loads_the_v4_stamp_tuning()
     {
-        var path = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", "Host", "RpgHost.cs");
+        var path = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Host", "RpgHost.cs");
         var text = File.ReadAllText(path);
 
         Assert.Contains("VfxTuningHub.Configure(", text, StringComparison.Ordinal);
@@ -27,7 +27,7 @@ public class ElementalActionVfxHostInjectionTests
     [Fact]
     public void Earth_phase_leases_receive_the_existing_concrete_element_color_plan()
     {
-        var root = FindRepoRoot();
+        var root = KeepverseRoots.Fusion();
         var director = File.ReadAllText(Path.Combine(root, "src", "FusionRpg.Injector", "Fx", "VfxDirector.cs"));
         var pool = File.ReadAllText(Path.Combine(root, "src", "FusionRpg.Injector", "Fx", "EarthPhasePool.cs"));
 

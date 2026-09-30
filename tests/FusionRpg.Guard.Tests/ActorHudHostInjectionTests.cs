@@ -33,7 +33,7 @@ public class ActorHudHostInjectionTests
     {
         var catalogPath = Path.Combine(FindRepoRoot(), "data", "tuning", "element-catalog.v2.json");
         using var catalog = JsonDocument.Parse(File.ReadAllText(catalogPath));
-        var assetRoot = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", "Assets", "actor-hud-elements");
+        var assetRoot = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Assets", "actor-hud-elements");
 
         foreach (var entry in catalog.RootElement.GetProperty("entries").EnumerateArray())
         {
@@ -74,7 +74,7 @@ public class ActorHudHostInjectionTests
 
     static string ReadInjector(string relative)
     {
-        var path = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", relative);
+        var path = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", relative);
         Assert.True(File.Exists(path), "missing " + path);
         return File.ReadAllText(path);
     }

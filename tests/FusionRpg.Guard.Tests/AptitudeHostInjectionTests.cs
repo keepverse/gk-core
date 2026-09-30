@@ -28,7 +28,7 @@ public class AptitudeHostInjectionTests
     [Fact]
     public void InjectorHost_wiresAptitudeTuningHub()
     {
-        var path = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", "Host", "RpgHost.cs");
+        var path = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Host", "RpgHost.cs");
         var text = File.ReadAllText(path);
         Assert.Contains(WiringNeedle, text, StringComparison.Ordinal);
         Assert.Contains(LoaderNeedle, text, StringComparison.Ordinal);
@@ -52,7 +52,7 @@ public class AptitudeHostInjectionTests
         // Configure(Loader.Parse(ReadAllText(...))) chain, character-for-character, so a future edit
         // to one host cannot silently diverge from the other (spec-aptitude-tuning.md §1 rule 2:
         // "one config, two consumers" -- divergent wiring is the same failure at the host layer).
-        var injectorText = File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", "Host", "RpgHost.cs"));
+        var injectorText = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Host", "RpgHost.cs"));
         var serverText = File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "FusionRpg.Server", "Program.cs"));
 
         string ExtractWiringLine(string text)

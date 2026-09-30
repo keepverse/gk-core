@@ -140,14 +140,12 @@ public class RiftGateMenuRenderingGuardTests
     [Fact]
     public void The_menu_art_is_a_uGUI_sprite_and_Sprite_Create_is_the_new_call()
     {
-        var art = File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "src", "FusionRpg.Injector", "Hud", "RiftMenuArt.cs"));
+        var art = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Hud", "RiftMenuArt.cs"));
 
         Assert.Contains("Sprite.Create", art, StringComparison.Ordinal);
         Assert.Contains("ImageConversion.LoadImage", art, StringComparison.Ordinal);
 
-        var tombstone = File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "src", "FusionRpg.Injector", "Hud", "RiftMenuTombstone.cs"));
+        var tombstone = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Hud", "RiftMenuTombstone.cs"));
         Assert.Contains("UnityEngine.UI.Image", tombstone, StringComparison.Ordinal);
         Assert.Contains("UnityEngine.UI.Button", tombstone, StringComparison.Ordinal);
         // The affordance must reuse the existing click path, never a second toggle path.
@@ -161,8 +159,7 @@ public class RiftGateMenuRenderingGuardTests
     public void The_in_match_RPG_button_stays_IMGUI_by_decision()
     {
         // Decision 18's deliberate split: match chrome is not a menu hierarchy.
-        var gui = File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "src", "FusionRpg.Injector", "Hud", "OverlaySwitchGui.cs"));
+        var gui = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Hud", "OverlaySwitchGui.cs"));
 
         Assert.Contains("GUI.Button", gui, StringComparison.Ordinal);
         Assert.False(gui.Contains("UnityEngine.UI.Button", StringComparison.Ordinal),
@@ -176,8 +173,7 @@ public class RiftGateMenuRenderingGuardTests
     [Fact]
     public void The_restyled_in_match_button_still_has_exactly_one_action()
     {
-        var gui = File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "src", "FusionRpg.Injector", "Hud", "OverlaySwitchGui.cs"));
+        var gui = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Hud", "OverlaySwitchGui.cs"));
 
         // Exactly one interactive control...
         var buttons = Regex.Matches(gui, @"GUI\.Button\s*\(").Count;

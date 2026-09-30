@@ -14,7 +14,7 @@ public class ControlActPlaceConfirmGuardTests
     [Fact]
     public void Place_receipt_is_decided_by_a_new_plant_in_the_target_cell()
     {
-        var text = File.ReadAllText(Path.Combine(RepoRoot(), "src", "FusionRpg.Injector", "ControlAct.cs"));
+        var text = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "ControlAct.cs"));
         var body = MethodBody(text, "static void DoPlace(JsonElement p)");
 
         var before = body.IndexOf("var before = PlantPtrsAt(col, row, typeId);", StringComparison.Ordinal);

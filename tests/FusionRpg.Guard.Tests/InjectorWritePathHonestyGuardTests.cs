@@ -26,7 +26,7 @@ public class InjectorWritePathHonestyGuardTests
     [Fact]
     public void Only_the_reporting_wrapper_calls_the_raw_clamp()
     {
-        var injector = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector");
+        var injector = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector");
         Assert.True(Directory.Exists(injector), "missing " + injector);
 
         var writerPath = Path.Combine(injector, "Stats", "EntityStatWriter.cs");
@@ -80,7 +80,7 @@ public class InjectorWritePathHonestyGuardTests
     [Fact]
     public void The_two_profile_clamp_bodies_stay_equivalent()
     {
-        var injector = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", "Bridges");
+        var injector = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Bridges");
         var threeNine = ClampBody(Path.Combine(injector, "pvzrh-3.9", "ZombieCombatFields.cs"));
         var threeEightOne = ClampBody(Path.Combine(injector, "pvzrh-3.8.1", "ZombieCombatFields.cs"));
 

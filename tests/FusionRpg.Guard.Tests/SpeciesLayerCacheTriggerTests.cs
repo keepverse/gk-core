@@ -145,7 +145,7 @@ public class SpeciesLayerCacheTriggerTests
     // guard test whose whole point is independence from the thing it checks) -----------------------
 
     static string InjectorSource(string relative) =>
-        File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", relative));
+        File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", relative));
 
     static string ServerSource(string relative) =>
         File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "FusionRpg.Server", relative));

@@ -13,7 +13,7 @@ public class GameStateSeedPickerGuardTests
     [Fact]
     public void Live_state_reports_the_seed_picker_before_trusting_the_match_phase()
     {
-        var text = File.ReadAllText(Path.Combine(RepoRoot(), "src", "FusionRpg.Injector", "DebugActions.cs"));
+        var text = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "DebugActions.cs"));
         var live = text.IndexOf("dump[\"liveState\"] = board == null", StringComparison.Ordinal);
         var picker = text.IndexOf(": initBoardReady == false", live, StringComparison.Ordinal);
         var seed = text.IndexOf("? \"SeedPicker\"", live, StringComparison.Ordinal);

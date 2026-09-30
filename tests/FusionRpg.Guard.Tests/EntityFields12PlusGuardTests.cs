@@ -192,7 +192,7 @@ public class EntityFields12PlusGuardTests
     {
         var root = FindRepoRoot();
         var path = fromInjector
-            ? System.IO.Path.Combine(root, "src", "FusionRpg.Injector", relative)
+            ? System.IO.Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", relative)
             : System.IO.Path.Combine(root, relative);
         Assert.True(System.IO.File.Exists(path), "missing " + path);
         return System.IO.File.ReadAllText(path);

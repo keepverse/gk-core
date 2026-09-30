@@ -21,7 +21,7 @@ namespace FusionRpg.Guard.Tests;
 /// </summary>
 public class LawnBasicAttackDefaultGuardTests
 {
-    static string Feature() => File.ReadAllText(Path.Combine(RepoRoot(), "src", "FusionRpg.Injector", "Effects", "LawnBasicAttackFeature.cs"));
+    static string Feature() => File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Effects", "LawnBasicAttackFeature.cs"));
 
     [Fact]
     public void The_feature_default_is_on()

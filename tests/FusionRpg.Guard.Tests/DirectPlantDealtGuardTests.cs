@@ -14,7 +14,7 @@ public class DirectPlantDealtGuardTests
     [Fact]
     public void Zombie_hits_from_a_plant_record_a_dealt_hit_once()
     {
-        var root = RepoRoot();
+        var root = KeepverseRoots.Fusion();
         var host = File.ReadAllText(Path.Combine(root, "src", "FusionRpg.Injector", "Effects", "EventDrainHost.cs"));
         var method = host.IndexOf("public static bool TryRecordDirectPlantDealt(", StringComparison.Ordinal);
         Assert.True(method >= 0, "missing TryRecordDirectPlantDealt");

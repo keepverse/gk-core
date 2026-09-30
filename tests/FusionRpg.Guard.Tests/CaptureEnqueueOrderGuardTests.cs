@@ -12,7 +12,7 @@ namespace FusionRpg.Guard.Tests;
 /// </summary>
 public class CaptureEnqueueOrderGuardTests
 {
-    static readonly string Source = File.ReadAllText(Path.Combine(RepoRoot(), "src", "FusionRpg.Injector", "GameHooks.cs"));
+    static readonly string Source = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "GameHooks.cs"));
 
     [Fact]
     public void Emit_enqueues_after_the_stamps_and_before_the_capture_side_effects()

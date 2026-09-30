@@ -14,7 +14,7 @@ public class LawnBasicAttackSwitchOffWithdrawGuardTests
     [Fact]
     public void Binder_tick_checks_the_off_edge_before_any_early_return_and_withdraws_basic_attack_grants()
     {
-        var text = File.ReadAllText(Path.Combine(RepoRoot(), "src", "FusionRpg.Injector", "Effects", "LawnBasicAttackGrantBinder.cs"));
+        var text = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Effects", "LawnBasicAttackGrantBinder.cs"));
 
         var tick = text.IndexOf("public static void Tick()", StringComparison.Ordinal);
         var edge = text.IndexOf("if (SwitchEdge.TurnedOff(LawnBasicAttackFeature.Enabled))", tick, StringComparison.Ordinal);

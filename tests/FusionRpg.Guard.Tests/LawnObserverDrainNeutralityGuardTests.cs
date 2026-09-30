@@ -21,7 +21,7 @@ public class LawnObserverDrainNeutralityGuardTests
     [Fact]
     public void Drain_Active_reads_only_Enabled_and_SessionActive()
     {
-        var host = Read("src/FusionRpg.Injector/Effects/EventDrainHost.cs");
+        var host = ReadInjectorFile("src/FusionRpg.Injector/Effects/EventDrainHost.cs");
         Assert.Contains("static bool Active => Enabled && !DebugRuntime.SessionActive;", host, StringComparison.Ordinal);
     }
 
@@ -44,7 +44,7 @@ public class LawnObserverDrainNeutralityGuardTests
         Assert.All(sessionWriters, w => Assert.Equal("src/FusionRpg.Injector/DebugRuntime.cs", w));
         Assert.Equal(new[] { "src/FusionRpg.Injector/Host/InjectorLoop.cs" }, enabledWriters.Distinct().ToArray());
 
-        var debugRuntime = Read("src/FusionRpg.Injector/DebugRuntime.cs");
+        var debugRuntime = ReadInjectorFile("src/FusionRpg.Injector/DebugRuntime.cs");
         var outsideSessionMethods = debugRuntime
             .Replace(MethodBody(debugRuntime, "public static void StartSession("), "")
             .Replace(MethodBody(debugRuntime, "public static void EndSession()"), "");
@@ -71,7 +71,7 @@ public class LawnObserverDrainNeutralityGuardTests
     [Fact]
     public void Server_routes_the_observer_hits_relay_only_debug_snapshot()
     {
-        var endpoints = Read("src/FusionRpg.Server/DebugEndpoints.cs");
+        var endpoints = Read(KeepverseRoots.Core(), "src/FusionRpg.Server/DebugEndpoints.cs");
 
         var snapshot = MethodBody(endpoints, "g.MapGet(\"/snapshot\"");
         var sends = Regex.Matches(snapshot, @"Send\(hub,\s*inbox,\s*""([^""]+)""").Select(m => m.Groups[1].Value).ToArray();
@@ -83,7 +83,7 @@ public class LawnObserverDrainNeutralityGuardTests
     [Fact]
     public void Injector_debug_snapshot_handler_only_self_reports()
     {
-        var runner = Read("src/FusionRpg.Injector/CheatCommandRunner.cs");
+        var runner = ReadInjectorFile("src/FusionRpg.Injector/CheatCommandRunner.cs");
         var at = runner.IndexOf("case \"debug.snapshot\":", StringComparison.Ordinal);
         Assert.True(at >= 0, "missing debug.snapshot handler");
         var end = runner.IndexOf("break;", at, StringComparison.Ordinal);
@@ -91,16 +91,20 @@ public class LawnObserverDrainNeutralityGuardTests
         Assert.Contains("DebugRuntime.Emit(\"debug.snapshot\", DebugRuntime.Snapshot());", handler, StringComparison.Ordinal);
         Assert.DoesNotContain("Session", handler.Replace("DebugRuntime.Snapshot()", ""), StringComparison.Ordinal);
 
-        var snapshot = MethodBody(Read("src/FusionRpg.Injector/DebugRuntime.cs"), "public static Dictionary<string, object> Snapshot()");
+        var snapshot = MethodBody(ReadInjectorFile("src/FusionRpg.Injector/DebugRuntime.cs"), "public static Dictionary<string, object> Snapshot()");
         AssertWritesNoFlag(snapshot, "DebugRuntime.Snapshot()");
     }
 
+    // One row is the Injector's bridge and the other is gk-core's own observer, so the
+    // repository is a parameter of the theory rather than a property of the file. Choosing it by
+    // the path prefix would work until someone adds a third row, and would be the same implicit
+    // prefix under another name.
     [Theory]
-    [InlineData("src/FusionRpg.Injector/Effects/LawnCombatObserverBridge.cs")]
-    [InlineData("src/FusionRpg.Core/Combat/Observability/LawnCombatObserver.cs")]
-    public void Observer_bridge_and_core_observer_write_no_drain_or_session_flag(string path)
+    [InlineData("src/FusionRpg.Injector/Effects/LawnCombatObserverBridge.cs", true)]
+    [InlineData("src/FusionRpg.Core/Combat/Observability/LawnCombatObserver.cs", false)]
+    public void Observer_bridge_and_core_observer_write_no_drain_or_session_flag(string path, bool inFusion)
     {
-        var text = Read(path);
+        var text = inFusion ? ReadInjectorFile(path) : Read(KeepverseRoots.Core(), path);
         // The bridge's own kill switch is its own `Enabled { get; set; } = ...` initializer — not a drain flag.
         var withoutOwnSwitch = Regex.Replace(text, @"public static bool Enabled \{ get; set; \} =", "");
         AssertWritesNoFlag(withoutOwnSwitch, path);
@@ -133,12 +137,19 @@ public class LawnObserverDrainNeutralityGuardTests
             .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar));
 
-    static string Read(string relative)
+    /// <summary>Reads a file under an EXPLICIT root. This helper used to prepend gk-core's
+    /// root to every path, which is why four Injector reads and one Server read all went
+    /// through the same prefix: the Injector ones were asking gk-core for a file in gk-fusion,
+    /// and the Server one was accidentally right. The root is now a parameter, so each call
+    /// site states which repository it means and neither kind is right by accident.</summary>
+    static string Read(string root, string relative)
     {
-        var path = Path.Combine(RepoRoot(), relative);
+        var path = Path.Combine(root, relative);
         Assert.True(File.Exists(path), "missing " + path);
         return File.ReadAllText(path);
     }
+
+    static string ReadInjectorFile(string relative) => Read(KeepverseRoots.Fusion(), relative);
 
     static string RepoRoot()
     {

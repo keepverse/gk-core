@@ -14,7 +14,7 @@ public class DebugLeaveBoardLoseScreenGuardTests
     [Fact]
     public void The_open_menu_stage_tries_the_lose_menu_before_the_battle_menu_and_then_waits_for_the_board()
     {
-        var text = File.ReadAllText(Path.Combine(RepoRoot(), "src", "FusionRpg.Injector", "DebugLeaveBoard.cs"));
+        var text = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "DebugLeaveBoard.cs"));
         Assert.Contains("const string LoseBackToMenuPath = \"CanvasUp/LoseMenu(Clone)/backtomenu\";", text, StringComparison.Ordinal);
 
         var stage0 = text.IndexOf("case 0:", StringComparison.Ordinal);

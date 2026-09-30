@@ -12,8 +12,7 @@ public class OverlayFallbackPreloadGuardTests
     [Fact]
     public void A_missing_launcher_probe_preloads_but_does_not_toggle_the_in_process_view()
     {
-        var source = File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "src", "FusionRpg.Injector", "Hud", "OverlaySwitch.cs"));
+        var source = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Hud", "OverlaySwitch.cs"));
 
         Assert.Contains("OverlayFallbackPolicy.ShouldPreloadInProcessFallback(RpgHost.OverlayHost, _probeOk)", source, StringComparison.Ordinal);
 

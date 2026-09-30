@@ -163,14 +163,14 @@ public sealed class ActorHudUnityGuardTests
     [Fact]
     public void ShieldBarPool_file_removed_from_injector()
     {
-        var path = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", "Fx", "ShieldBarPool.cs");
+        var path = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Fx", "ShieldBarPool.cs");
         Assert.False(File.Exists(path), "ShieldBarPool.cs must be deleted after shield-slot-migration");
     }
 
     [Fact]
     public void Injector_has_no_ShieldBarPool_references()
     {
-        var root = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector");
+        var root = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector");
         var hits = new List<string>();
         foreach (var file in Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories))
         {
@@ -236,7 +236,7 @@ public sealed class ActorHudUnityGuardTests
 
     static string ReadInjector(string relative)
     {
-        var path = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", relative);
+        var path = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", relative);
         Assert.True(File.Exists(path), "missing " + path);
         return File.ReadAllText(path);
     }

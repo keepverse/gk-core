@@ -83,7 +83,7 @@ public class InjectorKernelGridsGuardTests
 
     static string Injector(params string[] parts)
     {
-        var path = Path.Combine(new[] { FindRepoRoot(), "src", "FusionRpg.Injector" }.Concat(parts).ToArray());
+        var path = Path.Combine(new[] { KeepverseRoots.Fusion(), "src", "FusionRpg.Injector" }.Concat(parts).ToArray());
         Assert.True(File.Exists(path), "missing " + path);
         return path;
     }

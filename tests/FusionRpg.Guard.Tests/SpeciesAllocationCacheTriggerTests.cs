@@ -183,7 +183,7 @@ public class SpeciesAllocationCacheTriggerTests
     // ---- helpers -------------------------------------------------------------------------------
 
     static string InjectorSource(string relative) =>
-        File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", relative));
+        File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", relative));
 
     static string CoreSource(string relative) =>
         File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "FusionRpg.Core", relative));

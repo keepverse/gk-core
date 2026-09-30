@@ -53,7 +53,7 @@ public class DebugKillPtrContractGuardTests
 
     static string ReadInjector(string relative)
     {
-        var path = Path.Combine(FindRepoRoot(), "src", "FusionRpg.Injector", relative);
+        var path = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", relative);
         Assert.True(File.Exists(path), "missing " + path);
         return File.ReadAllText(path);
     }

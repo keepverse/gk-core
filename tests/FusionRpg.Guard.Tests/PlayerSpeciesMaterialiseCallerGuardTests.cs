@@ -144,8 +144,7 @@ public class PlayerSpeciesMaterialiseCallerGuardTests
 
         // And the injector reads that clock rather than the wall clock per question — the role change
         // D15 is about. The wall clock is still the SOURCE (StartingNow seeds from it).
-        var runtime = File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "src", "FusionRpg.Injector", "Effects", "EffectRuntime.cs"));
+        var runtime = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Effects", "EffectRuntime.cs"));
 
         Assert.Contains("_bag.UtcNow = () => _clock.UtcNow;", runtime, StringComparison.Ordinal);
         Assert.DoesNotContain("_bag.UtcNow = () => DateTimeOffset.UtcNow;", runtime, StringComparison.Ordinal);

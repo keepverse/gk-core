@@ -14,7 +14,7 @@ public class LawnBasicAttackPinnedElementGuardTests
     [Fact]
     public void Binder_builds_the_grant_from_a_pinned_element_before_the_species_element()
     {
-        var text = File.ReadAllText(Path.Combine(RepoRoot(), "src", "FusionRpg.Injector", "Effects", "LawnBasicAttackGrantBinder.cs"));
+        var text = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Effects", "LawnBasicAttackGrantBinder.cs"));
         var bind = text.IndexOf("static bool Bind(string ptr)", StringComparison.Ordinal);
         Assert.True(bind >= 0, "Bind must exist");
 
@@ -28,7 +28,7 @@ public class LawnBasicAttackPinnedElementGuardTests
     [Fact]
     public void Runtime_pin_command_requeues_the_grant_bind_for_that_ptr()
     {
-        var text = File.ReadAllText(Path.Combine(RepoRoot(), "src", "FusionRpg.Injector", "CheatCommandRunner.cs"));
+        var text = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "CheatCommandRunner.cs"));
         var handler = text.IndexOf("static void HandleCombatPinElement(JsonElement p)", StringComparison.Ordinal);
         Assert.True(handler >= 0, "the pin handler must exist");
 

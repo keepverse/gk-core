@@ -13,7 +13,7 @@ public class LawnObserverShooterJoinGuardTests
     [Fact]
     public void Bullet_hits_name_the_cached_shooter_and_keep_the_bullet_as_the_swing()
     {
-        var root = RepoRoot();
+        var root = KeepverseRoots.Fusion();
         var bridge = File.ReadAllText(Path.Combine(root, "src", "FusionRpg.Injector", "Effects", "LawnCombatObserverBridge.cs"));
         Assert.Contains("EventDrainHost.TryPeekBulletShooter(bullet.Pointer, out var shooter)", bridge, StringComparison.Ordinal);
         Assert.Contains("? (shooter.ToString(\"X\"), ptr)", bridge, StringComparison.Ordinal);

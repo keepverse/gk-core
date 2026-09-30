@@ -32,15 +32,15 @@ public class OverlayPipeContractGuardTests
     {
         Assert.Equal("FusionRpg.Overlay", PipeNameIn(ServerFile));
 
-        var spec = ReadRepoFile(@"docs\launcher\overlay-spec.md");
+        var spec = ReadWorkflowDoc(@"docs\launcher\overlay-spec.md");
         Assert.Contains(@"\\.\pipe\FusionRpg.Overlay", spec, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Every_verb_the_client_sends_is_one_the_server_accepts()
     {
-        var server = ReadRepoFile(ServerFile);
-        var client = ReadRepoFile(ClientFile);
+        var server = ReadFusionFile(ServerFile);
+        var client = ReadFusionFile(ClientFile);
 
         // Verbs the client actually puts on the wire: Send("toggle", ...) / Send("ping", ...)
         var sent = Regex.Matches(client, @"Send\(""(?<verb>[a-z]+)""")
@@ -62,7 +62,7 @@ public class OverlayPipeContractGuardTests
     public void The_launcher_stays_the_default_host()
     {
         // overlayHost=injector must stay opt-in until the in-game view is proven live.
-        var mode = ReadRepoFile(@"src\FusionRpg.Core\Overlay\OverlayHostSelection.cs");
+        var mode = ReadRepoFile(KeepverseRoots.Core(), @"src\FusionRpg.Core\Overlay\OverlayHostSelection.cs");
         Assert.Contains("Launcher = 0", mode, StringComparison.Ordinal);
         Assert.Contains("return OverlayHostMode.Launcher;", mode, StringComparison.Ordinal);
 
@@ -72,7 +72,7 @@ public class OverlayPipeContractGuardTests
                      @"src\FusionRpg.Injector\Host\FileRpgConfig.cs"
                  })
         {
-            var text = ReadRepoFile(host);
+            var text = ReadFusionFile(host);
             Assert.True(
                 text.Contains("\"launcher\"", StringComparison.Ordinal),
                 $"{host} should default OverlayHost to \"launcher\"");
@@ -89,7 +89,7 @@ public class OverlayPipeContractGuardTests
                      @"src\FusionRpg.Injector.MelonLoader\MelonFusionRpgMod.cs"
                  })
         {
-            var text = ReadRepoFile(host);
+            var text = ReadFusionFile(host);
             Assert.True(
                 text.Contains("OnApplicationQuit", StringComparison.Ordinal)
                 && text.Contains("OverlaySwitch.Shutdown", StringComparison.Ordinal),
@@ -146,7 +146,7 @@ public class OverlayPipeContractGuardTests
         // The view covers the game, so the button that opened it is underneath it. Wave 1 has Esc,
         // WPF chrome and a launcher-registered hotkey; the in-game host has none of those, so the
         // key handler is the only exit. Losing it strands the player in a covered lawn.
-        var host = ReadRepoFile(@"src\FusionRpg.Injector\Hud\OverlayViewHost.cs");
+        var host = ReadFusionFile(@"src\FusionRpg.Injector\Hud\OverlayViewHost.cs");
 
         Assert.True(
             host.Contains("AcceleratorKeyPressed", StringComparison.Ordinal),
@@ -202,19 +202,30 @@ public class OverlayPipeContractGuardTests
             string.Join(" | ", offenders));
     }
 
+    /// <summary>Both ends of the pipe live in gk-fusion - the Launcher's server and the
+    /// Injector's client - so every caller of this is reading the host repository.</summary>
     static string PipeNameIn(string relativePath)
     {
-        var text = ReadRepoFile(relativePath);
+        var text = ReadFusionFile(relativePath);
         var match = Regex.Match(text, @"PipeName\s*=\s*""(?<name>[^""]+)""");
         return match.Success ? match.Groups["name"].Value : "";
     }
 
-    static string ReadRepoFile(string relativePath)
+    /// <summary>Reads a file under an EXPLICIT root. This helper used to prepend gk-core's
+    /// root to every path, and its 8 call sites reach THREE repositories: gk-fusion for the
+    /// Launcher and Injector ends of the pipe, gk-workflow for the spec that defines the
+    /// contract, and gk-core for the host-selection policy. Under one implicit prefix all
+    /// three failed identically, as a missing file, which told a reader nothing about which
+    /// repository was actually being asked. Each call site now names it.</summary>
+    static string ReadRepoFile(string root, string relativePath)
     {
-        var path = Path.Combine(FindRepoRoot(), relativePath);
+        var path = Path.Combine(root, relativePath);
         Assert.True(File.Exists(path), "missing " + path);
         return File.ReadAllText(path);
     }
+
+    static string ReadFusionFile(string relativePath) => ReadRepoFile(KeepverseRoots.Fusion(), relativePath);
+    static string ReadWorkflowDoc(string relativePath) => ReadRepoFile(KeepverseRoots.Workspace(), relativePath);
 
     static string FindRepoRoot()
     {
