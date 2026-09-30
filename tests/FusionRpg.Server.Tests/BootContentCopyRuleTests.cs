@@ -110,6 +110,30 @@ public class BootContentCopyRuleTests
         return rules;
     }
 
+    /// <summary>Reports what <see cref="CopyRules"/> actually parses, from the real csproj, through the
+    /// same reader the coverage checks use.
+    ///
+    /// <para>This exists because a second, independent re-implementation of this parser - same Include/Link
+    /// pairing, same normalisation, same wildcard truncation - says all seventeen swept folders are covered,
+    /// while this class says thirteen are not. Two implementations of one function disagreeing is not
+    /// something to resolve by modelling the function a third time. It is resolved by having the function
+    /// say what it produced, and this assertion is written so that message lands in the failure output: if
+    /// <c>gk-data/packs/fusion/data/seed/atoms</c> is absent from the parsed bases, the parser disagrees with the model and the
+    /// printed list is the evidence; if it is present, the parser is right and <see cref="Covered"/> is what
+    /// disagrees.</para>
+    ///
+    /// <para>It asserts a real property (this tree's dungeon rule is a directory rule over a known base) and
+    /// not a count, so it does not become the population-pin this repo forbids.</para></summary>
+    [Fact]
+    public void The_parsed_rule_bases_are_what_the_coverage_check_compares_against()
+    {
+        var rules = CopyRules(CsprojSource());
+        var bases = rules.Select(r => r.BaseDir).ToList();
+        Assert.True(
+            bases.Contains("data/seed/dungeon"),
+            "parsed rule bases: " + string.Join(" | ", bases));
+    }
+
     /// <summary>The guard still bites: a rule that is not there is still uncovered. This exists because
     /// the fix above makes the parser able to see rules written as MSBuild properties, and a parser that
     /// suddenly matches more is exactly the kind of change that can also stop noticing a deletion. It is
