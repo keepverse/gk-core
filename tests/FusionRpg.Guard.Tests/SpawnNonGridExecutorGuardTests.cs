@@ -123,7 +123,7 @@ public class SpawnNonGridExecutorGuardTests
 
     static string ReadInjector(string relative)
     {
-        var root = FindRepoRoot();
+        var root = KeepverseRoots.Fusion();
         var path = System.IO.Path.Combine(root, "src", "FusionRpg.Injector", relative);
         Assert.True(System.IO.File.Exists(path), "missing " + path);
         return System.IO.File.ReadAllText(path);

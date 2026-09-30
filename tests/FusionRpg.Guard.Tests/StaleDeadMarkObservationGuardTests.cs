@@ -13,7 +13,7 @@ public class StaleDeadMarkObservationGuardTests
     [Fact]
     public void Both_take_damage_prefixes_report_living_hits_and_the_stats_window_publishes_them()
     {
-        var root = RepoRoot();
+        var root = KeepverseRoots.Fusion();
         var hooks = File.ReadAllText(Path.Combine(root, "src", "FusionRpg.Injector", "GameHooks.cs"));
         Assert.Contains("if (__instance.thePlantHealth > 0) Effects.EventDrainHost.Liveness.NoteHitOnLivingEntity(__instance.Pointer);", hooks, StringComparison.Ordinal);
         Assert.Contains("if (Bridges.ZombieCombatFields.GetHp(__instance) > 0) Effects.EventDrainHost.Liveness.NoteHitOnLivingEntity(__instance.Pointer);", hooks, StringComparison.Ordinal);

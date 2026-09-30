@@ -70,7 +70,7 @@ public class StatusStatApplierGuardTests
 
     static string ReadInjector(params string[] relative)
     {
-        var path = Path.Combine(new[] { FindRepoRoot(), "src", "FusionRpg.Injector" }.Concat(relative).ToArray());
+        var path = Path.Combine(new[] { KeepverseRoots.Fusion(), "src", "FusionRpg.Injector" }.Concat(relative).ToArray());
         Assert.True(File.Exists(path), "missing " + path);
         return File.ReadAllText(path);
     }

@@ -14,7 +14,7 @@ public class ZombieDeathHookTraceGuardTests
     [Fact]
     public void Note_zombie_dead_traces_the_hook_before_the_latch_returns()
     {
-        var root = RepoRoot();
+        var root = KeepverseRoots.Fusion();
         var hooks = File.ReadAllText(Path.Combine(root, "src", "FusionRpg.Injector", "GameHooks.cs"));
         var method = hooks.IndexOf("static void NoteZombieDead(Zombie z, int reason)", StringComparison.Ordinal);
         var latch = hooks.IndexOf("var firstForPtr = DeadZombies.Add(p);", method, StringComparison.Ordinal);

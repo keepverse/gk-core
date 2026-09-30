@@ -94,8 +94,10 @@ public class RiftGateNoNavigationGuardTests
     [Fact]
     public void The_forbidden_method_names_are_still_real_call_sites_elsewhere()
     {
-        var root = FindRepoRoot();
-        var debugActions = Path.Combine(root, "src", "FusionRpg.Injector", "DebugActions.cs");
+        // `root` stays the CORE root: line 40 enumerates gk-core's own src tree
+        // through it. Only the host path below needs the Fusion root.
+        var hostRoot = KeepverseRoots.Fusion();
+        var debugActions = Path.Combine(hostRoot, "src", "FusionRpg.Injector", "DebugActions.cs");
         Assert.True(File.Exists(debugActions), "missing " + debugActions);
 
         var text = File.ReadAllText(debugActions);
@@ -120,8 +122,10 @@ public class RiftGateMenuRenderingGuardTests
     [Fact]
     public void The_retired_IMGUI_menu_painter_is_gone_and_nothing_draws_it()
     {
-        var root = FindRepoRoot();
-        var retired = Path.Combine(root, "src", "FusionRpg.Injector", "Hud", "RiftMenuOverlay.cs");
+        // `root` stays the CORE root: line 40 enumerates gk-core's own src tree
+        // through it. Only the host path below needs the Fusion root.
+        var hostRoot = KeepverseRoots.Fusion();
+        var retired = Path.Combine(hostRoot, "src", "FusionRpg.Injector", "Hud", "RiftMenuOverlay.cs");
         Assert.False(File.Exists(retired),
             "the IMGUI menu painter must be retired (Decision 18: one rendering system for the menu)");
 
@@ -131,7 +135,7 @@ public class RiftGateMenuRenderingGuardTests
                      @"src\FusionRpg.Injector.MelonLoader\MelonFusionRpgMod.cs",
                  })
         {
-            var text = File.ReadAllText(Path.Combine(root, host));
+            var text = File.ReadAllText(Path.Combine(hostRoot, host));
             Assert.False(text.Contains("RiftMenuOverlay.Draw", StringComparison.Ordinal),
                 $"{host} still calls the retired IMGUI menu painter");
         }
