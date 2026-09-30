@@ -102,9 +102,39 @@ public static class KeepverseRoots
         return legacy ? root : Path.Combine(root, "gk-content");
     }
 
-    /// <summary>Root holding <c>docs/</c> and <c>tasks/</c>.</summary>
+    /// <summary>Root holding <c>docs/</c> and <c>tasks/</c>. In a workspace that is gk-workflow, so
+    /// this is how a repository reads a document it does not itself own -
+    /// <c>docs/architecture/power/ssot-power-scale.md</c>, for instance.</summary>
     public static string Workspace(string? start = null) =>
         Env("KEEPVERSE_WORKSPACE_ROOT") ?? Detected(start).Root;
+
+    /// <summary>
+    /// Root of gk-fusion: <c>src/FusionRpg.Injector/</c>, <c>src/FusionRpg.Launcher/</c> and the
+    /// loader hosts.
+    ///
+    /// <para><b>This accessor exists because six gk-core tests could not be fixed any other
+    /// way.</b> They scan the Injector's source to hold an invariant over it - that no handler
+    /// writes a stat directly, that the HUD pool identity is not restated, that a status clear
+    /// goes through one writer - and after the split each one looked for
+    /// <c>&lt;gk-core&gt;/src/FusionRpg.Injector/GameHooks.cs</c>, a path gk-core does not
+    /// contain. The two available answers were both wrong. Moving the tests to gk-fusion would put
+    /// a test in a repository whose subject it does not own, and keeping a hand-rolled sibling
+    /// lookup in each test would make gk-core depend on a sibling by a private convention that
+    /// nothing documents. A named accessor is the third answer: the dependency is real, so it is
+    /// stated once, here, where the resolver already lives and where an env override can redirect
+    /// it.
+    ///
+    /// <para>Note the asymmetry with <see cref="Workspace"/>, which is an ANCESTOR of gk-core and
+    /// therefore reachable by construction, while gk-fusion is a SIBLING and needs a name of its
+    /// own. That difference is why one of the two was a one-line fix and the other needed a method
+    /// written.</para>
+    /// </summary>
+    public static string Fusion(string? start = null)
+    {
+        if (Env("KEEPVERSE_FUSION_ROOT") is { } env) return env;
+        var (legacy, root) = Detected(start);
+        return legacy ? root : Path.Combine(root, "gk-fusion");
+    }
 
     /// <summary>
     /// The roots a relative path should be tried against, in order, deduplicated.

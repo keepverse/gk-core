@@ -199,7 +199,9 @@ public class RungSemanticsTests
     [Fact]
     public void The_rung_ladder_has_its_row_in_the_power_scale_register()
     {
-        var text = File.ReadAllText(Path.Combine(RepoRoot(), "docs", "architecture", "power", "ssot-power-scale.md"));
+        // docs/ is gk-workflow's, which is the workspace root and an ancestor of gk-core. See
+    // RungPowerBudgetTests for the same read.
+    var text = File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "power", "ssot-power-scale.md"));
 
         Assert.Contains("UnlockLadder.EffectiveRung", text, StringComparison.Ordinal);
         Assert.Contains("Action unlock ladder", text, StringComparison.Ordinal);

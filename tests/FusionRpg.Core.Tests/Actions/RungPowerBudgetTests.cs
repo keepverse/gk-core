@@ -153,7 +153,11 @@ public class RungPowerBudgetTests
     public void The_rung_power_budget_has_its_row_in_the_power_scale_register()
     {
         // Mirrors RungSemanticsTests' own doc-drift precedent against this exact file (test 7 there).
-        var text = File.ReadAllText(Path.Combine(RepoRoot(), "docs", "architecture", "power", "ssot-power-scale.md"));
+        // docs/ is gk-workflow's, and gk-workflow is the workspace root - an ANCESTOR of gk-core, so
+    // the resolver already names it. This read asked Core() for a document gk-core does not
+    // contain, which is a different mistake from the one the sibling needs: nothing had to be
+    // invented for this, only used.
+    var text = File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "power", "ssot-power-scale.md"));
 
         Assert.Contains("powerBudgetMilli", text, StringComparison.Ordinal);
         Assert.Contains("action-rungs.v2.json", text, StringComparison.Ordinal);

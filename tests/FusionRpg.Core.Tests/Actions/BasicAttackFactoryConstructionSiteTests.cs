@@ -110,7 +110,11 @@ public class BasicAttackFactoryConstructionSiteTests
         // game dir), so this is a source scan over the .cs text directly rather than a compiled
         // reference, matching this project's own established pattern for cross-project source
         // scans (e.g. guard-*.ps1).
-        var reader = Path.Combine(SrcDir(), "FusionRpg.Injector", "Actions", "LawnBasicAttackRow.cs");
+        // The reader this test audits lives in gk-fusion, not under gk-core's own src/. SrcDir() is
+    // gk-core's, so the old path named a repository that does not contain the file. The invariant
+    // is unchanged and still asserted on the real source - the point of the test is that the
+    // Injector's reader calls no HTTP, SignalR or SQLite API, and the Injector is where it is.
+    var reader = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Actions", "LawnBasicAttackRow.cs");
         Assert.True(File.Exists(reader), $"not found: {reader}");
 
         var text = CodeOnly(File.ReadAllText(reader));

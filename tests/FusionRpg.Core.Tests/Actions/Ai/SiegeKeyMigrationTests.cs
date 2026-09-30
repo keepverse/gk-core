@@ -119,7 +119,11 @@ public class SiegeKeyMigrationTests
         // Server/Program.cs and Injector/Host/RpgHost.cs both read "combat-ai.v1.json" -- a source
         // scan proves the literal, since neither host is reachable from a Core test directly.
         var serverSource = File.ReadAllText(Path.Combine(RepoRoot(), "src", "FusionRpg.Server", "Program.cs"));
-        var injectorSource = File.ReadAllText(Path.Combine(RepoRoot(), "src", "FusionRpg.Injector", "Host", "RpgHost.cs"));
+        // The Injector is gk-fusion's, and gk-fusion is a SIBLING of gk-core, not an ancestor - so
+    // unlike the docs read in RungPowerBudgetTests, no existing root named it and one had to be
+    // added: KeepverseRoots.Fusion(). Naming the dependency once in the resolver beats a hop count
+    // in every test that holds this invariant.
+    var injectorSource = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Host", "RpgHost.cs"));
         // CAI-F1: the hosts must reference the REVISION CONSTANT, never a literal filename. A literal is
         // what made an H7 publish impossible for every combat-ai lane; the constant is what makes the
         // filename and the readers move together.

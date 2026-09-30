@@ -555,7 +555,7 @@ public class LawnElementResolverTests
         // illegitimate to keep) — a STRONGER guarantee than "does not touch species rows": there is no
         // handler left to touch anything, so the process-wide species roster the element index is
         // built from cannot move under a route that no longer exists.
-        var endpoints = ReadRepoFile("src", "FusionRpg.Server", "DebugEndpoints.cs");
+        var endpoints = ReadRepoFile(KeepverseRoots.Core(), "src", "FusionRpg.Server", "DebugEndpoints.cs");
 
         Assert.DoesNotContain("\"/reforge-world\"", endpoints);
         // The exact call syntax, not any textual mention — the file's own retirement comment names the
@@ -584,14 +584,20 @@ public class LawnElementResolverTests
     }
 
     static string ReadInjectorFile(params string[] relative) =>
-        ReadRepoFile(new[] { "src", "FusionRpg.Injector" }.Concat(relative).ToArray());
+        ReadRepoFile(new[] { KeepverseRoots.Fusion(), "src", "FusionRpg.Injector" }.Concat(relative).ToArray());
 
     static string ReadCoreFile(params string[] relative) =>
-        ReadRepoFile(new[] { "src", "FusionRpg.Core" }.Concat(relative).ToArray());
+        ReadRepoFile(new[] { KeepverseRoots.Core(), "src", "FusionRpg.Core" }.Concat(relative).ToArray());
 
-    static string ReadRepoFile(params string[] relative)
+    /// <summary>Reads a file under an EXPLICIT root, so each call site says which repository it
+    /// means. This replaces a helper that prepended gk-core's root to every path, which made
+    /// <c>ReadRepoFile("src", "FusionRpg.Injector", ...)</c> ask gk-core for a file in gk-fusion and
+    /// read as a missing-file failure rather than as the wrong root. The existence assert stays:
+    /// a reader that cannot find its subject must say so rather than return nothing.</summary>
+    static string ReadRepoFile(params string[] parts)
     {
-        var path = Path.Combine(new[] { FindRepoRoot() }.Concat(relative).ToArray());
+        Assert.True(parts.Length > 0, "ReadRepoFile needs a root as its first segment");
+        var path = Path.Combine(parts);
         Assert.True(File.Exists(path), "missing " + path);
         return File.ReadAllText(path);
     }
