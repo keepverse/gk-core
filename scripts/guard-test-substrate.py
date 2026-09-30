@@ -81,6 +81,8 @@ import sys
 from datetime import date
 from dataclasses import dataclass, field
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from keepverse_roots import forge_root, fusion_root  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import cscan  # noqa: E402  (the shared scanner lives beside this tool)
@@ -292,6 +294,26 @@ def iter_test_sources(tests_dir: Path):
         yield path
 
 
+def sibling_roots(root: Path) -> list[Path]:
+    """The repositories a baseline entry may live in, resolved - never guessed by walking up.
+
+    A monorepo had one root, so a ratchet line named a path relative to it and that was the whole
+    addressing scheme. After the split the same line names a file in a sibling, and `root / rel` is
+    a path that has never existed. Resolving the owner per entry keeps one ratchet for the seam
+    instead of three partial ones.
+    """
+    out: list[Path] = []
+    base = root.resolve()
+    for accessor in (fusion_root, forge_root):
+        try:
+            cand = accessor(root)
+        except Exception:      # a missing sibling is not an error here; the entry is simply absent
+            continue
+        if cand.is_dir() and cand.resolve() != base and cand.resolve() not in out:
+            out.append(cand.resolve())
+    return out
+
+
 def scan(root: Path, baseline_path: Path) -> Report:
     tests_dir = root / TESTS_RELPATH
     if not tests_dir.is_dir():
@@ -309,6 +331,35 @@ def scan(root: Path, baseline_path: Path) -> Report:
         codes = sorted({f.code for f in scan_file(path, rel)})
         if codes:
             report.found[rel] = codes
+
+    # THE RATCHET SPANS THREE REPOSITORIES. Twelve of the twenty-four baseline entries name test
+    # files that have been gk-fusion's or gk-forge's since the split, and all twelve still
+    # violate. The guard reported every one as "no longer violated - remove the line" because it
+    # never opened them, which is a ratchet reporting its own blindness as a repair instruction.
+    # Taking the instruction would turn the guard green while dropping twelve live exemptions -
+    # the silent weakening the ratchet exists to prevent, and the reason a stale entry is a
+    # finding at all is that a stale entry is indistinguishable from a deleted one.
+    #
+    # Scoped deliberately. Only baseline entries that are NOT under this root are looked up in a
+    # sibling, so the guard keeps exactly the coverage its committed list declares. Walking every
+    # sibling test file instead would open a scope this guard never had, and any violation found
+    # there belongs in that repository's own ratchet, declared by whoever owns it.
+    for rel in sorted(report.baseline):
+        if rel in report.found or (root / rel).is_file():
+            continue
+        for sibling in sibling_roots(root):
+            candidate = sibling / rel
+            if not candidate.is_file():
+                continue
+            report.files_scanned += 1
+            codes = sorted({f.code for f in scan_file(candidate, rel)})
+            # Only a file that STILL violates is recorded as found. Recording an empty code list
+            # would insert the key, and evaluate() decides staleness by key absence - so an
+            # emptied list would keep a baseline line alive that should be reported for removal,
+            # which is the ratchet refusing to shrink. Found means found.
+            if codes:
+                report.found[rel] = codes
+            break
     return report
 
 
