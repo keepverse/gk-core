@@ -71,6 +71,13 @@ VERDICT_OK = "POWER GUARD OK — one ladder, pin holds, no private f(level)"
 VERDICT_FAILED = "POWER GUARD FAILED:"
 EXIT_OK = 0
 EXIT_FAILED = 1
+# A REFUSAL IS NOT A FINDING, AND THE EXIT CODE IS HOW SAY SO. guard-stat-pairs.py already
+# established 64 for "I cannot run"; these four mapped every Refusal onto EXIT_FAILED, so a
+# guard refusing because a sibling repository is not checked out was indistinguishable from a
+# guard that found a violation. A standalone clone is a SUPPORTED layout, so on a clone six
+# guards legitimately cannot run, and an operator has to be able to read that as a named
+# condition rather than as six broken guards.
+EXIT_REFUSED = 64
 
 POWER_DIR = ("src", "FusionRpg.Core", "Power")
 INVENTORY = ("docs", "architecture", "power", "inventory.json")
@@ -429,13 +436,13 @@ def main(argv: list[str] | None = None) -> int:
                        g1_allowlist=(g1_extra or []) + (list(G1_EXEMPT) if g1_extra else []),
                        g2_allowlist=g2_list)
     except Refusal as refusal:
-        print(f"{VERDICT_FAILED} {refusal.reason} {refusal.detail}", file=sys.stderr)
+        print(f"{GUARD_ID} REFUSED: {refusal.reason} {refusal.detail}", file=sys.stderr)
         if args.json:
-            print(json.dumps({"guard": GUARD_ID, "verdict": "FAILED", "reason": refusal.reason,
+            print(json.dumps({"guard": GUARD_ID, "verdict": "REFUSED", "reason": refusal.reason,
                               "detail": refusal.detail, "findings": [],
                               "findings_by_check": {}, "inventory_locations": 0,
                               "inventory_unlocated": []}, indent=2))
-        return EXIT_FAILED
+        return EXIT_REFUSED
 
     if args.json:
         print(json.dumps(result, indent=2))

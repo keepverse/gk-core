@@ -76,6 +76,13 @@ VERDICT_OK = ("CLASS-SYSTEM GUARD OK — aptitude ids collision-free, edges regi
 VERDICT_FAILED = "CLASS-SYSTEM GUARD FAILED:"
 EXIT_OK = 0
 EXIT_FAILED = 1
+# A REFUSAL IS NOT A FINDING, AND THE EXIT CODE IS HOW SAY SO. guard-stat-pairs.py already
+# established 64 for "I cannot run"; these four mapped every Refusal onto EXIT_FAILED, so a
+# guard refusing because a sibling repository is not checked out was indistinguishable from a
+# guard that found a violation. A standalone clone is a SUPPORTED layout, so on a clone six
+# guards legitimately cannot run, and an operator has to be able to read that as a named
+# condition rather than as six broken guards.
+EXIT_REFUSED = 64
 
 ROSTER = ("data", "seed", "aptitudes", "roster.json")
 CATALOG = ("data", "seed", "derived-stats", "catalog.json")
@@ -471,17 +478,17 @@ def main(argv: list[str] | None = None) -> int:
     try:
         result = check(args.root)
     except Refusal as refusal:
-        print(f"{VERDICT_FAILED} {refusal.reason} {refusal.detail}", file=sys.stderr)
+        print(f"{GUARD_ID} REFUSED: {refusal.reason} {refusal.detail}", file=sys.stderr)
         if args.json:
             # ONE envelope shape, not two. A consumer reading --json should not need a branch for "was
             # it a refusal?", so the refusal carries the SAME keys as the normal result with empty
             # values, plus the two that name it. The counting keys are present and zero rather than
             # absent: a key that vanishes on one path is a consumer's KeyError.
-            print(json.dumps({"guard": GUARD_ID, "verdict": "FAILED", "reason": refusal.reason,
+            print(json.dumps({"guard": GUARD_ID, "verdict": "REFUSED", "reason": refusal.reason,
                               "detail": refusal.detail, "root": str(args.root),
                               "shipped_tuning": None, "aptitude_ids": 0, "catalog_families": 0,
                               "failures": [], "skipped": []}, indent=2))
-        return EXIT_FAILED
+        return EXIT_REFUSED
 
     if args.json:
         print(json.dumps(result, indent=2))

@@ -90,6 +90,13 @@ import cscan  # noqa: E402  (the shared scanner lives beside this tool)
 GUARD_ID = "test-substrate"
 EXIT_OK = 0
 EXIT_FAILED = 1
+# A REFUSAL IS NOT A FINDING, AND THE EXIT CODE IS HOW SAY SO. guard-stat-pairs.py already
+# established 64 for "I cannot run"; these four mapped every Refusal onto EXIT_FAILED, so a
+# guard refusing because a sibling repository is not checked out was indistinguishable from a
+# guard that found a violation. A standalone clone is a SUPPORTED layout, so on a clone six
+# guards legitimately cannot run, and an operator has to be able to read that as a named
+# condition rather than as six broken guards.
+EXIT_REFUSED = 64
 
 BASELINE_RELPATH = "test-substrate-baseline.txt"
 TESTS_RELPATH = "tests"
@@ -416,14 +423,14 @@ def main(argv: list[str] | None = None) -> int:
         report = scan(root, baseline_path)
     except Refusal as refusal:
         if args.json:
-            print(json.dumps({"guard": GUARD_ID, "verdict": "FAILED", "reason": refusal.reason,
+            print(json.dumps({"guard": GUARD_ID, "verdict": "REFUSED", "reason": refusal.reason,
                               "detail": refusal.detail, "problems": [], "files_scanned": 0,
                               "baseline": "", "baseline_entries": 0}, indent=2))
         else:
             print(f"TEST SUBSTRATE GUARD REFUSED: {refusal.reason}", file=sys.stderr)
             if refusal.detail:
                 print(f"  {refusal.detail}", file=sys.stderr)
-        return EXIT_FAILED
+        return EXIT_REFUSED
 
     if args.update_baseline:
         try:

@@ -121,7 +121,14 @@ def _owner_token_exists(token: str, repo_root: Path) -> bool:
     # printed "scanned: tests, tools/seedsmith/tests" - naming a scan root it could not open, which is
     # a coverage claim about nothing.
     try:
-        seedsmith_src = forge_root(repo_root) / "tools" / "seedsmith" / "seedsmith"
+        # Wrapped like the other call site. An absent gk-forge is a named condition here too:
+        # this function asks whether a token exists in a file it cannot reach, and answering
+        # "no" because the repository is missing would be a guard reporting its blindness as
+        # an answer about the content.
+        try:
+            seedsmith_src = forge_root(repo_root) / "tools" / "seedsmith" / "seedsmith"
+        except RootNotFound:
+            return None
     except RootNotFound as exc:
         print(f"[{GUARD_ID}] EXIT_FORGE_ROOT_MISSING: {exc}", file=sys.stderr)
         return 2

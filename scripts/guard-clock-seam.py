@@ -62,6 +62,13 @@ VERDICT_OK = "CLOCK SEAM GUARD OK"
 VERDICT_FAILED = "CLOCK SEAM GUARD FAILED ({count} violation(s)):"
 EXIT_OK = 0
 EXIT_FAILED = 1
+# A REFUSAL IS NOT A FINDING, AND THE EXIT CODE IS HOW SAY SO. guard-stat-pairs.py already
+# established 64 for "I cannot run"; these four mapped every Refusal onto EXIT_FAILED, so a
+# guard refusing because a sibling repository is not checked out was indistinguishable from a
+# guard that found a violation. A standalone clone is a SUPPORTED layout, so on a clone six
+# guards legitimately cannot run, and an operator has to be able to read that as a named
+# condition rather than as six broken guards.
+EXIT_REFUSED = 64
 
 # The one clock type: the file that IS the seam.
 CLOCK_TYPE = "src/FusionRpg.Core/Time/ServerClock.cs"
@@ -363,11 +370,11 @@ def main(argv: list[str] | None = None) -> int:
     try:
         result = check(args.root.resolve(), args.src_dir)
     except Refusal as refusal:
-        print(f"{VERDICT_FAILED.format(count=0)} {refusal.reason} {refusal.detail}", file=sys.stderr)
+        print(f"{GUARD_ID} REFUSED: {refusal.reason} {refusal.detail}", file=sys.stderr)
         if args.json:
-            print(json.dumps({"guard": GUARD_ID, "verdict": "FAILED", "reason": refusal.reason,
+            print(json.dumps({"guard": GUARD_ID, "verdict": "REFUSED", "reason": refusal.reason,
                               "detail": refusal.detail, "violations": []}, indent=2))
-        return EXIT_FAILED
+        return EXIT_REFUSED
 
     if args.json:
         print(json.dumps(result, indent=2))
