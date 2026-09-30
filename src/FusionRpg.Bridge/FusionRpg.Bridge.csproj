@@ -30,7 +30,20 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <!-- net6.0, NOT net8.0, and the reason is a consumer rather than a preference.
+         FusionRpg.Core is net6.0 and every loader host in gk-fusion - BepInEx, MelonLoader,
+         MelonLoader.39 and MelonLoader.40 - is net6.0, because the game host they inject into
+         loads on .NET 6. A net8.0-only module here is not "newer", it is INCOMPATIBLE with every
+         consumer this module exists to serve: restore fails with NU1201 and gk-fusion does not
+         build at all. gk-core's own net8.0 test projects can still reference it, because a net8.0
+         project consumes a net6.0 library without complaint - the asymmetry runs one way only.
+
+         This was shipped wrong once, as net8.0, and the mistake survived a recorded "0 errors"
+         verification claim because the check counted `error CS\d+` and cannot see `error NU\d+`.
+         A restore error is not a compile error, and an instrument that only counts compile errors
+         reports a broken build as a clean one. The comment is here so the next person does not
+         "upgrade" it and reintroduce NU1201. -->
+    <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
