@@ -20,6 +20,9 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <!-- SplitManifestReconciliationTests uses FusionRpg.Core types; without this reference the project
+         does not compile (CS0234). Inherited from the source repository, same shape as Guard.Tests. -->
+    <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
     <ProjectReference Include="..\..\tools\FileMove\FileMove.csproj" />
   </ItemGroup>
 </Project>

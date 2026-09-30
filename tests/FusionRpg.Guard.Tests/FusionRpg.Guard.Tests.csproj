@@ -16,6 +16,13 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <!-- The guard suite's own source uses FusionRpg.Core types directly (e.g. KeepverseRoots), so
+         without this reference the project does not compile at all: 226 CS0234 errors. It is absent
+         in the source repository too, so this is an inherited defect, not a split artefact - and it
+         meant the whole boundary-guard suite was silently excluded from every test count. -->
+    <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- Build-order only: ClassSystemBaselineRegenTests runs scripts/regen-class-system-baselines.ps1,
          which launches these tools with dotnet run and no build step, in the tests' own configuration. The
          reference makes building this project build them, so no test spawns a build and a fresh
