@@ -25,6 +25,16 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+
+# The file under test is gk-fusion's, so it is asked of its owner rather than of REPO. `REPO /
+# "scripts/guard-game-profile.py"` does not exist in gk-core, and this suite raised at COLLECTION because of it - which is
+# why it was one of the dark suites, and why a collection error that aborts the pytest run could hide
+# the rest of the tree. The catalog it asserts on is gk-fusion's too, so all three sites move together.
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import fusion_root  # noqa: E402
+
+_FUSION = fusion_root(REPO)
+
 sys.path.insert(0, str(REPO / "scripts"))
 
 
@@ -37,7 +47,7 @@ def _load(name: str, path: Path):
     return module
 
 
-guard = _load("guard_game_profile", REPO / "scripts" / "guard-game-profile.py")
+guard = _load("guard_game_profile", _FUSION / "scripts" / "guard-game-profile.py")
 
 GA = "GameAssembly.dll"
 # A payload of an exact byte length, so a fixture's fingerprint can state a length and the file can
@@ -235,7 +245,7 @@ class PathsResolveSegmentWise(_FixtureCase):
     def test_the_real_catalog_shape_matches_a_real_pack(self) -> None:
         # The shipped catalog's two profiles, against the pack this machine actually has, so the
         # model is checked against the data rather than against a fixture shaped like it.
-        real = REPO / "game-profiles.json"
+        real = _FUSION / "game-profiles.json"
         if not real.is_file():
             self.skipTest("game-profiles.json is absent")
         catalog = json.loads(real.read_text(encoding="utf-8"))
@@ -415,7 +425,7 @@ class StreamsAndEnvelope(_FixtureCase):
 
     def test_the_default_catalog_is_the_repo_one(self) -> None:
         self.assertEqual(guard.DEFAULT_CATALOG, "game-profiles.json")
-        self.assertTrue((REPO / guard.DEFAULT_CATALOG).is_file())
+        self.assertTrue((_FUSION / guard.DEFAULT_CATALOG).is_file())
 
 
 if __name__ == "__main__":

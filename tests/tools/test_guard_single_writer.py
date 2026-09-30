@@ -23,6 +23,17 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+
+# The file under test is gk-fusion's, so it is asked of its owner rather than of REPO. `REPO /
+# "scripts/guard-single-writer.py"` does not exist in gk-core, and this suite raised at COLLECTION because of it - which is
+# why it was one of the dark suites, and why a collection error that aborts the pytest run could hide
+# the rest of the tree. Its own docstring already said `gk-fusion/scripts/guard-single-writer.py`. cscan.py stays on
+# REPO - it is gk-core's.
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import fusion_root  # noqa: E402
+
+_FUSION = fusion_root(REPO)
+
 sys.path.insert(0, str(REPO / "scripts"))
 
 
@@ -38,7 +49,7 @@ def _load(name: str, path: Path):
     return module
 
 
-guard = _load("guard_single_writer", REPO / "scripts" / "guard-single-writer.py")
+guard = _load("guard_single_writer", _FUSION / "scripts" / "guard-single-writer.py")
 cscan = _load("cscan", REPO / "scripts" / "cscan.py")
 
 INJ = "src/FusionRpg.Injector"

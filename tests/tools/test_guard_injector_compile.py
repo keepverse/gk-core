@@ -26,6 +26,16 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+
+# The file under test is gk-fusion's, so it is asked of its owner rather than of REPO. `REPO /
+# "scripts/guard-injector-compile.py"` does not exist in gk-core, and this suite raised at COLLECTION because of it - which is
+# why it was one of the dark suites, and why a collection error that aborts the pytest run could hide
+# the rest of the tree. Its own docstring already said `gk-fusion/scripts/guard-injector-compile.py`.
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import fusion_root  # noqa: E402
+
+_FUSION = fusion_root(REPO)
+
 sys.path.insert(0, str(REPO / "scripts"))
 
 
@@ -38,7 +48,7 @@ def _load(name: str, path: Path):
     return module
 
 
-guard = _load("guard_injector_compile", REPO / "scripts" / "guard-injector-compile.py")
+guard = _load("guard_injector_compile", _FUSION / "scripts" / "guard-injector-compile.py")
 
 SKIP_MARKER = "NOT COMPILED — skipping FusionRpg.Injector.MelonLoader.39"
 

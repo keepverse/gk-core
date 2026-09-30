@@ -46,7 +46,17 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-TOOL = REPO / ".claude" / "cmdc-agents" / "scripts" / "union_append_only.py"
+
+# The file under test is the workspace root's, so it is asked of its owner rather than of REPO. `REPO /
+# ".claude/cmdc-agents/scripts/union_append_only.py"` does not exist in gk-core, and this suite raised at COLLECTION because of it - which is
+# why it was one of the dark suites, and why a collection error that aborts the pytest run could hide
+# the rest of the tree. The ledgers it merges are the workspace root's as well.
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import workspace_root  # noqa: E402
+
+_WORKSPACE = workspace_root(REPO)
+
+TOOL = _WORKSPACE / ".claude" / "cmdc-agents" / "scripts" / "union_append_only.py"
 
 #: Hard timeout on every subprocess. A tool that hangs must fail the test, not the run.
 SUBPROCESS_TIMEOUT_S = 120
@@ -306,14 +316,14 @@ class FalsifierTests(ToolTestCase):
 # 2. Parity with the pre-fix algorithm, over real ledgers from tasks/.
 # ---------------------------------------------------------------------------------------------
 def real_ledgers() -> list[Path]:
-    return sorted((REPO / "tasks").glob("*ledger.jsonl"))
+    return sorted((_WORKSPACE / "tasks").glob("*ledger.jsonl"))
 
 
 def real_markdown_ledgers() -> list[Path]:
     """A named set, not a population: these are the files the resolver is actually pointed at."""
     names = ["data-test-substrate-todo.md", "actor-hud-todo.md", "summoner-convergence-todo.md",
              "verification-boundaries-todo.md", "ps1-ban-todo.md"]
-    return [REPO / "tasks" / n for n in names if (REPO / "tasks" / n).exists()]
+    return [_WORKSPACE / "tasks" / n for n in names if (_WORKSPACE / "tasks" / n).exists()]
 
 
 def cut_sides(text: str) -> tuple[str, str]:

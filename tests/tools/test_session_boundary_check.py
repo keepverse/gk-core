@@ -43,7 +43,17 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-SCRIPT = REPO / "scripts" / "session-boundary-check.py"
+
+# The file under test is the workspace root's, so it is asked of its owner rather than of REPO. `REPO /
+# "scripts/session-boundary-check.py"` does not exist in gk-core, and this suite raised at COLLECTION because of it - which is
+# why it was one of the dark suites, and why a collection error that aborts the pytest run could hide
+# the rest of the tree. The session records are the workspace root's too, so both sites move together.
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import workspace_root  # noqa: E402
+
+_WORKSPACE = workspace_root(REPO)
+
+SCRIPT = _WORKSPACE / "scripts" / "session-boundary-check.py"
 
 _spec = importlib.util.spec_from_file_location("session_boundary_check", SCRIPT)
 guard = importlib.util.module_from_spec(_spec)
@@ -643,12 +653,16 @@ class JsonEnvelope(unittest.TestCase):
 
 class TheShippedState(unittest.TestCase):
     def test_the_real_repo_runs_and_reports(self) -> None:
-        got = guard.check(REPO)
+        # The WORKSPACE root, not gk-core: `check()` reads `root / "tasks" / "sessions"` and the records
+        # are the workspace root's - 262 of them, 4 active. The next test in this class already uses
+        # `_WORKSPACE` for exactly this path, so the file was holding two roots at once and the shipped
+        # state read as empty.
+        got = guard.check(_WORKSPACE)
         self.assertIn(got["verdict"], {"OK", "FAIL"})
-        self.assertGreater(got["records"], 0, "the real repo has session records")
+        self.assertGreater(got["records"], 0, "the real workspace has session records")
 
     def test_the_real_repo_has_a_tasks_sessions_directory(self) -> None:
-        self.assertTrue((REPO / "tasks" / "sessions").is_dir())
+        self.assertTrue((_WORKSPACE / "tasks" / "sessions").is_dir())
 
     def test_program_status_holds_the_same_vocabularies(self) -> None:
         # The drift guard in gk-core/tests/tools/test_program_status.py reads THIS module's owner for these
