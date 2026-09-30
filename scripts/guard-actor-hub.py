@@ -51,7 +51,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from cscan import strip_whole_line_comments  # noqa: E402
-from keepverse_roots import RootNotFound, fusion_root  # noqa: E402
+from keepverse_roots import RootNotFound, fusion_root_or_owner  # noqa: E402
 
 GUARD_ID = "actor-hub"
 VERDICT_OK = "ACTOR-HUB GUARD OK"
@@ -85,7 +85,7 @@ def owning_root(root: Path, scope: str) -> Path:
         # missing file with `return []`, so the rule was dead in exactly the repository that owns
         # its subject - the silent-green shape, one indirection away from walk().
         try:
-            return fusion_root(root)
+            return fusion_root_or_owner(root)
         except RootNotFound as exc:
             raise Refusal("FUSION-ROOT-MISSING", str(exc)) from exc
     return root
@@ -239,7 +239,7 @@ def rel(root: Path, path: Path) -> str:
         # and machine-local at the same time, so a golden recorded on one machine fails on
         # another. A repository-relative path is neither.
         try:
-            return f"gk-fusion/{path.relative_to(fusion_root(root)).as_posix()}"
+            return f"gk-fusion/{path.relative_to(fusion_root_or_owner(root)).as_posix()}"
         except ValueError:
             return path.name
 
