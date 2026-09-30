@@ -170,16 +170,44 @@ def inventory_locations(inventory: dict) -> tuple[list[str], list[str]]:
     return tokens, unlocated
 
 
+# A REPOSITORY NAME AT THE HEAD OF AN INVENTORY TOKEN IS NOT PART OF THE PATH. The inventory is
+# gk-workflow's, so it names gk-core's files the way a reader who has the whole workspace names
+# them - `gk-core/src/FusionRpg.Core/...` - and 29 of its 33 location tokens are spelled that way.
+# This guard walks gk-core, so its own path is the repo-relative `src/FusionRpg.Core/...`.
+#
+# Compared as authored, those two can never meet: exact equality fails on the extra segment, and a
+# SHORTER string cannot startswith a LONGER one, so all 29 prefixed tokens were unreachable and G3
+# could license only the 4 bare-spelled scales. Six findings were the visible part of that; the
+# invisible part is that the guard was one path spelling away from licensing curves it never
+# examined. This is the same class as the W2 manifest notation defect - a value compared in a
+# different notation from the one it is written in - and it fails the same way: the check appears to
+# run and cannot succeed.
+_REPO_PREFIXES = ("gk-core", "gk-forge", "gk-fusion", "gk-web", "gk-workflow",
+                  "gk-data", "gk-content", "gk-tests", "gk-assets")
+
+
+def _strip_repo_prefix(token: str) -> str:
+    head, sep, tail = token.partition("/")
+    return tail if sep and head in _REPO_PREFIXES else token
+
+
 def _is_listed(rel_fwd: str, locations: list[str]) -> bool:
     """`$relFwd -eq $_` (case-INSENSITIVE) or `$relFwd.StartsWith($_)` (ordinal, case-SENSITIVE).
 
     The two halves disagree about case in the original, and transcribing them as one comparison would
-    change which files G3 licenses.
+    change which files G3 licenses. Both halves are preserved exactly; the only change is that a
+    repository-name segment is removed from the token before either runs, so the comparison is
+    between two paths rather than between a path and a workspace-qualified name for it.
+
+    A repository name is stripped ONLY when it is one of the nine, by exact match. Stripping the
+    first segment of any token would quietly rewrite a genuine relative path, and a guard that
+    normalises more than it means is a guard nobody can predict.
     """
     for token in locations:
-        if rel_fwd.lower() == token.lower():
+        bare = _strip_repo_prefix(token)
+        if rel_fwd.lower() == bare.lower():
             return True
-        if rel_fwd.startswith(token):  # ordinal: a case-differing prefix does NOT match
+        if rel_fwd.startswith(bare):  # ordinal: a case-differing prefix does NOT match
             return True
     return False
 
