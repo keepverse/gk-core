@@ -110,6 +110,53 @@ public class BootContentCopyRuleTests
         return rules;
     }
 
+    /// <summary>A differential for the guard's own parser, run in the same process on the same string.
+    ///
+    /// <para>There are two things a reader must not have to guess: which bases <see cref="CopyRules"/>
+    /// produces from the real csproj, and whether that list is what the arithmetic says it should be. This
+    /// asserts both, and when they disagree it names the first rule that differs rather than printing two
+    /// lists and leaving the comparison to the reader.</para>
+    ///
+    /// <para>The reference below is deliberately the same arithmetic, written out again. That is not a
+    /// second opinion about what the parser SHOULD do - it is a check that the deployed function does what
+    /// its own source says, on the actual file, in the actual test host. A model compared against a model
+    /// can only prove they agree with each other; a model compared against the deployed function, here,
+    /// can prove a divergence - which is the only reason the thirteen uncovered folders have stayed
+    /// unexplained across three passes.</para>
+    ///
+    /// <para>Asserting equality of two lists is not a population pin: it fails when the parser's behaviour
+    /// changes, and never fails because content was added.</para></summary>
+    [Fact]
+    public void CopyRules_agrees_with_the_same_arithmetic_written_out_on_the_real_csproj()
+    {
+        var csproj = CsprojSource();
+        var actual = CopyRules(csproj).Select(r => r.BaseDir).ToList();
+
+        var expected = new List<string>();
+        foreach (Match rule in Regex.Matches(csproj, @"<Content\s+Include=""(?<inc>[^""]+)"""))
+        {
+            var tail = csproj[rule.Length..];
+            var close = tail.IndexOf("</Content>", StringComparison.Ordinal);
+            var selfClose = tail.IndexOf("/>", StringComparison.Ordinal);
+            if (close < 0 || (selfClose >= 0 && selfClose < close)) close = selfClose;
+            var body = close < 0 ? tail : tail[..close];
+            var link = Regex.Match(body, @"<Link>(?<l>[^<]+)</Link>");
+            var spec = link.Success ? link.Groups["l"].Value : rule.Groups["inc"].Value;
+            var path = spec.Replace('\\', '/').TrimStart('.', '/');
+            var wildcard = path.IndexOfAny(new[] { '*', '%' });
+            expected.Add(wildcard < 0 ? path : path[..wildcard].TrimEnd('/'));
+        }
+
+        var firstDiff = expected.Zip(actual, (e, a) => (e, a))
+            .Select((pair, i) => (pair, i))
+            .FirstOrDefault(x => x.pair.e != x.pair.a);
+        Assert.True(
+            firstDiff.pair.e == firstDiff.pair.a,
+            $"CopyRules diverges from its own arithmetic at rule #{firstDiff.i}: "
+            + $"deployed produced '{firstDiff.pair.a}', the same arithmetic gives '{firstDiff.pair.e}'. "
+            + $"deployed bases: {string.Join(" | ", actual)}");
+    }
+
     /// <summary>Reports what <see cref="CopyRules"/> actually parses, from the real csproj, through the
     /// same reader the coverage checks use.
     ///
