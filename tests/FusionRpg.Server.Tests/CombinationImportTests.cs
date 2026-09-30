@@ -30,6 +30,34 @@ public class CombinationImportTests : IDisposable
         return KeepverseRoots.Core();
     }
 
+    /// <summary>
+    /// The SEED root, for the corpora the data pack owns. Distinct from <see cref="RepoRoot"/> and the
+    /// distinction is not cosmetic.
+    ///
+    /// <para>
+    /// <c>ReadArchetypes</c> builds <c>&lt;seedRoot&gt;/data/seed/items/_registry/build-themes.v1.json</c>
+    /// and returns an EMPTY list when that file is missing - it does not fail. So handing it the core
+    /// root, which after the split holds <c>data/tuning</c> and no <c>data/seed</c> at all, produced an
+    /// empty archetype axis; every recipe then failed the <c>archetypes.Count == 0</c> check with
+    /// "the archetype axis (build-themes.v1.json) is absent", and three tests read that as a broken
+    /// contract: one asserted a recipe was seeded and found none accepted, one asserted a refusal
+    /// reason and found a different one, and one asserted the archetype list was non-empty - which is
+    /// the same defect stating itself outright.
+    ///
+    /// <para>
+    /// The file lives in the data pack, which carries three archetypes - balance, defense, offense -
+    /// and <c>offense</c> is the one the fixtures need. This is the class the ActorSurface tests had
+    /// too, one level in: a test resolving another repository's file against gk-core. What made it
+    /// survive a migration review is that it was INCONSISTENT WITHIN A SINGLE FILE - the atoms and the
+    /// combinations corpora two lines away were already read through <c>KeepverseRoots.Content()</c>,
+    /// so the odd one out was visible in the diff and still read as correct.
+    /// </para>
+    /// </summary>
+    static string SeedRoot()
+    {
+        return KeepverseRoots.Content();
+    }
+
     static SocketTuning Sockets() => SocketTuning.Parse(
         File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", SocketTuningFiles.Current)));
 
@@ -60,7 +88,7 @@ public class CombinationImportTests : IDisposable
     {
         var sockets = Sockets();
         var strainSplice = StrainSplice(sockets);
-        var archetypes = CombinationBoot.ReadArchetypes(RepoRoot());
+        var archetypes = CombinationBoot.ReadArchetypes(SeedRoot());
         Assert.NotEmpty(archetypes);
 
         var log = new List<string>();
@@ -91,7 +119,7 @@ public class CombinationImportTests : IDisposable
     {
         var sockets = Sockets();
         var strainSplice = StrainSplice(sockets);
-        var archetypes = CombinationBoot.ReadArchetypes(RepoRoot());
+        var archetypes = CombinationBoot.ReadArchetypes(SeedRoot());
 
         // The `host-cannot-hold` row names `jewel-major` deliberately: its ceiling is 2 in every
         // revision the ceiling table has ever shipped, so the refusal stays the reason asserted here.
@@ -149,7 +177,7 @@ public class CombinationImportTests : IDisposable
         // is refused BY NAME and left out.
         var sockets = Sockets();
         var strainSplice = StrainSplice(sockets);
-        var archetypes = CombinationBoot.ReadArchetypes(RepoRoot());
+        var archetypes = CombinationBoot.ReadArchetypes(SeedRoot());
 
         var dir = Path.Combine(Path.GetTempPath(), "combo-container-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
