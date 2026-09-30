@@ -61,10 +61,28 @@ public sealed class KeepverseRootsTests
     [Fact]
     public void Legacy_layout_resolves_every_root_to_the_repo()
     {
-        var content = ContentRoot.Resolve();
-        Assert.True(Directory.Exists(Path.Combine(content, "data", "seed")));
-        Assert.Equal(content, CoreRoot.Resolve());
-        Assert.Equal(content, WorkspaceRoot.Resolve());
+        // This used to read the AMBIENT layout - ContentRoot.Resolve() with no argument - and
+        // assert the other two agreed with it. That passes in the monorepo, where the ambient
+        // layout happens to be legacy, and fails in a workspace, where it legitimately is not:
+        // Content is the pack and Core is gk-core, so they are SUPPOSED to differ. A test whose
+        // pass/fail depends on where its own binary sits is not testing what its name says.
+        //
+        // So it builds the layout it claims to test, the way every other test in this file
+        // already passes an explicit start, and asserts against that. This is also why
+        // LegacyLayout exists at all - it was written for this test, and this test stopped
+        // calling it.
+        var root = LegacyLayout(out var cleanup);
+        try
+        {
+            Assert.True(Directory.Exists(Path.Combine(root, "data", "seed")));
+            Assert.Equal(root, ContentRoot.Resolve(root));
+            Assert.Equal(root, CoreRoot.Resolve(root));
+            Assert.Equal(root, WorkspaceRoot.Resolve(root));
+        }
+        finally
+        {
+            Directory.Delete(cleanup, recursive: true);
+        }
     }
 
     [Fact]
