@@ -447,7 +447,7 @@ public class SpeciesBuildEndpointsTests : IAsyncLifetime
         Assert.True(body.GetProperty("priceAmount").GetInt64() > 0);   // the soul price is still quoted
     }
 
-    static string RepoTuningDir() => Path.Combine(FindRepoRoot(), "data", "tuning");
+    static string RepoTuningDir() => Path.Combine(KeepverseRoots.Core(), "data", "tuning");
 
     static string LatestAptitudesPath()
     {

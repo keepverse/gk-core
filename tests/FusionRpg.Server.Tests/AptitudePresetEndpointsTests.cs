@@ -725,7 +725,7 @@ public class AptitudePresetEndpointsTests : IAsyncLifetime
     /// rather than through <see cref="AptitudePresetTuningLoader"/>.</summary>
     static AssignLadderTuning MinimalAssignLadder() => new(new[] { AptitudeAutoAssignRules.Even });
 
-    static string RepoTuningDir() => Path.Combine(FindRepoRoot(), "data", "tuning");
+    static string RepoTuningDir() => Path.Combine(KeepverseRoots.Core(), "data", "tuning");
 
     static string LatestAptitudesPath()
     {

@@ -234,7 +234,7 @@ public class SpeciesLayerPathTests : IDisposable
         Assert.DoesNotContain(rowsBForPeashooter, r => r.SourceId.StartsWith("species-player:", StringComparison.Ordinal));
     }
 
-    static string RepoTuningDir() => Path.Combine(FindRepoRoot(), "data", "tuning");
+    static string RepoTuningDir() => Path.Combine(KeepverseRoots.Core(), "data", "tuning");
 
     static string LatestAptitudesPath()
     {

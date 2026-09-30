@@ -261,7 +261,7 @@ public class FusionAptitudesBroadcastTests : IAsyncLifetime
         await hub.DisposeAsync();
     }
 
-    static string RepoTuningDir() => Path.Combine(FindRepoRoot(), "data", "tuning");
+    static string RepoTuningDir() => Path.Combine(KeepverseRoots.Core(), "data", "tuning");
 
     static string LatestAptitudesPath()
     {

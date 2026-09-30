@@ -206,7 +206,7 @@ public class AuraRuntimeEndpointsTests : IAsyncLifetime
         public List<string> ActiveAuraIds { get; set; } = new();
     }
 
-    static string RepoTuningDir() => Path.Combine(FindRepoRoot(), "data", "tuning");
+    static string RepoTuningDir() => Path.Combine(KeepverseRoots.Core(), "data", "tuning");
 
     static int GetFreeTcpPort()
     {

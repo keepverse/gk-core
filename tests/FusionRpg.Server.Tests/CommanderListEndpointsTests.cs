@@ -191,7 +191,7 @@ public class CommanderListEndpointsTests : IAsyncLifetime
             Assert.Equal(string.Equals(row.Id, stable, StringComparison.Ordinal), row.IsDefault));
     }
 
-    static string RepoTuningDir() => Path.Combine(FindRepoRoot(), "data", "tuning");
+    static string RepoTuningDir() => Path.Combine(KeepverseRoots.Core(), "data", "tuning");
 
     static int GetFreeTcpPort()
     {

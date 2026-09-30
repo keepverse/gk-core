@@ -255,7 +255,7 @@ public class UniqueDefaultTriggerTests : IAsyncLifetime
         public Dictionary<string, long> Shares { get; set; } = new();
     }
 
-    static string RepoTuningDir() => Path.Combine(FindRepoRoot(), "data", "tuning");
+    static string RepoTuningDir() => Path.Combine(KeepverseRoots.Core(), "data", "tuning");
 
     static string LatestAptitudesPath()
     {

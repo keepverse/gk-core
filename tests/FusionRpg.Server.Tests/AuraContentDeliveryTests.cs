@@ -183,7 +183,7 @@ public class AuraContentDeliveryTests : IAsyncLifetime
         return KeepverseRoots.Core();
     }
 
-    static string RepoTuningDir() => Path.Combine(RepoRoot(), "data", "tuning");
+    static string RepoTuningDir() => Path.Combine(KeepverseRoots.Core(), "data", "tuning");
 
     static string LatestAptitudesPath()
     {

@@ -184,7 +184,7 @@ public class DerivedAuditEndpointsTests : IAsyncLifetime
         public double Value { get; set; }
     }
 
-    static string RepoTuningDir() => Path.Combine(FindRepoRoot(), "data", "tuning");
+    static string RepoTuningDir() => Path.Combine(KeepverseRoots.Core(), "data", "tuning");
 
     static string LatestAptitudesPath()
     {
