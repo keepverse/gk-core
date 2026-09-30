@@ -129,7 +129,7 @@ public sealed class ActorSurfaceEndpointsTests : IAsyncLifetime
     [Fact]
     public void Program_registers_the_actor_surface_route()
     {
-        var program = File.ReadAllText(Path.Combine(RepoSourceRoot(), "src", "FusionRpg.Server", "Program.cs"));
+        var program = File.ReadAllText(Path.Combine(KeepverseRoots.Core(), "src", "FusionRpg.Server", "Program.cs"));
         var code = StripLineComments(program);
 
         Assert.Contains("MapActorSurface()", code, StringComparison.Ordinal);
@@ -144,9 +144,12 @@ public sealed class ActorSurfaceEndpointsTests : IAsyncLifetime
     [Fact]
     public void Served_path_matches_the_path_the_web_client_requests()
     {
-        var root = RepoSourceRoot();
-        var endpoint = File.ReadAllText(Path.Combine(root, "src", "FusionRpg.Server", "ActorSurfaceEndpoints.cs"));
-        var client = File.ReadAllText(Path.Combine(root, "web", "fusion-rpg-web", "src", "lib", "bus", "actorSurface.ts"));
+        // The endpoint is gk-core's and the client is gk-web's. One root asked for both is
+        // the monorepo assumption in its purest form: no single repository contains them after
+        // the split, so the walk-up this replaced could not have been repaired by finding a
+        // better marker - it was being asked a question with three answers.
+        var endpoint = File.ReadAllText(Path.Combine(KeepverseRoots.Core(), "src", "FusionRpg.Server", "ActorSurfaceEndpoints.cs"));
+        var client = File.ReadAllText(Path.Combine(KeepverseRoots.Web(), "web", "fusion-rpg-web", "src", "lib", "bus", "actorSurface.ts"));
 
         const string path = "/api/catalogs/actor-surface";
         Assert.Contains($"\"{path}\"", StripLineComments(endpoint), StringComparison.Ordinal);
@@ -464,15 +467,28 @@ public sealed class ActorSurfaceEndpointsTests : IAsyncLifetime
     /// than guessed, because a guess here would silently re-point every other assertion in the file.
     /// </remarks>
     static string ServerElementCatalogFileName() =>
-        SingleElementCatalogFileName("src", "FusionRpg.Server", "Program.cs");
+        SingleElementCatalogFileName(KeepverseRoots.Core(), "src", "FusionRpg.Server", "Program.cs");
 
     /// <summary>The same, for the Injector host's boot wiring in <c>RpgHost.cs</c>.</summary>
     static string InjectorElementCatalogFileName() =>
-        SingleElementCatalogFileName("src", "FusionRpg.Injector", "Host", "RpgHost.cs");
+        SingleElementCatalogFileName(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Host", "RpgHost.cs");
 
-    static string SingleElementCatalogFileName(params string[] relativeParts)
+    /// <summary>
+    /// The catalog revision named by ONE file, asserted to name exactly one.
+    ///
+    /// <para>The owning repository is a PARAMETER, and that is the whole point of the signature. This
+    /// helper was called with a gk-core path (<c>src/FusionRpg.Server/Program.cs</c>) and a gk-fusion
+    /// path (<c>src/FusionRpg.Injector/Host/RpgHost.cs</c>) while resolving both against a single
+    /// root, so one caller silently asked gk-fusion for a gk-core file and got
+    /// <c>gk-fusion/src/FusionRpg.Server/Program.cs</c> - a path that does not exist. The failure
+    /// named that path, which is a better diagnostic than the walk-up it replaced and still entirely
+    /// avoidable: a repository boundary is not something a helper can infer from the arguments it was
+    /// given when those arguments are relative to a root the helper chose.
+    /// </para>
+    /// </summary>
+    static string SingleElementCatalogFileName(string ownerRoot, params string[] relativeParts)
     {
-        var path = Path.Combine(new[] { RepoSourceRoot() }.Concat(relativeParts).ToArray());
+        var path = Path.Combine(new[] { ownerRoot }.Concat(relativeParts).ToArray());
         Assert.True(File.Exists(path), "missing " + path);
 
         var names = Regex.Matches(StripLineComments(File.ReadAllText(path)), @"element-catalog\.v\d+\.json")
@@ -505,27 +521,6 @@ public sealed class ActorSurfaceEndpointsTests : IAsyncLifetime
     static string FindRepoRoot()
     {
         return KeepverseRoots.Core();
-    }
-
-    /// <summary>
-    /// The SOURCE root, for the tests that read <c>src/</c> or <c>web/</c> sources. Deliberately not
-    /// the same finder as <see cref="FindRepoRoot"/>: the build copies <c>gk-core/data/tuning</c> next to the
-    /// test executable, so a tuning-file marker stops the walk in <c>bin/Debug/net8.0</c> and every
-    /// <c>src/</c> path built from it throws <c>DirectoryNotFoundException</c>. The marker is the one
-    /// <c>ContentBootStartupWiringTests</c> already uses, because <c>gk-fusion/src/FusionRpg.Injector</c> is a
-    /// source-tree-only directory.
-    /// </summary>
-    static string RepoSourceRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo source root with src/FusionRpg.Injector");
     }
 
     static int GetFreeTcpPort()

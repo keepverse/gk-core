@@ -14,6 +14,11 @@ using FusionRpg.Core.Time;
 var builder = WebApplication.CreateBuilder(args);
 var urls = Environment.GetEnvironmentVariable("FUSIONRPG_URLS");
 var listenUrl = string.IsNullOrWhiteSpace(urls) ? "http://127.0.0.1:5088" : urls.Trim();
+
+// The verbs a missing endpoint can be asked for, declared once because the terminator has to cover
+// all of them: a terminator registered for GET alone leaves POST /api/nothing reachable by the SPA
+// fallback, which is the same defect one verb narrower.
+var MissingApiMethods = new[] { "GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS" };
 builder.WebHost.UseUrls(listenUrl);
 if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("FUSIONRPG_DATA")))
     builder.WebHost.UseContentRoot(AppContext.BaseDirectory);
@@ -2356,6 +2361,25 @@ else
 app.MapPerf();
 
 app.MapHub<RpgHub>("/hub/rpg");
+
+// AN UNMATCHED /api PATH IS A MISSING ENDPOINT, NOT A CLIENT-SIDE ROUTE. Registered before the SPA
+// fallback, which is otherwise unconstrained and answers EVERY unmatched path - including /api/... -
+// with index.html at HTTP 200. Two consequences, and the second is the serious one.
+//
+// A typo'd or version-mismatched API call returned 200 and an HTML body, so a client parsing JSON
+// failed far from the cause with a parse error instead of a 404. And every /api path "responded":
+// measured on this build, /api/definitely-not-a-route returned HTTP 200 and the SPA shell, while
+// /api/players returned real JSON. Any evidence gathered about the API through a status code was
+// therefore unfalsifiable - the specific shape of proof this workspace forbids, where a successful
+// response fabricates the precondition it appears to confirm.
+//
+// /hub is included because it is the other non-SPA prefix. MapHub is registered above, so the real
+// hub still matches first and only genuinely unmatched hub paths terminate here.
+app.MapMethods("/api/{**rest}", MissingApiMethods,
+               () => Results.NotFound(new { error = "no such endpoint" }));
+app.MapMethods("/hub/{**rest}", MissingApiMethods,
+               () => Results.NotFound(new { error = "no such hub" }));
+
 app.MapFallbackToFile("index.html");
 
 try
