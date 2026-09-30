@@ -388,8 +388,22 @@ def summarise(report: Report) -> tuple[str, str]:
     on a red run is less informative than the thing it replaces.
     """
     if report.red_gating:
+        # THE MOST SEVERE RED, NOT THE LAST ONE. This returned report.results[-1]["exit"], so the
+        # aggregate exit code depended on the ORDER the guards happened to run in: an identical set
+        # of results reported 64 or 1 purely by position, and reordering the registry silently changed
+        # what CI concluded. An audit caught it. It also undermines a claim made earlier in this
+        # session - that a refusal is distinguishable from a finding - which is true of a guard and
+        # arbitrary in aggregate, so the distinction has to be made HERE as well as there.
+        #
+        # UNDISPATCHABLE pairs with a guard's own refusal because neither is a finding about the
+        # tree: one says the guard could not run, the other says it could not see its subject. Both
+        # mean "no verdict was reached", and a reader who cannot tell that from a finding will treat
+        # a broken gate as a clean one.
+        red_ids = set(report.red_gating)
+        codes = {r["exit"] for r in report.results if r["id"] in red_ids and r["exit"] != 0}
+        worst = EXIT_UNDISPATCHABLE if EXIT_UNDISPATCHABLE in codes else (max(codes) if codes else 0)
         return (f"guards failed: {', '.join(report.red_gating)}{report.environment_note}",
-                report.results[-1]["exit"] or EXIT_FAILED)
+                worst or EXIT_FAILED)
     return f"GUARDS OK - {len(report.results)} guard(s) run, 0 red", EXIT_OK
 
 
