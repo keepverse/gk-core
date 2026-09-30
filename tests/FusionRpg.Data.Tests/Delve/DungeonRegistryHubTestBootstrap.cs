@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using FusionRpg.Core.Dungeon.Registry;
 using FusionRpg.Core.Dungeon.Tuning;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests.Delve;
 
@@ -23,7 +24,7 @@ internal static class DungeonRegistryHubTestBootstrap
             dir = dir.Parent;
         if (dir is null) throw new DirectoryNotFoundException("could not locate repo root above " + AppContext.BaseDirectory);
 
-        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(dir.FullName, "data", "seed", "dungeon", "_registry"));
+        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "_registry"));
         DungeonTuningHub.Configure(
             DungeonTuningLoader.Parse(File.ReadAllText(Path.Combine(dir.FullName, "data", "tuning", "dungeon.v3.json")), registries));
         EncounterTuningHub.Configure(

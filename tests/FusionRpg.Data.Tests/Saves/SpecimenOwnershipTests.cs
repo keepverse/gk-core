@@ -188,7 +188,7 @@ public class SpecimenOwnershipTests : System.IDisposable
     {
         var instanceId = ZombossSpecimen(25);
         var repoRoot = FindRepoRoot();
-        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(repoRoot, "data", "seed", "dungeon", "_registry"));
+        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "_registry"));
         var tuning = DungeonTuningLoader.Parse(
             File.ReadAllText(Path.Combine(repoRoot, "data", "tuning", "dungeon.v3.json")), registries);
 

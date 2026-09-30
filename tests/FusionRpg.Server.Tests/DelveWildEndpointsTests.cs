@@ -42,7 +42,7 @@ public class DelveWildEndpointsTests : IDisposable
         _playerId = _store.GetCurrentPlayerId();
 
         var repoRoot = FindRepoRoot();
-        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(repoRoot, "data", "seed", "dungeon", "_registry"));
+        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "_registry"));
         _rooms = new RoomTypeCatalog(registries.RoomKinds);
         _doors = new DoorTypeCatalog(registries.DoorKinds);
     }
@@ -60,7 +60,7 @@ public class DelveWildEndpointsTests : IDisposable
         var repoRoot = FindRepoRoot();
         var tuningDir = Path.Combine(repoRoot, "data", "tuning");
         string Read(string name) => File.ReadAllText(Path.Combine(tuningDir, name));
-        var dungeonRegistries = DungeonRegistryLoader.LoadAll(Path.Combine(repoRoot, "data", "seed", "dungeon", "_registry"));
+        var dungeonRegistries = DungeonRegistryLoader.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "_registry"));
         DungeonTuningHub.Configure(DungeonTuningLoader.Parse(Read("dungeon.v3.json"), dungeonRegistries));
         // Server.Tests' own PowerAndAptitudeTuningTestBootstrap module initializer configures
         // Power/Aptitude/DerivedStat/Rung/Aura/Items/CreatureSpeciesCatalog only -- ContractPolicy (the

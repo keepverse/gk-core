@@ -37,7 +37,7 @@ public class DelvePackClaimTests : IDisposable
         _store = _testStore.Store;
 
         var repoRoot = FindRepoRoot();
-        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(repoRoot, "data", "seed", "dungeon", "_registry"));
+        var registries = DungeonRegistryLoader.LoadAll(Path.Combine(KeepverseRoots.Content(), "data", "seed", "dungeon", "_registry"));
         _rooms = new RoomTypeCatalog(registries.RoomKinds);
         _doors = new DoorTypeCatalog(registries.DoorKinds);
         _tuning = DungeonTuningLoader.Parse(File.ReadAllText(Path.Combine(repoRoot, "data", "tuning", "dungeon.v3.json")), registries);
