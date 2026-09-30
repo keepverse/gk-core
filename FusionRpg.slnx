@@ -9,6 +9,13 @@
     <Project Path="src/FusionRpg.Server/FusionRpg.Server.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/FusionRpg.Bench/FusionRpg.Bench.csproj" />
+    <Project Path="tests/FusionRpg.CheatCore.Tests/FusionRpg.CheatCore.Tests.csproj" />
+    <Project Path="tests/FusionRpg.Data.Tests/FusionRpg.Data.Tests.csproj" />
+    <Project Path="tests/FusionRpg.FileMove.Tests/FusionRpg.FileMove.Tests.csproj" />
+    <Project Path="tests/FusionRpg.Guard.Tests/FusionRpg.Guard.Tests.csproj" />
+    <Project Path="tests/FusionRpg.SquadHarness.Tests/FusionRpg.SquadHarness.Tests.csproj" />
+    <Project Path="tests/FusionRpg.TestSplitAnalyzer.Tests/FusionRpg.TestSplitAnalyzer.Tests.csproj" />
     <Project Path="tests/FusionRpg.Core.Tests/FusionRpg.Core.Tests.csproj" />
     <Project Path="tests/FusionRpg.E2E.Tests/FusionRpg.E2E.Tests.csproj" />
     <Project Path="tests/FusionRpg.Server.Tests/FusionRpg.Server.Tests.csproj" />
