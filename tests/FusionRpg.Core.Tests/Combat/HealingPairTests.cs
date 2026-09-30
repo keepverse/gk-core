@@ -252,13 +252,22 @@ public class HealingPairTests
 
     static string ReadItemDataFile(params string[] relativeUnderData)
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
+        // This walked up from AppContext.BaseDirectory testing a candidate that never changed:
+        // KeepverseRoots.Content() is absolute and does not depend on where the walk currently is,
+        // so the loop condition was loop-invariant. It happened to be harmless HERE - the candidate
+        // is right on the first iteration and the walk only ever ran once - but a loop that cannot
+        // move is not a search, it is a single attempt wearing a search's clothes, and the next
+        // person to edit the candidate would have no reason to suspect the walk was load-bearing.
+        // The content root is named; there is nothing to walk up from.
+        var path = Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed", "items" }.Concat(relativeUnderData).ToArray());
+        if (!File.Exists(path))
         {
-            var candidate = Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed", "items" }.Concat(relativeUnderData).ToArray());
-            if (File.Exists(candidate)) return File.ReadAllText(candidate);
-            dir = dir.Parent;
+            throw new FileNotFoundException(
+                $"could not find {string.Join("/", relativeUnderData)} under the content root " +
+                $"'{KeepverseRoots.Content()}'. The content pack is a sibling repository, so a missing " +
+                $"file here means the pack is absent or the path is wrong - not that some parent " +
+                $"directory was searched and did not contain it.");
         }
-        throw new FileNotFoundException("could not find " + string.Join("/", relativeUnderData));
+        return File.ReadAllText(path);
     }
 }

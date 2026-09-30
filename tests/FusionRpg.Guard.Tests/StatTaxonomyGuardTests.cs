@@ -170,7 +170,10 @@ Assert.Contains("P1 ", stderr, StringComparison.Ordinal);
     static string NewFixture()
     {
         var dir = Path.Combine(Path.GetTempPath(), "fusionrpg-statpairsguard-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Path.Combine(KeepverseRoots.Content(), "data", "seed", "derived-stats"));
+        // The real gk-data pack is READ above (realCatalogPath) and must not be written at all.
+        // This named the pack; it was harmless only because the directory already existed. See
+        // ClassSystemGuardTests.NewFixture for the same fix and the reason.
+        Directory.CreateDirectory(Path.Combine(dir, "data", "seed", "derived-stats"));
         return dir;
     }
 

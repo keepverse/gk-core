@@ -335,8 +335,14 @@ public class ClassSystemGuardTests
     static string NewFixture()
     {
         var dir = Path.Combine(Path.GetTempPath(), "fusionrpg-classsystemguard-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Path.Combine(KeepverseRoots.Content(), "data", "seed", "aptitudes"));
-        Directory.CreateDirectory(Path.Combine(KeepverseRoots.Content(), "data", "seed", "derived-stats"));
+        // These two CreateDirectory calls named the real gk-data pack, so a guard test created
+        // directories inside a private repository. It was harmless only because both paths already
+        // existed - a test that mutates a repository it is only reading from is one refactor away
+        // from leaving debris there, and that is exactly what VerificationTopologyTests did with
+        // data/seed/items/row.json until b88603f. The fixture root is the test's own; every write
+        // below it already goes to `fixtureRoot`, so the real pack is only ever READ.
+        Directory.CreateDirectory(Path.Combine(dir, "data", "seed", "aptitudes"));
+        Directory.CreateDirectory(Path.Combine(dir, "data", "seed", "derived-stats"));
         return dir;
     }
 
