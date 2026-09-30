@@ -38,15 +38,41 @@ __all__ = ["subject_root"]
 
 
 def subject_root(root: Path, relative: tuple[str, ...], accessor) -> Path:
-    """The root that holds `relative` for this run: `root` if it has it, else the owner.
+    """The root that holds `relative` for this run, and WHY that root.
 
-    `accessor` is one of the `keepverse_roots` accessors, passed in rather than imported so this
-    module carries no opinion about WHICH repository owns which subject - that is the caller's
-    knowledge, and hard-coding it here would be a second place for the topology to live.
+    The distinction is between a FIXTURE and a REAL TREE, and it is made on a checkable property
+    rather than a guess about intent: a real repository is a git working tree, and a planted fixture
+    is a temporary directory that is not.
 
-    Raises whatever the accessor raises when the subject is in neither place. Callers are expected
-    to convert that into their own named refusal: this module resolves, it does not adjudicate.
+    - A FIXTURE carries its own subject, and that subject is what is under test. A guard contract test
+      plants its own roster, catalog or inventory and points `--root` at it, because a planted
+      violation is the only mechanism by which a rule is proven to fire. The fixture wins.
+    - A REAL TREE does not get to override the owner. If the root is a git repository and the
+      subject is missing from it, the subject is not there, and the owning repository holds it.
+
+    Without the second half, precedence is a hole rather than a rule: a caller who plants a
+    three-line `inventory.json` beside a real tree and passes that directory as `--root` silences a
+    guard that would otherwise report a finding. Measured, that is what happened - a planted file
+    turned the power guard from a G3 finding into `exit 0`. A guard that can be silenced by planting
+    a file in the place it is supposed to be checking is not a guard, and "the root wins" is only
+    safe while the root is somewhere other than the thing under test.
+
+    Root-then-owner for a fixture, owner-then-root for a real tree, decided by `is_git_tree`. It is
+    not a compromise between the two readings; each one is the correct answer for its own case.
+
+    Raises whatever the accessor raises when the subject is in neither place. Callers convert that
+    into their own named refusal: this module resolves, it does not adjudicate.
     """
-    if root.joinpath(*relative).exists():
-        return root
-    return accessor(root)
+    if not is_git_tree(root) and root.joinpath(*relative).exists():
+        return root          # a FIXTURE carries its own subject, and that is what is under test
+    return accessor(root)    # a REAL TREE resolves the owner, and never overrides it
+
+
+def is_git_tree(root: Path) -> bool:
+    """Is this a real repository working tree rather than a planted fixture?
+
+    `.git` is a directory in a normal clone and a FILE in a worktree or a submodule, so both are
+    accepted. A fixture is a temporary directory with neither.
+    """
+    git = root / ".git"
+    return git.is_dir() or git.is_file()

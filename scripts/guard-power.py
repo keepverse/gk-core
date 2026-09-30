@@ -170,45 +170,64 @@ def inventory_locations(inventory: dict) -> tuple[list[str], list[str]]:
     return tokens, unlocated
 
 
-# A REPOSITORY NAME AT THE HEAD OF AN INVENTORY TOKEN IS NOT PART OF THE PATH. The inventory is
-# gk-workflow's, so it names gk-core's files the way a reader who has the whole workspace names
-# them - `gk-core/src/FusionRpg.Core/...` - and 29 of its 33 location tokens are spelled that way.
-# This guard walks gk-core, so its own path is the repo-relative `src/FusionRpg.Core/...`.
+# HOW AN INVENTORY TOKEN IS MATCHED AGAINST A FILE. The inventory is gk-workflow's, so it names
+# gk-core's files the way a reader holding the whole workspace names them -
+# `gk-core/src/FusionRpg.Core/...` - and 29 of its 33 location tokens are spelled that way. This guard
+# walks gk-core, so its own path is the repo-relative `src/FusionRpg.Core/...`. Compared as authored
+# the two could never meet: exact equality fails on the extra segment, and a SHORTER string cannot
+# startswith a LONGER one, so all 29 prefixed tokens were unreachable and G3 could license only the 4
+# bare-spelled scales. Six declared curves were reported as undeclared, and the invisible half is worse
+# - the guard was one spelling away from licensing curves it never examined.
 #
-# Compared as authored, those two can never meet: exact equality fails on the extra segment, and a
-# SHORTER string cannot startswith a LONGER one, so all 29 prefixed tokens were unreachable and G3
-# could license only the 4 bare-spelled scales. Six findings were the visible part of that; the
-# invisible part is that the guard was one path spelling away from licensing curves it never
-# examined. This is the same class as the W2 manifest notation defect - a value compared in a
-# different notation from the one it is written in - and it fails the same way: the check appears to
-# run and cannot succeed.
-_REPO_PREFIXES = ("gk-core", "gk-forge", "gk-fusion", "gk-web", "gk-workflow",
-                  "gk-data", "gk-content", "gk-tests", "gk-assets")
+# Every rule below exists because STRIPPING A PREFIX IS A WAY TO MAKE A CHECK VACUOUS, and each was
+# found by an audit that attacked this function rather than reading it:
+#
+#   - AN EMPTY OR DIRECTORY-ONLY TOKEN LICENSES NOTHING. partition("gk-core/") yields an empty tail,
+#     and an empty string matches every path, so a token naming no file licensed the whole tree. That
+#     is the same fail-open the original PowerShell had, re-created by the fix for it.
+#   - A REPOSITORY IS STRIPPED ONLY WHEN IT REALLY HOLDS THE FILE. Stripping any recognised name let
+#     `gk-web/src/...`, `gk-fusion/src/...` and `gk-data/src/...` license a gk-core file, because the
+#     name matched even though the file is not in that repository. A token names a LOCATION, so the
+#     location has to exist there.
+#   - A PREFIX MUST END ON A PATH SEGMENT, so a token cannot license a file it does not name.
+#
+# The case semantics of the original comparison are preserved exactly - case-insensitive equality,
+# ordinal prefix - because the module docstring records that merging them changes which files G3
+# licenses. What changed is that a token now has to name a file.
 
 
-def _strip_repo_prefix(token: str) -> str:
-    head, sep, tail = token.partition("/")
-    return tail if sep and head in _REPO_PREFIXES else token
+def _candidate_rels(token: str, root: Path | None) -> list[str]:
+    """The repo-relative spellings `token` may legitimately mean. Empty licenses nothing."""
+    norm = token.replace("\\", "/").strip()
+    if not norm or norm.endswith("/"):
+        return []
+    out = [norm]
+    head, sep, tail = norm.partition("/")
+    if not sep or not tail:
+        return out
+    if root is None:
+        return out
+    # This repository named as itself, or a sibling that demonstrably holds this exact file.
+    if head == root.name or (root.parent / head / tail).is_file():
+        out.append(tail)
+    return out
 
 
-def _is_listed(rel_fwd: str, locations: list[str]) -> bool:
-    """`$relFwd -eq $_` (case-INSENSITIVE) or `$relFwd.StartsWith($_)` (ordinal, case-SENSITIVE).
+def _is_listed(rel_fwd: str, locations: list[str], root: Path | None = None) -> bool:
+    """Is this file licensed by any declared location?
 
-    The two halves disagree about case in the original, and transcribing them as one comparison would
-    change which files G3 licenses. Both halves are preserved exactly; the only change is that a
-    repository-name segment is removed from the token before either runs, so the comparison is
-    between two paths rather than between a path and a workspace-qualified name for it.
-
-    A repository name is stripped ONLY when it is one of the nine, by exact match. Stripping the
-    first segment of any token would quietly rewrite a genuine relative path, and a guard that
-    normalises more than it means is a guard nobody can predict.
+    Case-insensitive equality, then an ordinal prefix that must end on a path segment - the two
+    halves the original used, unmerged. A repository-name segment is removed first, but only when
+    that repository really holds the file.
     """
     for token in locations:
-        bare = _strip_repo_prefix(token)
-        if rel_fwd.lower() == bare.lower():
-            return True
-        if rel_fwd.startswith(bare):  # ordinal: a case-differing prefix does NOT match
-            return True
+        for cand in _candidate_rels(token, root):
+            if not cand:
+                continue
+            if rel_fwd.lower() == cand.lower():
+                return True
+            if rel_fwd.startswith(cand + "/"):  # ordinal, and a whole segment
+                return True
     return False
 
 
@@ -253,7 +272,7 @@ def check_g2_g3(root: Path, g2_allowlist: list[str], locations: list[str]) -> li
             if path.name not in allow:
                 findings.append(
                     f"G2 {rel}:{line_no}: private f({name})-shaped method outside Core/Power")
-            if not _is_listed(rel, locations):
+            if not _is_listed(rel, locations, root):
                 findings.append(
                     f"G3 {rel}:{line_no}: power-shaped method not listed in inventory.json")
     return findings
