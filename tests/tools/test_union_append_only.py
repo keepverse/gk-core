@@ -38,6 +38,7 @@ import json
 import os
 import re
 import shutil
+import string
 import subprocess
 import sys
 import tempfile
@@ -511,8 +512,17 @@ class ReportTests(ToolTestCase):
         # a hash this test does not own. guard-population-pin is right that a bare literal here
         # is a marker with nothing behind it - and its own standard says the fix is never to
         # add a pin marker to such a line but to rewrite it as the contract, so this states the
-        # contract instead. It also fails if the tool ever stops emitting a hex digest.
-        self.assertEqual(hashlib.sha256().digest_size * 2, len(envelope["out"]["sha256"]))
+        # contract instead.
+        digest = envelope["out"]["sha256"]
+        self.assertEqual(hashlib.sha256().digest_size * 2, len(digest))
+        # LENGTH ALONE IS NOT A HEX DIGEST. The length assertion above is satisfied by any string of
+        # the right size, so a tool that emitted 64 'z' characters would pass it. An audit caught the
+        # claim that this "also fails if the tool stops emitting a hex digest" - it did not, because
+        # the length is all that was ever checked. The alphabet is the other half of "hex", so it is
+        # asserted here rather than the comment being quietly weakened instead.
+        self.assertTrue(
+            all(c in string.hexdigits for c in digest),
+            f"the digest is the right length but is not hex: {digest[:16]!r}...")
 
     def test_the_human_summary_keeps_its_original_fields(self) -> None:
         """resolve-append-only.ps1 reads only the exit code, but a human greps this line: the original
