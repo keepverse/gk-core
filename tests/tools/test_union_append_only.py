@@ -31,6 +31,7 @@ inside the test. No store, no network, no game, and nothing outside `tempfile`'s
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import importlib.util
 import io
 import json
@@ -505,7 +506,13 @@ class ReportTests(ToolTestCase):
         self.assertEqual(uao.SCHEMA, envelope["schema"])
         self.assertTrue(envelope["ok"])
         self.assertEqual(ACCEPTED, envelope["exitCode"])
-        self.assertEqual(64, len(envelope["out"]["sha256"]))
+        # A hex digest is two characters per digest byte. That is the invariant; 64 is what it
+        # happens to be for SHA-256 today, and hard-coding the number would pin a property of
+        # a hash this test does not own. guard-population-pin is right that a bare literal here
+        # is a marker with nothing behind it - and its own standard says the fix is never to
+        # add a pin marker to such a line but to rewrite it as the contract, so this states the
+        # contract instead. It also fails if the tool ever stops emitting a hex digest.
+        self.assertEqual(hashlib.sha256().digest_size * 2, len(envelope["out"]["sha256"]))
 
     def test_the_human_summary_keeps_its_original_fields(self) -> None:
         """resolve-append-only.ps1 reads only the exit code, but a human greps this line: the original

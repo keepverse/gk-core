@@ -164,10 +164,65 @@ def owner_exists(owner: str, repo_root: Path) -> bool:
 _IMMUTABLE_PATH_RE = re.compile(r"^data/tuning/[a-zA-Z0-9_-]+\.v\d+\.json$")
 
 
+# AN OPTIONAL REPOSITORY PREFIX, because this guard's own standard mandates one. The spec
+# (docs/architecture/solid-enforcement/spec-population-pin.md) writes its worked example as
+# `pin: immutable gk-core/data/tuning/aptitudes.v8.json` and states the P3 rule as "immutable <path>
+# must be a tracked gk-core/data/tuning/<d>.v<n>.json" - workspace-qualified, with the repository
+# named. The regex this function used was `^data/tuning/...`, which rejects that form, so every pin
+# written to the standard was reported as "not a tracked data/tuning/<domain>.v<n>.json". Ten of
+# them, across four test files, each naming a file that exists and is tracked.
+#
+# The pins in the tree were following the standard. The guard was contradicting it, and the pins
+# were the thing being changed to suit the contradiction - backwards, and the shape of change this
+# repository refuses: the standard moving to fit the instrument.
+#
+# Accepting the prefix does not weaken the rule. The substantive requirement is untouched - the
+# target must still be a real, tracked, VERSIONED tuning file, `<domain>.v<n>.json` under some
+# repository's data/tuning - and it is resolved against the repository that owns it rather than
+# joined onto this one, which is what produced the nonsense path gk-core/gk-core/data/tuning/... .
+_REPO_PREFIX_RE = re.compile(r"^(?P<repo>[A-Za-z0-9_.-]+)/(?P<rest>.+)$")
+
+
 def immutable_path_is_valid(path_text: str, repo_root: Path) -> bool:
-    if not _IMMUTABLE_PATH_RE.match(path_text.replace("\\", "/")):
+    """A pin naming a real, tracked, VERSIONED tuning file.
+
+    Two steps, and they are separate on purpose. An optional leading repository segment is removed
+    FIRST - and only when it names a repository that exists here - because the standard this guard
+    implements writes its pins workspace-qualified. What remains must then match the shape rule
+    exactly, and finally the file must exist in the repository that owns it.
+
+    Resolving against the OWNING repository rather than joining onto this one is what stops the
+    qualified form producing gk-core/gk-core/data/tuning/... , a path that names a directory nobody
+    can create by following the error's own advice.
+    """
+    normalized = path_text.replace("\\", "/")
+    repo_dir = repo_root
+    prefix = _REPO_PREFIX_RE.match(normalized)
+    # The remainder must ITSELF be a data/tuning path, or there is no repository segment here to
+    # strip. Without that condition the heuristic misfires on the bare form: `data` is a real
+    # directory in gk-core, so `data/tuning/x.v1.json` matched, lost its `data/`, and stopped
+    # matching the shape rule - which is how a fix for the qualified form broke the plain one.
+    # Requiring `/data/tuning/` in the tail states the rule instead of guessing at a name list.
+    if prefix and prefix.group("rest").startswith("data/tuning/"):
+        named = prefix.group("repo")
+        # Two ways a leading segment can name a repository. It can be a SIBLING, in which case the
+        # directory is under this root. Or it can be THIS repository - and `gk-core/data/tuning/...`
+        # is spelled relative to the WORKSPACE, so joining it onto gk-core gives gk-core/gk-core/...,
+        # a path nobody can create by following the error's own advice. The repository's own name is
+        # the second case, and a test that did not know it would resolve the standard's own worked
+        # example to a directory that does not exist.
+        if named == repo_root.name:
+            repo_dir = repo_root
+        elif (repo_root / named).is_dir():
+            repo_dir = repo_root / named
+        else:
+            repo_dir = None
+        if repo_dir is None:
+            return False
+        normalized = prefix.group("rest")
+    if not _IMMUTABLE_PATH_RE.match(normalized):
         return False
-    return (repo_root / path_text).is_file()
+    return (repo_dir / normalized).is_file()
 
 
 def iter_scan_files(repo_root: Path, scan_roots: "tuple[str, ...]"):
