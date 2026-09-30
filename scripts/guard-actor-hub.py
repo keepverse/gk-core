@@ -49,7 +49,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from cscan import strip_whole_line_comments  # noqa: E402
+from keepverse_roots import fusion_root  # noqa: E402
 
 GUARD_ID = "actor-hub"
 VERDICT_OK = "ACTOR-HUB GUARD OK"
@@ -60,6 +62,27 @@ EXIT_REFUSED = 64
 
 SRC = ("src",)
 INJECTOR = "src/FusionRpg.Injector"
+
+
+# WHICH REPOSITORY OWNS A DECLARED SCOPE. The ActorHub seam genuinely spans two of them: the
+# Hub is FusionRpg.Core's and its consumer is FusionRpg.Injector's, so three of the four paths
+# this guard names have been in a sibling repository since the split. The monorepo had one
+# root, so `root / scope` was a correct expression and the question did not arise.
+#
+# Two guards behaved differently under the split, and both were silent. walk() returns [] for a
+# scope that is not a directory, so R5/R6/R7/R8/R9 scanned an empty Injector tree and reported
+# nothing. R4 builds its path directly and checked is_file(), so it reported two of the three
+# files in its required table as MISSING - a green-sounding "missing required file" naming files
+# that have never moved. Neither is a clock/count defect; both are this one.
+_CROSS_REPO_SCOPE = ("src/FusionRpg.Injector", "src/FusionRpg.Launcher")
+
+
+def owning_root(root: Path, scope: str) -> Path:
+    """The root that owns `scope`, which is not always `root`."""
+    norm = scope.replace("\\", "/").rstrip("/")
+    if any(norm == s or norm.startswith(s + "/") for s in _CROSS_REPO_SCOPE):
+        return fusion_root(root)
+    return root
 
 # PowerShell's -match folds case, so every pattern in this guard is compiled with IGNORECASE.
 # See the module docstring, contract note 1. Do not "fix" this by dropping the flag.
@@ -201,7 +224,18 @@ def allowed(path: Path, table: tuple[tuple[str, str], ...]) -> str | None:
 
 
 def rel(root: Path, path: Path) -> str:
-    return path.relative_to(root).as_posix()
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        # A cross-repo finding. It must NAME the repository, not print a sibling path with no
+        # repository on it: a reader cannot otherwise tell which tree a finding is about, and
+        # the alternative - falling back to the absolute path - makes findings machine-stable
+        # and machine-local at the same time, so a golden recorded on one machine fails on
+        # another. A repository-relative path is neither.
+        try:
+            return f"gk-fusion/{path.relative_to(fusion_root(root)).as_posix()}"
+        except ValueError:
+            return path.name
 
 
 def finding_at(root: Path, rule: str, path: Path, message: str) -> dict:
@@ -222,7 +256,7 @@ def missing(rule: str, name: str) -> dict:
 
 
 def walk(root: Path, scope: str, glob: str = "*.cs") -> list[Path]:
-    base = root / scope
+    base = owning_root(root, scope) / scope
     if not base.is_dir():
         return []
     return sorted(p for p in base.rglob(glob) if p.is_file())
@@ -302,7 +336,7 @@ def r3_no_new_channel_mod_producer(root: Path) -> list[dict]:
 def r4_hub_required(root: Path) -> list[dict]:
     out: list[dict] = []
     for req in HUB_REQUIRED:
-        path = root / "src" / req.path
+        path = owning_root(root, "src/" + req.path) / "src" / req.path
         if not path.is_file():
             # The DECLARED path, not the repo-relative one: the original's R4 message reads
             # "missing required file: FusionRpg.Injector\Stats\EntityApply.cs" while its R1

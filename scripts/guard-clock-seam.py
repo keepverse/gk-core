@@ -53,7 +53,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from cscan import strip_comments_preserving_layout  # noqa: E402
+from keepverse_roots import fusion_root  # noqa: E402
 
 GUARD_ID = "clock-seam"
 VERDICT_OK = "CLOCK SEAM GUARD OK"
@@ -194,7 +196,7 @@ def source_files(src_dir: Path) -> list[Path]:
     return sorted(found)
 
 
-def repo_relative(root: Path, path: Path) -> str:
+def repo_relative(root: Path, path: Path, extra_roots: tuple[Path, ...] = ()) -> str:
     """Repository-relative, forward-slashed, or a NAMED REFUSAL.
 
     Found by the contract test: with an absolute `--src-dir`, `root / <absolute>` keeps whatever
@@ -206,13 +208,23 @@ def repo_relative(root: Path, path: Path) -> str:
     fallback: a file outside the root is refused by name.
     """
     resolved = path.resolve()
-    base = root.resolve()
-    try:
-        return resolved.relative_to(base).as_posix()
-    except ValueError as exc:
-        raise Refusal("FILE-OUTSIDE-ROOT",
-                      f"{resolved} is not under the root {base}, so it has no repository-relative "
-                      f"path and the allowlist (which is keyed by one) cannot be applied to it") from exc
+    # The allowlist is keyed by a path RELATIVE TO THE REPOSITORY THAT OWNS THE FILE, so a file
+    # this guard legitimately scans from a sibling repository needs that repository as its base -
+    # not a fallback, which is what the no-fallback rule below exists to forbid. The distinction
+    # is the whole point: a FALLBACK invents a spelling the allowlist cannot match, and it did
+    # exactly that here. Declaring the second root up front means every path is either relative
+    # to a real repository or refused by name, and the refusal still stands for anything that is
+    # genuinely outside every scanned tree.
+    for base in (root.resolve(), *(r.resolve() for r in extra_roots)):
+        try:
+            return resolved.relative_to(base).as_posix()
+        except ValueError:
+            continue
+    raise Refusal("FILE-OUTSIDE-ROOT",
+                  f"{resolved} is not under any scanned root "
+                  f"({', '.join(str(r) for r in (root, *extra_roots))}), so it has no "
+                  f"repository-relative path and the allowlist (which is keyed by one) cannot be "
+                  f"applied to it")
 
 
 def _stripped(text: str) -> list[str]:
@@ -235,14 +247,31 @@ def check(root: Path, src_dir: str | None = None) -> dict:
         # treasure hunt.
         raise Refusal("SRC-DIR-MISSING", str(src))
 
+    # A DECLARED CROSS-REPOSITORY SOURCE TREE. Five of the nine allowlist entries name
+    # FusionRpg.Injector and FusionRpg.Launcher, which are gk-fusion's since the split, so a scan
+    # confined to this repository's src/ never sees those files and reports every one of them
+    # STALE. That is a red guard whose message is about staleness rather than about a missing
+    # sibling - and the obvious "fix" of deleting the five entries deletes the guard's coverage of
+    # real clock reads, which is the exact silent narrowing this program exists to prevent.
+    #
+    # Only added when the caller did NOT pass --src-dir: a contract test that points the guard at a
+    # fixture tree is asking about that tree, and quietly adding a second one would make its
+    # expectations unreproducible.
+    extra_roots: tuple[Path, ...] = ()
     files = source_files(src)
+    if src_dir is None or src_dir == DEFAULT_SRC_DIR:
+        fusion = fusion_root(root)
+        if fusion.is_dir():
+            extra_roots = (fusion,)
+            files = files + source_files(fusion / "src")
+
     violations: list[str] = []
     ambient_hits = allowed_hits = clock_type_hits = 0
     matched: set[tuple[str, str]] = set()
 
     # ---- rule 1: an ambient clock read outside the seam and outside the allowlist -------------
     for path in files:
-        rel = repo_relative(root, path)
+        rel = repo_relative(root, path, extra_roots)
         try:
             lines = _stripped(path.read_text(encoding="utf-8", errors="replace"))
         except OSError as exc:
