@@ -19,6 +19,9 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import root_carrying  # noqa: E402
 SCRIPT = REPO / "scripts" / "ps1-rename-sweep.py"
 
 _spec = importlib.util.spec_from_file_location("ps1_rename_sweep", SCRIPT)
@@ -480,7 +483,13 @@ class AStemWhoseSuccessorIsRenamed(unittest.TestCase):
         # verify, which is the opposite of what a named refusal is for.
         self.assertIn("scripts", sweep.TOOL_DIRS)
         self.assertIn(".claude/cmdc-agents/scripts", sweep.TOOL_DIRS)
-        harness = REPO / ".claude" / "cmdc-agents" / "scripts" / "accept_lane.py"
+        # The real harness is the WORKSPACE ROOT's: `.claude/cmdc-agents/scripts/` is gk-workflow's
+        # lane tooling and gk-core has no `.claude/` directory at all. The property this test reasons
+        # about is unchanged - that `check_preconditions` searches every directory in TOOL_DIRS rather
+        # than a hardcoded `scripts/` - and the planted fixture on the next lines still exercises it.
+        owner = root_carrying(REPO, ".claude/cmdc-agents/scripts/accept_lane.py")
+        self.assertIsNotNone(owner, "no repository carries .claude/cmdc-agents/scripts/accept_lane.py")
+        harness = owner / ".claude" / "cmdc-agents" / "scripts" / "accept_lane.py"
         self.assertTrue(harness.is_file(), "the fixture this test reasons about must exist")
         with tempfile.TemporaryDirectory(prefix="sweep-") as tmp:
             root = Path(tmp)
