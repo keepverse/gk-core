@@ -1,5 +1,6 @@
 using System.IO;
 using System.Runtime.CompilerServices;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -17,17 +18,17 @@ internal static class CommanderDirectoryTestBootstrap
         FusionRpg.Core.Commanders.CommanderDirectoryHub.Configure(
             FusionRpg.Core.Commanders.DataCommanderDirectory.Parse(
                 File.ReadAllText(Path.Combine(
-                    FindRepoRoot(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json"))));
+                    KeepverseRoots.Content(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json"))));
         // identity-rename T13: the same registry production configures before store.Init().
         FusionRpg.Core.Narrative.LeadNamesHub.Configure(FusionRpg.Core.Narrative.LeadNames.Parse(
                 File.ReadAllText(Path.Combine(
-                    FindRepoRoot(), "data", "seed", "narrative", "_registry", "names.en.v1.json"))));
+                    KeepverseRoots.Content(), "data", "seed", "narrative", "_registry", "names.en.v1.json"))));
         // save-identity SE4.12: `RpgStore.Init` seeds a save's empires from the authored registry, so
         // every test that constructs a store needs it configured first.
         FusionRpg.Core.Saves.NewSaveEmpiresHub.Configure(
             FusionRpg.Core.Saves.NewSaveEmpires.Parse(
                 File.ReadAllText(Path.Combine(
-                    FindRepoRoot(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json"))));
+                    KeepverseRoots.Content(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json"))));
     }
 
     static string FindRepoRoot()

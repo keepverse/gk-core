@@ -2,6 +2,7 @@ using FusionRpg.Core.Commanders;
 using FusionRpg.Core.Progression;
 using FusionRpg.Core.Saves;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests;
 
@@ -34,7 +35,7 @@ public class CommanderSeatTests : IDisposable
         // rows only, so this class composes the source and restores the previous directory on dispose.
         _previousDirectory = CommanderDirectoryHub.Current;
         var authored = DataCommanderDirectory.Parse(File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json")));
+            KeepverseRoots.Content(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json")));
         CommanderDirectoryHub.Configure(authored.WithSource(new UniqueCommanderSource(authored, _store)));
     }
 

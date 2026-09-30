@@ -1,6 +1,7 @@
 ﻿using FusionRpg.Core.Creatures.Generation;
 using System.Text.Json;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Creatures;
 
@@ -192,7 +193,7 @@ public class SpeciesBuildTuningTests
         // contracts of v1..v5 are pinned by the `VersionJson` cases instead.
         var tuning = SpeciesBuildTuningLoader.Parse(ShippedJson());
         using var measureDoc = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "data", "generated", "creatures", "_species-build-measure.json")));
+            KeepverseRoots.Content(), "data", "generated", "creatures", "_species-build-measure.json")));
         var measure = measureDoc.RootElement;
 
         Assert.Equal(6, tuning.Version);

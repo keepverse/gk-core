@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using FusionRpg.Data.Tests;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -44,7 +45,7 @@ public class CommanderEndpointsTests : IAsyncLifetime
         // the routes and the session cache below resolve a role-holding creature. Restored on dispose.
         _previousDirectory = CommanderDirectoryHub.Current;
         var authored = DataCommanderDirectory.Parse(File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json")));
+            KeepverseRoots.Content(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json")));
         CommanderDirectoryHub.Configure(authored.WithSource(new UniqueCommanderSource(authored, _store)));
 
         var port = GetFreeTcpPort();

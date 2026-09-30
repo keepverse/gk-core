@@ -2,6 +2,7 @@ using FusionRpg.Core.Commanders;
 using FusionRpg.Core.Creatures;
 using FusionRpg.Core.Saves;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Data.Tests;
 
@@ -193,7 +194,7 @@ public class CommanderRoleTests : IDisposable
         // bootstrap configures the authored rows only, so this test composes the source and restores it.
         var previous = CommanderDirectoryHub.Current;
         var authored = DataCommanderDirectory.Parse(File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json")));
+            KeepverseRoots.Content(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json")));
         CommanderDirectoryHub.Configure(authored.WithSource(new UniqueCommanderSource(authored, _store)));
         try
         {

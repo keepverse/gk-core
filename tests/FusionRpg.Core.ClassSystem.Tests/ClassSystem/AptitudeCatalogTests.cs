@@ -2,6 +2,7 @@ using System.Text.Json;
 using FusionRpg.Core.Stats.Aptitudes;
 using FusionRpg.Core.Stats.Derived;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.ClassSystem;
 
@@ -73,7 +74,7 @@ public class AptitudeCatalogTests
     [Fact]
     public void RosterJsonAgreesWithCode()
     {
-        var path = Path.Combine(FindRepoRoot(), "data", "seed", "aptitudes", "roster.json");
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "aptitudes", "roster.json");
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
         var entries = doc.RootElement.GetProperty("entries").EnumerateArray()
             .Select(e => (

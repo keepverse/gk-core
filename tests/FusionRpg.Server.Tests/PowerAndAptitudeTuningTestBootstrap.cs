@@ -6,6 +6,7 @@ using FusionRpg.Core.Creatures;
 using FusionRpg.Core.Power;
 using FusionRpg.Core.Stats.Aptitudes;
 using FusionRpg.Core.Stats.Derived;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Server.Tests;
 
@@ -85,7 +86,7 @@ internal static class PowerAndAptitudeTuningTestBootstrap
                 File.ReadAllText(Path.Combine(tuningDir, "reaction-lane.v3.json"))));
         FusionRpg.Core.World.StructureCatalog.Configure(
             FusionRpg.Core.World.StructureSeed.StructureCorpus.Load(
-                Path.Combine(FindRepoRoot(), "data", "seed", "structures")));
+                Path.Combine(KeepverseRoots.Content(), "data", "seed", "structures")));
         // Same reason: BattleRunState's constructor unconditionally reads ActionTimingPolicy.Tuning.
         // Values transcribed from the real, shipped gk-core/data/tuning/action-timing.v1.json, matching Core
         // .Tests' own ContractTuningTestBootstrap.DefaultActionTiming exactly.

@@ -1,6 +1,10 @@
 using System.Diagnostics;
 using Xunit;
+using FusionRpg.TestSupport;
 
+// This assembly does not reference FusionRpg.Core, so it cannot use the production
+// KeepverseRoots; the test-support resolver that Directory.Build.props links into every
+// *.Tests project is the one available here, and it answers the same question.
 namespace FusionRpg.Guard.Tests;
 
 /// <summary>
@@ -139,7 +143,7 @@ Assert.Contains("P1 ", stderr, StringComparison.Ordinal);
         var fixture = NewFixture();
         try
         {
-            var realCatalogPath = Path.Combine(FindRepoRoot(), "data", "seed", "derived-stats", "catalog.json");
+            var realCatalogPath = Path.Combine(ContentRoot.Resolve(), "data", "seed", "derived-stats", "catalog.json");
             var root = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(realCatalogPath))!.AsObject();
             var entries = root["entries"]!.AsArray();
 

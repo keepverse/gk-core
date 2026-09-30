@@ -5,6 +5,7 @@ using FusionRpg.Core.World;
 using FusionRpg.Core.World.Loam;
 using Xunit;
 using Xunit.Abstractions;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.World;
 
@@ -210,7 +211,7 @@ public class WildSpeciesSpawnTests
         // fallback must name a species the real import pipeline can actually expand.
         var catalog = new HashSet<string>(StringComparer.Ordinal);
         foreach (var file in Directory.EnumerateFiles(
-                     Path.Combine(FindRepoRoot(), "data", "seed", "creatures", "species"),
+                     Path.Combine(KeepverseRoots.Content(), "data", "seed", "creatures", "species"),
                      "*.json", SearchOption.AllDirectories))
         {
             using var doc = JsonDocument.Parse(File.ReadAllText(file));

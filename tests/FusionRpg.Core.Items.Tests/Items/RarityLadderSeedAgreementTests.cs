@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FusionRpg.Core.Items;
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Core.Tests.Items;
 
@@ -19,7 +20,7 @@ public class RarityLadderSeedAgreementTests
     public void RungIds_match_the_seeded_ladder_value_for_value()
     {
         using var doc = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(FindRepoRoot(), "data", "seed", "rarity", "ladder.v1.json")));
+            File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "rarity", "ladder.v1.json")));
 
         var seeded = doc.RootElement.GetProperty("entries").EnumerateArray()
             .OrderBy(e => e.GetProperty("ordinal").GetInt32())
