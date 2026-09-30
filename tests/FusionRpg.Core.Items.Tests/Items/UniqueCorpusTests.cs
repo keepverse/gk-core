@@ -19,18 +19,6 @@ namespace FusionRpg.Core.Tests.Items;
 /// </summary>
 public class UniqueCorpusTests
 {
-    static string RepoRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md"))) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("repo root");
-    }
-
     static string Seed(params string[] parts) => Path.Combine(new[] { KeepverseRoots.Content(), "data", "seed" }.Concat(parts).ToArray());
 
     static readonly IReadOnlyList<UniqueSeed> Corpus = LoadCorpus();

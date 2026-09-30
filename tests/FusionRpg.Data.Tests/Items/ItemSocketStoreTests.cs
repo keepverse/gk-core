@@ -1,6 +1,7 @@
 using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Sockets;
+using FusionRpg.Core.Workspace;
 using FusionRpg.Data;
 using FusionRpg.Data.Sqlite;
 using Xunit;
@@ -44,9 +45,10 @@ public class ItemSocketStoreTests : IDisposable
 
     static SocketTuning Tuning()
     {
-        var dir = AppContext.BaseDirectory;
-        while (dir is not null && !File.Exists(Path.Combine(dir, "CONTRIBUTING.md"))) dir = Path.GetDirectoryName(dir);
-        return SocketTuning.Parse(File.ReadAllText(Path.Combine(dir!, "data", "tuning", SocketTuningFiles.Current)));
+        // See EquipProjectionSocketsTests.Sockets(): the CONTRIBUTING.md marker walk overshoots now
+        // that the file is gk-workflow's, and data/tuning is gk-core's own.
+        return SocketTuning.Parse(File.ReadAllText(
+            Path.Combine(KeepverseRoots.Core(), "data", "tuning", SocketTuningFiles.Current)));
     }
 
     [Fact]
@@ -357,8 +359,8 @@ public class ItemSocketStoreTests : IDisposable
 
     static IReadOnlyDictionary<string, ItemRarityRungTuning> SampleRarityTuning()
     {
-        var dir = AppContext.BaseDirectory;
-        while (dir is not null && !File.Exists(Path.Combine(dir, "CONTRIBUTING.md"))) dir = Path.GetDirectoryName(dir);
-        return ItemRarityTuning.Parse(File.ReadAllText(Path.Combine(dir!, "data", "tuning", "item-rarity.v1.json")));
+        // See Tuning() above: a named root, not a marker walk.
+        return ItemRarityTuning.Parse(File.ReadAllText(
+            Path.Combine(KeepverseRoots.Core(), "data", "tuning", "item-rarity.v1.json")));
     }
 }

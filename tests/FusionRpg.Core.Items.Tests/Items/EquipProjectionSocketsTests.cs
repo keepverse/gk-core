@@ -3,6 +3,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Items;
 using FusionRpg.Core.Items.Sockets;
 using FusionRpg.Core.Stats.Derived;
+using FusionRpg.Core.Workspace;
 using Xunit;
 
 namespace FusionRpg.Core.Tests.Items;
@@ -104,11 +105,11 @@ public class EquipProjectionSocketsTests
 
     static SocketTuning Sockets()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md")))
-            dir = dir.Parent;
+        // data/tuning is gk-core's own. The walk-up that used to find it keyed on CONTRIBUTING.md,
+        // which the topology moved to gk-workflow, so the walk ran off the top of the repository and
+        // produced a path under the workspace root that cannot exist. A named root is the whole fix.
         return SocketTuning.Parse(File.ReadAllText(
-            Path.Combine(dir!.FullName, "data", "tuning", SocketTuningFiles.Current)));
+            Path.Combine(KeepverseRoots.Core(), "data", "tuning", SocketTuningFiles.Current)));
     }
 
     static AtomRow WordAtom() => new()

@@ -6,6 +6,7 @@ using FusionRpg.Core.PassiveTree.Catalog;
 using FusionRpg.Core.PassiveTree.Resolve;
 using FusionRpg.Core.Power;
 using FusionRpg.Core.Stats.Derived;
+using FusionRpg.Core.Workspace;
 using Xunit;
 
 namespace FusionRpg.Core.Tests.PassiveTree.Resolve;
@@ -18,11 +19,11 @@ public class TreeBinderResolverParityTests
 {
     static PowerTuning RealPowerTuning()
     {
-        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md")))
-            dir = dir.Parent;
-        var root = dir?.FullName ?? throw new DirectoryNotFoundException("repo root not found");
-        return PowerTuningLoader.Parse(File.ReadAllText(Path.Combine(root, "data", "tuning", "power-scale.v2.json")));
+        // data/tuning is gk-core's own. This walk-up keyed on Directory.GetCurrentDirectory() AND on
+        // CONTRIBUTING.md, so it depended on the test host's working directory as well; the file is
+        // gk-workflow's now, so the walk could only land somewhere wrong.
+        return PowerTuningLoader.Parse(File.ReadAllText(
+            Path.Combine(KeepverseRoots.Core(), "data", "tuning", "power-scale.v2.json")));
     }
 
     [Fact]

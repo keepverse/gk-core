@@ -1,5 +1,6 @@
 using FusionRpg.Core.Items.Materials;
 using FusionRpg.Core.Items.Sockets;
+using FusionRpg.Core.Workspace;
 using Xunit;
 
 namespace FusionRpg.Core.Tests.Items;
@@ -15,12 +16,10 @@ public class ItemUpgradeCostContractTests
 {
     static MaterialTuning Tuning()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md")))
-            dir = dir.Parent;
-        Assert.NotNull(dir);
+        // See EquipProjectionSocketsTests.Sockets(): the CONTRIBUTING.md marker walk overshoots now
+        // that the file is gk-workflow's, and data/tuning is gk-core's own.
         return MaterialTuning.Parse(File.ReadAllText(
-            Path.Combine(dir!.FullName, "data", "tuning", SocketTuningFiles.Materials)));
+            Path.Combine(KeepverseRoots.Core(), "data", "tuning", SocketTuningFiles.Materials)));
     }
 
     [Fact]

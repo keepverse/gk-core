@@ -3,6 +3,7 @@ using FusionRpg.Contracts;
 using FusionRpg.Core.Battle;
 using FusionRpg.Core.Effects;
 using FusionRpg.Core.Stats.Derived;
+using FusionRpg.Core.Workspace;
 using Xunit;
 
 namespace FusionRpg.Core.Tests.Battle;
@@ -182,12 +183,10 @@ public class BattleEffectMathTests
     [Fact]
     public void No_reflect_formula_was_added_under_the_battle_folder()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "CONTRIBUTING.md")))
-            dir = dir.Parent;
-        Assert.NotNull(dir);
-
-        var battle = Path.Combine(dir!.FullName, "src", "FusionRpg.Core", "Battle");
+        // src/FusionRpg.Core/Battle is gk-core's own. The walk-up keyed on CONTRIBUTING.md, which the
+        // topology moved to gk-workflow, so it ran past the repository and this test was scanning a
+        // path under the workspace root that does not exist.
+        var battle = Path.Combine(KeepverseRoots.Core(), "src", "FusionRpg.Core", "Battle");
         var offenders = Directory.EnumerateFiles(battle, "*.cs", SearchOption.AllDirectories)
             .Where(f => System.Text.RegularExpressions.Regex.IsMatch(
                 File.ReadAllText(f), @"/\s*[A-Za-z0-9_.]*Reflect(Rate|Share)Scale"))
