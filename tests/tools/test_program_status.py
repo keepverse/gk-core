@@ -20,13 +20,40 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import root_carrying  # noqa: E402
+
+
+def _owned(relative: str) -> Path:
+    """The file `relative`, in the repository that actually OWNS it.
+
+    <para>TWO of this module's four constants moved out of gk-core in the split, and a constant built
+    from `REPO` names gk-core whatever moved. `BOUNDARY` became gk-workflow's
+    `session-boundary-check.py`; `ACCEPT` became gk-workflow's `accept_lane.py`, the twin of
+    `accept-lane.ps1`. Neither file exists in gk-core at all, so both constants pointed at nothing,
+    and the drift guards below were reading a path with no file behind it - which is why six tests
+    failed on an owner that had simply gone somewhere else.
+
+    <para>The point of these guards is that they read the OWNER rather than a copy of the owner's
+    copy, so a hard-coded path defeats the thing being tested. Raising rather than falling back is
+    deliberate: a fallback would substitute `REPO / relative`, which is exactly the bug, and a guard
+    that cannot find its owner must say so instead of reading nothing and reporting a pass.
+    """
+    root = root_carrying(REPO, relative)
+    if root is None:
+        raise RuntimeError(
+            f"no repository in this workspace carries {relative!r}, so its owner cannot be read")
+    return root.joinpath(*relative.replace("\\", "/").split("/"))
+
+
 TOOL = REPO / "scripts" / "program_status.py"
 RULE = REPO / "scripts" / "audit-program-pipeline.py"
-BOUNDARY = REPO / "scripts" / "session-boundary-check.py"
+BOUNDARY = _owned("scripts/session-boundary-check.py")
 # The acceptance gate's owner. It was `accept-lane.ps1` until the port; the vocabulary moved to
 # the twin and the drift guard moved with it, because the POINT of this test is that it reads the
 # OWNER rather than a copy of the owner's copy.
-ACCEPT = REPO / ".claude" / "cmdc-agents" / "scripts" / "accept_lane.py"
+ACCEPT = _owned(".claude/cmdc-agents/scripts/accept_lane.py")
 
 
 def _load(path: Path, name: str):
@@ -552,8 +579,28 @@ class RealTreeTests(unittest.TestCase):
         payload = json.dumps(status_mod.asdict(status_mod.build_report(REPO, timeout=120)))
         # The rule is "no path from the machine that ran this", not "no backslash anywhere" — a
         # committed document may legitimately quote a path such as `H:\Games\...`.
-        self.assertNotIn(str(REPO), payload)
-        self.assertNotIn(str(REPO.name) + os.sep, payload)
+        #
+        # The second assertion read the ESCAPED JSON, and an escaped JSON is full of backslashes that
+        # are not paths. A task title longer than 43 characters is truncated with the ellipsis
+        # character `…`, which json.dumps writes as the six characters `\u2026` - so a title that
+        # merely NAMES this repository as a repo-relative path, `... a new gk-core…`, contains the
+        # literal `gk-core\` and was reported as a machine path. Measured on the real report: the
+        # single match was one such truncated title, and a search for a real drive-rooted path found
+        # none. Before the split this repository's name was long and distinctive enough not to occur in
+        # ordinary task prose; `gk-core` does occur, so the proxy collided with content.
+        #
+        # Re-serialising with ensure_ascii=False resolves the escapes, so `gk-core…` no longer contains
+        # a backslash while a genuine `gk-core\scripts\...` still does. The criterion is unchanged and
+        # the check is now strictly wider, not narrower: the third assertion below rejects ANY
+        # drive-rooted absolute path, which the first one could only do for this repository's own
+        # prefix. A drive path can never survive as a `\uXXXX` escape, because `D` and `:` are not
+        # escaped, so resolving them cannot hide one.
+        plain = json.dumps(status_mod.asdict(status_mod.build_report(REPO, timeout=120)),
+                           ensure_ascii=False)
+        self.assertNotIn(str(REPO), plain)
+        self.assertNotIn(str(REPO.name) + os.sep, plain)
+        leak = re.search(r"[A-Za-z]:[\\/]", plain)
+        self.assertIsNone(leak, f"an absolute Windows path leaked into the report: {leak!r}")
 
 
 if __name__ == "__main__":

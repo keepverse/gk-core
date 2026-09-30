@@ -50,6 +50,9 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 HERE = Path(__file__).resolve().parent
+
+sys.path.insert(0, str(HERE / "lib"))
+from keepverse_roots import RootNotFound, workspace_root  # noqa: E402  (the insert above first)
 REPO = HERE.parent
 DEFAULT_TIMEOUT = 30.0
 
@@ -461,22 +464,56 @@ CAVEATS = [
 ]
 
 
+def tasks_root(repo: Path) -> Path:
+    """The repository that owns `tasks/` for this run: local first, then the workspace.
+
+    <para>This tool lives in gk-core and its SUBJECT lives in gk-workflow. `tasks/`,
+    `tasks/sessions/`, `.claude/cmdc-agents/acceptance/` and every `tasks/*-ledger.jsonl` are the
+    workspace root's, while `scripts/todo-shapes.v1.json` is gk-core's - one tool, two repositories,
+    which the split made true rather than made broken.
+
+    <para>Local first, then the workspace, and that order is load-bearing in both directions. A
+    FIXTURE carries its own `tasks/`, and that is the corpus under test: `_fixture_repo` plants the
+    todos, the session records and the acceptance artefacts precisely so a planted finding is the
+    only mechanism by which a rule is proven to fire. Resolving the workspace first would let a real
+    tree's todo files answer a fixture's question. gk-core, by contrast, has no `tasks/` at all, so
+    the local check simply misses and the workspace answers - which is why the guard on this tool was
+    not removed but narrowed to what it was actually asserting.
+    """
+    if (repo / "tasks").is_dir():
+        return repo
+    return workspace_root(repo)
+
+
 def build_report(repo: Path = REPO, program: str | None = None, timeout: float = DEFAULT_TIMEOUT) -> Report:
-    if not (repo / "tasks").is_dir() or not (repo / "scripts").is_dir():
-        raise Refusal("NO-REPO", f"{repo} has no tasks/ and scripts/")
+    # `scripts/` belongs to the tool's own repository and `tasks/` may belong to another, so the two
+    # preconditions are asked of two roots rather than of one. They were asked of one root, and the
+    # conjunction could not be satisfied anywhere in the workspace: gk-core has scripts/ and no
+    # tasks/, gk-workflow has tasks/ and the tool is not there. The effect was that the documented
+    # `python scripts/program_status.py` refused NO-REPO from inside gk-core, and the two tests that
+    # run this tool against THIS repository - the ones that exist because a fixture cannot catch a
+    # corpus containing a shape the author never imagined - could not run at all.
+    if not (repo / "scripts").is_dir():
+        raise Refusal("NO-REPO", f"{repo} has no scripts/")
+    try:
+        data = tasks_root(repo)
+    except RootNotFound as exc:
+        raise Refusal("NO-REPO", f"{repo} has no tasks/ and no repository above it does either: {exc}") from exc
+    if not (data / "tasks").is_dir():
+        raise Refusal("NO-REPO", f"{repo} has no tasks/ and {data} does not either")
     # The shape map is read FIRST: it is a local file with its own named refusal, and importing the
     # block rule before it turns "your marker map is gone" into an opaque import error.
-    shapes = _shape_map(repo)
+    shapes = _shape_map(repo)   # gk-core's marker map - it ships with the block rule
     rule = load_rule_module(repo)
-    git = git_state(repo, timeout)
-    statuses = program_statuses(repo, rule, shapes, timeout)
+    git = git_state(data, timeout)   # the HEAD the task records actually belong to
+    statuses = program_statuses(data, rule, shapes, timeout)
     if program:
         statuses = [s for s in statuses if s.program == program or fnmatch.fnmatch(s.program, program)]
         if not statuses:
             raise Refusal("NO-TODO-FILES", f"no program matches {program!r}")
-    sessions = session_records(repo)
-    arts = acceptances(repo, git.head, timeout)
-    books = ledgers(repo)
+    sessions = session_records(data)
+    arts = acceptances(data, git.head, timeout)
+    books = ledgers(data)
 
     for status in statuses:
         status.fencedBy = sorted(s.session for s in sessions
