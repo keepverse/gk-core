@@ -23,8 +23,21 @@ internal static class KeepverseLayout
         var d = new DirectoryInfo(start ?? AppContext.BaseDirectory);
         while (d != null)
         {
+            // Two markers, not one - the same rule as src/FusionRpg.Core/Workspace/KeepverseRoots.cs
+            // and the three Python copies, because this is a fourth copy of the same contract and it is
+            // the one most tests actually call. A split repository satisfies the one-marker probe BY
+            // ITSELF: gk-forge owns its own FusionRpg.slnx and its own
+            // data/seed/creatures/{_generated,_registry}, because the split left a repository's
+            // generator inputs where the generator is. Walking up from a test binary under gk-forge
+            // stopped at gk-forge and reported Legacy=true.
+            //
+            // The two C# fixtures that plant a legacy layout - KeepverseRootsTests.LegacyLayout and
+            // SeedImportRunnerFindUpTests.LegacyLayout - ALREADY create data/tuning beside data/seed,
+            // so neither needed changing. That is worth stating: they were right and the probe was
+            // wrong, which is the opposite of the usual fixture-drift story.
             if (File.Exists(Path.Combine(d.FullName, "FusionRpg.slnx")) &&
-                Directory.Exists(Path.Combine(d.FullName, "data", "seed")))
+                Directory.Exists(Path.Combine(d.FullName, "data", "seed")) &&
+                Directory.Exists(Path.Combine(d.FullName, "data", "tuning")))
                 return (true, d.FullName);
             if (Directory.Exists(Path.Combine(d.FullName, "gk-core")) &&
                 Directory.Exists(Path.Combine(d.FullName, "gk-data")))

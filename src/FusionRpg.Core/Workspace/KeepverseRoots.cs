@@ -40,8 +40,28 @@ public static class KeepverseRoots
         while (dir is not null)
         {
             var root = dir.FullName;
+            // The legacy probe requires data/tuning as well as data/seed, and that is the same fix the
+            // three Python copies carry. A split repository satisfies the old one-marker probe BY
+            // ITSELF: gk-forge owns its own FusionRpg.slnx and its own
+            // data/seed/creatures/{_generated,_registry}, because the split left a repository's generator
+            // inputs where the generator is - so a walk upward from anywhere inside gk-forge stopped at
+            // gk-forge and this type reported Legacy=true for it. That is not a cosmetic misdetection:
+            // ContentRoot() returns `root` unchanged when Legacy is true, so every content path resolved
+            // into gk-forge's partial data/seed instead of the gk-data pack, and CoreRoot() resolved to
+            // gk-forge instead of gk-core.
+            //
+            // Verified against the pre-split repository rather than assumed: at its HEAD it carries
+            // FusionRpg.slnx, data/seed, data/tuning and data/generated side by side. Measured across
+            // the split, of the repositories carrying the solution file - gk-forge, gk-core,
+            // gk-fusion - data/tuning is in gk-core ALONE, so no split repository satisfies both markers.
+            //
+            // NEAREST WINS is unchanged and is not negotiable: a legacy clone nested inside the workspace
+            // must resolve against itself, or content resolves into a pack the caller never asked for.
+            // The fix is the probe's PRECISION, not the walk's order - an attempt to make the outermost
+            // match win fixed two repositories, did nothing for gk-forge, and broke that contract.
             if (File.Exists(Path.Combine(root, "FusionRpg.slnx")) &&
-                Directory.Exists(Path.Combine(root, "data", "seed")))
+                Directory.Exists(Path.Combine(root, "data", "seed")) &&
+                Directory.Exists(Path.Combine(root, "data", "tuning")))
                 return (true, root);
             if (Directory.Exists(Path.Combine(root, "gk-core")) &&
                 Directory.Exists(Path.Combine(root, "gk-data")))
