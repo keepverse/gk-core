@@ -504,7 +504,7 @@ jobs:
         working-directory: tools/tuning
         run: |
           # pytest is installed by the seedsmith lockfile step above; this step must stay after it.
-          python -m pytest . -q -p no:cacheprovider
+          python -m pytest . -q -p no:cacheprovider --continue-on-collection-errors
           if ($LASTEXITCODE -ne 0) { throw "tools/tuning's own test suite failed" }
 
       # The `tools-audit-tests` pytest project (registry root `.`, tests `gk-core/tests/tools`) owns
@@ -518,7 +518,7 @@ jobs:
         working-directory: .
         run: |
           # Stdlib-only tests; pytest itself comes from the seedsmith lockfile step above.
-          python -m pytest tests/tools -q -p no:cacheprovider
+          python -m pytest tests/tools -q -p no:cacheprovider --continue-on-collection-errors
           if ($LASTEXITCODE -ne 0) { throw "tools-audit-tests' own test suite failed" }
 
       - name: Fail-closed merge/acceptance regression
@@ -541,7 +541,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "ip-censor lockfile install failed" }
           python -m pip install -e . --no-deps
           if ($LASTEXITCODE -ne 0) { throw "ip-censor editable install failed" }
-          python -m pytest tests -q -p no:cacheprovider
+          python -m pytest tests -q -p no:cacheprovider --continue-on-collection-errors
           if ($LASTEXITCODE -ne 0) { throw "ip-censor's own test suite failed" }
 
       # ip-censor T11 (advisory CI scan, owner ruling IC-3). The scan is ADVISORY in CI: it exits 0
@@ -584,7 +584,7 @@ jobs:
           # new, uncalibrated metric. Every other metric in the suite (Coverage, Distribution,
           # Balance, Constraint, ExemplarConformance, SemanticDedup, Quality) still starts
           # measure-only, per spec-metrics.md §4's normal calibration discipline.
-          python -m pytest tests -q
+          python -m pytest tests -q --continue-on-collection-errors
           if ($LASTEXITCODE -ne 0) { throw "seedsmith's own test suite failed" }
           python -m seedsmith check --adapter items --gate ../../data/seed/items
           if ($LASTEXITCODE -ne 0) { throw "item seed corpus has reachability gaps" }

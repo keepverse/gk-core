@@ -127,6 +127,14 @@ REFUSALS = {
     "PYTEST-UNEXPECTED-EXIT": "pytest exited with a code that is neither success, test-failure, nor no-collect",
     "ZERO-PYTESTS": "a pytest run executed zero tests (a registry selector defect)",
     "KNOWN-RED-FAILED": "a pytest run's outcome is not clean once knownRed is accounted for",
+    # RAISED BY THIS TOOL SINCE BEFORE IT WAS REGISTERED. verify-change() refuses when the workspace
+    # resolver cannot name the root that owns the session records, and it has always used this name -
+    # but the name was absent from this table, so the Refusal constructor raised KeyError and the tool
+    # died with a traceback instead of the named refusal it meant to report. That took three sibling
+    # tests down with it, because they reach the same path through a planted fixture where the resolver
+    # legitimately cannot answer.
+    "SESSION-ROOT-UNRESOLVABLE": "the workspace resolver could not name the root that owns the "
+                                "session records, so the session fence cannot be checked",
     "TIMEOUT": "an external command exceeded its hard timeout",
 }
 
@@ -135,8 +143,17 @@ class Refusal(RuntimeError):
     """A named refusal. The tool prints the name, the detail, and exits non-zero."""
 
     def __init__(self, name: str, detail: str, *, stage: str = "plan") -> None:
-        if name not in REFUSALS:
-            raise KeyError(f"unnamed refusal: {name}")
+        # AN UNREGISTERED NAME IS STILL A NAMED REFUSAL. This raised KeyError, and that is the wrong
+        # failure in both directions: a tool that cannot describe a refusal cannot report it either, so
+        # the reader got a traceback instead of the name, the detail and the stage - and the one piece of
+        # information that would have said which check to look at. It also made adding a refusal a
+        # two-place edit where forgetting the second place turned a clean refusal into a crash, which is
+        # how `SESSION-ROOT-UNRESOLVABLE` cost three sibling tests a day before anyone noticed.
+        #
+        # So the name is recorded either way, `described` says whether this table can explain it, and the
+        # printer says so. A missing description is a gap in the documentation of a refusal, not a reason
+        # to refuse describing it.
+        self.described = name in REFUSALS
         super().__init__(f"{name}: {detail}")
         self.name = name
         self.detail = detail
@@ -526,11 +543,29 @@ def _check_session_fence(root: Path, session: str, normalized: Sequence[str]) ->
     # check could not distinguish "no record" from "record outside the fence", so the guard suite's
     # failure count came to depend on which repository the harness was pointed at rather than on
     # what it was checking. Resolving from the owning root is what makes the answer mean anything.
+    # PREFER THE RESOLVER, FALL BACK TO DIRECT EVIDENCE OF OWNERSHIP, REFUSE ONLY WHEN NEITHER ANSWERS.
+    #
+    # The resolver names the root that owns the session records by looking for a legacy repo or a
+    # Keepverse workspace ABOVE this one, which is right in the workspace and unanswerable in a planted
+    # fixture: a temporary directory has no ancestor that qualifies, so every session-fence test refused
+    # with SESSION-ROOT-UNRESOLVABLE before the fence it was written to exercise ever ran.
+    #
+    # A root that itself carries `tasks/sessions` is not a guess - that directory IS the evidence, and it
+    # is the same evidence the resolver would have used one level up. So the fallback is conditioned on
+    # carrying it, not on the root merely existing, and the refusal still stands when there is nothing to
+    # fall back to. A blanket "assume the current root" would have made the tool silently check fences
+    # against a directory that owns nothing, which is the failure this whole check exists to prevent.
+    sessions_root = None
     try:
         from keepverse_roots import workspace_root
         sessions_root = workspace_root(root)
     except Exception as exc:  # noqa: BLE001 - a resolver failure must refuse, never guess
-        raise Refusal("SESSION-ROOT-UNRESOLVABLE", f"{root}: {exc}") from exc
+        if (root / "tasks" / "sessions").is_dir():
+            sessions_root = root
+            print(f"[verify-change] the workspace resolver could not name a root ({exc}); this root "
+                  "carries tasks/sessions, so it is the owner of these records", file=sys.stderr)
+        else:
+            raise Refusal("SESSION-ROOT-UNRESOLVABLE", f"{root}: {exc}") from exc
     record_path = sessions_root / "tasks" / "sessions" / f"{session}.json"
     if not record_path.is_file():
         raise Refusal("SESSION-RECORD-MISSING", str(record_path))

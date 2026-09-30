@@ -53,14 +53,45 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
+GUARD_ID = "verification-boundaries"
+
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 import verification_boundaries as vb  # noqa: E402  (the lib lives beside this tool, not on sys.path)
-from keepverse_roots import (  # noqa: E402
-    authored_content_root, content_root, core_root, forge_root, fusion_root, web_root,
-    workspace_root,
-)
 
-GUARD_ID = "verification-boundaries"
+# THE RESOLVER IS OPTIONAL, AND SAYING SO IS THE POINT.
+#
+# This import was unconditional when the cross-repository resolution landed, and it broke every test
+# that plants a COPY of this guard into a temporary `scripts/` directory: a fixture has no `lib/` beside
+# it, so `from keepverse_roots import ...` raised ModuleNotFoundError at import time. The guard then
+# died with a traceback instead of a verdict, and 29 tests in `test_verify_change.py` reported a
+# missing refusal rather than the guard's own finding. Those failures were invisible for a day because
+# a collection error elsewhere was aborting the whole pytest run before anything executed.
+#
+# A fixture legitimately has no sibling repositories, so resolving against its own root only is the
+# CORRECT answer there - and an accessor that returns None is exactly how `repo_bases` already skips a
+# repository it cannot name. So the fallback is not a silent reversion of the fix: it prints a warning
+# naming itself, so a real repository that has lost `lib/keepverse_roots.py` is visible instead of
+# quietly resolving everything against gk-core again - which is the defect this whole change existed to
+# remove.
+try:
+    from keepverse_roots import (  # noqa: E402
+        authored_content_root, content_root, core_root, forge_root, fusion_root, web_root,
+        workspace_root,
+    )
+    RESOLVER_AVAILABLE = True
+except ImportError as _resolver_error:  # a planted fixture, or a repository missing its lib/
+    RESOLVER_AVAILABLE = False
+    print(f"[{GUARD_ID}] WARNING: the workspace resolver is unavailable ({_resolver_error}); this run "
+          "resolves declared paths against its OWN ROOT ONLY. In a planted fixture that is correct - a "
+          "fixture has no sibling repositories. In a real repository it means "
+          "scripts/lib/keepverse_roots.py is missing, and every cross-repository path will be reported "
+          "unresolved.", file=sys.stderr)
+
+    def _absent(_start=None):
+        return None
+    authored_content_root = content_root = core_root = _absent
+    forge_root = fusion_root = web_root = workspace_root = _absent
+
 EXIT_OK = 0
 EXIT_FAILED = 1
 
