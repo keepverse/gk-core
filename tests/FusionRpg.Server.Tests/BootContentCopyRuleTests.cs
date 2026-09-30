@@ -92,7 +92,15 @@ public class BootContentCopyRuleTests
             // The element's own body, up to its close. A <Link> is a child of the <Content> that
             // declared it, so pairing them needs the element boundary rather than a global search -
             // otherwise one rule's Link would be credited to the rule above it.
-            var tail = rule.Length < csprojSource.Length ? csprojSource[rule.Length..] : string.Empty;
+            //
+            // `Index + Length`, NOT `Length`. Match.Length is how many characters the match spans; the
+            // end of the match is Index + Length, and the first <Content> in a csproj is nowhere near
+            // offset 0. Using Length alone made every rule's "body" start near the top of the file, so
+            // the body was bounded by some EARLIER element's </Content> and the Link it found - when it
+            // found one - belonged to a different rule. That is why exactly one base came out clean: the
+            // first rule, whose body happened to still contain its own Link.
+            var start = rule.Index + rule.Length;
+            var tail = start < csprojSource.Length ? csprojSource[start..] : string.Empty;
             var close = tail.IndexOf("</Content>", StringComparison.Ordinal);
             var selfClose = tail.IndexOf("/>", StringComparison.Ordinal);
             if (close < 0 || (selfClose >= 0 && selfClose < close)) close = selfClose;
@@ -135,7 +143,8 @@ public class BootContentCopyRuleTests
         var expected = new List<string>();
         foreach (Match rule in Regex.Matches(csproj, @"<Content\s+Include=""(?<inc>[^""]+)"""))
         {
-            var tail = csproj[rule.Length..];
+            var start = rule.Index + rule.Length;
+            var tail = csproj[start..];
             var close = tail.IndexOf("</Content>", StringComparison.Ordinal);
             var selfClose = tail.IndexOf("/>", StringComparison.Ordinal);
             if (close < 0 || (selfClose >= 0 && selfClose < close)) close = selfClose;
