@@ -29,13 +29,30 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "lib"))
+from keepverse_roots import content_root, forge_root, workspace_root  # noqa: E402
+
+# The corpus is gk-data's pack and the tool under test imports seedsmith, which is gk-forge's. Neither
+# path exists under gk-core, so `REPO_ROOT / "tools" / "seedsmith"` raised ModuleNotFoundError AT
+# COLLECTION - which is why this file was one of the nine dark suites, and why a collection error
+# aborting the run could hide the other 76 files entirely.
+_FORGE = forge_root(REPO_ROOT)
+# `content_root()` is the PACK root (gk-data/packs/fusion), not its data/seed - verified by measuring
+# both: `<pack>/data/seed/items` is a directory and `<pack>/items` is not. I got this wrong first and
+# it showed up as `.../gk-data/packs/fusion/items/materials/materials.json` in two failures, which is
+# the same slip as ladders.py earlier in this program: a resolver accessor that returns the pack, used
+# as though it returned the seed tree.
+_ITEMS = content_root(REPO_ROOT) / "data" / "seed" / "items"
+# The ref path is workspace-relative, so it is joined here and nowhere else.
+_WORKSPACE = workspace_root(REPO_ROOT)
 SCRIPT = REPO_ROOT / "scripts" / "reemit-colliding-item-names.py"
 
 _spec = importlib.util.spec_from_file_location("reemit_colliding", SCRIPT)
 reemit = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(reemit)
 
-sys.path.insert(0, str(REPO_ROOT / "tools" / "seedsmith"))
+sys.path.insert(0, str(_FORGE / "tools" / "seedsmith"))
 from seedsmith.adapters.items.materialgen import run as run_mod  # noqa: E402
 
 
@@ -160,7 +177,7 @@ class CrossCorpusTests(unittest.TestCase):
         What is worth pinning on the real tree: the collector gathers names from the other corpora (so the
         pass is live, not inert), and HEAD's materials do not collide with any of them.
         """
-        items = REPO_ROOT / "data" / "seed" / "items"
+        items = _ITEMS
         owners = reemit.other_corpus_names(items, items / "materials" / "materials.json")
         self.assertGreater(len(owners), 500, "the sets corpus alone carries far more names than this; if "
                                              "this drops, the collector stopped walking the tree")
@@ -638,7 +655,7 @@ class DefectClassWiringTests(unittest.TestCase):
     any of it is spent.
     """
 
-    LIVE_CORPUS = REPO_ROOT / "data" / "seed" / "items" / "materials" / "materials.json"
+    LIVE_CORPUS = _ITEMS / "materials" / "materials.json"
 
     def _live_ids(self) -> "tuple[str, str]":
         """Two REAL runtimeIds from the live corpus, so the write-target guard is satisfied.
@@ -999,14 +1016,21 @@ class CrossCorpusSkipPathTests(unittest.TestCase):
     def test_the_skip_path_must_actually_exist(self) -> None:
         """The property that was broken, stated directly: a skip path that does not exist makes the
         exclusion a silent no-op, and the tool cannot say so."""
-        items = REPO_ROOT / "data" / "seed" / "items"
+        items = _ITEMS
         joined = items / reemit.DEFAULT_CORPUS_IN_REF
         self.assertFalse(joined.exists(),
                          f"FAIL-BEFORE: {joined} is a doubled path that cannot exist, so the materials "
                          f"corpus is never skipped and every material name joins `owners`")
+        # The criterion is UNCHANGED and is the whole point of this class: the constant is a
+        # workspace-relative path, so it must be joined to the WORKSPACE root - joining it onto the
+        # items root builds a doubled path that cannot exist and the exclusion becomes a silent no-op.
+        # What changed is only WHICH root, because after the split the path no longer hangs off the
+        # repository this file lives in. `REPO_ROOT` here is gk-core, which would build
+        # `gk-core/gk-data/packs/fusion/...` - and that is the exact failure the assertion exists to
+        # catch, now wearing a different prefix.
         self.assertEqual(
-            (REPO_ROOT / reemit.DEFAULT_CORPUS_IN_REF), items / "materials" / "materials.json",
-            "FAIL-BEFORE: the constant is repo-relative, so it must be joined to the REPO root")
+            (_WORKSPACE / reemit.DEFAULT_CORPUS_IN_REF), items / "materials" / "materials.json",
+            "FAIL-BEFORE: the constant is workspace-relative, so it must be joined to the WORKSPACE root")
 
     def test_the_materials_corpus_is_really_excluded_from_owners(self) -> None:
         """Behaviour, not a path spelling: no `material.*` id may appear in `owners`."""

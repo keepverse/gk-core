@@ -41,13 +41,37 @@ import sys
 import time
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
-SEEDSMITH = REPO_ROOT / "tools" / "seedsmith"
+
+# TWO ROOTS, BECAUSE TWO REPOSITORIES. Before the split every workspace path hung off one root; the
+# corpus is gk-data's pack, seedsmith is gk-forge's, and this file is gk-core's. The seedsmith path and
+# the items root below both named directories that exist in neither gk-core nor anywhere this module
+# could reach - and the tool's own comment at the cross_corpus_collisions call already said so: it
+# names `gk-data/packs/fusion/data/seed/items/materials/materials.json` as what DEFAULT_CORPUS_IN_REF
+# IS, while the constant beside it still held the pre-split spelling. That is the fifth time in this
+# program that the documentation was right and the code beside it was stale.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "lib"))
+from keepverse_roots import content_root, forge_root, workspace_root  # noqa: E402  (above first)
+
+FORGE_ROOT = forge_root(REPO_ROOT)
+SEEDSMITH = FORGE_ROOT / "tools" / "seedsmith"
+# `content_root()` is the PACK root, so the seed tree sits below it. Measured rather than assumed,
+# because guessing this wrong is a mistake this program has already made once with ladders.py:
+# <pack>/data/seed/items is a directory and <pack>/items is not.
+ITEMS_ROOT = content_root(REPO_ROOT) / "data" / "seed" / "items"
+# The ref path is workspace-relative, so it is joined here and nowhere else.
+WORKSPACE_ROOT = workspace_root(REPO_ROOT)
 DEFAULT_REF = "rescue/corpus-bcu211-itemseedgen-run"
-DEFAULT_CORPUS_IN_REF = "data/seed/items/materials/materials.json"
+# TWO JOBS, TWO BASES, AND THE SPLIT MADE THEM DIFFERENT. This constant is the path INSIDE a git ref,
+# which is workspace-relative - which is exactly what this file's own comment further down says when it
+# names `gk-data/packs/fusion/data/seed/items/materials/materials.json`. It was ALSO being joined onto
+# REPO_ROOT for the filesystem, which after the split produces
+# `gk-core/data/seed/items/materials/materials.json` - the failure this run surfaced. So it is now the
+# ref path and nothing else, and the live corpus is ITEMS_ROOT.
+DEFAULT_CORPUS_IN_REF = "gk-data/packs/fusion/data/seed/items/materials/materials.json"
 #: Where `materialgen` actually WRITES: its CLI has no `--out-dir`, so this is the target no matter what
 #: `--ref`/`--corpus` was read from. A module constant rather than an inline join, so the precondition that
 #: compares the plan against it can be pointed at a fixture instead of the real corpus.
-LIVE_MATERIALS_PATH = "data/seed/items/materials/materials.json"
+LIVE_MATERIALS_PATH = "data/seed/items/materials/materials.json"   # relative to ITEMS_ROOT
 
 #: Windows `CreateProcess` caps a command line at 32,767 characters, and the id list is one argument
 #: inside it. The default leaves headroom for the interpreter, the module path and the other flags.
@@ -465,7 +489,7 @@ def main(argv=None) -> int:
     # there would under-report and finish the job still holding 6 duplicates.
     cross = cross_corpus_collisions(
         kept,
-        # `REPO_ROOT / DEFAULT_CORPUS_IN_REF`, NOT `items_root / DEFAULT_CORPUS_IN_REF`.
+        # `WORKSPACE_ROOT / DEFAULT_CORPUS_IN_REF`, NOT `ITEMS_ROOT / DEFAULT_CORPUS_IN_REF`.
         #
         # ⛔ Real bug, found 2026-09-28 by cross-checking two of my own measurements: my hand-rolled probe
         # counted 13 cross-corpus collisions and this call reported 181, with holders reading
@@ -484,8 +508,8 @@ def main(argv=None) -> int:
         # `charm.*` or `set.*` also holds, which is exactly what this function exists to catch - was
         # SWAMPED in 181 false positives, so the tool's own diagnostic understated the very thing it was
         # written to measure.
-        other_corpus_names(REPO_ROOT / "data" / "seed" / "items",
-                           REPO_ROOT / DEFAULT_CORPUS_IN_REF),
+        other_corpus_names(ITEMS_ROOT,
+                           WORKSPACE_ROOT / DEFAULT_CORPUS_IN_REF),
         run_mod)
     already = set(ids)
     ordered = list(ids) + [rid for rid, _, _ in cross if rid not in already]
@@ -525,7 +549,7 @@ def main(argv=None) -> int:
     # every target is present and `run_batch` upserts in place. That is a `git checkout <ref> -- <path>`,
     # a git operation rather than a hand-edit, and the stale intermediate is never committed - the
     # re-emit rewrites the file before the single commit that lands it.
-    live_path = REPO_ROOT / LIVE_MATERIALS_PATH
+    live_path = ITEMS_ROOT / "materials" / "materials.json"
     live_rows, present, absent = 0, 0, []
     if live_path.is_file():
         try:
@@ -542,7 +566,7 @@ def main(argv=None) -> int:
         # which is exactly the situation a test fixture creates - and a refusal that dies with a traceback
         # is worse than no refusal, because the operator sees a crash instead of the reason.
         try:
-            shown = str(live_path.relative_to(REPO_ROOT))
+            shown = str(live_path.relative_to(ITEMS_ROOT))
         except ValueError:
             shown = str(live_path)
         return fail("precondition", 2,
