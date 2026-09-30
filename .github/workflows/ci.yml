@@ -167,6 +167,12 @@ jobs:
           # (HARD by design — a violation SHOULD fail CI) and DominanceGuard's MECHANISM tests only
           # (returns without throwing, coverage populated, no clock applied — code regressions, safe to
           # block on regardless of what the verdict itself says).
+          # The seven `dotnet test` calls that named gk-forge and gk-fusion test projects were
+          # removed here. They could never have run in this repository - gk-core has no
+          # tests/FusionRpg.AtomImporter.Tests, no tools/LawnCombatObserver.Tests - so the
+          # gate they sat in was reporting a coverage it did not have. Those projects are
+          # wired where they live: gk-forge and gk-fusion each run their own solution from
+          # their own CI, which is the thin entrypoint the workspace ownership rule asks for.
           dotnet test tests/FusionRpg.Core.Balance.Tests/FusionRpg.Core.Balance.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min --filter "Category=BalanceGuard"
           if ($LASTEXITCODE -ne 0) { throw "balance-guard: a termination invariant or dominance-guard-mechanism test failed — see output above" }
 
@@ -332,22 +338,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "FusionRpg.CheatCore.Tests failed" }
           dotnet test tests/FusionRpg.Guard.Tests/FusionRpg.Guard.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
           if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Guard.Tests failed" }
-          dotnet test tests/FusionRpg.Launcher.Tests/FusionRpg.Launcher.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
-          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Launcher.Tests failed" }
-          dotnet test tests/FusionRpg.ItemSeedValidator.Tests/FusionRpg.ItemSeedValidator.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
-          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.ItemSeedValidator.Tests failed" }
-          dotnet test tests/FusionRpg.AtomImporter.Tests/FusionRpg.AtomImporter.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
-          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.AtomImporter.Tests failed" }
-          dotnet test tests/FusionRpg.ElementEnumGen.Tests/FusionRpg.ElementEnumGen.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
-          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.ElementEnumGen.Tests failed" }
           # Wired in 2026-09-06 (seed-to-concrete) -- found never in CI via CiWiringGuardTests, verified
           # green in isolation before adding (FusionRpg.PassiveTreeRosterGen.Tests held back: one
           # pre-existing, unrelated content-drift failure at the time -- gk-data/packs/fusion/data/seed/statuses/roster.json
           # is stale against a "nerve" status family another stream added; not this program's to fix).
           dotnet test tests/FusionRpg.SquadHarness.Tests/FusionRpg.SquadHarness.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
           if ($LASTEXITCODE -ne 0) { throw "FusionRpg.SquadHarness.Tests failed" }
-          dotnet test tests/FusionRpg.TreeBinder.Tests/FusionRpg.TreeBinder.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
-          if ($LASTEXITCODE -ne 0) { throw "FusionRpg.TreeBinder.Tests failed" }
           # solid-remediation T5.5/T5.6 -- the file-move tool. Wired at introduction rather than found
           # later by CiWiringGuardTests: a move tool that rewrites source and project files is exactly
           # the kind whose tests must run somewhere nobody has to remember.
@@ -362,10 +358,6 @@ jobs:
           # R24 (2026-09-18): both tool test trees ran in NO workflow and nothing reported it. They
           # run here, beside the other product test projects, each with its own exit check; the W7
           # case in CiWiringGuardTests keeps the next tools/*.Tests project from going unwired.
-          dotnet test tools/LawnCombatObserver.Tests/LawnCombatObserver.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
-          if ($LASTEXITCODE -ne 0) { throw "LawnCombatObserver.Tests failed" }
-          dotnet test tools/ProveLiveProbe.Tests/ProveLiveProbe.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
-          if ($LASTEXITCODE -ne 0) { throw "ProveLiveProbe.Tests failed" }
           dotnet test tests/FusionRpg.Server.Tests/FusionRpg.Server.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
           if ($LASTEXITCODE -ne 0) { throw "FusionRpg.Server.Tests failed" }
           dotnet test tests/FusionRpg.E2E.Tests/FusionRpg.E2E.Tests.csproj -c Release --verbosity minimal --blame-hang --blame-hang-timeout 10min
