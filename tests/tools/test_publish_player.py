@@ -39,6 +39,9 @@ from pathlib import Path
 from unittest import mock
 
 REPO = Path(__file__).resolve().parents[2]
+
+sys.path.insert(0, str(REPO / "scripts" / "lib"))
+from keepverse_roots import owning_base  # noqa: E402
 PUBLISH = Path(os.environ.get("PUBLISH_PLAYER_SCRIPT", REPO / "scripts" / "publish_player.py")).resolve()
 SYNC = Path(os.environ.get("SYNC_CI_DROP_SCRIPT",
                            REPO / "scripts" / "sync_ci_drop_into_game.py")).resolve()
@@ -590,7 +593,14 @@ class ThePipeline(TemporaryRepo):
         would survive until a player pack with a MelonLoader drop was actually built."""
         source = PUBLISH.read_text(encoding="utf-8")
         self.assertIn('"guard-game-profile.py"', source)
-        self.assertTrue((REPO / "scripts" / "guard-game-profile.py").is_file())
+        # The guard is gk-fusion's, so the assertion asks its OWNER for it. REPO is gk-core, which has
+        # no scripts/guard-game-profile.py at all - so the test that exists to catch a wrong-but-plausible
+        # guard name could not run, which is the one failure this class of name typo produces. The tool
+        # itself was already right: publish_player.py resolves the guard through its stage layout root
+        # rather than through REPO, so only this assertion was still spelling the pre-split path.
+        self.assertIsNotNone(
+            owning_base("scripts/guard-game-profile.py", REPO),
+            "no repository carries scripts/guard-game-profile.py, so the name the stage calls is wrong")
 
 
 # ------------------------------------------------------------------------------------------------

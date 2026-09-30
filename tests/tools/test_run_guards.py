@@ -358,8 +358,22 @@ class TheArguments(unittest.TestCase):
 
     def test_LOCAL_args_are_APPENDED_per_guard_and_addressed_BY_NAME(self) -> None:
         row = guard_row("scripts/g.py")
+        # THE GUARD'S OWN DIALECT, which is what the switch is FOR. This line used to assert
+        # ["-GameDir", "C:/game"] while calling the `.py` branch, so it pinned the exact defect the
+        # runner's own docstring records as fixed: `-Key` was emitted unconditionally, the PowerShell
+        # spelling, while `.py` guards were dispatched through sys.executable - so argparse got
+        # `-GameDir` where it wanted `--game-dir` and the guard exited 2 with `unrecognized
+        # arguments`, reported as a red guard on a run that had in fact passed both values.
+        # The name of this test is about APPENDING and BY NAME, and both halves are still asserted.
         got = rg.resolve_guard_args("g", row, "local", "", {"g": {"GameDir": "C:/game"}}, False)
-        self.assertEqual(got, ["-GameDir", "C:/game"])
+        self.assertEqual(got, ["--GameDir", "C:/game"])
+        # and the switch tracks the extension rather than being pinned. The extension here is
+        # deliberately a language no guard in this workspace uses: the assertion is about the
+        # derivation, not about resurrecting a dialect. A `.py` guard is the only kind that ships.
+        self.assertEqual(
+            rg.resolve_guard_args("g", row, "local", "", {"g": {"GameDir": "C:/game"}}, False,
+                                  extension=".rb"),
+            ["-GameDir", "C:/game"])
         # and they do not leak to a guard that was not addressed
         self.assertEqual(rg.resolve_guard_args("other", row, "local", "", {"g": {"x": "1"}}, False), [])
 
