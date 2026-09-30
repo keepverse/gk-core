@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -183,46 +184,95 @@ _IMMUTABLE_PATH_RE = re.compile(r"^data/tuning/[a-zA-Z0-9_-]+\.v\d+\.json$")
 _REPO_PREFIX_RE = re.compile(r"^(?P<repo>[A-Za-z0-9_.-]+)/(?P<rest>.+)$")
 
 
+def _is_git_tree(root: Path) -> bool:
+    """A real repository working tree, as opposed to a planted fixture. `.git` is a directory in a
+    normal clone and a file in a worktree or submodule, so both count."""
+    git = root / ".git"
+    return git.is_dir() or git.is_file()
+
+
+_TRACKED_CACHE: dict[str, frozenset[str] | None] = {}
+
+
+def _tracked_files(repo: Path) -> frozenset[str] | None:
+    """Every path git tracks in `repo`, or None when that question cannot be asked.
+
+    Cached per repository because a guard run validates many pins and `git ls-files` is a process.
+    None means "not a git working tree" - a planted fixture - and the caller then falls back to
+    existence, which is the only answer available there and the right one.
+    """
+    key = str(repo)
+    if key in _TRACKED_CACHE:
+        return _TRACKED_CACHE[key]
+    result: frozenset[str] | None = None
+    if _is_git_tree(repo):
+        try:
+            proc = subprocess.run(["git", "-C", str(repo), "ls-files", "-z"],
+                                  capture_output=True, timeout=120)
+            if proc.returncode == 0:
+                names = proc.stdout.decode("utf-8", "replace").split("\0")
+                result = frozenset(n.replace("\\", "/") for n in names if n)
+        except (OSError, subprocess.SubprocessError):
+            result = None       # git unusable: fall back to existence rather than fail the guard
+    _TRACKED_CACHE[key] = result
+    return result
+
+
+def _sibling_root(named: str, repo_root: Path) -> Path | None:
+    """The repository `named`, resolved through the workspace contract rather than by joining.
+
+    Joining produced gk-core/gk-core/... for this repository's own name and, for a real sibling, a
+    path that exists only if the sibling happens to be nested. The resolver already answers "which
+    repository is that", and asking it is the difference between a guard that follows the topology
+    and one that encodes a guess about it.
+    """
+    if named == repo_root.name:
+        return repo_root
+    candidate = repo_root.parent / named
+    return candidate if candidate.is_dir() else None
+
+
 def immutable_path_is_valid(path_text: str, repo_root: Path) -> bool:
     """A pin naming a real, tracked, VERSIONED tuning file.
 
-    Two steps, and they are separate on purpose. An optional leading repository segment is removed
-    FIRST - and only when it names a repository that exists here - because the standard this guard
-    implements writes its pins workspace-qualified. What remains must then match the shape rule
-    exactly, and finally the file must exist in the repository that owns it.
+    Three requirements, and they are separate on purpose. An optional leading repository segment is
+    resolved FIRST - and only when the tail is itself a data/tuning path - because the standard this
+    guard implements writes its pins workspace-qualified. What remains must then match the shape rule
+    exactly. And the file must EXIST and be TRACKED in the repository that owns it.
 
-    Resolving against the OWNING repository rather than joining onto this one is what stops the
-    qualified form producing gk-core/gk-core/data/tuning/... , a path that names a directory nobody
-    can create by following the error's own advice.
+    TRACKED is the requirement that was missing, and it is the one the guard's own message claims:
+    "is not a tracked data/tuning/<domain>.v<n>.json" while the implementation asked only is_file().
+    An untracked, never-committed file satisfied it, which is the weakest possible reading of "a
+    published version never changes" - a file that was never published at all.
+
+    A planted fixture is not a git working tree, so tracking is unanswerable there and existence is
+    the only honest answer; that is the same fixture-versus-real-tree distinction guard_subjects.py
+    makes, and the same reason: asking a question of a temporary directory produces a confident
+    wrong answer rather than an honest one.
     """
     normalized = path_text.replace("\\", "/")
     repo_dir = repo_root
     prefix = _REPO_PREFIX_RE.match(normalized)
-    # The remainder must ITSELF be a data/tuning path, or there is no repository segment here to
-    # strip. Without that condition the heuristic misfires on the bare form: `data` is a real
-    # directory in gk-core, so `data/tuning/x.v1.json` matched, lost its `data/`, and stopped
-    # matching the shape rule - which is how a fix for the qualified form broke the plain one.
-    # Requiring `/data/tuning/` in the tail states the rule instead of guessing at a name list.
+    # The tail must ITSELF be a data/tuning path, or there is no repository segment to strip.
+    # Without that condition the heuristic misfires on the bare form: `data` is a real directory in
+    # gk-core, so `data/tuning/x.v1.json` matched, lost its `data/`, and stopped matching the shape
+    # rule - which is how a fix for the qualified form broke the plain one.
     if prefix and prefix.group("rest").startswith("data/tuning/"):
         named = prefix.group("repo")
-        # Two ways a leading segment can name a repository. It can be a SIBLING, in which case the
-        # directory is under this root. Or it can be THIS repository - and `gk-core/data/tuning/...`
-        # is spelled relative to the WORKSPACE, so joining it onto gk-core gives gk-core/gk-core/...,
-        # a path nobody can create by following the error's own advice. The repository's own name is
-        # the second case, and a test that did not know it would resolve the standard's own worked
-        # example to a directory that does not exist.
-        if named == repo_root.name:
-            repo_dir = repo_root
-        elif (repo_root / named).is_dir():
-            repo_dir = repo_root / named
-        else:
-            repo_dir = None
-        if repo_dir is None:
-            return False
         normalized = prefix.group("rest")
+        resolved = _sibling_root(named, repo_root)
+        if resolved is None:
+            return False
+        repo_dir = resolved
     if not _IMMUTABLE_PATH_RE.match(normalized):
         return False
-    return (repo_dir / normalized).is_file()
+    candidate = repo_dir / normalized
+    if not candidate.is_file():
+        return False
+    tracked = _tracked_files(repo_dir)
+    if tracked is None:
+        return True            # a fixture: existence is the only answer available, and the right one
+    return normalized in tracked
 
 
 def iter_scan_files(repo_root: Path, scan_roots: "tuple[str, ...]"):
