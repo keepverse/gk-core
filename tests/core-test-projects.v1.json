@@ -157,7 +157,6 @@
         "$(GkForgeRoot)tools/DominanceBaseline/DominanceBaseline.csproj",
         "src/FusionRpg.Core/FusionRpg.Core.csproj",
         "tools/CombatSim/CombatSim.csproj",
-        "tools/DominanceBaseline/DominanceBaseline.csproj",
         "tools/ProvePredictor/ProvePredictor.csproj",
         "tools/RealDataAggregate/RealDataAggregate.csproj",
         "tools/ResidualFitLoop/ResidualFitLoop.csproj"
