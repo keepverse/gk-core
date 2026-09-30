@@ -52,6 +52,12 @@ class Tree:
         # call site rather than relying on this default.
         if kind == "legacy":
             (self.root / "data" / "seed").mkdir(parents=True)
+            # `data/tuning` too, because that is what a legacy root actually carried and the probe now asks
+            # for both. Verified against the pre-split repository rather than assumed: at its HEAD it has
+            # FusionRpg.slnx, data/seed, data/tuning and data/generated side by side. A fixture planting
+            # only the old pair was not a legacy root, it was a directory that satisfied the old probe -
+            # which is precisely the shape that misclassified gk-forge.
+            (self.root / "data" / "tuning").mkdir(parents=True)
             (self.root / "FusionRpg.slnx").write_text("<Project/>", encoding="utf-8")
         elif kind in ("workspace", "workspace-no-pack"):
             (self.root / "gk-core").mkdir(parents=True)
@@ -117,6 +123,33 @@ class TheLegacyLayout(unittest.TestCase):
             (root / "data" / "seed").mkdir(parents=True)
             with self.assertRaises(kr.RootNotFound):
                 kr.core_root(root)
+
+    def test_a_repo_with_SEED_but_no_TUNING_is_NOT_a_legacy_repo(self) -> None:
+        """The gk-forge shape, and the reason the legacy probe asks for two markers.
+
+        gk-forge owns its own `FusionRpg.slnx` and its own `data/seed/creatures/{_generated,_registry}` -
+        generator inputs, left where the generator is. With a one-marker probe a walk upward from
+        `gk-forge/tools/seedsmith/seedsmith` matched "legacy" AT gk-forge and stopped one directory short
+        of the workspace root, so `content_root()` returned gk-forge instead of `gk-data/packs/fusion`,
+        `core_root()` returned gk-forge instead of gk-core, and `workspace_root()` returned gk-forge,
+        which holds neither `docs/` nor `tasks/`. Measured: of the split repositories carrying the
+        solution file - gk-forge, gk-core, gk-fusion - `data/tuning` is in gk-core alone, so no split
+        repository satisfies both markers.
+
+        Non-vacuity: dropping `data/tuning` from the probe fails this test and restores the four
+        `TheLegacyLayout` cases. The pair of them is the contract - a directory with seed data but no
+        tuning is not a legacy repo, and a directory with both is, nearest match winning - so neither
+        half can be satisfied by deleting the other.
+        """
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix="kr-seedonly-") as tmp:
+            root = Path(tmp)
+            (root / "data" / "seed" / "creatures" / "_registry").mkdir(parents=True)
+            (root / "FusionRpg.slnx").write_text("<Project/>", encoding="utf-8")
+            with self.assertRaises(kr.RootNotFound):
+                kr.core_root(root)
+            with self.assertRaises(kr.RootNotFound):
+                kr.workspace_root(root)
 
     def test_a_GYML_file_alone_is_NOT_a_layout(self) -> None:
         """`FusionRpg.slnx` is a FILE, and `gk-data/packs/fusion/data/seed` must be a DIRECTORY beside it. A solution-shaped
@@ -205,6 +238,7 @@ class NothingToResolve(unittest.TestCase):
             (outer / "gk-data" / "packs" / "fusion").mkdir(parents=True)
             inner = outer / "inner"
             (inner / "data" / "seed").mkdir(parents=True)
+            (inner / "data" / "tuning").mkdir(parents=True)   # both markers - see the Tree builder
             (inner / "FusionRpg.slnx").write_text("<Project/>", encoding="utf-8")
             start = inner / "deep"
             start.mkdir()
