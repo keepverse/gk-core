@@ -32,7 +32,12 @@ public class OverlayPipeContractGuardTests
     {
         Assert.Equal("FusionRpg.Overlay", PipeNameIn(ServerFile));
 
-        var spec = ReadWorkflowDoc(@"docs\launcher\overlay-spec.md");
+        // The spec is gk-FUSION's. This read went to KeepverseRoots.Workspace() on the reasoning that
+        // the launcher contract is a document and documents are gk-workflow's. Measured per FILE, the
+        // workspace root's docs/ holds development documentation and does not carry this one; gk-fusion's
+        // docs/ does. So this was a missing file, and a directory-level check gets it backwards for the
+        // same reason it gets data/seed/creatures/_registry backwards.
+        var spec = ReadFusionFile(@"docs\launcher\overlay-spec.md");
         Assert.Contains(@"\\.\pipe\FusionRpg.Overlay", spec, StringComparison.Ordinal);
     }
 
@@ -104,7 +109,11 @@ public class OverlayPipeContractGuardTests
     /// </summary>
     static IEnumerable<string> InjectorHostProjects()
     {
-        var root = FindRepoRoot();
+        // gk-FUSION's src, for the same reason as the timeScale scan below: the projects being
+        // discovered are Injector hosts, and the shared-source glob it keys on is an Injector path.
+        // Enumerating gk-core's src found no host project at all, so the "discovered rather than
+        // listed" claim was true of a set that was empty.
+        var root = KeepverseRoots.Fusion();
         foreach (var proj in Directory.EnumerateFiles(
                      Path.Combine(root, "src"), "*.csproj", SearchOption.AllDirectories))
         {
@@ -166,13 +175,22 @@ public class OverlayPipeContractGuardTests
         // A second writer anywhere would be silently overwritten on the next frame whenever a speed
         // setting is active — precisely how "pause does not work with a speed cheat on" bugs appear.
         // OverlayPause therefore decides and CheatActions applies.
+        // Scan gk-FUSION, which is where the Injector and its single writer live. This walked
+        // gk-core's `src`, and that made the guard VACUOUS IN THE DANGEROUS DIRECTION rather than
+        // merely wrong: `Time.timeScale =` is written only by the Injector, so scanning a tree with
+        // none of them made `offenders.Count == 0` true by construction — a second writer would have
+        // been invisible. Measured, gk-core has 0 such writes and gk-fusion has 4, all in the declared
+        // owner CheatActions.cs (which is gk-fusion's, so the walk could never have found it).
+        // The guard's own anchor is what caught this: `scanned > 50` was reading gk-core's 40-odd
+        // files, and `writesInTheOwner > 0` was reading zero. That anchor is load-bearing, not
+        // ceremony — a guard that quietly scans nothing passes forever, and this one nearly did.
         var offenders = new List<string>();
         var scanned = 0;
         var writesInTheOwner = 0;
         var separator = Path.DirectorySeparatorChar;
 
         foreach (var file in Directory.EnumerateFiles(
-                     Path.Combine(FindRepoRoot(), "src"), "*.cs", SearchOption.AllDirectories))
+                     Path.Combine(KeepverseRoots.Fusion(), "src"), "*.cs", SearchOption.AllDirectories))
         {
             if (file.Contains($"{separator}obj{separator}", StringComparison.Ordinal)) continue;
             if (file.Contains($"{separator}bin{separator}", StringComparison.Ordinal)) continue;
@@ -212,23 +230,24 @@ public class OverlayPipeContractGuardTests
     }
 
     /// <summary>Reads a file under an EXPLICIT root. This helper used to prepend gk-core's
-    /// root to every path, and its 8 call sites reach THREE repositories: gk-fusion for the
-    /// Launcher and Injector ends of the pipe, gk-workflow for the spec that defines the
-    /// contract, and gk-core for the host-selection policy. Under one implicit prefix all
-    /// three failed identically, as a missing file, which told a reader nothing about which
-    /// repository was actually being asked. Each call site now names it.</summary>
+    /// root to every path, and its call sites reach TWO repositories: gk-fusion for the
+    /// Launcher and Injector ends of the pipe, and gk-core for the host-selection policy.
+    /// Under one implicit prefix the gk-fusion reads failed identically, as a missing file,
+    /// which told a reader nothing about which repository was actually being asked. Each
+    /// call site now names it.</summary>
+    /// <remarks>
+    /// A THIRD repository was named here and was wrong: the comment claimed the spec came from
+    /// gk-workflow. Resolved per file, <c>docs/launcher/overlay-spec.md</c> is gk-fusion's — the
+    /// workspace root's <c>docs/</c> is the development documentation tree and does not carry it.
+    /// The call site now reads it through <see cref="ReadFusionFile"/>, and the helper that made
+    /// the wrong claim is gone rather than left for the next caller to trust.
+    /// </remarks>
     static string ReadRepoFile(string root, string relativePath)
     {
         var path = Path.Combine(root, relativePath);
-        Assert.True(File.Exists(path), "missing " + path);
+        Assert.True(File.Exists(path), $"missing {path} - the owner repository does not carry {relativePath}");
         return File.ReadAllText(path);
     }
 
     static string ReadFusionFile(string relativePath) => ReadRepoFile(KeepverseRoots.Fusion(), relativePath);
-    static string ReadWorkflowDoc(string relativePath) => ReadRepoFile(KeepverseRoots.Workspace(), relativePath);
-
-    static string FindRepoRoot()
-    {
-        return KeepverseRoots.Core();
-    }
 }
