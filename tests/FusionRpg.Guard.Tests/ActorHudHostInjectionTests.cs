@@ -47,7 +47,10 @@ public class ActorHudHostInjectionTests
     [Fact]
     public void Every_injector_host_copies_the_actor_hud_element_art()
     {
-        var root = FindRepoRoot();
+        // The three host csprojs below are gk-FUSION's. This root was gk-core's, so all three reads
+        // raised DirectoryNotFoundException. The file's other two helpers were already routed
+        // (`ReadInjector` to Fusion, `ReadCore` to Core), which is why only these reads were broken.
+        var root = KeepverseRoots.Fusion();
         foreach (var project in new[]
                  {
                      Path.Combine("src", "FusionRpg.Injector.BepInEx", "FusionRpg.Injector.BepInEx.csproj"),

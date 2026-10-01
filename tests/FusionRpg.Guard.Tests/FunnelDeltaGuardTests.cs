@@ -24,7 +24,10 @@ public class FunnelDeltaGuardTests
         var script = Path.Combine(KeepverseRoots.Fusion(), "scripts", "guard-funnel-delta.py");
         Assert.True(File.Exists(script), "missing " + script);
 
-        var (exit, stdout, stderr) = RunScript(script, repoRoot);
+        // The real tree only. The guard scans `<root>/src/FusionRpg.Injector`, so the real-tree run needs
+        // gk-fusion while the four FIXTURE runs below must keep passing their fixture root — changing
+        // `FindRepoRoot()` instead would have pointed every one of them at gk-core.
+        var (exit, stdout, stderr) = RunScript(script, KeepverseRoots.Fusion());
         Assert.True(exit == 0,
             $"guard failed exit={exit}\nstdout:\n{stdout}\nstderr:\n{stderr}");
         Assert.Contains("FUNNEL DELTA GUARD OK", stdout, StringComparison.Ordinal);

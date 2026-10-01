@@ -103,14 +103,20 @@ public class TuningRevisionLiteralGuardTests
     [Fact]
     public void The_one_constant_is_what_the_server_and_the_validator_name()
     {
-        var root = RepoRoot();
-        foreach (var rel in new[]
+        // Two owners, so two (root, relative) pairs rather than one array of relative paths. An array of
+        // relative paths has a single owner by construction, which is how `tools/ItemSeedValidator` -
+        // gk-FORGE's validator, reached through gk-core's root - raised DirectoryNotFoundException here.
+        // `data/tuning/` is gk-core's and the gk-data pack is separate: a pack path would need its own
+        // entry, and this constant is named by SOURCE files, not by a pack.
+        foreach (var (root, rel) in new[]
                  {
-                     "src/FusionRpg.Server/Program.cs",
-                     "tools/ItemSeedValidator/Checks/SocketMaxCheck.cs",
+                     (RepoRoot(), "src/FusionRpg.Server/Program.cs"),
+                     (KeepverseRoots.Forge(), "tools/ItemSeedValidator/Checks/SocketMaxCheck.cs"),
                  })
         {
-            var text = File.ReadAllText(Path.Combine(root, rel));
+            var path = Path.Combine(root, rel);
+            Assert.True(File.Exists(path), $"missing {path} - {root} does not carry {rel}");
+            var text = File.ReadAllText(path);
             Assert.Contains("SocketTuningFiles.Current", text, StringComparison.Ordinal);
             Assert.DoesNotContain("\"sockets.v", text, StringComparison.Ordinal);
         }

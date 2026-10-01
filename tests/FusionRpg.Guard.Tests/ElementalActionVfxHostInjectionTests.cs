@@ -42,7 +42,10 @@ public class ElementalActionVfxHostInjectionTests
     {
         foreach (var project in HostProjects())
         {
-            var text = File.ReadAllText(Path.Combine(FindRepoRoot(), project));
+            // The four host csprojs are gk-FUSION's; the root was gk-core's. The two reads above this one
+        // already used KeepverseRoots.Fusion() directly, so the file held a working root and a broken
+        // one three lines apart.
+        var text = File.ReadAllText(Path.Combine(KeepverseRoots.Fusion(), project));
             foreach (var variant in RuntimeVariants)
             {
                 var include = "Assets\\elemental-action-vfx\\" + variant.Path;

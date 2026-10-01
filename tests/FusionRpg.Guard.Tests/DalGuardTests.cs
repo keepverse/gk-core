@@ -128,23 +128,36 @@ public class DalGuardTests
     [Fact]
     public void Injector_and_Core_csproj_have_no_Sqlite()
     {
-        var repoRoot = FindRepoRoot();
-        foreach (var rel in new[]
-                 {
-                     Path.Combine("src", "FusionRpg.Injector", "FusionRpg.Injector.csproj"),
-                     Path.Combine("src", "FusionRpg.Core", "FusionRpg.Core.csproj")
-                 })
-        {
-            var csproj = Path.Combine(repoRoot, rel);
-            Assert.True(File.Exists(csproj), "missing " + csproj);
-            var text = File.ReadAllText(csproj);
-            Assert.DoesNotContain("Microsoft.Data.Sqlite", text, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("Sqlite", text, StringComparison.OrdinalIgnoreCase);
-        }
+        // Exactly the two projects the test is named for, and they live in two repositories. The
+        // Injector csproj is gk-FUSION's, so it cannot sit in an array of gk-core-relative paths at all —
+        // an array of relative paths has one owner by construction, which is how a read that resolved to
+        // a file that does not exist ever looked correct.
+        //
+        // `FusionRpg.Data` is deliberately NOT in this list and neither is `FusionRpg.Server`: the DAL
+        // boundary says SQL lives in `FusionRpg.Data` and nowhere else, so those two are SUPPOSED to
+        // reference SQLite. Adding them here asserted the opposite of the boundary and failed on
+        // FusionRpg.Data's own package reference.
+        AssertNoSqlite(KeepverseRoots.Core(),
+            Path.Combine("src", "FusionRpg.Core", "FusionRpg.Core.csproj"));
+        AssertNoSqlite(KeepverseRoots.Fusion(),
+            Path.Combine("src", "FusionRpg.Injector", "FusionRpg.Injector.csproj"));
     }
 
     static string FindRepoRoot()
     {
         return KeepverseRoots.Core();
     }
+
+    /// <summary>Asserts one project file carries no SQLite reference, naming both owner and path.</summary>
+    /// <param name="root">The repository that carries the project.</param>
+    /// <param name="relative">The project's path below that root.</param>
+    static void AssertNoSqlite(string root, string relative)
+    {
+        var csproj = Path.Combine(root, relative);
+        Assert.True(File.Exists(csproj), $"missing {csproj} - {root} does not carry {relative}");
+        var text = File.ReadAllText(csproj);
+        Assert.DoesNotContain("Microsoft.Data.Sqlite", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Sqlite", text, StringComparison.OrdinalIgnoreCase);
+    }
+
 }
