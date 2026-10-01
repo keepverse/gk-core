@@ -44,7 +44,7 @@ import re
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
-from keepverse_roots import RootNotFound, forge_root  # noqa: E402
+from keepverse_roots import RootNotFound, forge_root, owning_base, repo_bases  # noqa: E402
 
 
 class VocabularyMirrorError(ValueError):
@@ -132,6 +132,30 @@ _VERSIONED_NAME_RE = re.compile(r"^(.+)\.v(\d+)\.json$")
 _JSON_ARRAY_PATH_RE = re.compile(r"^(\w+)\[\]\.(\w+)$")
 
 
+
+def _resolve_hint(repo_root: Path, hint_path: Path) -> Path:
+    """Where a manifest `file_hint` actually is, given the CALLER's root.
+
+    The hint is REPOSITORY-QUALIFIED by its own contract - the docstring's own example is
+    `gk-core/data/tuning/status-catalog.v1.json` - so joining it onto `repo_root` produced
+    `<gk-forge>/gk-core/data/tuning`, a directory that exists in no repository. That is why the guard
+    reported "no status-catalog.v*.json found" for a catalog that is published and present.
+
+    So a leading component naming one of the resolver's own repositories is stripped and the remainder
+    resolved through `owning_base`, which asks which repository TRACKS it. A hint that names no known
+    repository is used as-is, so a relative hint keeps behaving exactly as before.
+    """
+    known = {base.name for base in repo_bases(repo_root)}
+    parts = hint_path.parts
+    if len(parts) > 1 and parts[0] in known:
+        relative = Path(*parts[1:])
+        base = owning_base(relative.as_posix(), repo_root)
+        return (base or repo_root) / relative
+    # A hint naming no known repository is the caller's own relative path and is used LITERALLY. This is not
+    # a style choice: `test_a_non_versioned_hint_is_used_literally` passes a temp directory and the hint
+    # `plain.json`, and routing that through the resolver answered with a directory the caller never named.
+    return repo_root / hint_path
+
 def resolve_latest_versioned_path(repo_root: Path, file_hint: str) -> Path:
     """The manifest's own rule: 'the owner file for a tuning catalog is the latest published
     version, resolved at run time... never a pinned version number.' `file_hint` (e.g.
@@ -141,9 +165,9 @@ def resolve_latest_versioned_path(repo_root: Path, file_hint: str) -> Path:
     hint_path = Path(file_hint)
     m = _VERSIONED_NAME_RE.match(hint_path.name)
     if not m:
-        return repo_root / hint_path
+        return _resolve_hint(repo_root, hint_path)
     domain = m.group(1)
-    directory = (repo_root / hint_path).parent
+    directory = _resolve_hint(repo_root, hint_path).parent
     pat = re.compile(r"^" + re.escape(domain) + r"\.v(\d+)\.json$")
     candidates = []
     if directory.is_dir():
@@ -174,7 +198,15 @@ def resolve_json_catalog_owner(doc: dict, path: str) -> "list[str]":
 def resolve_owner_members(repo_root: Path, owner: dict) -> "list[str]":
     kind = owner.get("kind")
     if kind == "csharp-enum":
-        path = repo_root / owner["file"]
+        # NOT `repo_root / owner["file"]`. `repo_root` is the CALLER's root - the test passes gk-forge -
+        # while every `csharp-enum` owner is gk-core's, e.g.
+        # `src/FusionRpg.Core/Actions/ActionEnums.cs`. That is a sibling, so no `..` hop reaches it and the
+        # guard reported "owner file not found" for a file that is present. `owning_base` asks which
+        # repository TRACKS the path; `owner["file"]` is always a concrete file, so this is per-file
+        # resolution and never the shadow-directory case. A repository that tracks it nowhere falls back to
+        # the join, which keeps this guard's refusal unchanged.
+        base = owning_base(owner["file"], repo_root)
+        path = (base or repo_root) / owner["file"]
         if not path.is_file():
             raise VocabularyMirrorError(f"owner file not found: {path}")
         return extract_enum_members(path.read_text(encoding="utf-8"), owner["enum"])
