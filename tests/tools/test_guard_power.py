@@ -132,7 +132,7 @@ class CliSurface(unittest.TestCase):
 
 class ExitCodeVocabulary(unittest.TestCase):
     def test_the_vocabulary_is_closed(self) -> None:
-        self.assertEqual({guard.EXIT_OK, guard.EXIT_FAILED}, {0, 1})
+        self.assertEqual({guard.EXIT_OK, guard.EXIT_FAILED, guard.EXIT_REFUSED}, {0, 1, 64})
 
     def test_the_real_tree_passes(self) -> None:
         self.assertEqual(0, run()["exit"])
@@ -175,10 +175,10 @@ class NamedRefusals(unittest.TestCase):
             root = build(Path(tmp), no_inventory=True)
             proc = subprocess.run([sys.executable, str(SCRIPT), "--root", str(root), "--json"],
                                   capture_output=True, text=True, timeout=900)
-            self.assertEqual(guard.EXIT_FAILED, proc.returncode)
+            self.assertEqual(guard.EXIT_REFUSED, proc.returncode)
             payload = json.loads(proc.stdout)
             self.assertEqual("INVENTORY-MISSING", payload["reason"])
-            self.assertEqual("FAILED", payload["verdict"])
+            self.assertEqual("REFUSED", payload["verdict"])
 
 
 class JsonEnvelope(unittest.TestCase):

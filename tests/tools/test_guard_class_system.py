@@ -123,12 +123,12 @@ class CliSurface(unittest.TestCase):
 
 class ExitCodeVocabulary(unittest.TestCase):
     def test_the_vocabulary_is_closed(self) -> None:
-        self.assertEqual({guard.EXIT_OK, guard.EXIT_FAILED}, {0, 1})
+        self.assertEqual({guard.EXIT_OK, guard.EXIT_FAILED, guard.EXIT_REFUSED}, {0, 1, 64})
 
     def test_a_refusal_is_never_reported_as_clean(self) -> None:
         with tempfile.TemporaryDirectory(prefix="gcs-none-") as tmp:
             result = run("--root", tmp)
-        self.assertEqual(guard.EXIT_FAILED, result["exit"])
+        self.assertEqual(guard.EXIT_REFUSED, result["exit"])
         self.assertNotIn("GUARD OK", result["stdout"])
 
 

@@ -198,9 +198,13 @@ def inventory_locations(inventory: dict) -> tuple[list[str], list[str]]:
 
 def _candidate_rels(token: str, root: Path | None) -> list[str]:
     """The repo-relative spellings `token` may legitimately mean. Empty licenses nothing."""
-    norm = token.replace("\\", "/").strip()
-    if not norm or norm.endswith("/"):
+    norm = token.replace("\\", "/").strip().rstrip("/")
+    if not norm:
         return []
+    # A trailing separator made this a DIRECTORY location, and discarding it made the prefix comparison in
+    # `_is_listed` unreachable for every directory token — the hole R2 closed had been re-opened as a
+    # feature. The empty-token fail-open it actually closes stays shut: "gk-core/" now yields "gk-core",
+    # which matches no repository-relative path, and "  " or "///" still yields "" and licenses nothing.
     out = [norm]
     head, sep, tail = norm.partition("/")
     if not sep or not tail:
