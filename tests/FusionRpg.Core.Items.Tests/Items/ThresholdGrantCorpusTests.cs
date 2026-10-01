@@ -366,7 +366,13 @@ public class ThresholdGrantCorpusTests
                      (Path.Combine("tools", "seedsmith", "seedsmith", "metrics", "linkage.py"), "NON_HYBRID_ROLES"),
                  })
         {
-            var text = File.ReadAllText(Path.Combine(ThresholdGrantTests.RepoRoot(), path));
+            // `tools/seedsmith/**` is gk-forge's - the GENERATOR repository - and this is a gk-core test, so
+            // building the path from RepoRoot() (which is KeepverseRoots.Core()) looked in gk-core for a
+            // directory it does not have. Measured: both files exist only under gk-forge. The `path` here is
+            // a runtime value, which is why the per-site path router could not see it and why this one had
+            // to be read and edited rather than rewritten - the same limit as
+            // ElementHubDocDriftTests.ReadDoc, which joins `docs` in the same shape.
+            var text = File.ReadAllText(Path.Combine(KeepverseRoots.Forge(), path));
             var line = text.Split('\n').Single(l => l.Contains(constant + " = frozenset", StringComparison.Ordinal));
             Assert.Contains("ward-array", line);
             Assert.Contains("head-guard", line);

@@ -469,8 +469,16 @@ public class MaterialCorpusTests
         using var doc = JsonDocument.Parse(
             File.ReadAllText(Path.Combine(KeepverseRoots.Content(), "data", "seed", "items", "materials", "materials.json")));
 
+        // `materials.json` also carries the 3599 `trophy.*` display rows, so counting every entry measures
+        // the FILE rather than the materials corpus this test is about. Measured 2026-10-01: the file holds
+        // 3633 entries of which 3599 are `trophy.*` and 34 are materials - 14 shard (10 issuable plus the
+        // 4 legacy rows below), 8 substrate, 6 essence, 3 catalyst, 3 assurance. A trophy row is a real
+        // item and is gated by its own tests; folding 3599 of them into a materials count is what produced
+        // `Expected: 31, Actual: 3633`, which reads as a population blow-out and is not one.
         var runtimeIds = doc.RootElement.GetProperty("entries").EnumerateArray()
-            .Select(e => e.GetProperty("runtimeId").GetString()!).ToList();
+            .Select(e => e.GetProperty("runtimeId").GetString()!)
+            .Where(id => !id.StartsWith("trophy.", StringComparison.Ordinal))
+            .ToList();
 
         var legacyCount = runtimeIds.Count(MaterialCatalog.IsLegacyShardId);
         // Formula, not a literal (population-pin SE3.3, 2026-09-19): every issuable id (the closed
