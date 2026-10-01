@@ -207,8 +207,15 @@ public class ElementHubDocDriftTests
 
     static string ReadDoc(params string[] relativeUnderDocs)
     {
-        var path = Path.Combine(new[] { FindRepoRoot(), "docs" }.Concat(relativeUnderDocs).ToArray());
-        Assert.True(File.Exists(path), "missing " + path);
+        // `docs/**` is the WORKSPACE ROOT's, not gk-core's - and gk-core DOES carry a `docs/`, holding only
+        // `docs/research/class-system/real-runs`. So a directory-level check is not enough here, which is
+        // exactly why this resolve is spelled out rather than left to a shared root helper: the two
+        // repositories genuinely share a directory NAME and not its contents.
+        var path = Path.Combine(
+            new[] { KeepverseRoots.Workspace(), "docs" }.Concat(relativeUnderDocs).ToArray());
+        Assert.True(File.Exists(path),
+                    "missing " + path + " - the authored doc is the workspace root's, and gk-core's own "
+                    + "docs/ carries only docs/research/class-system/real-runs");
         return File.ReadAllText(path);
     }
 

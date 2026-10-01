@@ -132,10 +132,14 @@ public class SingleDeclarationTests
         // a byte-identical scope line with no declaring type anywhere. The vocabulary now lives in
         // FusionRpg.Contracts.InspectScopes; those two consumer files may not re-literalise it.
         var root = RepoRoot();
+        // Split across two repositories, measured rather than assumed: DebugEndpoints.cs is gk-core's
+        // and ControlInspect.cs is gk-fusion's, because the Injector moved out with the launcher. Built
+        // from `root` both were read from gk-core, so the Injector one refused:
+        //     missing ...\gk-core\src\FusionRpg.Injector\ControlInspect.cs
         var consumers = new[]
         {
             Path.Combine(root, "src", "FusionRpg.Server", "DebugEndpoints.cs"),
-            Path.Combine(root, "src", "FusionRpg.Injector", "ControlInspect.cs")
+            Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "ControlInspect.cs")
         };
         foreach (var file in consumers)
         {
@@ -160,7 +164,8 @@ public class SingleDeclarationTests
         // themselves. The folds now call Core's ActorHudShieldStacks.Totals and
         // ShieldBarVisual.TrueRatio — nothing under Injector/Hud may do either arithmetic itself.
         var root = RepoRoot();
-        var hudDir = Path.Combine(root, "src", "FusionRpg.Injector", "Hud");
+        // The Injector is gk-fusion's; `root` is gk-core's. Measured, not inferred from the name.
+        var hudDir = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Hud");
         Assert.True(Directory.Exists(hudDir), "missing " + hudDir);
 
         foreach (var file in EnumerateSources(hudDir))
