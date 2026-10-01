@@ -106,20 +106,38 @@ public class PlantSideStatusGuardTests
         using var stream = File.OpenRead(path);
         var hash = Convert.ToHexString(sha256.ComputeHash(stream));
 
-        // Re-pinned 2026-09-21 after combat-ai CAI1.12 (commit c3bb0ba2, "the per-place executor
-        // allowlist", Core half) changed this file (384 -> 447 lines, tasks/combat-ai-todo.md:830) —
-        // exactly the deliberate re-pin this pin exists to force, rather than a silent drift. The
-        // previous pin (52F843…, 2026-09-09) covered the unrelated AttackerEdge addition (9aad045).
-        // Re-pinned 2026-09-23 after battle-derived-wire T6 (commit 5e33ad647, "one gate owns
-        // combat.defense.omni") added BaseDerived to IBattleStatTarget plus its doc comment — accepted
-        // lane work, merged to the integration branch with BattleDefenseOwnershipTests 5/5 and goldens
-        // unmoved. The next accepted P1 battle repair (reviewed SHA 7b4e8ef582a0744e20f501562a4b28167e402c89)
-        // changed the retained-damage observer surface in this same file, so the byte pin is deliberately
-        // re-baselined here rather than weakening the guard. Verified current SHA-256:
-        // 946E578D0092A77EB8DD59FDAF8C48FD3113B6042E0E4FB627E921EAB2B43013.
-        // E39 remains Injector-only; this hash protects the current Core baseline from accidental
-        // edits while keeping the guard honest about the checked-in byte content.
-        const string baselineHash = "946E578D0092A77EB8DD59FDAF8C48FD3113B6042E0E4FB627E921EAB2B43013";
+        // Re-pinned 2026-10-01, and the cause is the MIGRATION rather than a battle change.
+        //
+        // The previous pin, 946E578D0092A77EB8DD59FDAF8C48FD3113B6042E0E4FB627E921EAB2B43013, was
+        // MEASURED correct: it is the SHA-256 of the source repository's copy of this file at its HEAD,
+        // byte for byte, LF endings included. So the pin was not stale and nothing had drifted silently.
+        //
+        // What changed the bytes is kvsplit's documented path-literal transform. This file is gk-core's,
+        // and one comment line names its own coverage pattern; the transform rewrote it from
+        // `src/FusionRpg.Core/Battle/**` to `gk-core/src/FusionRpg.Core/Battle/**`, because a
+        // repository-relative path is ambiguous once nine repositories exist. That is the
+        // `path-literal-moves` residue class, and it changes content by design.
+        //
+        // VERIFIED, not assumed: the diff between the source copy at the import SHA
+        // (effc51d9b55f78aa7a5c47e14eef0e61b690e5eb) and this repository's copy is exactly ONE line, and it
+        // is that comment. 511 lines on both sides; 29802 bytes against 29794, the 8-byte difference
+        // being the inserted `gk-core/` prefix on that one line. Every other line is identical.
+        //
+        // Two things this explicitly is NOT, both measured before being ruled out:
+        //   * Not a lossy import. lossy-check reports zero losses, and a one-line comment rewrite is the
+        //     transform working, not data going missing.
+        //   * Not a line-ending artifact. An intermediate measurement appeared to show the source
+        //     storing CRLF, which would have made a raw byte pin fragile across checkouts. That was MY
+        //     probe: Out-File rewrites LF to CRLF as it writes. Read straight from `git cat-file`, the
+        //     source blob is 29794 bytes with zero CRLF, exactly like this one.
+        //
+        // So the guard is re-baselined to the bytes that are actually here, which is the deliberate
+        // re-pin this pin exists to force. It is NOT weakened: the next edit to this file still fails
+        // this test, and the comment now says what would make a future change illegitimate — anything
+        // beyond a path literal.
+        // E39 remains Injector-only; this hash protects the current Core baseline from accidental edits
+        // while keeping the guard honest about the checked-in byte content.
+        const string baselineHash = "38EAAB1B086867CB60991026B437034AC196961D18CD01E9439F409D52711A3D";
         Assert.Equal(baselineHash, hash);
     }
 
