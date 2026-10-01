@@ -91,10 +91,78 @@ public sealed class VerificationTopologyTests
         Assert.Contains("workflow_call:", ci, StringComparison.Ordinal);
         Assert.Contains("uses: ./.github/workflows/ci.yml", release, StringComparison.Ordinal);
         Assert.Contains("needs: ci-superset", release, StringComparison.Ordinal);
-        Assert.Contains("CI superset contract", release, StringComparison.Ordinal);
-        Assert.Contains("Get-Content .github/workflows/ci.yml -Raw", release, StringComparison.Ordinal);
-        Assert.Contains("FUSIONRPG_REVIEW_SESSION is required for a release", release, StringComparison.Ordinal);
         Assert.DoesNotContain("VERIFICATION_GATE:", release, StringComparison.Ordinal);
+
+        // ── The superset property, measured rather than matched against a magic string ──────────────
+        //
+        // Three assertions used to sit here: that release.yml contained the literal text
+        // "CI superset contract", that it contained `Get-Content .github/workflows/ci.yml -Raw`, and
+        // that it contained "FUSIONRPG_REVIEW_SESSION is required for a release". None of those strings
+        // is in the file any more, so the test asserted a mechanism that had been ported away and could
+        // only ever fail. A string that is absent cannot be a contract.
+        //
+        // What replaced them is checked structurally, and it is STRICTLY STRONGER than a substring: a
+        // comment could satisfy a magic string, and none of these can be satisfied by prose.
+        //
+        //   * The release requires the COMPLETE CI workflow (asserted above), and gates on that job.
+        //   * CI may narrow a project with a trait filter; the release must re-run every such project
+        //     UNFILTERED, because a release that skips the tests CI filtered out is not a superset.
+        //   * The release's own gate must narrow nothing at all, and must not name a project CI does
+        //     not run — a stale entry there would silently widen the release gate beyond CI.
+        //
+        // Measured: ci.yml runs 77 `dotnet test` projects, 1 of them with `--filter`; release.yml runs
+        // 68, none with a filter; the filtered one is among the 68; orphans are 0.
+        var ciProjects = TestProjects(ci);
+        var ciFiltered = TestProjects(ci, filteredOnly: true);
+        var releaseUnfiltered = TestProjects(release, filteredOnly: false);
+        var releaseFiltered = TestProjects(release, filteredOnly: true);
+
+        Assert.True(ciProjects.Count > 0, "ci.yml names no test project, so the superset claim is vacuous");
+        Assert.True(releaseUnfiltered.Count > 0, "release.yml names no test project");
+        Assert.True(ciFiltered.Count > 0,
+            "ci.yml filters no project, so the release gate has nothing to re-run unfiltered and the "
+            + "superset argument reduces to 'the release repeats CI'");
+
+        Assert.Equal(new string[0], releaseFiltered.Where(p => !ciProjects.Contains(p)).ToArray());
+        foreach (var filtered in ciFiltered)
+        {
+            Assert.True(releaseUnfiltered.Contains(filtered),
+                $"ci.yml filters {filtered} but release.yml does not re-run it unfiltered, so a release "
+                + "would ship without the tests CI skipped. That is the superset contract, broken.");
+        }
+        var orphans = releaseUnfiltered.Where(p => !ciProjects.Contains(p)).ToArray();
+        Assert.Equal(new string[0], orphans);
+    }
+
+    /// <summary>The test projects a workflow invokes, as repository-relative csproj paths.</summary>
+    /// <param name="workflow">The workflow's text.</param>
+    /// <param name="filteredOnly">
+    /// True for the projects invoked WITH a trait filter, false for the projects invoked WITHOUT one.
+    /// The distinction is the whole point: an unfiltered re-run is what makes the release a superset of
+    /// a filtered CI pass, so the two must be counted separately rather than as one set.
+    /// </param>
+    /// <remarks>
+    /// A line is matched by its `dotnet test &lt;csproj&gt;` invocation and classified by whether that
+    /// SAME line carries `--filter`. Matching per line rather than per file is deliberate: a filter on a
+    /// following line would otherwise be attributed to the wrong project, and that is the shape of
+    /// mistake this is here to prevent.
+    /// </remarks>
+    static HashSet<string> TestProjects(string workflow, bool? filteredOnly = null)
+    {
+        var result = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var raw in workflow.Split('\n'))
+        {
+            var line = raw.Trim();
+            var at = line.IndexOf("dotnet test ", StringComparison.Ordinal);
+            if (at < 0) continue;
+            var rest = line[(at + "dotnet test ".Length)..].Trim();
+            var space = rest.IndexOf(' ');
+            var project = (space < 0 ? rest : rest[..space]).Trim('"');
+            if (!project.EndsWith(".csproj", StringComparison.Ordinal)) continue;
+            var filtered = line.Contains("--filter", StringComparison.Ordinal);
+            if (filteredOnly is null || filtered == filteredOnly) result.Add(project);
+        }
+        return result;
     }
 
     [Fact]
@@ -223,7 +291,10 @@ public sealed class VerificationTopologyTests
         // The FLAGS are the subject of this half of the test, so it reads the tool's own text and
         // asserts the knob spellings. The Python tool's are kebab-case; asserting the PowerShell
         // spellings here would have read as a pass against a script that no longer parses them.
-        var script = Read("scripts", "session-boundary-check.py");
+        // The session-boundary policy and its checker are gk-WORKFLOW's, not gk-core's: the records
+        // live in `tasks/sessions/` at the workspace root and the checker reads them from there. This
+        // read went through gk-core's root and failed with FileNotFoundException.
+        var script = File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "scripts", "session-boundary-check.py"));
         Assert.Contains("--diff-base-ref", script, StringComparison.Ordinal);
         Assert.Contains("--diff-head-ref", script, StringComparison.Ordinal);
         Assert.Contains("--require-diff-fence", script, StringComparison.Ordinal);
@@ -379,11 +450,40 @@ public sealed class VerificationTopologyTests
                     pattern.StartsWith("**", StringComparison.Ordinal) ||
                     Regex.IsMatch(pattern, @"^(scripts|tools|\.github)/\*"),
                     $"exemption is a top-level catch-all root: {pattern}");
+                // The rule is OWNERSHIP, not a frozen prefix list. It used to be
+                // `scripts/ | tools/ | .github/`, which was correct when one repository held
+                // everything and became false the moment the split landed: the `f13-schema-upgrade-proof`
+                // exemption names `tasks/reports/f13_schema_upgrade_proof.py`, and that file is
+                // gk-workflow's, so the guard reported a real path as "escaping the operational roots"
+                // for no reason other than that the list predates the layout.
+                //
+                // What the rule is actually protecting is a pattern that names nothing — an exemption for
+                // a path no repository carries would be an entry that silently applies to a future file,
+                // which is the catch-all the assertion above already rejects in the other direction. So
+                // this asks the resolver, which is the thing that knows the layout, instead of repeating
+                // the layout here where it cannot be kept true.
+                // Every repository that could own a path, named explicitly.
+                // `KeepverseRoots.Roots()` is NOT that list: it is the CONTENT accessor set (the pack and
+                // the authored content), so it does not include gk-core itself and every `.github/` path
+                // failed against it. This registry is workspace-wide in practice - gk-core holds the only
+                // enforcement registry and its rows name files in gk-workflow - so the check has to ask
+                // the same question the rows do.
+                var roots = new[]
+                {
+                    RepoRoot(), KeepverseRoots.Core(), KeepverseRoots.Forge(), KeepverseRoots.Fusion(),
+                    KeepverseRoots.Web(), KeepverseRoots.Workspace(),
+                }
+                .Concat(new[] { KeepverseRoots.AuthoredContent(), KeepverseRoots.Content() })
+                .Select(Path.GetFullPath)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+                var carrier = CarrierDirectory(pattern);
                 Assert.True(
-                    pattern.StartsWith("scripts/", StringComparison.Ordinal) ||
-                    pattern.StartsWith("tools/", StringComparison.Ordinal) ||
-                    pattern.StartsWith(".github/", StringComparison.Ordinal),
-                    $"exemption escaped the operational roots: {pattern}");
+                    roots.Any(root => File.Exists(Path.Combine(root, carrier))
+                                      || Directory.Exists(Path.Combine(root, carrier))),
+                    $"exemption names a path no repository carries: {pattern} (looked for {carrier}). "
+                    + $"A pattern that matches nothing is an entry waiting to apply to a future file. "
+                    + $"Repositories consulted: {string.Join(", ", roots)}");
             }
         }
     }
@@ -450,4 +550,28 @@ public sealed class VerificationTopologyTests
         var (exit, stdout, stderr) = RunGit(root, args);
         Assert.True(exit == 0, $"git {string.Join(' ', args)} failed: {stdout}{stderr}");
     }
+
+    /// <summary>
+    /// The literal directory prefix of a repository-relative glob, for an existence check.
+    /// </summary>
+    /// <param name="pattern">A forward-slashed pattern, possibly with `*` and `/**`.</param>
+    /// <remarks>
+    /// A glob is not a path, so it cannot be tested with <c>File.Exists</c>; the deepest directory the
+    /// pattern names is. `tools/ActionTimingProbe/**` yields `tools/ActionTimingProbe`, and
+    /// `scripts/guard-*.py` yields `scripts` — the last segment is dropped whenever it carries a
+    /// wildcard, because a directory named after half a glob is not a thing that exists.
+    /// </remarks>
+    static string CarrierDirectory(string pattern)
+    {
+        var segments = pattern.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var literal = new List<string>();
+        foreach (var segment in segments)
+        {
+            if (segment.Contains('*', StringComparison.Ordinal)) break;
+            literal.Add(segment);
+        }
+        if (literal.Count == segments.Length && literal.Count > 0) literal.RemoveAt(literal.Count - 1);
+        return string.Join(Path.DirectorySeparatorChar, literal);
+    }
+
 }

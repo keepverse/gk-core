@@ -30,10 +30,11 @@ public class LawnObserverDrainNeutralityGuardTests
     {
         var sessionWriters = new List<string>();
         var enabledWriters = new List<string>();
-        foreach (var file in SourceFiles("src"))
+        var scanned = 0;
+        foreach (var (rel, file) in DrainFlagSourceFiles())
         {
             var text = File.ReadAllText(file);
-            var rel = Path.GetRelativePath(RepoRoot(), file).Replace('\\', '/');
+            scanned++;
             foreach (Match m in Regex.Matches(text, @"(?<![\w.])(DebugRuntime\.)?SessionActive\s*=(?!=)"))
                 if (!rel.StartsWith("src/FusionRpg.Core/", StringComparison.Ordinal) && !rel.StartsWith("src/FusionRpg.Server/", StringComparison.Ordinal))
                     sessionWriters.Add(rel);
@@ -41,8 +42,16 @@ public class LawnObserverDrainNeutralityGuardTests
                 enabledWriters.Add(rel);
         }
 
+        // A guard that quietly scans nothing passes forever, so the scan is anchored on BOTH the volume
+        // and the owner. The volume alone would pass on a small tree; the owner alone passed on an empty
+        // list, which is the failure this had.
+        Assert.True(scanned > 50, $"expected to scan both repositories' sources, saw {scanned} files");
         Assert.All(sessionWriters, w => Assert.Equal("src/FusionRpg.Injector/DebugRuntime.cs", w));
+        Assert.True(sessionWriters.Count > 0,
+            "no file writes SessionActive, so the single-writer assertion above proved nothing");
         Assert.Equal(new[] { "src/FusionRpg.Injector/Host/InjectorLoop.cs" }, enabledWriters.Distinct().ToArray());
+        Assert.True(enabledWriters.Count > 0,
+            "no file writes EventDrainHost.Enabled, so the single-writer assertion above proved nothing");
 
         var debugRuntime = ReadInjectorFile("src/FusionRpg.Injector/DebugRuntime.cs");
         var outsideSessionMethods = debugRuntime
@@ -56,7 +65,8 @@ public class LawnObserverDrainNeutralityGuardTests
     {
         var allowed = new[] { "/api/perf/recent", "/api/debug/snapshot", "/api/events", "/api/debug/session" };
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var file in SourceFiles("tools/LawnCombatObserver"))
+        // The observer tool is gk-FUSION's, and it was being looked for under gk-core.
+        foreach (var file in SourceFiles(KeepverseRoots.Fusion(), "tools/LawnCombatObserver"))
         {
             var text = File.ReadAllText(file);
             Assert.DoesNotMatch(@"\b(PostAsync|PutAsync|PatchAsync|DeleteAsync|SendAsync)\b", text);
@@ -132,10 +142,43 @@ public class LawnObserverDrainNeutralityGuardTests
         throw new InvalidOperationException("unbalanced braces after " + signature);
     }
 
-    static IEnumerable<string> SourceFiles(string relativeDir) =>
-        Directory.EnumerateFiles(Path.Combine(RepoRoot(), relativeDir), "*.cs", SearchOption.AllDirectories)
+    /// <summary>Every .cs file under <c>&lt;root&gt;/&lt;relativeDir&gt;</c>, build output excluded.</summary>
+    /// <param name="root">The repository to scan.</param>
+    /// <param name="relativeDir">The directory below it.</param>
+    /// <remarks>
+    /// The root is a parameter because the trees a caller needs span repositories. This used to scan
+    /// gk-core's <c>src/</c> for every caller, and the drain-flag test then asserted that the only writer
+    /// of <c>SessionActive</c> is <c>src/FusionRpg.Injector/DebugRuntime.cs</c> — a gk-FUSION file the scan
+    /// could never have reached, so the writer list it compared was empty and the equality passed for the
+    /// wrong reason. An empty list satisfies <c>Assert.All</c>; that is what made this invisible rather
+    /// than red.
+    /// </remarks>
+    static IEnumerable<string> SourceFiles(string root, string relativeDir) =>
+        Directory.EnumerateFiles(Path.Combine(root, relativeDir), "*.cs", SearchOption.AllDirectories)
             .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar));
+
+    /// <summary>
+    /// Every source file in the repositories that own the drain/session flag writers, as
+    /// (repository-relative path, absolute path).
+    /// </summary>
+    /// <remarks>
+    /// TWO repositories, because the test's own exclusions say so: it filters out
+    /// <c>src/FusionRpg.Core/</c> and <c>src/FusionRpg.Server/</c>, and those prefixes only mean anything
+    /// if gk-core is in the scanned set. The writers themselves are gk-fusion's. Scanning one repository
+    /// answers neither half, so both are scanned and the relative path is what the assertions compare —
+    /// a path whose owner is not named in the result would be a defect this shape cannot express.
+    /// </remarks>
+    static IEnumerable<(string Rel, string Abs)> DrainFlagSourceFiles()
+    {
+        foreach (var root in new[] { KeepverseRoots.Core(), KeepverseRoots.Fusion() })
+        {
+            foreach (var file in SourceFiles(root, "src"))
+            {
+                yield return (Path.GetRelativePath(root, file).Replace('\\', '/'), file);
+            }
+        }
+    }
 
     /// <summary>Reads a file under an EXPLICIT root. This helper used to prepend gk-core's
     /// root to every path, which is why four Injector reads and one Server read all went
