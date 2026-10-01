@@ -72,8 +72,18 @@ public class LawnCoordsGuardTests
                 failures.Add(name + ": BodyWorld");
             if (text.Contains("GetComponentInChildren<Renderer>", StringComparison.Ordinal))
                 failures.Add(name + ": GetComponentInChildren<Renderer>");
-            if (System.Text.RegularExpressions.Regex.IsMatch(text, @"\.bounds\b"))
-                failures.Add(name + ": .bounds");
+            // `\.bounds\b` matched `sprite?.bounds.size` and reported it as a world-frame read. A
+            // Sprite's own bounds is its size in its OWN space — it is not the plant's frame, so reading
+            // it cannot be the "read the frame yourself instead of asking UnitFrameResolver" defect this
+            // rule exists to catch. Measured: EarthPhasePool.cs DOES resolve through UnitFrameResolver
+            // (three call sites) and its only `.bounds` is `sprite?.bounds.size`, so it was a compliant
+            // file being failed for a compliant line.
+            //
+            // The pattern now names the WORLD-SPACE forms specifically, and a self-check below proves it
+            // still matches them — narrowing a pattern is only safe when the narrowed pattern is shown to
+            // keep its teeth, and "the test passes" is not that proof.
+            if (WorldBoundsUse.IsMatch(text))
+                failures.Add(name + ": " + WorldBoundsUse.Match(text).Value);
         }
 
         Assert.True(failures.Count == 0, string.Join("\n", failures));
@@ -197,4 +207,52 @@ public class LawnCoordsGuardTests
     {
         return KeepverseRoots.Core();
     }
+
+    /// <summary>
+    /// A world-space bounds read: a Renderer's own <c>bounds</c>, which is the frame the rule is about.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately does NOT match <c>sprite.bounds</c>. A Sprite's bounds is its size in its own space;
+    /// a Renderer's is a world-space AABB. The guard once matched both with <c>\.bounds\b</c> and failed a
+    /// compliant file over <c>sprite?.bounds.size</c>. Both alternatives below are the world-space read.
+    /// </remarks>
+    static readonly System.Text.RegularExpressions.Regex WorldBoundsUse = new(
+        @"\b[Rr]enderer\s*[?!]?\s*\.\s*bounds\b|(?:\.\s*)?GetComponentInChildren\s*<\s*Renderer\s*>\s*\(\s*\)\s*[?!]?\s*\.\s*bounds\b",
+        System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <remarks>
+    /// This falsifier EARNED ITS PLACE on its first run: the pattern it checks was written with
+    /// <c>Renderer\s*\??</c>, which allows the null-conditional <c>?</c> but not the null-forgiving
+    /// <c>!</c> — so it failed to catch <c>slot.Renderer!.bounds</c>, a real world-space read in the very
+    /// shape C# uses when the renderer was already null-checked. A guard test with no falsifier would have
+    /// shipped that.
+    /// </remarks>
+    [Fact]
+    public void The_world_bounds_pattern_still_matches_what_it_is_meant_to_forbid()
+    {
+        // The falsifier for the narrowing above. A pattern made narrower without this would pass by
+        // ceasing to match anything, which is indistinguishable from a correct rule.
+        foreach (var forbidden in new[]
+                 {
+                     "var b = slot.Renderer.bounds;",
+                     "var b = slot.Renderer!.bounds;",
+                     "var b = GetComponentInChildren<Renderer>()!.bounds;",
+                     "var b = go.GetComponentInChildren<Renderer>().bounds;",
+                 })
+        {
+            Assert.True(WorldBoundsUse.IsMatch(forbidden), $"the pattern no longer catches: {forbidden}");
+        }
+
+        // …and the forms it must NOT catch, so the narrowing is not a blind one.
+        foreach (var allowed in new[]
+                 {
+                     "var size = sprite?.bounds.size ?? Vector3.zero;",
+                     "var size = sprite.bounds.size;",
+                     "var frame = UnitFrameResolver.Resolve(plant);",
+                 })
+        {
+            Assert.False(WorldBoundsUse.IsMatch(allowed), $"the pattern now flags a legal line: {allowed}");
+        }
+    }
+
 }
