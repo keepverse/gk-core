@@ -14,7 +14,7 @@ public class DebugSessionGuardTests
     [Fact]
     public void EndSession_clears_LogDamage_it_enabled()
     {
-        var text = ReadSource("src", "FusionRpg.Injector", "DebugRuntime.cs");
+        var text = ReadSource(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "DebugRuntime.cs");
 
         var start = text.IndexOf("public static void StartSession", StringComparison.Ordinal);
         var end = text.IndexOf("public static void EndSession", StringComparison.Ordinal);
@@ -33,22 +33,27 @@ public class DebugSessionGuardTests
     [Fact]
     public void StatsConfig_LogDamage_defaults_off()
     {
-        var text = ReadSource("src", "FusionRpg.Contracts", "Dtos.cs");
+        var text = ReadSource(KeepverseRoots.Core(), "src", "FusionRpg.Contracts", "Dtos.cs");
         var idx = text.IndexOf("public bool LogDamage", StringComparison.Ordinal);
         Assert.True(idx >= 0, "StatsConfig.LogDamage not found");
         var line = text.Substring(idx, Math.Min(80, text.Length - idx));
         Assert.DoesNotContain("= true", line, StringComparison.Ordinal);
     }
 
-    static string ReadSource(params string[] parts)
+    /// <summary>Reads a source file from an EXPLICIT root.</summary>
+    /// <param name="root">The repository that carries it.</param>
+    /// <param name="parts">The path below that root.</param>
+    /// <remarks>
+    /// The root is a parameter because this file's two reads are in two repositories:
+    /// <c>src/FusionRpg.Injector/DebugRuntime.cs</c> is gk-FUSION's and
+    /// <c>src/FusionRpg.Contracts/Dtos.cs</c> is gk-core's. One helper with a fixed gk-core root made the
+    /// first read raise <c>missing ...\gk-core\src\FusionRpg.Injector\DebugRuntime.cs</c> — and the file's
+    /// subject is precisely that session-scoping logic, so the test that guards it could not read it.
+    /// </remarks>
+    static string ReadSource(string root, params string[] parts)
     {
-        var path = Path.Combine(new[] { FindRepoRoot() }.Concat(parts).ToArray());
-        Assert.True(File.Exists(path), "missing " + path);
+        var path = Path.Combine(new[] { root }.Concat(parts).ToArray());
+        Assert.True(File.Exists(path), $"missing {path} - {root} does not carry {Path.Combine(parts)}");
         return File.ReadAllText(path);
-    }
-
-    static string FindRepoRoot()
-    {
-        return KeepverseRoots.Core();
     }
 }

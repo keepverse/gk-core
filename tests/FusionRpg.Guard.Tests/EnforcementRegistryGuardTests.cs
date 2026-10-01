@@ -45,7 +45,7 @@ public sealed class EnforcementRegistryGuardTests
     // ── R1 ───────────────────────────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Every guard script on disk, BOTH extensions, repo-relative and ordered.
+    /// Every guard script in ONE repository, BOTH extensions, repo-relative and ordered.
     ///
     /// One definition, used by the R1 invariant and by the test that pins the glob. That is the
     /// point: when the glob lived inline in R1, a test asserting "both extensions are present"
@@ -58,21 +58,87 @@ public sealed class EnforcementRegistryGuardTests
     /// invariant that has quietly stopped covering the thing it names. A guard is a guard
     /// whichever interpreter runs it.
     /// </summary>
-    internal static string[] DiskGuards(string root)
+    internal static string[] DiskGuards(string root) => DiskGuardsIn(new[] { root });
+
+    /// <summary>Every guard script across the repositories that carry any, repo-relative and ordered.</summary>
+    /// <param name="roots">The repositories to enumerate.</param>
+    /// <remarks>
+    /// The catalog is WORKSPACE-WIDE: 6 of its 29 entries name a script gk-core does not carry
+    /// (four in gk-fusion, two at the workspace root). Enumerating gk-core alone therefore made BOTH
+    /// halves of R1 partial — an uncatalogued guard added to gk-fusion was invisible, and a catalogued
+    /// entry pointing at gk-fusion read as "missing". Measured: 25 guard scripts across the two
+    /// repositories that have any (21 + 4), 25 distinct names.
+    ///
+    /// The returned form stays `scripts/&lt;name&gt;` because that is the vocabulary the catalog itself
+    /// stores, so the two sides of the invariant are comparable. That is only sound while no two
+    /// repositories contribute the SAME name, so a collision is asserted rather than tolerated: a silent
+    /// collision would let a catalogued entry be satisfied by a different repository's file, which is
+    /// the ownership error this whole change is about.
+    /// </remarks>
+    internal static string[] DiskGuardsIn(IEnumerable<string> roots)
     {
-        var dir = Path.Combine(root, "scripts");
-        return Directory.GetFiles(dir, "guard-*.ps1")
-            .Concat(Directory.GetFiles(dir, "guard-*.py"))
-            .Select(p => "scripts/" + Path.GetFileName(p))
-            .OrderBy(p => p, StringComparer.Ordinal).ToArray();
+        var byName = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var root in roots)
+        {
+            var dir = Path.Combine(root, "scripts");
+            if (!Directory.Exists(dir)) continue;
+            foreach (var path in Directory.GetFiles(dir, "guard-*.ps1")
+                         .Concat(Directory.GetFiles(dir, "guard-*.py")))
+            {
+                var name = Path.GetFileName(path);
+                if (!byName.TryGetValue(name, out var owners)) byName[name] = owners = new List<string>();
+                owners.Add(root);
+            }
+        }
+
+        var collisions = byName.Where(kv => kv.Value.Count > 1)
+            .Select(kv => $"{kv.Key} in {string.Join(" and ", kv.Value.Select(Path.GetFileName))}")
+            .ToList();
+        Assert.True(collisions.Count == 0,
+            "the same guard script name exists in more than one repository, so a repo-relative "
+            + "catalog entry could be satisfied by the wrong one: " + string.Join("; ", collisions));
+
+        // The `scripts/` PREFIX is part of the identity, not decoration: the catalog stores
+        // `scripts/<name>`, so returning bare file names made every guard read as uncatalogued. That is
+        // the same class of mistake as a relative path with no owner — a name that cannot be compared
+        // against the thing it is supposed to match.
+        return byName.Keys
+            .Select(name => "scripts/" + name)
+            .OrderBy(p => p, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    /// <summary>Every repository that could carry a catalog entry's script.</summary>
+    /// <remarks>
+    /// Named explicitly rather than taken from <c>KeepverseRoots.Roots()</c>, which is the CONTENT
+    /// accessor set (the pack and the authored content) and does not include gk-core or gk-fusion.
+    /// </remarks>
+    static IReadOnlyList<string> WorkspaceRepositoryRoots() => new[]
+    {
+        KeepverseRoots.Workspace(), KeepverseRoots.Core(), KeepverseRoots.Fusion(),
+        KeepverseRoots.Forge(), KeepverseRoots.Web(),
+    };
+
+    /// <summary>Whether ANY repository carries a catalog entry's script, naming which one.</summary>
+    /// <param name="relative">The entry's repo-relative script path.</param>
+    static string? CarryingRepository(string relative)
+    {
+        foreach (var root in WorkspaceRepositoryRoots())
+        {
+            var path = Path.Combine(root, relative);
+            if (File.Exists(path)) return root;
+        }
+        return null;
     }
 
     [Fact]
     public void R1_every_guard_on_disk_is_catalogued_and_every_entry_script_exists()
     {
-        var root = RepoRoot();
         var reg = EnforcementRegistry.Load();
-        var violations = R1Violations(reg, DiskGuards(root), script => File.Exists(Path.Combine(root, script)));
+        var violations = R1Violations(
+            reg,
+            DiskGuardsIn(WorkspaceRepositoryRoots()),
+            script => CarryingRepository(script) is not null);
         Assert.True(violations.Count == 0, "R1: " + Join(violations));
     }
 

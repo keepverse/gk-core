@@ -125,7 +125,10 @@ public class PvzWriteSurfaceGuardTests
     [Fact]
     public void The_real_tree_still_passes()
     {
-        var (exit, stdout, stderr) = RunGuard(FindRepoRoot());
+        // The REAL tree only; the six calls above pass fixtures and must keep doing so. The guard scans
+        // `<root>/src/FusionRpg.Injector`, which is gk-fusion's, so gk-core's root made this run refuse
+        // with exit 64 and `MISSING_INJECTOR` — the "real tree still passes" claim could not be asked.
+        var (exit, stdout, stderr) = RunGuard(KeepverseRoots.Fusion());
         Assert.True(exit == 0, $"exit={exit}\n{stdout}\n{stderr}");
         Assert.Contains("SINGLE-WRITER GUARD OK", stdout, StringComparison.Ordinal);
     }
@@ -164,7 +167,6 @@ public class PvzWriteSurfaceGuardTests
 
     static (int Exit, string Stdout, string Stderr) RunGuard(string root)
     {
-        var repoRoot = FindRepoRoot();
         var script = Path.Combine(KeepverseRoots.Fusion(), "scripts", "guard-single-writer.py");
         var psi = new ProcessStartInfo
         {
