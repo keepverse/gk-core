@@ -73,10 +73,21 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+
+# `keepverse_roots` lives in this repository's `scripts/lib`, which is not on sys.path when the script is
+# run as a FILE — only when it is run as a module from this directory. That is why the import inside
+# `tool_base` is guarded rather than top-level, and why the guard's own fallback (`return root`) is what
+# a caller that has not set PYTHONPATH gets: a silent return to the pre-split behaviour instead of a named
+# failure. The two-line sys.path insert below is the established idiom for exactly this, copied from
+# gk-fusion/scripts/guard-single-writer.py:53-54, so a tool in this repository resolves a sibling the same
+# way a tool in that one does.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
 TOOL_ID = "regen-class-system-baselines"
 
@@ -200,6 +211,28 @@ def live_tuning(root: Path) -> Path:
     return best[1]
 
 
+def tool_base(root: Path, tool: tuple[str, str]) -> Path:
+    """The repository that carries `tool` — this one, or the sibling that took it.
+
+    `tools/CombatSim` is gk-core's and `tools/DominanceBaseline` is gk-FORGE's, so a single `root` for
+    both made the regen refuse with `TOOL-NOT-BUILT` against a tool that is built and present. The comment
+    beside the call site already said "gk-forge/tools/DominanceBaseline" — the prose was right and the code
+    under it was not, which is the ninth instance of that shape in this program.
+
+    `owning_base` is the shared resolver's answer to "which repository carries this path", searching
+    `root` first and then the fixed sibling set, and returning None when nothing does — so a tool that
+    exists nowhere still falls back to `root` and fails with the original, more useful message rather
+    than silently looking somewhere new. That is the decidable rule, not a special case on the name.
+    """
+    rel = "/".join(tool)
+    try:
+        from keepverse_roots import owning_base
+    except ImportError:  # a clone without scripts/lib beside this file
+        return root
+    base = owning_base(rel, root)
+    return Path(base) if base is not None else root
+
+
 def require_built(root: Path, tool: tuple[str, str], configuration: str) -> None:
     """Refuse when the tool has no built output for this configuration, BEFORE running it.
 
@@ -207,12 +240,15 @@ def require_built(root: Path, tool: tuple[str, str], configuration: str) -> None
     `The system cannot find the file specified` from inside `dotnet` -- which names neither the tool
     nor the configuration. The original's own comment records hitting exactly that on a fresh worktree.
     """
-    binaries = root.joinpath(*tool, "bin", configuration)
+    base = tool_base(root, tool)
+    binaries = base.joinpath(*tool, "bin", configuration)
     if not any(binaries.glob(os.path.join(_TFM_GLOB, "*.dll"))):
         raise Refusal(
             "TOOL-NOT-BUILT",
             f"{'/'.join(tool)} has no build output under "
-            f"{binaries.relative_to(root) if binaries.is_relative_to(root) else binaries} for "
+            f"{binaries.relative_to(base) if binaries.is_relative_to(base) else binaries} for "
+            f"--owner {base}" if base != root else f"{'/'.join(tool)} has no build output under "
+            f"{binaries.relative_to(base) if binaries.is_relative_to(base) else binaries} for "
             f"--configuration {configuration}. Every invocation is --no-build; build it first, or pass "
             f"the configuration that is already built.")
 
@@ -455,8 +491,11 @@ def execute(root: Path, out_dir: Path, configuration: str, sim_timeout: int, too
     dotnet = resolve_dotnet()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    combatsim = root.joinpath(*COMBATSIM)
-    dominance_tool = root.joinpath(*DOMINANCE_TOOL)
+    # Each tool resolves against the repository that carries it. CombatSim is gk-core's;
+    # DominanceBaseline is gk-forge's, and joining both onto one `root` is what made `dotnet run` fail
+    # with "The provided file path does not exist" for a tool that is present and built.
+    combatsim = tool_base(root, COMBATSIM).joinpath(*COMBATSIM)
+    dominance_tool = tool_base(root, DOMINANCE_TOOL).joinpath(*DOMINANCE_TOOL)
 
     # A private scratch tree, OUTSIDE the output directory. The original wrote its element scratch under
     # $OutDir -- the TRACKED docs/research/class-system by default -- and removed it with a bare
@@ -491,7 +530,7 @@ def execute(root: Path, out_dir: Path, configuration: str, sim_timeout: int, too
         # drift from it. `chains` is a best-response CHASE DominanceGuard has no equivalent search for,
         # so it stays trinity's own.
         core_scratch = scratch / "_dominance-core-scratch.json"
-        run_tool(dotnet, root, dominance_tool, configuration,
+        run_tool(dotnet, tool_base(root, DOMINANCE_TOOL), dominance_tool, configuration,
                  ["--theta", str(THETA), "--out", str(core_scratch)],
                  tool_timeout, "DominanceBaseline", report)
         core = read_json(core_scratch, "CORE-BASELINE-UNREADABLE")
