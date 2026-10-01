@@ -365,12 +365,20 @@ def render(report: Report, as_json: bool, tool_id: str = TOOL_ID,
     print(doc_hint)
 
 
-def run(args: argparse.Namespace, tool_id: str = TOOL_ID, profile_hint: str | None = None) -> int:
+def run(args: argparse.Namespace, tool_id: str = TOOL_ID, profile_hint: str | None = None,
+        default_profile_id: str = "") -> int:
     """Validate, execute, report. Returns the exit code; never raises past a refusal.
 
     Split out of `main` so the profile entry point can share the whole path -- validation, the
     directory defaults, the refusal vocabulary and the envelope -- instead of re-implementing the parts
     it happened to need.
+
+    `default_profile_id` is the CALLER's fallback for an empty `--profile-id`, and it is passed in
+    rather than read from a module constant because the constant belongs to the profile entry point
+    (`dump_game_profile.py`), not here. Naming it unqualified read as though this module owned it; it
+    does not, so an empty `--profile-id` on the profile entry point raised `NameError` instead of
+    printing the hint the caller had already configured a default for. The same reason the parser
+    takes the default as a parameter: one owner per value.
     """
     for name, value in (("--build-timeout", args.build_timeout), ("--run-timeout", args.run_timeout)):
         if value <= 0:
@@ -410,7 +418,7 @@ def run(args: argparse.Namespace, tool_id: str = TOOL_ID, profile_hint: str | No
         return refusal.exit_code
 
     render(report, args.json, tool_id,
-           doc_hint=(profile_hint.format(profile=args.profile_id or DEFAULT_PROFILE_ID)
+           doc_hint=(profile_hint.format(profile=args.profile_id or default_profile_id)
                      if profile_hint else P0_HINT))
     return EXIT_OK if report.ok else EXIT_FAILED
 

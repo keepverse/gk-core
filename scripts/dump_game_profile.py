@@ -56,7 +56,8 @@ def main(argv: list[str] | None = None) -> int:
     `$LASTEXITCODE` -- would destroy the one thing the port is for.
     """
     return core.run(core.build_parser(TOOL_ID, DEFAULT_PROFILE_ID).parse_args(argv),
-                    tool_id=TOOL_ID, profile_hint=PROFILE_HINT)
+                    tool_id=TOOL_ID, profile_hint=PROFILE_HINT,
+                    default_profile_id=DEFAULT_PROFILE_ID)
 
 
 if __name__ == "__main__":
