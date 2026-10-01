@@ -16,6 +16,10 @@ from pathlib import Path
 
 import pytest
 
+from ipcensor import report
+from ipcensor.registry import MARKS_FILE
+from ipcensor.roots import owned_dir
+
 TOOL_ROOT = Path(__file__).resolve().parents[1]
 LOCKFILE = TOOL_ROOT / "requirements.lock"
 REGISTRY_FIXTURES = Path(__file__).resolve().parent / "fixtures" / "registry" / "valid"
@@ -108,8 +112,17 @@ def test_the_module_entry_point_checks_the_shipped_registry() -> None:
     # spec-wiring.md §Testing Strategy level 2 and T10's acceptance line: the entry point exits 0 on
     # the registry the tool actually ships, with the root resolved from the git working tree (no
     # `--root`), exactly as the CI and release steps invoke it.
+    #
+    # The registry is located through the shared workspace resolver, because the split moved
+    # `data/seed/**` into a gk-data pack. The subprocess below resolves it the SAME way from a
+    # different working directory - that is the real point of this test, since CI invokes the
+    # advisory scan from the repository root and this suite invokes it from `tools/ip-censor`; a
+    # resolver anchored to the process working directory would pass here and crash there.
     repo_root = TOOL_ROOT.parents[1]
-    assert (repo_root / "data" / "seed" / "ip-censor" / "_registry" / "marks.v1.json").is_file()
+    shipped = owned_dir(report.DEFAULT_REGISTRY_DIR, repo_root)
+
+    assert (shipped / MARKS_FILE).is_file(), shipped
+    assert "gk-data" in shipped.parts, shipped
 
     result = _run_module("registry-check", cwd=repo_root)
 

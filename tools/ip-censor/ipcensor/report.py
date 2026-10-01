@@ -1,9 +1,14 @@
 """The composition root: load the registry, read the tree, write the plan and the report.
 
-`report` is the only module that knows where things live. It resolves the scanned tree and the registry
-from `git rev-parse --show-toplevel` (or an explicit `--root`) and **never** from the process working
+`report` is the only module that knows where things live. It resolves the SCANNED TREE from
+`git rev-parse --show-toplevel` (or an explicit `--root`) and **never** from the process working
 directory: `git ls-files` run inside `gk-core/tools/ip-censor` would enumerate only that folder and any gate over
 it would pass vacuously (plan D4).
+
+The REGISTRY is resolved separately, through `ipcensor.roots`, and it has to be: the split moved
+`data/seed/**` into a gk-data pack, so the tree being scanned and the registry that describes it
+stopped being the same repository. `registry_dir` still honours a `--root` that carries the registry -
+the fixture tests depend on exactly that - and falls through to the pack only when it does not.
 
 The plan JSON is the hand-off to the execute program. It is versioned, byte-stable apart from
 `generated_at`, and it carries `remediation` on every finding so no consumer has to re-derive it.
@@ -19,11 +24,20 @@ from typing import Iterable, Mapping, Sequence
 
 from ipcensor.census import TokenStat, census
 from ipcensor.registry import MARKS_FILE, Registry, load_registry
+from ipcensor.roots import owned_dir
 from ipcensor.scan import Finding, scan
 from ipcensor.source import SourceFile, iter_files, matches_any
 from ipcensor.suggest import SuggestFn, Suggestion, suggest
 
 PLAN_SCHEMA_VERSION = 1
+
+# REPOSITORY-RELATIVE, AND IT MUST STAY THAT WAY. This string is not only a path: it is the form the
+# authored data uses. `scope-policy.v1.json` carries the rules `data/seed/**/_registry/**` and
+# `data/seed/ip-censor/**`, and `marks.v1.json` lists `self_paths` of `data/seed/ip-censor/**`, all of
+# which are matched against repo-relative finding paths. Turning this into a resolved absolute path
+# would stop the registry from describing its own scope. WHERE it lives is a separate question, and
+# `roots` answers it - the split moved this tree into a gk-data pack, so `root / DEFAULT_REGISTRY_DIR`
+# named a path in a repository that does not have it.
 DEFAULT_REGISTRY_DIR = "data/seed/ip-censor/_registry"
 
 # Closed vocabulary: a new grouping is a reviewed decision, and `--by remediation` must lose no finding.
@@ -97,8 +111,17 @@ def registry_version(directory: Path | str) -> str:
     return versions.pop()
 
 
+def registry_dir(root: Path | str | None = None) -> Path:
+    """The registry directory, resolved through the repository that carries it (`ipcensor.roots`).
+
+    `root` still wins when it genuinely carries the registry - that is what lets the fixture tests
+    pass `--root` into a throwaway repo - and a root that does not fall through to the content pack.
+    """
+    return owned_dir(DEFAULT_REGISTRY_DIR, root)
+
+
 def load_registry_for(root: Path | str, *, directory: str = DEFAULT_REGISTRY_DIR) -> Registry:
-    return load_registry(Path(root) / directory)
+    return load_registry(owned_dir(directory, root))
 
 
 def commit_of(root: Path | str) -> str:
@@ -181,7 +204,7 @@ def build_plan(
     return Plan(
         schema_version=PLAN_SCHEMA_VERSION,
         generated_from_commit=commit_of(root),
-        registry_version=registry_version(Path(root) / DEFAULT_REGISTRY_DIR),
+        registry_version=registry_version(registry_dir(root)),
         model=model,
         findings=tuple(findings),
         suggestions=tuple(suggestions),
@@ -292,7 +315,7 @@ def _in_tree(path: str, tree: str | None) -> bool:
 
 def registry_check(root: Path | str) -> str:
     """Parse the shipped registry and describe it. Raises `RegistryError` when it cannot be loaded."""
-    directory = Path(root) / DEFAULT_REGISTRY_DIR
+    directory = registry_dir(root)
     registry = load_registry(directory)
     return (
         f"{MARKS_FILE}: {registry_version(directory)}, "

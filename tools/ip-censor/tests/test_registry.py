@@ -40,13 +40,26 @@ from ipcensor.registry import (
     render_marks,
     surface_for,
 )
+from ipcensor.roots import owned_dir, owned_path
 from ipcensor.source import matches_any, tracked_paths
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "registry" / "valid"
 REMEDIATION_FIXTURES = FIXTURES.parent / "remediation"
 TOOL_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = TOOL_ROOT.parents[1]
-SHIPPED_REGISTRY = REPO_ROOT / "data" / "seed" / "ip-censor" / "_registry"
+
+# The registry these tests read is the SHIPPED one, so it is resolved through the shared workspace
+# resolver rather than joined onto a repository root: the split moved `data/seed/**` into a gk-data
+# pack, and `REPO_ROOT / "data" / "seed" / ...` names a path no repository carries.
+#
+# NOT CIRCULAR, AND THE ASSERTION BELOW IS WHY. Resolving with the tool's own helper would let these
+# tests follow it anywhere: a resolver pointed at any parseable registry would keep them green while
+# the release gate read something else. `SHIPPED_REGISTRY_REPO` therefore names the repository the
+# resolver CHOSE, and the guard demands it be the content pack - an independent fact about the
+# workspace that the resolver cannot satisfy by being wrong in the tool's favour.
+SHIPPED_REGISTRY_RELPATH = "data/seed/ip-censor/_registry"
+SHIPPED_REGISTRY = owned_dir(SHIPPED_REGISTRY_RELPATH, TOOL_ROOT)
+SHIPPED_REGISTRY_REPO = owned_path(f"{SHIPPED_REGISTRY_RELPATH}/{MARKS_FILE}", TOOL_ROOT).parents[1]
 
 
 def valid_files() -> dict[str, str]:
@@ -698,6 +711,23 @@ def test_the_registry_loads_from_a_directory() -> None:
 # They pin the CLOSED vocabulary — which marks exist, which scopes, which replacements, which
 # surfaces are enforced — and never a hit population: how many occurrences those marks produce over
 # the real tree is a reading (validation-ssot.md).
+
+
+def test_the_shipped_registry_lives_in_the_content_pack_and_not_in_the_scanned_repository() -> None:
+    # The precondition every other shipped-registry test here silently depends on. They all read
+    # `SHIPPED_REGISTRY`, so a resolver that returned a directory that is NOT the shipped registry
+    # would keep them green while proving nothing about what the release gate reads.
+    assert (SHIPPED_REGISTRY / MARKS_FILE).is_file(), SHIPPED_REGISTRY
+
+    # It is a gk-data PACK, and the pack is what the resolver returns - `gk-data/packs/fusion`, whose
+    # basename is the pack name. A resolver that matched the literal prefix `data/seed` finds nothing
+    # under gk-data and silently answers "the scanned repository", which is the bug this test pins.
+    assert "gk-data" in SHIPPED_REGISTRY_REPO.parts, SHIPPED_REGISTRY_REPO
+    assert SHIPPED_REGISTRY_REPO != REPO_ROOT
+    assert not (REPO_ROOT / "data" / "seed").exists(), (
+        "the scanned repository has a data/seed again, so the shipped registry is ambiguous: the "
+        "resolver would answer with whichever root came first in repo_bases()"
+    )
 
 
 def test_the_shipped_registry_parses_and_is_byte_stable() -> None:

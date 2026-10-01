@@ -1,8 +1,9 @@
 """Tests for `curate import` and the USPTO adapter (spec-curate.md §Testing Strategy).
 
-Fixtures use invented marks only. The authored filter the tool ships lives in
-`gk-data/packs/fusion/data/seed/ip-censor/_registry/import-filter.v1.json`; these tests read the fixture copy, so the module
-is proven against the schema the shipped file must satisfy.
+Fixtures use invented marks only. Most of these tests read the fixture copy of the authored filter, so
+the module is proven against the schema the shipped file must satisfy; the two
+`test_the_shipped_filter_*` tests instead read the SHIPPED file, resolved through the shared workspace
+resolver because the split moved `data/seed/**` into a gk-data pack.
 """
 
 from __future__ import annotations
@@ -36,6 +37,7 @@ from ipcensor.curate import (
 from ipcensor.datasets import uspto
 from ipcensor.registry import CATEGORIES, REGISTRY_FILES, parse_marks, parse_registry
 from ipcensor.registry import render_marks
+from ipcensor.roots import TOOL_ROOT, owned
 
 TESTS_DIR = Path(__file__).resolve().parent
 FIXTURES = TESTS_DIR / "fixtures" / "curate"
@@ -151,8 +153,25 @@ def test_the_filter_can_be_loaded_from_a_path(tmp_path: Path) -> None:
         load_import_filter(tmp_path / "missing.json")
 
 
-def test_the_shipped_filter_path_is_the_specs_path() -> None:
-    assert DEFAULT_FILTER_PATH == "data/seed/ip-censor/_registry/import-filter.v1.json"
+def test_the_shipped_filter_path_resolves_to_the_shipped_filter() -> None:
+    # The pair `curate.DEFAULT_FILTER_PATH` / its reader was the one hard-coded path in this module.
+    # It was paired with the literal below and both had to move together; this asserts RESOLVED
+    # BEHAVIOUR instead, because the literal alone proved nothing - it stayed true while every read of
+    # the file failed. What has to hold is that the constant the CLI passes names the real shipped
+    # filter, read the same way the CLI reads it.
+    assert DEFAULT_FILTER_PATH == "data/seed/ip-censor/_registry/import-filter.v1.json", (
+        "the constant is repository-relative DATA, not just a path: scope-policy.v1.json matches "
+        "data/seed/**/_registry/** against it and marks.v1.json lists data/seed/ip-censor/** as a "
+        "self path, so a resolved or absolute spelling here would stop the registry describing itself"
+    )
+
+    resolved = owned(DEFAULT_FILTER_PATH, TOOL_ROOT)
+
+    assert resolved.is_file(), resolved
+    # Resolved through the same call the CLI makes, so this is the reader under test rather than a
+    # restatement of the constant.
+    assert load_import_filter() == load_import_filter(resolved)
+    assert load_import_filter().format == uspto.FORMAT_ID
 
 
 def test_the_shipped_filter_parses_and_pins_the_adapters_format() -> None:
@@ -160,8 +179,7 @@ def test_the_shipped_filter_parses_and_pins_the_adapters_format() -> None:
     # this test proves the shipped file satisfies the schema the module enforces and that its format
     # still names the adapter's own pin. Its Nice classes, status codes and goods terms are tuned
     # against real candidate output at T21; the filter's shape is what is pinned here.
-    repo_root = TESTS_DIR.parents[2]
-    shipped = load_import_filter(repo_root / DEFAULT_FILTER_PATH)
+    shipped = load_import_filter()
 
     assert shipped.format == uspto.FORMAT_ID
     assert shipped.category in CATEGORIES

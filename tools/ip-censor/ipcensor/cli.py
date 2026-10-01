@@ -17,6 +17,7 @@ from typing import Sequence
 
 from ipcensor import curate, llm, report
 from ipcensor.registry import RegistryError
+from ipcensor.roots import owned
 from ipcensor.scan import BUCKETS
 from ipcensor.suggest import PROPOSAL_MARKER
 
@@ -24,6 +25,11 @@ EXIT_OK = 0
 EXIT_FINDINGS = 1
 EXIT_ERROR = 2
 
+# REPOSITORY-RELATIVE, resolved through `ipcensor.roots` at the write site below - never joined onto a
+# root. `admit` rewrites the registry it just read, so this must name the SAME registry
+# `report.load_registry_for` loaded; resolving it through the same resolver is what guarantees that,
+# and it is why a `data/` tree that moved repositories did not silently fork `admit`'s output away
+# from the file the scan reads.
 MARKS_PATH = "data/seed/ip-censor/_registry/marks.v1.json"
 
 SUGGEST_PROMPT = (
@@ -213,7 +219,7 @@ def _curate(args: argparse.Namespace, root: Path) -> int:
     directory = Path(args.out_dir) if getattr(args, "out_dir", None) else root / curate.DEFAULT_CANDIDATE_DIR
 
     if args.curate_verb == "import":
-        filter = curate.load_import_filter(root / curate.DEFAULT_FILTER_PATH)
+        filter = curate.load_import_filter(owned(curate.DEFAULT_FILTER_PATH, root))
         candidates = curate.read_and_import(
             args.input, filter, dataset_version=args.dataset_version
         )
@@ -252,7 +258,7 @@ def _curate(args: argparse.Namespace, root: Path) -> int:
     for mark, reason in result.refused:
         print(f"ipcensor: refused {mark}: {reason}", file=sys.stderr)
     if not args.dry_run:
-        curate.write_marks(result, root / MARKS_PATH)
+        curate.write_marks(result, owned(MARKS_PATH, root))
     print(
         f"admitted {len(result.admitted)}, rechecked {len(result.rechecked)}, "
         f"rejected {len(result.rejected)}, refused {len(result.refused)}"

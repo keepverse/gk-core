@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+from ipcensor.roots import owning_base
 from ipcensor.source import (
     TEXT_EXTENSIONS,
     SourceError,
@@ -108,7 +109,33 @@ def test_tracked_paths_reports_the_repository() -> None:
     assert names == tuple(sorted(names))
     assert "README.md" in names
     # Tracked, but not scannable: the allowlist is applied on the way out, not in the listing.
-    assert "tools/seedsmith/requirements.lock" in names
+    assert "tools/seedsmith/requirements.lock" not in names, (
+        "REPO_ROOT is gk-core and gk-forge owns this file, so its presence here means the split left "
+        "a copy behind; a duplicate lockfile is how two clones pin different matchers and both call "
+        "themselves green"
+    )
+
+
+def test_tracked_paths_reaches_a_file_the_split_gave_to_a_sibling() -> None:
+    """The same file, read from the repository that OWNS it.
+
+    This line used to assert `tools/seedsmith/requirements.lock` was listed by `find_root(TESTS_DIR)`,
+    which is a SIBLING read: gk-forge owns that file after the split and gk-core never had it, so the
+    assertion could only ever have passed before the split. Dropping it outright would have deleted a
+    real check, because the underlying claim - a tracked path that is not scannable, and is still
+    listed in full - is still worth pinning. So it is pinned against the repository that carries it:
+    the resolver answers `gk-forge`, and `tracked_paths` enumerates that repository, which is exactly
+    how `report` scans a cross-repository path. Nothing about the check is loosened; only the root
+    it is measured against is now the one that owns the file.
+    """
+    rel = "tools/seedsmith/requirements.lock"
+
+    owner = owning_base(rel, TESTS_DIR)
+
+    assert owner is not None, f"no repository carries {rel}"
+    assert owner != REPO_ROOT, f"{rel} resolved to the same root the sibling read assumed"
+    assert (owner / rel).is_file()
+    assert rel in tracked_paths(owner)
 
 
 # ---- line indexing --------------------------------------------------------------

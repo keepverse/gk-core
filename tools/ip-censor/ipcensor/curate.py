@@ -18,6 +18,7 @@ from typing import Any, Callable, Iterable, Mapping, NoReturn
 
 from ipcensor.census import TokenStat
 from ipcensor.datasets import uspto
+from ipcensor.roots import owned
 from ipcensor.registry import (
     CATEGORIES,
     SURFACES,
@@ -30,8 +31,15 @@ from ipcensor.registry import (
 from ipcensor.registry import render_marks as registry_render_marks
 
 # The spec's evidence home (self_paths class 3). The tool's only write site resolves through here, so a
-# candidate file cannot land anywhere else.
+# candidate file cannot land anywhere else. It stays ROOT-relative because `tasks/**` is a scope the
+# authored registry names, and resolving it at import time would make a module-level constant raise in
+# a clone that has no sibling repository.
 DEFAULT_CANDIDATE_DIR = "tasks/ip-censor/curate"
+
+# REPOSITORY-RELATIVE, like `report.DEFAULT_REGISTRY_DIR`, and for the same reason: it is also the
+# string a rejection names, so it must read as the registry's own path rather than as this clone's
+# layout. It is READ through `roots.owned`, never joined onto a root - the split moved `data/seed/**`
+# into a gk-data pack, so `root / DEFAULT_FILTER_PATH` named a file no repository had.
 DEFAULT_FILTER_PATH = "data/seed/ip-censor/_registry/import-filter.v1.json"
 SCHEMA_VERSION = 1
 
@@ -158,8 +166,15 @@ def parse_import_filter(text: str, *, source: str = DEFAULT_FILTER_PATH) -> Impo
     )
 
 
-def load_import_filter(path: Path | str = DEFAULT_FILTER_PATH) -> ImportFilter:
-    file = Path(path)
+def load_import_filter(path: Path | str | None = None) -> ImportFilter:
+    """Read an authored import filter. The default is the shipped one, resolved through `roots`.
+
+    `None` rather than `DEFAULT_FILTER_PATH` as the default, so the shipped filter is resolved instead
+    of joined onto the process working directory - a bare relative default names a file relative to
+    wherever the caller happened to be, which is the same wrong base the split exposed. An explicit
+    `path` is taken as written, which is what lets the fixture tests point at their own copy.
+    """
+    file = Path(path) if path is not None else owned(DEFAULT_FILTER_PATH)
     try:
         return parse_import_filter(file.read_text(encoding="utf-8"), source=str(file))
     except OSError as exc:
