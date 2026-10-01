@@ -390,7 +390,12 @@ def r6_sim_engine_no_stats_resolve(root: Path) -> list[dict]:
 def r7_program_equip(root: Path) -> list[dict]:
     path = root / "src" / "FusionRpg.Server" / "Program.cs"
     if not path.is_file():
-        return [missing("debug-emit-contributions", f"{INJECTOR}/CheatCommandRunner.cs")]
+        # Absent means UNCHECKED. This rule is not a required-file check — the module docstring's
+        # contract item 2 says a missing required file is a finding in R1 and R4 and NOT a check in
+        # R7/R8/R9, and R8 and R9 already return [] here. This branch returned a finding instead,
+        # naming a FusionRpg.Injector file R7 never read under R9's rule id, so a tree with no
+        # FusionRpg.Server failed on a rule that had nothing to examine.
+        return []
     code = code_of(read(path))
     if re.search("UseEquipment", code, FLAGS) and not re.search("EquippedBoundAtoms", code, FLAGS):
         return [finding_at(

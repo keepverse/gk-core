@@ -48,6 +48,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -203,6 +204,23 @@ def source_files(src_dir: Path) -> list[Path]:
     return sorted(found)
 
 
+def same_directory(a: Path, b: Path) -> bool:
+    """Are these two paths the SAME directory, whatever spelling each uses?
+
+    Path equality is a spelling comparison, and Windows will hand out two spellings for one directory: a
+    temp directory reached as `C:\\Users\\NENESC~1\\...` and the same directory resolved as
+    `C:\\Users\\NeneScarlet\\...`. That is not hypothetical — %TEMP% is short here, so every fixture the
+    clock-seam contract tests build arrives short and every `resolve()` of it arrives long.
+
+    `os.path.samefile` asks the filesystem for file identity, which no aliasing can fake. It raises when a
+    path does not exist, so this falls back to resolved-path comparison.
+    """
+    try:
+        return os.path.samefile(a, b)
+    except OSError:
+        return a.resolve() == b.resolve()
+
+
 def repo_relative(root: Path, path: Path, extra_roots: tuple[Path, ...] = ()) -> str:
     """Repository-relative, forward-slashed, or a NAMED REFUSAL.
 
@@ -273,7 +291,11 @@ def check(root: Path, src_dir: str | None = None) -> dict:
             fusion = fusion_root_or_owner(root)
         except RootNotFound as exc:
             raise Refusal("FUSION-ROOT-MISSING", str(exc)) from exc
-        if fusion.is_dir():
+        # `same_directory`, not `!=`: a contract test's fixture has no Keepverse workspace above it, so
+        # `fusion_root_or_owner` resolves to the FIXTURE ITSELF, and %TEMP% arrives in 8.3 short form while
+        # the resolver returns the long form. Comparing Paths said "different" and the same eleven files
+        # were walked twice, doubling source_files, ambient_reads and allowlisted_reads.
+        if fusion.is_dir() and not same_directory(fusion, root):
             extra_roots = (fusion,)
             files = files + source_files(fusion / "src")
 
