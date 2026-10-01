@@ -18,32 +18,43 @@ public class DecisionsGateTests
     [Fact]
     public void DecisionsRowExists_forClassSystem()
     {
-        var text = ReadNormalized(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "decisions.md"));
+        var decisionsPath = Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "decisions.md");
+        var text = ReadNormalized(decisionsPath);
         var row = FindRow(text, "Class system");
 
         Assert.True(row is not null, "decisions.md has no 'Class system' row — AGENTS.md requires one before this program's architecture changes lock behavior.");
-        Assert.Contains("free build", row, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Zomboss AI patterns", row, StringComparison.Ordinal);
-        Assert.Contains("Twelve aptitudes", row, StringComparison.Ordinal);
-        Assert.Contains("sources, not registered channels", row, StringComparison.Ordinal);
-        Assert.Contains("sum of four scopes", row, StringComparison.Ordinal);
-        Assert.Contains("Win rate is the metric", row, StringComparison.Ordinal);
-        Assert.Contains("HARD and blocks the build", row, StringComparison.Ordinal);
-        Assert.Contains("SOFT and reports", row, StringComparison.Ordinal);
-        Assert.Contains("No aptitude cap and no respec cap", row, StringComparison.Ordinal);
+        // The index proves the ROW exists; the category file the row links to carries the RULE. Asserting
+        // rule text against the index asserts against a file defined not to hold it — AGENTS.md: "The two
+        // lock files are indexes, not documents. Each row is one line; the rule text lives in the category
+        // file the row links to." Measured: all nine needles are absent from the index and present in
+        // decisions/progression.md, whose line 21 carries the whole row.
+        var rule = CategoryTextFor(row!, decisionsPath);
+        Assert.Contains("free build", rule, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Zomboss AI patterns", rule, StringComparison.Ordinal);
+        Assert.Contains("Twelve aptitudes", rule, StringComparison.Ordinal);
+        Assert.Contains("sources, not registered channels", rule, StringComparison.Ordinal);
+        Assert.Contains("sum of four scopes", rule, StringComparison.Ordinal);
+        Assert.Contains("Win rate is the metric", rule, StringComparison.Ordinal);
+        Assert.Contains("HARD and blocks the build", rule, StringComparison.Ordinal);
+        Assert.Contains("SOFT and reports", rule, StringComparison.Ordinal);
+        Assert.Contains("No aptitude cap and no respec cap", rule, StringComparison.Ordinal);
     }
 
     [Fact]
     public void ResourceModelRow_readsSixAndAgreesWithCodeAndRoster()
     {
         var repoRoot = FindRepoRoot();
-        var decisionsText = ReadNormalized(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "decisions.md"));
+        var decisionsPath = Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "decisions.md");
+        var decisionsText = ReadNormalized(decisionsPath);
         var row = FindRow(decisionsText, "Resource model");
         Assert.True(row is not null, "decisions.md has no 'Resource model' row.");
 
-        Assert.Contains("Six actor resources", row, StringComparison.Ordinal);
-        Assert.Contains("`poise`", row, StringComparison.Ordinal);
-        Assert.Contains("no longer claims guard", row, StringComparison.Ordinal);
+        // Same two-step gate as the row above: the index for the row, the linked category file for the
+        // substance. Neither is inferred from the other.
+        var rule = CategoryTextFor(row!, decisionsPath);
+        Assert.Contains("Six actor resources", rule, StringComparison.Ordinal);
+        Assert.Contains("`poise`", rule, StringComparison.Ordinal);
+        Assert.Contains("no longer claims guard", rule, StringComparison.Ordinal);
 
         // The row's own headline number must equal the code's registered list -- not a separately
         // maintained count that could drift the moment either side changes.
@@ -72,6 +83,33 @@ public class DecisionsGateTests
                 return m.Value;
         }
         return null;
+    }
+
+    /// <summary>
+    /// The category file an index row links to, resolved relative to the index.
+    ///
+    /// <para><b>Why this exists.</b> <c>decisions.md</c> is an INDEX: one row per decision, with the rule
+    /// text in <c>decisions/&lt;category&gt;.md</c>. AGENTS.md is explicit — "The two lock files are
+    /// indexes, not documents. Each row is one line; the rule text lives in the category file the row
+    /// links to" — and the two gates in this class asserted rule text IN the index. Measured: all nine
+    /// needles are absent from the index and present in <c>decisions/progression.md</c>, whose line 21
+    /// carries the whole row including "**Free build: the player has no class.**"
+    ///
+    /// <para>So each gate is now two checks and both matter: the index must carry the row — that is the
+    /// hard boundary, "architecture changes that lock behavior need decisions.md first" — AND the file the
+    /// row links to must carry the substance. Neither is inferred from the other, and a row pointing at a
+    /// category file that does not exist is a refusal rather than a silent pass.
+    /// </para></summary>
+    static string CategoryTextFor(string indexRow, string decisionsPath)
+    {
+        var link = Regex.Match(indexRow, @"\]\((?<path>[^)]+\.md)\)");
+        Assert.True(link.Success, "the index row carries no link to a category file: " + indexRow);
+        var indexDir = Path.GetDirectoryName(decisionsPath)!;
+        var categoryPath = Path.GetFullPath(Path.Combine(indexDir, link.Groups["path"].Value));
+        Assert.True(File.Exists(categoryPath),
+                    "the index row links to a category file that does not exist: " + categoryPath
+                    + " (from " + indexRow.Trim() + ")");
+        return ReadNormalized(categoryPath);
     }
 
     static List<string> ExtractRosterIdsInOrdinalOrder(string rosterPath)

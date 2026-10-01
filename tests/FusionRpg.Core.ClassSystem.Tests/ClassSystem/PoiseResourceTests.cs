@@ -127,8 +127,17 @@ public class PoiseResourceTests
         Assert.Contains("Six actor resources", hubText, StringComparison.Ordinal);
         Assert.DoesNotContain("Five actor resources", hubText, StringComparison.Ordinal);
 
-        var decisionsText = File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "decisions.md"));
-        Assert.Contains("Six actor resources", decisionsText, StringComparison.Ordinal);
+        // The same decision must also be LOCKED, not only described: `decisions.md` carries the row and
+        // `decisions/progression.md` - the category file that row links to - carries the rule. Reading the
+        // rule out of the index is what this assertion did, and the index is defined not to hold it
+        // (AGENTS.md: "the rule text lives in the category file the row links to"), so it failed on a
+        // document that does contain the decision, one indirection away.
+        var decisionsPath = Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "decisions.md");
+        Assert.Contains("| Resource model",
+            File.ReadAllText(decisionsPath), StringComparison.Ordinal);
+        Assert.Contains("Six actor resources",
+            File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture",
+                "decisions", "progression.md")), StringComparison.Ordinal);
     }
 
     [Fact]
