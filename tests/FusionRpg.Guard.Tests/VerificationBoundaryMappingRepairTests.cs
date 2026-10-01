@@ -24,16 +24,35 @@ public sealed class VerificationBoundaryMappingRepairTests
     private const string NeighborPath = "tools/seedsmith/seedsmith/adapters/trees/species/generate_tree.py";
     private const string NeighborTestPath = "tools/seedsmith/tests/test_tree_species_fixture.py";
 
+    /// <summary>
+    /// The three paths became TWO, and that is a correction rather than a loss.
+    /// </summary>
+    /// <remarks>
+    /// The third was <c>.claude/cmdc-agents/scripts/bcu212-full-run.ps1</c>, a PowerShell launcher retired
+    /// by this repository's own no-PowerShell rule. It exists in NO repository — measured by name across
+    /// all nine — and its replacement <c>bcu212_full_run.py</c> has its own boundary row
+    /// (<c>bcu212-full-run-tool</c>) with its own suite. So the row under test is correct as it stands and
+    /// this list was stale: it named a file that had been deliberately removed.
+    /// </remarks>
     private static readonly string[] ConcretePaths =
     {
-        ".claude/cmdc-agents/scripts/bcu212-full-run.ps1",
         ".claude/cmdc-agents/scripts/bcu212-report.py",
         "tools/seedsmith/_j9_batch_run.py",
     };
 
+    /// <summary>
+    /// Three test files became TWO, for the same reason and with the same evidence.
+    /// </summary>
+    /// <remarks>
+    /// <c>test_bcu212_launcher.py</c> spawned <c>pwsh</c> against that retired script, so all eight of its
+    /// tests failed against a file that does not exist, and the live launcher's suite
+    /// (<c>gk-core/tests/tools/test_bcu212_full_run.py</c>, 31 passing) already covers the behaviour. It
+    /// was removed rather than repointed: a second suite for the same launcher in a second repository is
+    /// the competing copy this program keeps refusing to create, and there was no behaviour left for it
+    /// to cover that the ported suite does not.
+    /// </remarks>
     private static readonly string[] FocusedTestFiles =
     {
-        "tools/seedsmith/tests/test_bcu212_launcher.py",
         "tools/seedsmith/tests/test_bcu212_report.py",
         "tools/seedsmith/tests/test_j9_batch_run.py",
     };
@@ -44,7 +63,7 @@ public sealed class VerificationBoundaryMappingRepairTests
     }
 
     [Fact]
-    public void Bcu212_boundary_maps_exactly_the_three_paths_to_the_three_real_tests()
+    public void Bcu212_boundary_maps_exactly_its_paths_to_their_real_tests()
     {
         using var document = ReadRegistry();
         var boundary = FindBoundary(document.RootElement, BoundaryId);

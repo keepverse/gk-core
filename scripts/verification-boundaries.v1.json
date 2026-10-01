@@ -2624,8 +2624,7 @@
       ],
       "project": "seedsmith",
       "testFiles": [
-        "tools/seedsmith/tests/test_bcu212_launcher.py",
-        "tools/seedsmith/tests/test_bcu212_report.py",
+            "tools/seedsmith/tests/test_bcu212_report.py",
         "tools/seedsmith/tests/test_j9_batch_run.py"
       ],
       "guards": [],

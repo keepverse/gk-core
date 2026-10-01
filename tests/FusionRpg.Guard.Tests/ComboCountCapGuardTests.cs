@@ -64,23 +64,45 @@ public class ComboCountCapGuardTests
     [Fact]
     public void no_combination_count_cap_exists()
     {
-        var root = RepoRoot();
         var offenders = new List<string>();
         var allowlistedWithHits = new HashSet<string>(StringComparer.Ordinal);
+        var scanned = 0;
 
-        foreach (var top in new[] { "src", "tools", "tests" })
-            foreach (var file in EnumerateSourceFiles(Path.Combine(root, top)))
+        // The scan covers the repositories the ALLOWLIST reaches, not one of them. It scanned gk-core
+        // only, while two of the five allowlist entries are gk-forge's — so those two could never be hit,
+        // and the staleness check below then reported them as entries to remove. The entries were right:
+        // `gk-forge/tools/seedsmith/seedsmith/adapters/items/combogen/tuning.py` still carries
+        // `maxCombosPerActor` inside `SOCKETS_OWNED_KEYS`, which is exactly why it is allowlisted — the
+        // ownership list is what keeps the migration path ignoring that key. Removing the entry would
+        // have deleted the record of a live negative assertion and, with it, the guard over a key that
+        // still ships.
+        //
+        // `rel` stays root-relative because that is the allowlist's own vocabulary; a repository NAME is
+        // prefixed onto offender messages because `tools/…` alone is ambiguous across two repositories.
+        foreach (var (repo, root) in new[]
+                 {
+                     ("gk-core", KeepverseRoots.Core()),
+                     ("gk-forge", KeepverseRoots.Forge()),
+                 })
+        {
+            foreach (var top in new[] { "src", "tools", "tests" })
             {
-                var rel = Path.GetRelativePath(root, file).Replace('\\', '/');
-                var hits = IdentifierHits(file, rel, CapIdentifiers).ToList();
-                if (CapAllowlist.Contains(rel))
+                foreach (var file in EnumerateSourceFiles(Path.Combine(root, top)))
                 {
-                    if (hits.Count > 0) allowlistedWithHits.Add(rel);
-                    continue;
+                    var rel = Path.GetRelativePath(root, file).Replace('\\', '/');
+                    scanned++;
+                    var hits = IdentifierHits(file, rel, CapIdentifiers).ToList();
+                    if (CapAllowlist.Contains(rel))
+                    {
+                        if (hits.Count > 0) allowlistedWithHits.Add(rel);
+                        continue;
+                    }
+                    offenders.AddRange(hits.Select(h => $"{repo}/{h}"));
                 }
-                offenders.AddRange(hits);
             }
+        }
 
+        Assert.True(scanned > 0, "no source file was scanned, so the retired-cap check proved nothing");
         Assert.True(offenders.Count == 0,
             "R12 retired the per-actor combination cap (SSH4.1/SSH4.2); these name it again:\n" +
             string.Join("\n", offenders));
