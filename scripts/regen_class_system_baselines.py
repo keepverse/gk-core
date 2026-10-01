@@ -243,12 +243,17 @@ def require_built(root: Path, tool: tuple[str, str], configuration: str) -> None
     base = tool_base(root, tool)
     binaries = base.joinpath(*tool, "bin", configuration)
     if not any(binaries.glob(os.path.join(_TFM_GLOB, "*.dll"))):
+        # One message, composed from parts. A conditional expression binds looser than f-string implicit
+        # concatenation, so the previous `... if base != root else ...` chose between two WHOLE messages
+        # rather than two tails of one, and the `base != root` branch — the one that fires when the tool
+        # lives in a SUBTREE — named the owner and then stopped. That is the branch this function's own
+        # docstring exists to prevent: a refusal "that names neither the tool nor the configuration", which
+        # is what a caller is left holding when the output is measured from somewhere other than the root.
+        where = binaries.relative_to(base) if binaries.is_relative_to(base) else binaries
+        owner = f" for --owner {base}" if base != root else ""
         raise Refusal(
             "TOOL-NOT-BUILT",
-            f"{'/'.join(tool)} has no build output under "
-            f"{binaries.relative_to(base) if binaries.is_relative_to(base) else binaries} for "
-            f"--owner {base}" if base != root else f"{'/'.join(tool)} has no build output under "
-            f"{binaries.relative_to(base) if binaries.is_relative_to(base) else binaries} for "
+            f"{'/'.join(tool)} has no build output under {where}{owner} for "
             f"--configuration {configuration}. Every invocation is --no-build; build it first, or pass "
             f"the configuration that is already built.")
 
