@@ -428,16 +428,31 @@ public sealed class VerificationBoundaryWorkflowTests
     [Fact]
     public void The_documented_entry_point_is_the_python_planner()
     {
-        var root = RepoRoot();
-        Assert.True(File.Exists(Path.Combine(root, "scripts", "verify-change.py")),
-            "scripts/verify-change.py is missing");
-        Assert.True(File.Exists(Path.Combine(root, "scripts", "lib", "verification_boundaries.py")),
-            "scripts/lib/verification_boundaries.py is missing");
+        var core = RepoRoot();
+        Assert.True(File.Exists(Path.Combine(core, "scripts", "verify-change.py")),
+            "scripts/verify-change.py is missing from gk-core");
+        Assert.True(File.Exists(Path.Combine(core, "scripts", "lib", "verification_boundaries.py")),
+            "scripts/lib/verification_boundaries.py is missing from gk-core");
 
+        // The instruction files are the WORKSPACE ROOT's, not gk-core's, and that is a correction
+        // rather than a preference. This read gk-core's, where `AGENTS.md` is a 40-line repository
+        // guide and `CLAUDE.md` does not exist at all — so the loop asserted against a file that
+        // documents nothing about verification, and the next iteration would have thrown
+        // FileNotFoundException on the missing one. The process documentation is gk-workflow's by
+        // ownership: gk-workflow owns contributor standards and contributor instructions, and a
+        // duplicate of them inside gk-core is the competing copy that ownership exists to prevent.
+        var workspace = KeepverseRoots.Workspace();
+        var names = new List<string>();
         foreach (var instructionFile in new[] { "AGENTS.md", "CLAUDE.md" })
         {
-            var text = File.ReadAllText(Path.Combine(root, instructionFile));
-            Assert.Contains("verify-change.py", text, StringComparison.Ordinal);
+            var path = Path.Combine(workspace, instructionFile);
+            // Only files that EXIST are asserted on. A repo that dropped its CLAUDE.md mirror is not
+            // a verification defect, and requiring a file to exist would make this test a statement
+            // about repository layout rather than about the entry point.
+            if (!File.Exists(path)) continue;
+            var text = File.ReadAllText(path);
+            names.Add(instructionFile);
+
             // STRENGTHENED, and the old version of this assertion was VACUOUS once the file was
             // deleted. It read "no line tells an agent to run the .ps1", which is trivially true of a
             // file that is not on disk -- the check could only ever pass. Now that the script is GONE,
@@ -458,6 +473,36 @@ public sealed class VerificationBoundaryWorkflowTests
                     $"{instructionFile} still names the retired PowerShell planner: {trimmed}");
             }
         }
+
+        Assert.NotEmpty(names);
+        var naming = names.Where(n => File.ReadAllText(Path.Combine(workspace, n))
+            .Contains("verify-change.py", StringComparison.Ordinal)).ToList();
+        Assert.True(naming.Count > 0,
+            $"no workspace instruction file names verify-change.py. Checked: {string.Join(", ", names)}. "
+            + "The verification entry point is documented nowhere an agent will read it.");
+
+        // The part that actually failed. Every instruction file NAMED the planner, and the command
+        // still did not run: CLAUDE.md said `python scripts\verify-change.py`, and this root has no
+        // `scripts/`, so an agent following it got `can't open file '<root>/scripts/verify-change.py'`
+        // and no guidance. A mention is not a command, so this asserts the documented PATH RESOLVES —
+        // which is the defect, and which a "does the text contain the name" assertion can never see.
+        var documented = new List<string>();
+        foreach (var name in naming)
+        {
+            foreach (Match m in Regex.Matches(
+                         File.ReadAllText(Path.Combine(workspace, name)),
+                         @"python\s+(?<cmd>(?:[A-Za-z]:)?[A-Za-z0-9_.\-]+(?:[\\/][A-Za-z0-9_.\-]+)*[\\/]verify-change\.py)"))
+            {
+                var rel = m.Groups["cmd"].Value.Replace('/', Path.DirectorySeparatorChar);
+                var candidate = Path.IsPathRooted(rel) ? rel : Path.Combine(workspace, rel);
+                Assert.True(File.Exists(candidate),
+                    $"{name} documents the planner as '{rel}', which does not exist. Relative to "
+                    + $"this root that is {candidate}. An agent that runs the documented command gets a "
+                    + "missing-file error with no guidance, which is worse than a missing document.");
+                documented.Add(rel);
+            }
+        }
+        Assert.NotEmpty(documented);
     }
 
     [Fact]
@@ -915,19 +960,190 @@ public sealed class VerificationBoundaryWorkflowTests
     }
 
     [Fact]
-    public void An_unmapped_tool_tree_still_refuses_rather_than_selecting_nothing()
+    public void No_real_source_file_is_silently_unhandled_by_the_registry()
     {
-        // The whole point of mapping two trees is that the third stays a refusal, not a silent pass.
-        // A boundary that quietly ignores what it does not know is how the gap appeared in the first
-        // place.
-        var (exit, stdout, stderr) = RunPlanner(
-            "--paths tools/HybridViability/Program.cs --allow-unscoped --plan-only");
+        // The whole point of mapping every tree is that nothing is LEFT UNHANDLED. The assertion this
+        // replaces was narrower, and is no longer true of the registry:
+        //
+        //   * It named `tools/HybridViability/Program.cs` as an unmapped tree that must REFUSE. That
+        //     file is now MAPPED (`hybrid-viability-tool`), so the planner correctly returns a plan and
+        //     the test was asserting a stale fact with no way to notice.
+        //   * Every remaining unmapped tool tree carries an explicit `local-tool-trees` EXEMPTION with a
+        //     stated reason, and the plan prints that reason and the JSON carries `exemptionReason`. An
+        //     exemption is a NAMED answer, not a quiet pass.
+        //
+        // So the hazard the test was written for — "a boundary that quietly ignores what it does not
+        // know" — is now best expressed as CLOSURE, which is strictly stronger: every real file under
+        // `src/` and `tools/` is either bounded by an owner row or covered by an exemption, AND every
+        // exemption states why. Measured over 1455 files, the unhandled set is empty, which is also why
+        // `BOUNDARY-MISSING` is no longer reachable from any real file: full coverage makes that refusal
+        // unreachable by construction. A future unmapped file is now caught HERE, by name, instead of
+        // being caught there.
+        var root = RepoRoot();
+        var ownerPatterns = ReadPathPatterns(root, "scripts/verification-boundaries.v1.json", "owner");
+        var exemptions = ReadExemptions(root);
+        Assert.NotEmpty(ownerPatterns);
+        Assert.NotEmpty(exemptions);
 
-        Assert.True(exit != 0, "an unmapped tool path selected a scope");
-        // The refusal NAME. The PowerShell form said "VERIFICATION BOUNDARY MISSING"; the port
-        // names it BOUNDARY-MISSING, which is the part a caller can branch on.
-        Assert.Contains("VERIFY-CHANGE REFUSED", stdout + stderr, StringComparison.Ordinal);
-        Assert.Contains("BOUNDARY-MISSING", stdout + stderr, StringComparison.Ordinal);
+        var unhandled = new List<string>();
+        foreach (var tree in new[] { "src", "tools" })
+        {
+            var dir = Path.Combine(root, tree);
+            Assert.True(Directory.Exists(dir), $"expected {tree}/ in {root}");
+            foreach (var file in Directory.EnumerateFiles(dir, "*.cs", SearchOption.AllDirectories))
+            {
+                var s = file.Replace('\\', Path.DirectorySeparatorChar);
+                if (s.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                    || s.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+                var rel = Path.GetRelativePath(root, file).Replace('\\', '/');
+                if (!ownerPatterns.Any(p => PatternCovers(p, rel))
+                    && !exemptions.Keys.Any(p => PatternCovers(p, rel)))
+                {
+                    unhandled.Add(rel);
+                }
+            }
+        }
+
+        Assert.True(unhandled.Count == 0,
+            $"{unhandled.Count} real file(s) are neither bounded by an owner row nor covered by a "
+            + "verificationExemption, so the planner would refuse them with BOUNDARY-MISSING. Either add an "
+            + "owner row (it has a verification contract) or an exemption with a reason (it does not), and "
+            + "never leave one out: a path nobody mapped is how this gap appeared the first time.\n  "
+            + string.Join("\n  ", unhandled.Take(20)));
+
+        // An exemption that states no reason is a quiet pass wearing a label. The plan prints the reason
+        // and the JSON carries `exemptionReason`, so an empty one leaves the reader with nothing.
+        var unreasoned = exemptions.Where(kv => string.IsNullOrWhiteSpace(kv.Value))
+            .Select(kv => kv.Key).ToList();
+        Assert.True(unreasoned.Count == 0,
+            $"exemption(s) covering tool trees state no reason, so a plan line would read "
+            + $"(explicit exemption) with nothing after it: {string.Join(", ", unreasoned)}");
+    }
+
+    /// <summary>Reads one registry's path patterns, for the given <c>kind</c> of boundary.</summary>
+    /// <param name="root">The repository root.</param>
+    /// <param name="registryRelative">Registry path, repo-relative and forward-slashed.</param>
+    /// <param name="kind">The boundary kind to take paths from.</param>
+    /// <remarks>
+    /// The raw JSON is read rather than the resolver being called. The assertion is about what the
+    /// registry CONTAINS, and asking the matching code would make this test agree with whatever that
+    /// code decided — the circular version of the check, and useless as a guard over the same tables.
+    /// </remarks>
+    static List<string> ReadPathPatterns(string root, string registryRelative, string kind)
+    {
+        var path = Path.Combine(root, registryRelative.Replace('/', Path.DirectorySeparatorChar));
+        Assert.True(File.Exists(path), $"registry not found: {path}");
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+        var patterns = new List<string>();
+        foreach (var boundary in doc.RootElement.GetProperty("boundaries").EnumerateArray())
+        {
+            if (!boundary.TryGetProperty("kind", out var k) || k.GetString() != kind) continue;
+            foreach (var p in boundary.GetProperty("paths").EnumerateArray())
+            {
+                patterns.Add((p.GetString() ?? "").Replace('\\', '/'));
+            }
+        }
+        return patterns;
+    }
+
+    /// <summary>Every verification exemption as pattern → reason, with the reason left as written.</summary>
+    /// <param name="root">The repository root.</param>
+    static Dictionary<string, string> ReadExemptions(string root)
+    {
+        var path = Path.Combine(root, "scripts", "enforcement-registry.v1.json");
+        Assert.True(File.Exists(path), $"enforcement registry not found: {path}");
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (!doc.RootElement.TryGetProperty("verificationExemptions", out var list)) return result;
+        foreach (var e in list.EnumerateArray())
+        {
+            var reason = e.TryGetProperty("reason", out var r) ? r.GetString() ?? "" : "";
+            foreach (var p in e.GetProperty("paths").EnumerateArray())
+            {
+                result[(p.GetString() ?? "").Replace('\\', '/')] = reason;
+            }
+        }
+        return result;
+    }
+
+    /// <summary>Whether an owner/exemption pattern covers a repository-relative file.</summary>
+    /// <param name="pattern">Forward-slashed pattern from a registry.</param>
+    /// <param name="relative">Forward-slashed repository-relative file path.</param>
+    /// <remarks>
+    /// The three shapes a row actually uses for a tree or a file: an exact path, a directory prefix
+    /// (`tools/Foo` covering `tools/Foo/Bar.cs`), and a `/**` suffix. A `*` inside a segment is honoured
+    /// per segment rather than assumed away, because a registry row is free to use it and treating it as
+    /// a literal would report a file as unhandled when the guard does handle it — a false alarm that
+    /// trains a reader to ignore this test.
+    /// </remarks>
+    static bool PatternCovers(string pattern, string relative)
+    {
+        if (string.IsNullOrEmpty(pattern)) return false;
+        if (pattern == relative) return true;
+        if (relative.StartsWith(pattern.TrimEnd('/') + "/", StringComparison.Ordinal)) return true;
+        if (pattern.EndsWith("/**", StringComparison.Ordinal)
+            && relative.StartsWith(pattern[..^3], StringComparison.Ordinal))
+        {
+            return true;
+        }
+        if (!pattern.Contains('*', StringComparison.Ordinal)) return false;
+        return SegmentsMatch(
+            pattern.Split('/'),
+            relative.Split('/'),
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Segment-by-segment match where a segment's `*` stands for any run of characters.</summary>
+    /// <param name="pattern">Pattern segments.</param>
+    /// <param name="path">Path segments.</param>
+    /// <param name="comparison">How path segments compare to pattern segments.</param>
+    static bool SegmentsMatch(IReadOnlyList<string> pattern, IReadOnlyList<string> path, StringComparison comparison)
+    {
+        if (pattern.Count != path.Count) return false;
+        for (var i = 0; i < pattern.Count; i++)
+        {
+            if (!SegmentMatches(pattern[i], path[i], comparison)) return false;
+        }
+        return true;
+    }
+
+    /// <summary>Whether one path segment matches one pattern segment, `*` being any run of characters.</summary>
+    /// <param name="pattern">The pattern segment, possibly containing several `*`.</param>
+    /// <param name="segment">The path segment.</param>
+    /// <param name="comparison">How literal characters compare.</param>
+    /// <remarks>
+    /// Split the pattern on `*` and require the literal runs to appear in order, with the first run
+    /// anchored to the start and the last anchored to the end. That is what distinguishes `foo*` from
+    /// `*foo*` from `*foo`, and it is why a bare `*` matches anything: both its runs are empty.
+    /// </remarks>
+    static bool SegmentMatches(string pattern, string segment, StringComparison comparison)
+    {
+        if (!pattern.Contains('*', StringComparison.Ordinal))
+        {
+            return string.Equals(pattern, segment, comparison);
+        }
+
+        var runs = pattern.Split('*');
+        var first = runs[0];
+        var last = runs[^1];
+        if (first.Length > 0 && !segment.StartsWith(first, comparison)) return false;
+        if (last.Length > 0 && !segment.EndsWith(last, comparison)) return false;
+
+        // Walk the middle runs. `at` is both the read cursor in the segment and the exclusive end of
+        // the previous run, so a run cannot be satisfied by characters the previous one already used.
+        var at = first.Length;
+        for (var i = 1; i < runs.Length; i++)
+        {
+            var run = runs[i];
+            if (run.Length == 0) continue;
+            var found = segment.IndexOf(run, at, comparison);
+            if (found < 0) return false;
+            at = found + run.Length;
+        }
+        return true;
     }
 
     [Fact]
@@ -1383,11 +1599,27 @@ public sealed class VerificationBoundaryWorkflowTests
         var (guardExit, guardStdout, guardStderr) = RunBoundaryGuard(RepoRoot());
         Assert.True(guardExit == 0, $"guard failed exit={guardExit}\nstdout:\n{guardStdout}\nstderr:\n{guardStderr}");
 
+        // Seedsmith is gk-FORGE's, so this path resolved only once the planner learned to ask the
+        // fixed set of sibling repositories rather than only gk-core. Before that the planner REFUSED
+        // it (PATH-NOT-FOUND) and this assertion never ran; the text plan it was written against also
+        // never printed a target list, because the renderer prints one only when there is more than
+        // one target. So the assertion was satisfied by nothing.
+        //
+        // The JSON form is read instead, because `testFiles` is where the selected tests actually are.
+        // Substring-matching the text plan for a filename that plan does not print is a check that
+        // cannot fail for the right reason, and it would have gone on passing had the boundary stopped
+        // selecting that test at all.
         var (itemsExit, itemsStdout, itemsStderr) = RunPlanner(
-            "--paths tools/seedsmith/seedsmith/adapters/items/acquisition.py --allow-unscoped --plan-only");
+            "--paths tools/seedsmith/seedsmith/adapters/items/acquisition.py --allow-unscoped --plan-only --format json");
         Assert.True(itemsExit == 0, $"exit={itemsExit}\nstdout:{itemsStdout}\nstderr:{itemsStderr}");
-        Assert.Contains("seedsmith-items", itemsStdout, StringComparison.Ordinal);
-        Assert.Contains("test_items_adapter.py", itemsStdout, StringComparison.Ordinal);
+        using var itemsDoc = System.Text.Json.JsonDocument.Parse(itemsStdout);
+        var itemsSelection = itemsDoc.RootElement.GetProperty("selections").EnumerateArray()
+            .FirstOrDefault(s => s.GetProperty("boundary").GetString() == "seedsmith-items");
+        Assert.True(itemsSelection.ValueKind == System.Text.Json.JsonValueKind.Object,
+            $"no seedsmith-items selection in the plan:\n{itemsStdout}");
+        var itemTests = itemsSelection.GetProperty("testFiles").EnumerateArray()
+            .Select(x => x.GetString() ?? "").ToList();
+        Assert.Contains("tools/seedsmith/tests/test_items_adapter.py", itemTests);
 
         var (publishExit, publishStdout, publishStderr) = RunPlanner(
             "--paths tools/tuning/publish.py --allow-unscoped --plan-only");

@@ -285,7 +285,7 @@
       "paths": [
         "tools/HybridViability/HybridViability.csproj"
       ],
-      "reason": "The project file is explicitly bounded, while Program.cs intentionally remains unmapped as the existing refusal sentinel; mapping that source requires the separately owned verification-boundaries handoff."
+      "reason": "CORRECTED 2026-10-01. This row said: 'The project file is explicitly bounded, while Program.cs intentionally remains unmapped as the existing refusal sentinel; mapping that source requires the separately owned verification-boundaries handoff.' Both halves were no longer true. The owner row 'hybrid-viability-tool' now covers 'tools/HybridViability/**', so Program.cs IS mapped, and the planner returns a plan for it rather than refusing - which is why the guard test that asserted this refusal had to be corrected rather than pointed elsewhere. There is no longer an unmapped-sentinel source: measured over 1455 real .cs files under src/ and tools/, every one is either bounded by an owner row or covered by a verificationExemption, and every exemption states a reason. The project file itself is now covered by the same owner row, so this row matches a path that is already bounded; it is kept rather than deleted because removing a row is a topology change and its harmless redundancy is not one. The closure property is what guards the hazard this row was written for, and FusionRpg.Guard.Tests.No_real_source_file_is_silently_unhandled_by_the_registry asserts it by name."
     },
     {
       "id": "local-tool-trees",

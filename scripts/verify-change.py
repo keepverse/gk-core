@@ -481,14 +481,23 @@ class Plan:
     selections: list[Selection] = field(default_factory=list)
     checks: list[Check] = field(default_factory=list)
     full_evidence_owner: str = "CI/nightly/release"
+    # normalized path -> the repository that actually carries it, for paths that are not under the
+    # repository holding this tooling. SIBLING of `selections`, not a field of it: Selection's
+    # per-kind key set is a documented plan contract, so the owner is a sibling key that is present
+    # only when a path is foreign-owned. An absent `pathOwners` means every path is local, which is
+    # the same reading an absent `exemptionReason` carries.
+    path_owners: dict[str, str] = field(default_factory=dict)
 
     def as_json(self) -> dict[str, Any]:
-        return {
+        payload = {
             "paths": self.paths,
             "selections": [selection.as_json() for selection in self.selections],
             "checks": [check.as_json() for check in self.checks],
             "fullEvidenceOwner": self.full_evidence_owner,
         }
+        if self.path_owners:
+            payload["pathOwners"] = dict(sorted(self.path_owners.items()))
+        return payload
 
     def render_text(self) -> str:
         """The plan exactly as the PowerShell original printed it (INFORMATION stream -> stdout).
@@ -498,14 +507,19 @@ class Plan:
         """
         lines = ["Verification plan:"]
         for selection in self.selections:
+            # A path carried by a sibling repository is named on its own line, because the checks
+            # below were selected from a registry that lives in ANOTHER repository than the file.
+            # Printing it as if it were local is how a plan comes to imply coverage it did not get.
+            owner = self.path_owners.get(selection.path, "")
+            owner_note = f"   [carried by {owner}]" if owner else ""
             if selection.level == "full":
                 lines.append(f"  {selection.path} -> {selection.boundary} (full): no local check; "
-                             "CI full evidence owns this input")
+                             f"CI full evidence owns this input{owner_note}")
             elif selection.level == "exempt":
                 lines.append(f"  {selection.path} -> {selection.boundary} (explicit exemption): "
-                             f"{selection.exemption_reason}")
+                             f"{selection.exemption_reason}{owner_note}")
             else:
-                lines.append(f"  {selection.path} -> {selection.boundary} ({selection.level})")
+                lines.append(f"  {selection.path} -> {selection.boundary} ({selection.level}){owner_note}")
         for check in self.checks:
             suffix = " (sharded runner)" if (check.kind == "test" and check.runner == "sharded") else ""
             targets = check.targets or []
@@ -515,8 +529,92 @@ class Plan:
         return "\n".join(lines)
 
 
-def _normalize_path(raw: str, *, must_exist: bool, root: Path) -> str:
-    """Repository-relative, forward-slashed, no traversal — and (for --paths) a real file."""
+# The workspace-root property -> the name the plan should print for it. Derived from the resolver's
+# OWN accessors rather than from a second table, because a hand-written list of repository names is
+# exactly the kind of second copy that drifts; the only thing stated here is what to CALL each root,
+# which is not derivable from a path.
+_CARRIER_NAMES = (
+    ("gk-workflow (workspace root)", "workspace_root"),
+    ("gk-data (packs/fusion)", "content_root"),
+    ("gk-content", "authored_content_root"),
+    ("gk-core", "core_root"),
+    ("gk-forge", "forge_root"),
+    ("gk-fusion", "fusion_root"),
+    ("gk-web", "web_root"),
+)
+
+
+def _carrier_label(carrier: Path, root: Path) -> str:
+    """Name the repository that carries a path, for the plan's owner note.
+
+    The workspace root IS the gk-workflow repository (docs/, .claude/, tasks/ are its), so it is named
+    as such rather than by its directory name, which is the workspace's name and would read as an extra
+    repository that does not exist. The content pack is gk-data's, and a path under it belongs to gk-data
+    however deep the pack nests it.
+    """
+    if carrier == root:
+        return ""
+    try:
+        import keepverse_roots as kr
+    except ImportError:
+        return carrier.name
+    for label, accessor_name in _CARRIER_NAMES:
+        accessor = getattr(kr, accessor_name, None)
+        if accessor is None:
+            continue
+        try:
+            base = accessor(root)
+        except Exception:
+            continue  # several accessors RAISE when their subject is absent
+        if base is not None and Path(base).resolve() == carrier:
+            return label
+    return carrier.name
+
+
+def _workspace_carrier(relative: str, root: Path) -> str:
+    """The repository carrying `relative` when it is NOT under `root`, else "".
+
+    WHAT THIS IS FOR. `docs/PRINCIPLES.md` is gk-workflow's and does not exist in gk-core, so
+    `--paths docs/PRINCIPLES.md` used to refuse with PATH-NOT-FOUND — while the documented primary
+    entry point for verifying a change to a workspace document is exactly that command. The refusal
+    was correct when every path lived in one repository and became a dead end once they did not.
+
+    WHY NOT `--root`. Pointing the planner at gk-workflow relocates its TOOL lookup too, and the
+    boundary registry and guard it needs are gk-core's, so `--root` trades one refusal for
+    TOOL-MISSING. The tool stays where it is and only the PATH question is widened, which is the
+    part that actually changed meaning.
+
+    WHY the shared resolver's `owning_base`. It searches `root` first and then the fixed set of
+    sibling roots, and returns None when no repository carries the file, so a typo still fails closed
+    instead of resolving to whatever directory happens to exist. It is the tested primitive held
+    byte-identical across its three copies, rather than a rule written for this caller - and its own
+    documentation already records why the ancestor-only form cannot answer this question.
+    """
+    try:
+        from keepverse_roots import owning_base
+    except ImportError:  # a standalone clone without scripts/lib on the path
+        return ""
+    # `owning_base`, not `root_carrying`. The planner is routinely asked about a path a SIBLING
+    # repository carries - a gk-forge test, a gk-data pack file - and `root_carrying` walks ancestors
+    # only, so it answers the workspace root and nothing else. `owning_base` searches `root` first and
+    # then the fixed set of sibling roots the split produced, including the gk-data content PACK, and
+    # returns None when no repository has the file, which keeps the refusal for a path that exists
+    # nowhere.
+    carrier = owning_base(relative, root)
+    if carrier is None:
+        return ""
+    return _carrier_label(Path(carrier).resolve(), root)
+
+
+def _normalize_path(raw: str, *, must_exist: bool, root: Path,
+                    owners: dict[str, str] | None = None) -> str:
+    """Repository-relative, forward-slashed, no traversal — and (for --paths) a real file.
+
+    A file carried by a SIBLING repository satisfies the existence check, and the repository that
+    carries it is recorded in `owners` so the plan can say so. A repository-relative path is still
+    what the boundary registry matches on, so a foreign-owned path resolves against the same owner
+    rows it always did — `docs/**` and `docs/architecture/power/**` included.
+    """
     text = str(raw or "").strip()
     if ROOTED_PATH_PATTERN.match(text) or TRAVERSAL_PATTERN.search(text):
         raise Refusal("PATH-NOT-RELATIVE", f"path must be repository-relative without traversal: {raw}")
@@ -524,7 +622,11 @@ def _normalize_path(raw: str, *, must_exist: bool, root: Path) -> str:
     if not normalized:
         raise Refusal("PATH-EMPTY", f"path is empty: '{raw}'")
     if must_exist and not (root / normalized).is_file():
-        raise Refusal("PATH-NOT-FOUND", f"{normalized} (a removed file belongs to --deleted-paths)")
+        owner = _workspace_carrier(normalized, root)
+        if not owner:
+            raise Refusal("PATH-NOT-FOUND", f"{normalized} (a removed file belongs to --deleted-paths)")
+        if owners is not None:
+            owners[normalized] = owner
     return normalized
 
 
@@ -606,8 +708,9 @@ def build_plan(
     seam_boundaries = sorted((b for b in (registry.get("boundaries") or []) if b.get("kind") == "seam"),
                              key=lambda b: _sort_key(b.get("id", "")))
 
+    path_owners: dict[str, str] = {}
     normalized = _unique_sorted(
-        [_normalize_path(p, must_exist=True, root=root) for p in paths]
+        [_normalize_path(p, must_exist=True, root=root, owners=path_owners) for p in paths]
         + [_normalize_path(p, must_exist=False, root=root) for p in deleted_paths]
     )
     if not normalized:
@@ -700,7 +803,7 @@ def build_plan(
 
     selections.sort(key=lambda s: _sort_key(s.path, s.boundary))
     checks = _build_checks(inputs, selections, normalized, deleted_paths)
-    return Plan(paths=normalized, selections=selections, checks=checks)
+    return Plan(paths=normalized, selections=selections, checks=checks, path_owners=path_owners)
 
 
 def _build_checks(
