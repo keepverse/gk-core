@@ -37,14 +37,14 @@ public class CommanderPoolTransportGuardTests
     [Fact]
     public void The_transport_parses_both_fields_and_replaces_the_cache_wholesale()
     {
-        var client = Source("src/FusionRpg.Injector/RpgClient.cs");
+        var client = FusionSource("src/FusionRpg.Injector/RpgClient.cs");
         Assert.Contains("TryGetProperty(\"humanEmpire\"", client, StringComparison.Ordinal);
         Assert.Contains("TryGetProperty(\"commanderByEmpire\"", client, StringComparison.Ordinal);
         // The SAME fetch every other cache rides (no second round trip), applied through the one seam.
         Assert.Contains("CheatState.ApplyCommanderPools(humanEmpire, commanderPoolsByEmpire)", client,
             StringComparison.Ordinal);
 
-        var apply = MethodBody(Source("src/FusionRpg.Injector/CheatState.cs"), "public static void ApplyCommanderPools(");
+        var apply = MethodBody(FusionSource("src/FusionRpg.Injector/CheatState.cs"), "public static void ApplyCommanderPools(");
         Assert.Contains("_commanderPoolsByEmpire = byEmpire", apply, StringComparison.Ordinal);
         Assert.Contains("Stats.Invalidate()", apply, StringComparison.Ordinal);
     }
@@ -52,7 +52,7 @@ public class CommanderPoolTransportGuardTests
     [Fact]
     public void The_injector_resolves_the_owners_empire_and_never_borrows_the_humans()
     {
-        var cheat = Source("src/FusionRpg.Injector/CheatState.cs");
+        var cheat = FusionSource("src/FusionRpg.Injector/CheatState.cs");
 
         // The source's commander delegate is the empire-keyed read, not a player-scoped lambda.
         Assert.Contains("resolveCommanderAllocation: CommanderPoolFor,", cheat, StringComparison.Ordinal);
@@ -100,8 +100,30 @@ public class CommanderPoolTransportGuardTests
         Assert.Contains("new(empire, true,", selector, StringComparison.Ordinal);
     }
 
-    static string Source(string relative) =>
-        File.ReadAllText(Path.Combine(FindRepoRoot(), relative.Replace('/', Path.DirectorySeparatorChar)));
+    /// <summary>Reads a gk-CORE source file.</summary>
+    ///
+    /// <para>This single helper served two repositories. Six of its nine call sites name gk-core paths
+    /// (<c>src/FusionRpg.Server</c>, <c>src/FusionRpg.Core</c>, <c>src/FusionRpg.Data</c>) and three name
+    /// gk-fusion's (<c>src/FusionRpg.Injector/RpgClient.cs</c> and
+    /// <c>src/FusionRpg.Injector/CheatState.cs</c>), all combined onto
+    /// <c>FindRepoRoot()</c> = <c>KeepverseRoots.Core()</c>. The three Injector reads refused with
+    /// <c>DirectoryNotFoundException</c> against a path that does not exist and never did post-split.</para>
+    ///
+    /// <para>Two named helpers, not one that searches every repository: a resolver that picks whichever
+    /// repository happens to carry a path would make an ownership error invisible instead of reporting
+    /// it, which is the failure this whole class of fix exists to prevent. The owner is written at the
+    /// call site, where a reader can see it.</para>
+    static string Source(string relative) => Read(KeepverseRoots.Core(), relative);
+
+    /// <summary>Reads a gk-FUSION source file — <c>src/FusionRpg.Injector</c> is gk-fusion's.</summary>
+    static string FusionSource(string relative) => Read(KeepverseRoots.Fusion(), relative);
+
+    static string Read(string root, string relative)
+    {
+        var path = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));
+        Assert.True(File.Exists(path), $"not found: {path} - the owner repository does not carry {relative}");
+        return File.ReadAllText(path);
+    }
 
     /// <summary>Brace-matched body of the declaration whose text starts with <paramref name="signature"/>,
     /// plus a following tail for expression-bodied members — deliberately not a regex over C# braces.</summary>
