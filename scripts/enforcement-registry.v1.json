@@ -50,6 +50,13 @@
       "backlogModule": null,
       "localReason": null
     },
+    "decision-citations": {
+      "script": "scripts/check-decision-citations.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
     "test-substrate": {
       "script": "scripts/guard-test-substrate.py",
       "tier": "ci",
