@@ -145,11 +145,41 @@ public class ParamParityGuardTests
         return missing;
     }
 
+    /// <summary>
+    /// Read a repository-relative source file, asking each repository whether it carries it.
+    ///
+    /// <para><b>Why not just <c>FindRepoRoot()</c>.</b> Ten of the sixteen kinds map to <c>Sink</c>, and
+    /// <c>Sink</c> is <c>src/FusionRpg.Injector/Effects/InjectorEffectActionSink.cs</c> - the INJECTOR, which
+    /// is gk-fusion's. Measured: every other consumer constant is gk-core's, and that one is not. Built
+    /// from gk-core the read missed, and because ten kinds share the constant the test failed on
+    /// <c>String.Join</c> over a sequence whose first element threw - a stack trace naming LINQ rather than
+    /// the file that moved.
+    ///
+    /// <para>The order is gk-core first, so a path both repositories carry resolves the way it did before
+    /// the split; a path only gk-fusion carries then resolves there. That is nearest-match-wins over the
+    /// repositories, which is what the shared <c>KeepverseRoots</c> does for a marker and what this does
+    /// for a whole file - and it is why the accessor is asked per FILE rather than per prefix: the
+    /// repositories share the directory name <c>src/</c> and not its contents.
+    /// </para></summary>
+    static readonly (string Name, Func<string> Root)[] SourceOwners =
+    {
+        ("gk-core", () => KeepverseRoots.Core()),
+        ("gk-fusion", () => KeepverseRoots.Fusion()),
+        ("gk-forge", () => KeepverseRoots.Forge()),
+    };
+
     static string ReadRepoFile(string repoRelativePath)
     {
-        var path = Path.Combine(FindRepoRoot(), repoRelativePath.Replace('/', Path.DirectorySeparatorChar));
-        Assert.True(File.Exists(path), "missing " + path);
-        return File.ReadAllText(path);
+        var relative = repoRelativePath.Replace('/', Path.DirectorySeparatorChar);
+        foreach (var (name, root) in SourceOwners)
+        {
+            var path = Path.Combine(root(), relative);
+            if (File.Exists(path))
+                return File.ReadAllText(path);
+        }
+        var tried = string.Join(", ", SourceOwners.Select(o => $"{o.Name}/{relative}"));
+        throw new FileNotFoundException(
+            "no repository carries this source file: " + repoRelativePath + " (looked for " + tried + ")");
     }
 
     // Mirrors the FindRepoRoot pattern PlantSideStatusGuardTests.cs / SpawnNonGridExecutorGuardTests.cs
