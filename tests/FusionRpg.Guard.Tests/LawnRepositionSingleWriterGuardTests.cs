@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using FusionRpg.Core.Workspace;
 using Xunit;
 
 namespace FusionRpg.Guard.Tests;
@@ -177,15 +178,26 @@ public class LawnRepositionSingleWriterGuardTests
         return ExternalProcess.Run(psi, 60_000, "guard script timed out");
     }
 
+    /// <summary>The guard script is gk-FUSION's, and a walk up cannot reach it.</summary>
+    ///
+    /// <para>This walked up from the test host's own directory looking for
+    /// <c>scripts/guard-single-writer.py</c>. The only ancestors of a gk-core test's bin output are gk-core
+    /// and the workspace root; gk-fusion is a SIBLING, which no number of <c>..</c> hops reaches. That is
+    /// stated in the shared resolver's own documentation as the reason every "walk up until you find it"
+    /// loop for a sibling fails, and the refusal is what six of these tests reported:
+    /// <c>DirectoryNotFoundException : Could not find the guard-single-writer.py script</c>.</para>
+    ///
+    /// <para>The comment at the top of this file already names the correct post-split path -
+    /// <c>gk-fusion/scripts/guard-single-writer.py</c> - so the prose was right and the code beside it was
+    /// not. That is the seventh instance of that shape in this program.</para>
     static string FindScript()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            var script = Path.Combine(dir.FullName, "scripts", "guard-single-writer.py");
-            if (File.Exists(script)) return script;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not find the guard-single-writer.py script");
+        var script = Path.Combine(KeepverseRoots.Fusion(), "scripts", "guard-single-writer.py");
+        if (File.Exists(script)) return script;
+        // Name where it was looked for. A refusal that cannot say where is the opposite of a named refusal,
+        // and this one previously named nothing at all.
+        throw new DirectoryNotFoundException(
+            $"guard-single-writer.py not found at {script} - it is gk-fusion's, and this is a gk-core test, "
+            + "so the walk up this used to do could never have reached it");
     }
 }
