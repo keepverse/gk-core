@@ -241,8 +241,7 @@
         "scripts/gate_class_system_phase9.py",
         "scripts/mutate.*",
         "scripts/prepare_injector_refs.py",
-        "scripts/test_deploy_play.py",
-        "scripts/test_substrate_leak_alarm.py",
+          "scripts/test_substrate_leak_alarm.py",
         "scripts/wait_for_deploy.py"
       ],
       "reason": "Owner-run operational tooling has no deterministic repository test target; its callers and release/CI steps own execution evidence. These exact paths are explicit exemptions, not a broadened scripts boundary."
