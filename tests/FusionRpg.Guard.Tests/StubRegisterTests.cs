@@ -17,11 +17,6 @@ public sealed class StubRegisterTests
 {
     const string RegisterPath = "docs/architecture/stub-register.md";
 
-    static string RepoRoot()
-    {
-        return KeepverseRoots.Core();
-    }
-
     /// <summary>The rows of the `## Rows` table: every pipe line whose first cell looks like `SR-nn`.</summary>
     static IReadOnlyList<string[]> Rows()
     {
@@ -127,13 +122,21 @@ public sealed class StubRegisterTests
     [Fact]
     public void Every_row_points_at_a_file_that_exists()
     {
-        var root = RepoRoot();
         foreach (var cells in Rows())
         {
             var where = cells[3].Trim('`');
             var filePart = where.Split(':')[0];
-            Assert.True(File.Exists(Path.Combine(root, filePart)),
-                $"{cells[0]}: where '{where}' names a file that does not exist — the register is stale");
+            // The register is the workspace root's document and its `where` cells cite files in ANY
+            // repository, so the citation is resolved by asking which repository carries it - gk-core
+            // first, so a path gk-core has resolves the way it did before the split. Resolving every
+            // citation against one repository rots the register the moment it cites another, and this
+            // table already cites `web/` and `data/`.
+            var root = new[] { KeepverseRoots.Core(), KeepverseRoots.Workspace(),
+                               KeepverseRoots.Fusion(), KeepverseRoots.Web(),
+                               KeepverseRoots.Content(), KeepverseRoots.Forge() }
+                .FirstOrDefault(r => File.Exists(Path.Combine(r, filePart.Replace('/', Path.DirectorySeparatorChar))));
+            Assert.True(root is not null,
+                $"{cells[0]}: where '{where}' names a file that no repository carries — the register is stale");
         }
     }
 }

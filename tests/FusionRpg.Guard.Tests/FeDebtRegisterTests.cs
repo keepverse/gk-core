@@ -23,16 +23,39 @@ public sealed class FeDebtRegisterTests
 {
     const string RegisterPath = "docs/architecture/fe-debt-register.md";
 
+    /// <summary>The register is the WORKSPACE ROOT's document, and its `where` cells cite files in any
+    /// repository - so both the register and each citation are resolved by asking which repository carries
+    /// the path, gk-core first.</summary>
     static string RepoRoot()
     {
         return KeepverseRoots.Core();
     }
 
+    /// <summary>The repository carrying a cited path. A register whose citations are resolved against ONE
+    /// repository rots the moment it cites another, and `docs/**` alone already did.</summary>
+    static string? CarryingRoot(string repoRelativePath)
+    {
+        foreach (var root in new[] { KeepverseRoots.Core(), KeepverseRoots.Workspace(),
+                                     KeepverseRoots.Fusion(), KeepverseRoots.Web(),
+                                     KeepverseRoots.Content(), KeepverseRoots.Forge() })
+        {
+            if (File.Exists(Path.Combine(root, repoRelativePath.Replace('/', Path.DirectorySeparatorChar))))
+                return root;
+        }
+        return null;
+    }
+
     /// <summary>Every pipe line of the `## Rows` table whose first cell looks like `FE-nn`.</summary>
     static IReadOnlyList<string[]> Rows()
     {
-        var path = Path.Combine(RepoRoot(), RegisterPath);
-        Assert.True(File.Exists(path), $"the FE debt register is missing: {RegisterPath}");
+        // The register lives at `docs/architecture/fe-debt-register.md` and the workspace root is the only
+        // repository that carries it - gk-core has a `docs/` of its own, holding
+        // `docs/research/class-system/real-runs`, so a directory-level check concludes gk-core owns `docs`
+        // and this read misses. Measured, and it is why the failure read "the FE debt register is missing"
+        // rather than anything about a malformed table.
+        var path = Path.Combine(KeepverseRoots.Workspace(), RegisterPath);
+        Assert.True(File.Exists(path),
+                    $"the FE debt register is missing: {RegisterPath} (looked in {path})");
 
         var rows = new List<string[]>();
         foreach (var line in File.ReadAllLines(path))
@@ -109,7 +132,7 @@ public sealed class FeDebtRegisterTests
                 .ToArray();
 
             Assert.True(cited.Length > 0, $"{cells[0]}: where '{cells[2]}' cites no file at all");
-            Assert.True(cited.Any(c => File.Exists(Path.Combine(root, c))),
+            Assert.True(cited.Any(c => CarryingRoot(c) is not null),
                 $"{cells[0]}: none of its cited paths exist any more: {string.Join(", ", cited)}");
         }
     }
