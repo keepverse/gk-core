@@ -1,4 +1,5 @@
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -35,11 +36,23 @@ public class LawnObserverMeleeAttackerGuardTests
         Assert.True(fallback > melee, "the damageFrom fallback runs only after the melee lookup");
     }
 
+    /// <summary>Reads a file from gk-FUSION, which is what carries <c>src/FusionRpg.Injector</c>.</summary>
+    ///
+    /// <para>The twin of the helper in <c>BambooDragonAmbientAttackerGuardTests</c>, with the same walk and
+    /// the same impossible marker: it probed ancestors for a <c>src/FusionRpg.Injector</c> directory, which
+    /// gk-fusion carries and gk-core does not, so it reported <c>DirectoryNotFoundException : repo root</c>
+    /// rather than ever finding one. See that file for the full argument; the walk reaches ancestors and
+    /// this needed a sibling.</para>
     static string Read(params string[] parts)
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) dir = dir.Parent;
-        if (dir is null) throw new DirectoryNotFoundException("repo root");
-        return File.ReadAllText(Path.Combine(new[] { dir.FullName }.Concat(parts).ToArray()));
+        var path = Path.Combine(new[] { KeepverseRoots.Fusion() }.Concat(parts).ToArray());
+        if (!File.Exists(path))
+        {
+            throw new FileNotFoundException(
+                $"not found: {path} - gk-fusion carries src/FusionRpg.Injector, and this is a gk-core test, "
+                + "so the walk up this used to do could never have reached it",
+                path);
+        }
+        return File.ReadAllText(path);
     }
 }

@@ -1,4 +1,5 @@
 using Xunit;
+using FusionRpg.Core.Workspace;
 
 namespace FusionRpg.Guard.Tests;
 
@@ -38,11 +39,28 @@ public class BambooDragonAmbientAttackerGuardTests
         Assert.True(record2 > ambient, "the ambient attacker must be chosen before the hit is recorded");
     }
 
+    /// <summary>Reads a file from gk-FUSION, which is what carries <c>src/FusionRpg.Injector</c>.</summary>
+    ///
+    /// <para>This walked up from the test host's own directory looking for a
+    /// <c>src/FusionRpg.Injector</c> directory and reported
+    /// <c>DirectoryNotFoundException : repo root</c> when it ran out of parents. It could never succeed:
+    /// the only ancestors of a gk-core test's bin output are gk-core and the workspace root, and
+    /// gk-fusion is a SIBLING. A walk reaches ancestors; this needed a sibling. The marker directory it
+    /// probed for is itself a gk-fusion path, so the probe was looking for the thing that moved.</para>
+    ///
+    /// <para>Two files carried this helper verbatim. The refusal also named nothing — not the marker, not
+    /// the owner, not the directory it had walked to — so the message could not be acted on even by
+    /// someone who had the split in front of them.</para>
     static string Read(params string[] parts)
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) dir = dir.Parent;
-        if (dir is null) throw new DirectoryNotFoundException("repo root");
-        return File.ReadAllText(Path.Combine(new[] { dir.FullName }.Concat(parts).ToArray()));
+        var path = Path.Combine(new[] { KeepverseRoots.Fusion() }.Concat(parts).ToArray());
+        if (!File.Exists(path))
+        {
+            throw new FileNotFoundException(
+                $"not found: {path} - gk-fusion carries src/FusionRpg.Injector, and this is a gk-core test, "
+                + "so the walk up this used to do could never have reached it",
+                path);
+        }
+        return File.ReadAllText(path);
     }
 }
