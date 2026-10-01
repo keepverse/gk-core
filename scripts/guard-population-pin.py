@@ -126,15 +126,28 @@ def _owner_token_exists(token: str, repo_root: Path) -> bool:
         # this function asks whether a token exists in a file it cannot reach, and answering
         # "no" because the repository is missing would be a guard reporting its blindness as
         # an answer about the content.
-        try:
-            seedsmith_src = forge_root(repo_root) / "tools" / "seedsmith" / "seedsmith"
-        except RootNotFound:
-            return None
+        seedsmith_src: Path | None = forge_root(repo_root) / "tools" / "seedsmith" / "seedsmith"
     except RootNotFound as exc:
-        print(f"[{GUARD_ID}] EXIT_FORGE_ROOT_MISSING: {exc}", file=sys.stderr)
-        return 2
+        # Skips THIS scan root only. Returning here - as this did until this change - ended the WHOLE
+        # function, so `owner_exists` collapsed the `None` straight back to `False` and the guard
+        # reported its own blindness as an answer about the content: a `closed-vocabulary` owner
+        # declared in `src/` was called missing because a SIBLING repository was unreachable. That is
+        # the precise thing the comment above this call says the wrapping is there to prevent, so the
+        # intent recorded in 3e5c29b ("it answers cannot-reach-it rather than no") was not what the code
+        # did. Unreachable now means "not scanned", and the guard keeps scanning what it CAN open.
+        # The named refusal is KEPT and still goes to stderr - it is the same condition, and the same
+        # name, that guard-vocabulary-mirror.py refuses on at its line 312. Only the false "no" is gone.
+        #
+        # This branch was UNREACHABLE until this change, because the inner `except RootNotFound:
+        # return None` caught first and the outer handler could never run. That is why its print
+        # referenced `GUARD_ID` - a name this file does not define anywhere, and does not define now.
+        # Dead code rots silently, and the only reason it surfaced is that making the branch live made
+        # the missing name raise. Had the reference been anything else - a file handle, a cache - this
+        # would have shipped the same way.
+        seedsmith_src = None
+        print(f"POPULATION PIN GUARD: EXIT_FORGE_ROOT_MISSING -- {exc}", file=sys.stderr)
     for root in (repo_root / "src", seedsmith_src):
-        if not root.is_dir():
+        if root is None or not root.is_dir():
             continue
         for path in root.rglob("*"):
             if path.suffix not in (".cs", ".py") or not path.is_file():
