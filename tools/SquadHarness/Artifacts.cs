@@ -1,3 +1,4 @@
+using FusionRpg.Core.Workspace;
 using System.Text.Json;
 
 namespace FusionRpg.Tools.SquadHarness;
@@ -14,10 +15,10 @@ public static class Artifacts
     static readonly JsonSerializerOptions Options = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     public static string ScopeTransferPath(string repoRoot) =>
-        Path.Combine(repoRoot, "docs", "research", "passive-tree", "_scope-transfer.json");
+        Path.Combine(KeepverseRoots.Workspace(), "_scope-transfer.json", "docs", "research", "passive-tree", "_scope-transfer.json");
 
     public static string SquadScopePath(string repoRoot) =>
-        Path.Combine(repoRoot, "docs", "research", "passive-tree", "_squad-scope.json");
+        Path.Combine(KeepverseRoots.Workspace(), "_squad-scope.json", "docs", "research", "passive-tree", "_squad-scope.json");
 
     /// <summary>Every proposed value is a number AND a half-width (F2 acceptance) -- this is the one
     /// shape every cell in both artifacts uses, so a reader can never mistake a point estimate for a

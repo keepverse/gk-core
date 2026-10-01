@@ -116,9 +116,9 @@ public class SlotRolesTests
         // seedsmith's registries.py/linkage.py (read as text, since this is a C# test project).
         var registryCore = ItemRoleRegistry.HybridCore(LoadRegistry()).Select(d => ItemRoles.Id(d.Role)).OrderBy(s => s).ToList();
 
-        var registriesPy = File.ReadAllText(Path.Combine(RepoRoot(), "tools", "seedsmith", "seedsmith",
+        var registriesPy = File.ReadAllText(Path.Combine(KeepverseRoots.Forge(), "tools", "seedsmith", "seedsmith",
             "adapters", "items", "registries.py"));
-        var linkagePy = File.ReadAllText(Path.Combine(RepoRoot(), "tools", "seedsmith", "seedsmith",
+        var linkagePy = File.ReadAllText(Path.Combine(KeepverseRoots.Forge(), "tools", "seedsmith", "seedsmith",
             "metrics", "linkage.py"));
 
         // Both python sources name the THREE DROPPED roles (the complement), not the twelve kept --

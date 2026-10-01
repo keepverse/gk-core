@@ -96,7 +96,7 @@ public class SpecChannelClaimTests
     {
         var registry = DerivedStatRegistry.CreateDefault();
         var registeredIds = registry.AllRegistered.Select(d => d.ChannelId).ToHashSet(StringComparer.Ordinal);
-        var docsRoot = Path.Combine(FindRepoRoot(), "docs", "architecture");
+        var docsRoot = Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture");
         var failures = new List<string>();
 
         foreach (var file in Directory.EnumerateFiles(docsRoot, "*.md", SearchOption.AllDirectories))

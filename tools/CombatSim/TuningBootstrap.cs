@@ -35,12 +35,25 @@ public static class TuningBootstrap
             FusionRpg.Core.Stats.Derived.DerivedStatTuningLoader.Parse(Read(dir, "derived-stats", patches, version: 2)));
         FusionRpg.Core.Status.StatusPolicy.Configure(
             FusionRpg.Core.Status.StatusTuningLoader.Parse(Read(dir, "status", patches)));
+        // RungPolicy, like the five above, throws its own named refusal until a host configures it -
+        // "RungPolicy.Configure(...) has not run. Every rung read comes from
+        // data/tuning/action-rungs.v{n}.json (spec-rung-table.md) - there is no built-in default". That is
+        // the gate working as designed, but this bootstrap never learned the policy existed, so every
+        // SquadHarness test that reaches a rung died on it: measured 2026-10-01, 60 of 193 failing in
+        // FusionRpg.SquadHarness.Tests, all with the same refusal. The module initializer at
+        // SquadHarnessTuningTestBootstrap was already correct - it fixed a DIFFERENT policy in 2026-09-17
+        // (73 of 193, BattleRuleset and ChannelAnchor) - so the shape was right and the list was short.
+        //
+        // v4 pinned explicitly, as every domain here is: the newest file on disk is not the contract, and
+        // silently following it would move every class-system baseline the next time a rung is published.
+        FusionRpg.Core.Actions.Rungs.RungPolicy.Configure(
+            FusionRpg.Core.Actions.Rungs.RungTableLoader.Parse(Read(dir, "action-rungs", patches, 4)));
 
         var unused = patches.Keys.Where(k => !Touched.Contains(k)).ToList();
         if (unused.Count > 0)
             throw new InvalidOperationException(
                 "--set names a domain with no tuning file loaded here: " + string.Join(", ", unused) +
-                ". Known domains: combat, shield, stats, derived-stats, status.");
+                ". Known domains: combat, shield, stats, derived-stats, status, action-rungs.");
     }
 
     static readonly HashSet<string> Touched = new(StringComparer.Ordinal);

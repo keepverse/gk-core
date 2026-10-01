@@ -21,7 +21,7 @@ public class FunnelDeltaGuardTests
     public void Guard_script_exits_zero()
     {
         var repoRoot = FindRepoRoot();
-        var script = Path.Combine(repoRoot, "scripts", "guard-funnel-delta.py");
+        var script = Path.Combine(KeepverseRoots.Fusion(), "scripts", "guard-funnel-delta.py");
         Assert.True(File.Exists(script), "missing " + script);
 
         var (exit, stdout, stderr) = RunScript(script, repoRoot);
@@ -34,7 +34,7 @@ public class FunnelDeltaGuardTests
     public void Guard_script_exits_nonzero_when_plugin_calls_TakeDamage()
     {
         var repoRoot = FindRepoRoot();
-        var script = Path.Combine(repoRoot, "scripts", "guard-funnel-delta.py");
+        var script = Path.Combine(KeepverseRoots.Fusion(), "scripts", "guard-funnel-delta.py");
         var fixture = CreateFixture("td-");
         try
         {
@@ -60,7 +60,7 @@ public class FunnelDeltaGuardTests
     public void Guard_script_exits_nonzero_when_plugin_calls_Bag_Grant()
     {
         var repoRoot = FindRepoRoot();
-        var script = Path.Combine(repoRoot, "scripts", "guard-funnel-delta.py");
+        var script = Path.Combine(KeepverseRoots.Fusion(), "scripts", "guard-funnel-delta.py");
         var fixture = CreateFixture("grant-");
         try
         {
@@ -86,7 +86,7 @@ public class FunnelDeltaGuardTests
     public void Guard_script_exits_zero_when_injector_TakeDamage_is_not_a_plugin()
     {
         var repoRoot = FindRepoRoot();
-        var script = Path.Combine(repoRoot, "scripts", "guard-funnel-delta.py");
+        var script = Path.Combine(KeepverseRoots.Fusion(), "scripts", "guard-funnel-delta.py");
         var fixture = CreateFixture("hot-");
         try
         {
@@ -109,7 +109,7 @@ public class FunnelDeltaGuardTests
     public void Guard_script_exits_nonzero_when_core_calls_AddPlantHp()
     {
         var repoRoot = FindRepoRoot();
-        var script = Path.Combine(repoRoot, "scripts", "guard-funnel-delta.py");
+        var script = Path.Combine(KeepverseRoots.Fusion(), "scripts", "guard-funnel-delta.py");
         var fixture = CreateFixture("core-hp-");
         try
         {

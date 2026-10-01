@@ -35,7 +35,7 @@ public class PowerGuardTests
     public void InventoryJson_exists_and_parses()
     {
         var repoRoot = FindRepoRoot();
-        var path = Path.Combine(repoRoot, "docs", "architecture", "power", "inventory.json");
+        var path = Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "power", "inventory.json");
         Assert.True(File.Exists(path), "missing " + path);
         using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
         Assert.True(doc.RootElement.GetProperty("scales").GetArrayLength() > 0);

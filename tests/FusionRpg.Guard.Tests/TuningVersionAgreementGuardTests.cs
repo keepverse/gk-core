@@ -38,7 +38,7 @@ public class TuningVersionAgreementGuardTests
     public static IReadOnlyList<string> DefaultRoots(string repoRoot) => new[]
     {
         Path.Combine(repoRoot, "src"),
-        Path.Combine(repoRoot, "tools", "seedsmith", "seedsmith"),
+        Path.Combine(KeepverseRoots.Forge(), "tools", "seedsmith", "seedsmith"),
     };
 
     /// <summary>Every version each domain is named at, over the given roots. Roots are parameters so a

@@ -249,7 +249,7 @@ public sealed class VerificationTopologyTests
 
             var (exit, stdout, stderr) = RunPython(new[]
             {
-                Path.Combine(RepoRoot(), "scripts", "session-boundary-check.py"),
+                Path.Combine(KeepverseRoots.Workspace(), "scripts", "session-boundary-check.py"),
                 "--repo-root", root, "--ci", "--session", "lane",
                 "--diff-base-ref", "HEAD~1", "--diff-head-ref", "HEAD", "--require-diff-fence",
             });

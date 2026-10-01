@@ -49,7 +49,7 @@ public class StatusStatPayloadTests
         // docs/architecture/examples/status/expose-row.overlay.json — split out of blight-row's (E17
         // originally carried the `stat` block there; C2 found blight never declares ModifyStat, so
         // the block moved to a status that actually does).
-        var path = Path.Combine(RepoRoot(), "docs", "architecture", "examples", "status",
+        var path = Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "examples", "status",
             "expose-row.overlay.json");
         using var doc = JsonDocument.Parse(File.ReadAllText(path));
 

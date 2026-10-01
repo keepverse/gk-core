@@ -1,3 +1,4 @@
+using FusionRpg.Core.Workspace;
 using System.Text.Json;
 
 namespace FusionRpg.Tools.SquadHarness;
@@ -187,7 +188,7 @@ public static class BudgetSweep
                 "budget-scale matters at all, never a treeShareMilli value in its own per-mille unit.");
 
     public static string ArtifactPath(string repoRoot) =>
-        Path.Combine(repoRoot, "docs", "research", "passive-tree", "_budget-sweep.json");
+        Path.Combine(KeepverseRoots.Workspace(), "_budget-sweep.json", "docs", "research", "passive-tree", "_budget-sweep.json");
 
     static readonly JsonSerializerOptions ArtifactOptions = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 

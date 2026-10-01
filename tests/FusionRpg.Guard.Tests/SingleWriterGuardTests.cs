@@ -14,7 +14,7 @@ public class SingleWriterGuardTests
     public void Guard_script_exits_zero()
     {
         var repoRoot = FindRepoRoot();
-        var script = Path.Combine(repoRoot, "scripts", "guard-single-writer.py");
+        var script = Path.Combine(KeepverseRoots.Fusion(), "scripts", "guard-single-writer.py");
         Assert.True(File.Exists(script), "missing " + script);
 
         var psi = new ProcessStartInfo

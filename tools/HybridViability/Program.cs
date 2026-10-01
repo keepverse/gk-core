@@ -1,5 +1,6 @@
 // Hybrid viability measurement — passive-tree-ideal.md §3.3.
 
+using FusionRpg.Core.Workspace;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using FusionRpg.Core.Balance.Guards;
@@ -183,7 +184,7 @@ Console.WriteLine($"  corner  vs hybrid2 : {c - MeanOf("hybrid2"):+0.00%;-0.00%;
 Console.WriteLine($"  corner  vs hybrid3 : {c - MeanOf("hybrid3"):+0.00%;-0.00%;0.00%}");
 Console.WriteLine($"  corner  vs spread  : {c - MeanOf("spread"):+0.00%;-0.00%;0.00%}");
 
-var outPath = args.Length > 1 ? args[1] : Path.Combine(repoRoot, "docs", "research", "class-system", "_hybrid-viability.json");
+var outPath = args.Length > 1 ? args[1] : Path.Combine(KeepverseRoots.Workspace(), "docs", "research", "class-system", "_hybrid-viability.json");
 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outPath))!);
 File.WriteAllText(outPath, JsonSerializer.Serialize(new
 {

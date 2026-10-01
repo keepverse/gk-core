@@ -15,7 +15,7 @@ public class UnitClassContractParityTests
     public void TsUnionMatchesCSharpEnum()
     {
         var repoRoot = FindRepoRoot();
-        var tsText = File.ReadAllText(Path.Combine(repoRoot, "web", "fusion-rpg-web", "src", "contract", "types.ts"));
+        var tsText = File.ReadAllText(Path.Combine(KeepverseRoots.Web(), "web", "fusion-rpg-web", "src", "contract", "types.ts"));
         // Strip `//` line comments first -- the union spans several lines with an explanatory comment
         // between the original ten members and the two class-system additions.
         var tsTextNoComments = Regex.Replace(tsText, @"//[^\n]*", "");
@@ -43,7 +43,7 @@ public class UnitClassContractParityTests
         // spec-magnitude-and-units.md §3 is the authored ledger both the C# enum and the TS union
         // trace back to -- every enum member must appear there as a backtick-wrapped class name.
         var repoRoot = FindRepoRoot();
-        var docText = File.ReadAllText(Path.Combine(repoRoot, "docs", "design", "spec-magnitude-and-units.md"));
+        var docText = File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "docs", "design", "spec-magnitude-and-units.md"));
         // The ledger's own count line. It read "twelve classes" until the world-numbers program
         // added `LoamUnits` on 2026-09-04 and updated the doc to "thirteen"; the C# enum was the
         // side that lagged. Asserting the doc's CURRENT count keeps this honest -- but the real

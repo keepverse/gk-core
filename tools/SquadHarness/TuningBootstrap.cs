@@ -75,6 +75,29 @@ public static class TuningBootstrap
         // basic-attack envelope (BattleRunState.cs:68) -- missing this throws on the very first setup
         // this harness builds, not on some rarely-exercised path.
         ActionTimingPolicy.Configure(ActionTimingTuningLoader.Parse(Read("action-timing")));
+
+        // RungPolicy, and this entry exists because the file's own docstring predicts it: the two lines
+        // above were "found the hard way by earlier programs as 'one more Configure every harness must
+        // remember'". RungPolicy is the next one. It throws by design until a host configures it -
+        // "RungPolicy.Configure(...) has not run. Every rung read comes from
+        // data/tuning/action-rungs.v{n}.json (spec-rung-table.md) - there is no built-in default" - and
+        // every arena, tree and budget path this harness builds reads a rung, so measured 2026-10-01 this
+        // was 60 of 193 failing in FusionRpg.SquadHarness.Tests, every one with that same refusal.
+        //
+        // `Read`, not `ReadPinned`: this harness resolves a domain to the HIGHEST v{n} on disk by
+        // design, and action-rungs is a genuine sequence (v1..v4) rather than the `power-scale.v3.json`
+        // case pinned two entries above, which is a different artifact kind sharing a domain prefix.
+        // Latest is v4, which is what the corpus reads today.
+        FusionRpg.Core.Actions.Rungs.RungPolicy.Configure(
+            FusionRpg.Core.Actions.Rungs.RungTableLoader.Parse(Read("action-rungs")));
+
+        // And the one immediately after it, which the previous fix uncovered: BattleEngine's
+        // ApplyBasicAttack reads ActionBaseTuningHub on EVERY basic attack (BasicAttack.cs:404), so it
+        // throws before the first hit lands rather than on a rare path. Measured 2026-10-01, this was the
+        // only remaining unconfigured hub named by the whole run - 120 occurrences across 60 failures -
+        // which is why it is worth stating that the set is CLOSED for this harness as measured, rather
+        // than adding hubs on suspicion.
+        ActionBaseTuningHub.Configure(ActionBaseTuningLoader.Parse(Read("action-base")));
     }
 
     static string LatestTuningFileName(string tuningDir, string domain)

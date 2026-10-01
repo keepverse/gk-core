@@ -1,3 +1,4 @@
+using FusionRpg.Core.Workspace;
 using System.Text.Json;
 
 namespace FusionRpg.Tools.SquadHarness;
@@ -155,7 +156,7 @@ public static class SoulTrackSweep
     }
 
     public static string ArtifactPath(string repoRoot) =>
-        Path.Combine(repoRoot, "docs", "research", "passive-tree", "_soul-track-sweep.json");
+        Path.Combine(KeepverseRoots.Workspace(), "docs", "research", "passive-tree", "_soul-track-sweep.json");
 
     static readonly JsonSerializerOptions ArtifactOptions = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 

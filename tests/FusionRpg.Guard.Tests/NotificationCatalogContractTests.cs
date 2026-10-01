@@ -80,7 +80,7 @@ public class NotificationCatalogContractTests
     }
 
     static string ReadDtos() => ReadSrc("FusionRpg.Contracts", "NotificationDtos.cs");
-    static string ReadCatalogTs() => File.ReadAllText(Path.Combine(FindRepoRoot(), "web", "fusion-rpg-web", "src", "shell", "notify", "catalog.ts"));
+    static string ReadCatalogTs() => File.ReadAllText(Path.Combine(KeepverseRoots.Web(), "web", "fusion-rpg-web", "src", "shell", "notify", "catalog.ts"));
 
     static string[] CsEnumMembers(string source, string enumName)
     {

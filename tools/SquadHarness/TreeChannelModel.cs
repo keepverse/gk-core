@@ -1,3 +1,4 @@
+using FusionRpg.Core.Workspace;
 using System.Text.Json;
 using FusionRpg.Core.Battle;
 using FusionRpg.Core.PassiveTree.Binding;
@@ -320,7 +321,7 @@ public static class TreeChannelModel
     static readonly JsonSerializerOptions ArtifactOptions = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     public static string ConcentrationArtifactPath(string repoRoot) =>
-        Path.Combine(repoRoot, "docs", "research", "passive-tree", "_concentration-sweep-v2.json");
+        Path.Combine(KeepverseRoots.Workspace(), "_concentration-sweep-v2.json", "docs", "research", "passive-tree", "_concentration-sweep-v2.json");
 
     public static string WriteConcentrationArtifact(TreeModel.ConcentrationResult result, string? outPath = null)
     {

@@ -77,7 +77,7 @@ public class ClassSystemBaselineRegenTests
         // Both sides now resolve the LIVE config the same way: highest data/tuning/aptitudes.v*.json.
         var repoRoot = FindRepoRoot();
         var liveAptitudes = LiveAptitudesFileName(repoRoot);
-        var path = Path.Combine(repoRoot, "docs", "research", "class-system", "_baseline-dominance.json");
+        var path = Path.Combine(KeepverseRoots.Workspace(), "docs", "research", "class-system", "_baseline-dominance.json");
         Assert.True(File.Exists(path), $"missing {path} — run python scripts/regen_class_system_baselines.py");
 
         using var doc = JsonDocument.Parse(File.ReadAllText(path));

@@ -1,6 +1,7 @@
 // battle-tempo forecast-rail FR2, executed standalone (Core.Tests blocked). Mirrors
 // gk-core/tests/FusionRpg.Core.ClassSystem.Tests/ClassSystem/TurnOrderRecordContractParityTests.cs case-for-case.
 
+using FusionRpg.Core.Workspace;
 using System.Text.RegularExpressions;
 using FusionRpg.Core.Battle.Timeline;
 
@@ -24,7 +25,7 @@ string FindRepoRoot()
 }
 
 var repoRoot = FindRepoRoot();
-var tsText = File.ReadAllText(Path.Combine(repoRoot, "web", "fusion-rpg-web", "src", "contract", "types.ts"));
+var tsText = File.ReadAllText(Path.Combine(KeepverseRoots.Web(), "web", "fusion-rpg-web", "src", "contract", "types.ts"));
 var tsTextNoComments = Regex.Replace(tsText, @"//[^\n]*", "");
 
 var typeMatch = Regex.Match(tsTextNoComments, @"export type TurnOrderEntry = \{([^}]*)\};");

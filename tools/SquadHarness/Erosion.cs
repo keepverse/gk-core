@@ -1,3 +1,4 @@
+using FusionRpg.Core.Workspace;
 using System.Text.Json;
 using FusionRpg.Core.Battle;
 using FusionRpg.Core.Power;
@@ -451,7 +452,7 @@ public static class Erosion
     static readonly JsonSerializerOptions ArtifactOptions = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     public static string ArtifactPath(string repoRoot) =>
-        Path.Combine(repoRoot, "docs", "research", "passive-tree", "_erosion-differential.json");
+        Path.Combine(KeepverseRoots.Workspace(), "docs", "research", "passive-tree", "_erosion-differential.json");
 
     /// <summary>Writes <c>_erosion-differential.json</c> -- spec's own Commands block names this exact
     /// path. Same shape discipline as <see cref="Artifacts.WriteTransfer"/>: an <c>at</c> provenance field

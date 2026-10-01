@@ -79,7 +79,7 @@ public class PoiseResourceTests
             .First(e => e.GetProperty("id").GetString() == "poise");
         Assert.Equal("guard", poise.GetProperty("pays").GetString());
 
-        var hubText = ReadNormalized(Path.Combine(repoRoot, "docs", "architecture", "resource-hub-ssot.md"));
+        var hubText = ReadNormalized(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "resource-hub-ssot.md"));
         // SS2's pays-for table row for `stamina` must not list guard among its actions.
         var staminaRow = Regex.Match(hubText, @"^\|\s*`stamina`\s*\|.*\|$", RegexOptions.Multiline);
         Assert.True(staminaRow.Success, "resource-hub-ssot.md SS2 has no `stamina` row.");
@@ -100,7 +100,7 @@ public class PoiseResourceTests
         // pinned in the SSOT text, and poise's own roster note is checked for the specific mistake
         // the rule warns against ("regen comes back slower" is the wrong, tempting phrasing).
         var repoRoot = FindRepoRoot();
-        var hubText = ReadNormalized(Path.Combine(repoRoot, "docs", "architecture", "resource-hub-ssot.md"));
+        var hubText = ReadNormalized(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "resource-hub-ssot.md"));
         Assert.Contains(
             "An exhaustion debuff must never touch a channel feeding its own resource's regen.",
             hubText, StringComparison.Ordinal);
@@ -123,11 +123,11 @@ public class PoiseResourceTests
         using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(rosterPath));
         Assert.Equal(6, doc.RootElement.GetProperty("entries").GetArrayLength());
 
-        var hubText = ReadNormalized(Path.Combine(repoRoot, "docs", "architecture", "resource-hub-ssot.md"));
+        var hubText = ReadNormalized(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "resource-hub-ssot.md"));
         Assert.Contains("Six actor resources", hubText, StringComparison.Ordinal);
         Assert.DoesNotContain("Five actor resources", hubText, StringComparison.Ordinal);
 
-        var decisionsText = File.ReadAllText(Path.Combine(repoRoot, "docs", "architecture", "decisions.md"));
+        var decisionsText = File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "decisions.md"));
         Assert.Contains("Six actor resources", decisionsText, StringComparison.Ordinal);
     }
 

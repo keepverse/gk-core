@@ -18,7 +18,7 @@ public class DecisionsGateTests
     [Fact]
     public void DecisionsRowExists_forClassSystem()
     {
-        var text = ReadNormalized(Path.Combine(FindRepoRoot(), "docs", "architecture", "decisions.md"));
+        var text = ReadNormalized(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "decisions.md"));
         var row = FindRow(text, "Class system");
 
         Assert.True(row is not null, "decisions.md has no 'Class system' row — AGENTS.md requires one before this program's architecture changes lock behavior.");
@@ -37,7 +37,7 @@ public class DecisionsGateTests
     public void ResourceModelRow_readsSixAndAgreesWithCodeAndRoster()
     {
         var repoRoot = FindRepoRoot();
-        var decisionsText = ReadNormalized(Path.Combine(repoRoot, "docs", "architecture", "decisions.md"));
+        var decisionsText = ReadNormalized(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "decisions.md"));
         var row = FindRow(decisionsText, "Resource model");
         Assert.True(row is not null, "decisions.md has no 'Resource model' row.");
 

@@ -1,3 +1,4 @@
+using FusionRpg.Core.Workspace;
 using System.Text.Json;
 using Xunit;
 
@@ -100,7 +101,7 @@ static class GuardWiring
     /// </summary>
     static bool DeployInvokesItAsAPrecondition(string repoRoot, string guardId)
     {
-        var deploy = Path.Combine(repoRoot, "scripts", "deploy-play.py");
+        var deploy = Path.Combine(KeepverseRoots.Fusion(), "scripts", "deploy-play.py");
         if (!File.Exists(deploy)) return false;
         var text = File.ReadAllText(deploy);
         return text.Contains($"-Only {guardId}", StringComparison.Ordinal);
@@ -118,7 +119,7 @@ static class GuardWiring
     /// LITERALS are kept, because the precondition builds the runner path inside one.</para></summary>
     public static void AssertDeployRunsNoGuardSuite(string repoRoot)
     {
-        var deploy = Path.Combine(repoRoot, "scripts", "deploy-play.py");
+        var deploy = Path.Combine(KeepverseRoots.Fusion(), "scripts", "deploy-play.py");
         Assert.True(File.Exists(deploy), "missing " + deploy);
         var code = StripModuleDocstringAndComments(File.ReadAllText(deploy));
 

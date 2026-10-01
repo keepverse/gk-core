@@ -169,14 +169,14 @@ internal static class ContractTuningTestBootstrap
         // empires from it and an empty save is named from it, so every store test needs it.
         FusionRpg.Core.Narrative.LeadNamesHub.Configure(FusionRpg.Core.Narrative.LeadNames.Parse(
                 File.ReadAllText(Path.Combine(
-                    ContentRoot(), "data", "seed", "narrative", "_registry", "names.en.v1.json"))));
+                    KeepverseRoots.Content(), "data", "seed", "narrative", "_registry", "names.en.v1.json"))));
         ItemsTuningHub.Configure(DefaultItems);
         // commander-identity SE4.2/SE4.3: the process-wide commander directory, read from the real
         // authored registry exactly like production does (Core never touches a path).
         FusionRpg.Core.Commanders.CommanderDirectoryHub.Configure(
             FusionRpg.Core.Commanders.DataCommanderDirectory.Parse(
                 File.ReadAllText(Path.Combine(
-                    ContentRoot(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json"))));
+                    KeepverseRoots.Content(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json"))));
         // test-substrate TVB-F16: `RpgStore.WorldTurnHubInputsForUnlocked` reads `AptitudeTuningHub.Tuning`,
         // so the first Data-level district assault ever COMMITTED through the store threw before it fought
         // (`DistrictAssaultResolver.BuildAnimateSetups` -> `CommitWorldTurn`'s `HubInputsFor`). Configured
@@ -190,7 +190,7 @@ internal static class ContractTuningTestBootstrap
         FusionRpg.Core.Saves.NewSaveEmpiresHub.Configure(
             FusionRpg.Core.Saves.NewSaveEmpires.Parse(
                 File.ReadAllText(Path.Combine(
-                    ContentRoot(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json"))));
+                    KeepverseRoots.Content(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json"))));
     }
 
     public static readonly ContractTuning DefaultContracts = new(

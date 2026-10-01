@@ -1,3 +1,4 @@
+using FusionRpg.Core.Workspace;
 using System.Globalization;
 using System.Text.Json;
 using FusionRpg.Core.Battle;
@@ -119,7 +120,7 @@ if (channels.Count == 0)
 var result = new ProveAptitudeResult(theta, source, points, perChannel, deltas, !anyNonZero);
 var json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
 
-outPath ??= Path.Combine(repoRoot, "docs", "research", "class-system", "_prove-aptitude.json");
+outPath ??= Path.Combine(KeepverseRoots.Workspace(), "docs", "research", "class-system", "_prove-aptitude.json");
 Directory.CreateDirectory(Path.GetDirectoryName(outPath)!);
 File.WriteAllText(outPath, json);
 Console.WriteLine(json);

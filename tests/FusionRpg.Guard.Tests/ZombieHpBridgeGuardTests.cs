@@ -10,7 +10,7 @@ public class ZombieHpBridgeGuardTests
     public void Injector_outside_Bridges_does_not_assign_zombie_health_fields()
     {
         var repoRoot = FindRepoRoot();
-        var injector = Path.Combine(repoRoot, "src", "FusionRpg.Injector");
+        var injector = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector");
         Assert.True(Directory.Exists(injector), "missing " + injector);
 
         var leaks = new List<string>();
@@ -40,7 +40,7 @@ public class ZombieHpBridgeGuardTests
     public void Injector_outside_Bridges_does_not_call_CreateZombie_SetZombie()
     {
         var repoRoot = FindRepoRoot();
-        var injector = Path.Combine(repoRoot, "src", "FusionRpg.Injector");
+        var injector = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector");
         var leaks = new List<string>();
         foreach (var file in Directory.EnumerateFiles(injector, "*.cs", SearchOption.AllDirectories))
         {
@@ -69,7 +69,7 @@ public class ZombieHpBridgeGuardTests
     public void GameCaptureHooks_does_not_harmony_patch_SetZombie()
     {
         var repoRoot = FindRepoRoot();
-        var path = Path.Combine(repoRoot, "src", "FusionRpg.Injector", "GameCaptureHooks.cs");
+        var path = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "GameCaptureHooks.cs");
         Assert.True(File.Exists(path), "missing " + path);
         var text = File.ReadAllText(path);
         Assert.DoesNotContain(
@@ -86,7 +86,7 @@ public class ZombieHpBridgeGuardTests
     public void Bridge_3_8_1_spawn_has_melon_5_arg_SetZombie()
     {
         var repoRoot = FindRepoRoot();
-        var path = Path.Combine(repoRoot, "src", "FusionRpg.Injector", "Bridges", "pvzrh-3.8.1", "CreateZombieSpawn.cs");
+        var path = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "Bridges", "pvzrh-3.8.1", "CreateZombieSpawn.cs");
         Assert.True(File.Exists(path), "missing " + path);
         var text = File.ReadAllText(path);
         Assert.Contains("#if FUSIONRPG_MELON", text, StringComparison.Ordinal);

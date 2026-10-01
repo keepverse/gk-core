@@ -1,3 +1,4 @@
+using FusionRpg.Core.Workspace;
 using System.Text.Json;
 using FusionRpg.Core.PassiveTree;
 using FusionRpg.Core.PassiveTree.Resolve;
@@ -394,10 +395,10 @@ public static class TreeModel
     static readonly JsonSerializerOptions ArtifactOptions = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     public static string ConcentrationArtifactPath(string repoRoot) =>
-        Path.Combine(repoRoot, "docs", "research", "passive-tree", "_concentration-sweep.json");
+        Path.Combine(KeepverseRoots.Workspace(), "_concentration-sweep.json", "docs", "research", "passive-tree", "_concentration-sweep.json");
 
     public static string CrossUnlockArtifactPath(string repoRoot) =>
-        Path.Combine(repoRoot, "docs", "research", "passive-tree", "_crossunlock-sweep.json");
+        Path.Combine(KeepverseRoots.Workspace(), "_crossunlock-sweep.json", "docs", "research", "passive-tree", "_crossunlock-sweep.json");
 
     /// <summary>Every cell is a number AND a half-width (F2's own acceptance rule, reused here) --
     /// <see cref="Artifacts"/>'s <c>ValueWithHalfWidth</c> shape, restated so this file has no

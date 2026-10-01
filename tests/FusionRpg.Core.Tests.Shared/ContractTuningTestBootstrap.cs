@@ -132,18 +132,18 @@ internal static class ContractTuningTestBootstrap
         FusionRpg.Core.Commanders.CommanderDirectoryHub.Configure(
             FusionRpg.Core.Commanders.DataCommanderDirectory.Parse(
                 File.ReadAllText(Path.Combine(
-                    ContentRoot(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json"))));
+                    KeepverseRoots.Content(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json"))));
         // identity-rename T13: the lead-names registry, same convention — a world template names
         // its empires from it and an empty save is named from it, so every test that builds either
         // needs it configured before production's own boot would.
         FusionRpg.Core.Narrative.LeadNamesHub.Configure(FusionRpg.Core.Narrative.LeadNames.Parse(
                 File.ReadAllText(Path.Combine(
-                    ContentRoot(), "data", "seed", "narrative", "_registry", "names.en.v1.json"))));
+                    KeepverseRoots.Content(), "data", "seed", "narrative", "_registry", "names.en.v1.json"))));
         // save-identity SE4.12: the authored new-save registry, same convention.
         FusionRpg.Core.Saves.NewSaveEmpiresHub.Configure(
             FusionRpg.Core.Saves.NewSaveEmpires.Parse(
                 File.ReadAllText(Path.Combine(
-                    ContentRoot(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json"))));
+                    KeepverseRoots.Content(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json"))));
         // species-gear-chain T34b: the trophy id registry, read from the real committed generated
         // corpus exactly like production does (Core never reads a file itself) — every test in this
         // assembly that names a real trophy id (e.g. "trophy.species.abyssswordstar.1") resolves it
@@ -151,7 +151,7 @@ internal static class ContractTuningTestBootstrap
         FusionRpg.Core.Items.Materials.MaterialCatalog.ConfigureTrophyRegistry(
             FusionRpg.Core.Items.Materials.MaterialCatalog.ParseTrophyRegistryIds(
                 File.ReadAllText(Path.Combine(
-                    ContentRoot(), "data", "seed", "items", "materials", "trophy-registry.json"))));
+                    KeepverseRoots.Content(), "data", "seed", "items", "materials", "trophy-registry.json"))));
     }
 
     public static readonly ContractTuning DefaultContracts = new(

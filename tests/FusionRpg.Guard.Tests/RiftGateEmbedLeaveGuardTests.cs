@@ -55,7 +55,7 @@ public class RiftGateEmbedMarkerGuardTests
     public void The_marker_reader_is_a_query_reader_not_a_hash_reader()
     {
         var web = File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "web", "fusion-rpg-web", "src", "shell", "overlayEmbed.ts"));
+            KeepverseRoots.Web(), "web", "fusion-rpg-web", "src", "shell", "overlayEmbed.ts"));
         Assert.Contains("searchParams", web, StringComparison.Ordinal);
         Assert.DoesNotContain("location.hash", web, StringComparison.Ordinal);
     }
@@ -77,7 +77,7 @@ public class RiftGateLeaveControlGuardTests
     public void The_leave_control_is_gated_on_the_embed_marker()
     {
         var control = File.ReadAllText(Path.Combine(
-            FindRepoRoot(), "web", "fusion-rpg-web", "src", "shell", "OverlayLeave.tsx"));
+            KeepverseRoots.Web(), "web", "fusion-rpg-web", "src", "shell", "OverlayLeave.tsx"));
 
         Assert.Contains("useOverlayEmbed", control, StringComparison.Ordinal);
         Assert.Contains("postOverlayLeave", control, StringComparison.Ordinal);

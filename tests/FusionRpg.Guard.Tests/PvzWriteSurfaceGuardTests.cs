@@ -165,7 +165,7 @@ public class PvzWriteSurfaceGuardTests
     static (int Exit, string Stdout, string Stderr) RunGuard(string root)
     {
         var repoRoot = FindRepoRoot();
-        var script = Path.Combine(repoRoot, "scripts", "guard-single-writer.py");
+        var script = Path.Combine(KeepverseRoots.Fusion(), "scripts", "guard-single-writer.py");
         var psi = new ProcessStartInfo
         {
             FileName = "python",

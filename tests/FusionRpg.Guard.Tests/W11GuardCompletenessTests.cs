@@ -23,8 +23,8 @@ public class W11GuardCompletenessTests
     public void Foundation_and_stat_system_document_W11_B_Bend()
     {
         var repoRoot = FindRepoRoot();
-        var foundation = File.ReadAllText(Path.Combine(repoRoot, "docs", "testing", "foundation.md"));
-        var stats = File.ReadAllText(Path.Combine(repoRoot, "docs", "architecture", "stat-system.md"));
+        var foundation = File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "docs", "testing", "foundation.md"));
+        var stats = File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "stat-system.md"));
         Assert.Contains("W11-B", foundation, StringComparison.Ordinal);
         Assert.Contains("Bend", foundation, StringComparison.Ordinal);
         Assert.Contains("W11-B", stats, StringComparison.Ordinal);
@@ -35,7 +35,7 @@ public class W11GuardCompletenessTests
     public void Effect_runtime_inventory_names_alt_sinks_and_HitLand_W12()
     {
         var repoRoot = FindRepoRoot();
-        var path = Path.Combine(repoRoot, "docs", "architecture", "effect-runtime.md");
+        var path = Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "effect-runtime.md");
         var text = File.ReadAllText(path);
         Assert.Contains("RealTakeDamage", text, StringComparison.Ordinal);
         Assert.Contains("BodyTakeDamage", text, StringComparison.Ordinal);
@@ -50,7 +50,7 @@ public class W11GuardCompletenessTests
     public void GameCaptureHooks_still_emits_real_body_apply_paths()
     {
         var repoRoot = FindRepoRoot();
-        var path = Path.Combine(repoRoot, "src", "FusionRpg.Injector", "GameCaptureHooks.cs");
+        var path = Path.Combine(KeepverseRoots.Fusion(), "src", "FusionRpg.Injector", "GameCaptureHooks.cs");
         Assert.True(File.Exists(path), "missing " + path);
         var text = File.ReadAllText(path);
         Assert.Contains("[\"path\"] = \"real\"", text, StringComparison.Ordinal);

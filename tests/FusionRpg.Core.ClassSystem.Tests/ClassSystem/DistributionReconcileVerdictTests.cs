@@ -37,7 +37,7 @@ public class DistributionReconcileVerdictTests
     public void AllNineRegisterItemsHaveALandedVerdict()
     {
         var repoRoot = FindRepoRoot();
-        var text = File.ReadAllText(Path.Combine(repoRoot, "docs", "architecture", "class-system", "spec-distribution-reconcile.md"));
+        var text = File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "class-system", "spec-distribution-reconcile.md"));
 
         Assert.Equal(9, NineItems.Length);
         var missing = new List<string>();
@@ -79,7 +79,7 @@ public class DistributionReconcileVerdictTests
         // the same change" that deletes the stub -- so the ONLY passing state left is both gone.
         var repoRoot = FindRepoRoot();
         var subsystemSource = File.ReadAllText(Path.Combine(repoRoot, "src", "FusionRpg.Core", "Stats", "Derived", "Subsystems", "RpgProgressionSubsystem.cs"));
-        var ledgerText = File.ReadAllText(Path.Combine(repoRoot, "docs", "architecture", "power", "ssot-power-scale.md"));
+        var ledgerText = File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "power", "ssot-power-scale.md"));
 
         var stubCurveStillInCode = subsystemSource.Contains("level * 10", StringComparison.Ordinal);
         var inventoried = ledgerText.Contains("RpgProgressionSubsystem`'s bonus flats", StringComparison.Ordinal)
@@ -163,7 +163,7 @@ public class DistributionReconcileVerdictTests
         // 3.2's own verdict keeps the composers separate). This asserts the divergence is a STATED
         // rule, not a silent one: overlay reads IPowerIndexProvider, battle aliases Level.
         var repoRoot = FindRepoRoot();
-        var text = File.ReadAllText(Path.Combine(repoRoot, "docs", "architecture", "class-system", "spec-distribution-reconcile.md"));
+        var text = File.ReadAllText(Path.Combine(KeepverseRoots.Workspace(), "docs", "architecture", "class-system", "spec-distribution-reconcile.md"));
         Assert.Contains("the two paths obtain", text, StringComparison.Ordinal);
         Assert.Contains("DOCUMENT the contract", text, StringComparison.Ordinal);
     }

@@ -98,7 +98,7 @@ public class ClassSystemPhase9ReadinessGateTests
         // (class-system-plan.md §0.1). Wiring it into any "throw on failure" pipeline would break the
         // run today for an honestly-expected state, not a regression — so it must not be wired there.
         var repoRoot = FindRepoRoot();
-        var path = Path.Combine(repoRoot, "scripts", "deploy-play.py");
+        var path = Path.Combine(KeepverseRoots.Fusion(), "scripts", "deploy-play.py");
         Assert.True(File.Exists(path), "missing " + path);
         var text = File.ReadAllText(path);
         // Both spellings, because the retired form was hyphenated and the port is underscored. A

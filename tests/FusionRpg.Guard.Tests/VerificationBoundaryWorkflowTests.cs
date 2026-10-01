@@ -146,7 +146,7 @@ public sealed class VerificationBoundaryWorkflowTests
     /// </summary>
     private static (string Id, string[] Paths) ActiveSession()
     {
-        var dir = Path.Combine(RepoRoot(), "tasks", "sessions");
+        var dir = Path.Combine(KeepverseRoots.Workspace(), "tasks", "sessions");
         foreach (var file in Directory.EnumerateFiles(dir, "*.json").OrderBy(f => f, StringComparer.Ordinal))
         {
             if (Path.GetFileName(file).StartsWith("_", StringComparison.Ordinal)) continue;
@@ -206,7 +206,7 @@ public sealed class VerificationBoundaryWorkflowTests
     /// "a session may plan a path it can write", never "a session must own C#".</summary>
     private static (string Id, string[] Paths)? ActiveSessionWithScope()
     {
-        var dir = Path.Combine(RepoRoot(), "tasks", "sessions");
+        var dir = Path.Combine(KeepverseRoots.Workspace(), "tasks", "sessions");
         foreach (var file in Directory.EnumerateFiles(dir, "*.json").OrderBy(f => f, StringComparer.Ordinal))
         {
             if (Path.GetFileName(file).StartsWith("_", StringComparison.Ordinal)) continue;

@@ -16,7 +16,7 @@ public class TurnOrderRecordContractParityTests
     public void TsTypeFieldsMatchTheCSharpRecordFields()
     {
         var repoRoot = FindRepoRoot();
-        var tsText = File.ReadAllText(Path.Combine(repoRoot, "web", "fusion-rpg-web", "src", "contract", "types.ts"));
+        var tsText = File.ReadAllText(Path.Combine(KeepverseRoots.Web(), "web", "fusion-rpg-web", "src", "contract", "types.ts"));
         var tsTextNoComments = Regex.Replace(tsText, @"//[^\n]*", "");
 
         var typeMatch = Regex.Match(tsTextNoComments, @"export type TurnOrderEntry = \{([^}]*)\};");
