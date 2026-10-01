@@ -17,9 +17,21 @@ namespace FusionRpg.Guard.Tests;
 [Trait("VerificationId", "guard.doc-citations")]
 public sealed class DocCitationAuditTests
 {
-    const string Harness = """
+    /// <summary>The harness is handed the audit script's ABSOLUTE path.
+    ///
+    /// It carried the relative `scripts/audit-doc-citations.py`, which resolved against the process working
+    /// directory - gk-core - while the script is the WORKSPACE ROOT's, because development documentation and
+    /// its tooling are gk-workflow's. Measured: `scripts/audit-doc-citations.py` is present at the workspace
+    /// root and absent from gk-core. All thirteen of these tests failed with a FileNotFoundError from inside
+    /// the harness, which is why the message read "audit harness failed exit=1" and a traceback rather than
+    /// anything about a citation.
+    ///
+    /// The path is interpolated rather than appended, so the working directory can be anything: a relative
+    /// path in a harness is a claim about the CWD that the CWD never promised to honour.
+    /// </summary>
+    const string HarnessTemplate = """
 import importlib.util, io, json, sys
-spec = importlib.util.spec_from_file_location("audit", "scripts/audit-doc-citations.py")
+spec = importlib.util.spec_from_file_location("audit", sys.argv[1])
 audit = importlib.util.module_from_spec(spec); spec.loader.exec_module(audit)
 doc = "virtual/NOTES.md"
 text = sys.stdin.read()
@@ -46,7 +58,10 @@ print(json.dumps([[f["ref"], f["sev"]] for f in findings]))
             CreateNoWindow = true
         };
         psi.ArgumentList.Add("-c");
-        psi.ArgumentList.Add(Harness);
+        psi.ArgumentList.Add(HarnessTemplate);
+        // `python -c CODE arg` puts `arg` at `sys.argv[1]`, so the script path travels with the harness
+        // instead of being a claim about the working directory.
+        psi.ArgumentList.Add(KeepverseRoots.Workspace() + "/scripts/audit-doc-citations.py");
         psi.RedirectStandardOutput = true;
         psi.RedirectStandardError = true;
         psi.UseShellExecute = false;
