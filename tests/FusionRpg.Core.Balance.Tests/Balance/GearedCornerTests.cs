@@ -4,6 +4,7 @@ using FusionRpg.Core.Effects.Atoms;
 using FusionRpg.Core.Stats;
 using FusionRpg.Core.Stats.Aptitudes;
 using FusionRpg.Core.Stats.Derived;
+using FusionRpg.Core.Workspace;
 using FusionRpg.Core.Stats.Derived.Subsystems;
 using Xunit;
 
@@ -301,7 +302,18 @@ public class GearedCornerTests
         // today because gk-data/packs/fusion/data/seed/items/_tuning/tier-bands.v1.json authors a sharePermille for the 14
         // stat.modify primary-channel families only -- a real, named content gap. When it closes, the
         // corpus grows and this test must not break for it.
-        var path = FindRepoFile(Path.Combine("data", "seed", "atoms", "trait-critical-hunter.json"));
+        // `data/seed/**` is the CONTENT PACK's tree, so `FindRepoFile` - which walks UP from the test
+        // host's own directory looking for the relative path - can never find it: the only ancestors of a
+        // gk-core test's bin output are gk-core and the workspace root, and the file lives in a SIBLING
+        // repository. Its refusal said so and nothing else:
+        //     could not locate data\seed\atoms\trait-critical-hunter.json above ...\tests\...\bin\
+        //
+        // The comment four lines above already names the correct post-split path -
+        // `gk-data/packs/fusion/data/seed/items/_tuning/tier-bands.v1.json` - so the prose was right and
+        // the code beside it was not: the sixth instance of that shape in this program.
+        var path = Path.Combine(KeepverseRoots.Content(), "data", "seed", "atoms",
+                                "trait-critical-hunter.json");
+        Assert.True(File.Exists(path), $"the shipped atom this suite pins is not there: {path}");
         var collected = AtomSeedFile.Collect(new[] { (path, File.ReadAllText(path)) });
 
         var atom = Assert.Single(collected.Content.Atoms, a => a.AtomId == ShippedAtomId);
@@ -312,18 +324,6 @@ public class GearedCornerTests
         Assert.Equal(ShippedChannel, bound.Channel);
         Assert.Equal(DerivedModifierOp.Flat, bound.Op);
         Assert.Equal(ShippedAmount, bound.Amount);
-    }
-
-    static string FindRepoFile(string relative)
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            var candidate = Path.Combine(dir.FullName, relative);
-            if (File.Exists(candidate)) return candidate;
-            dir = dir.Parent;
-        }
-        throw new InvalidOperationException($"could not locate {relative} above {AppContext.BaseDirectory}");
     }
 }
 
