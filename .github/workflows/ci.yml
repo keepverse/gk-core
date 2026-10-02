@@ -540,8 +540,8 @@ jobs:
       - name: Validate item seed corpus
         shell: pwsh
         run: |
-          dotnet run --project ../gk-forge/tools/ItemSeedValidator -c Release
-          if ($LASTEXITCODE -ne 0) { throw "item seed corpus failed validation" }
+          dotnet run --project ../gk-forge/tools/ItemSeedValidator -c Release -- ../gk-data/packs/fusion/data/seed/items
+          if ($LASTEXITCODE -ne 0) { throw "item seed corpus failed validation. The seed root is passed explicitly because the tool usage is `[seed root]`; left to its own walk it exits 2 with 'could not locate data/seed/items', which after the split is gk-data/packs/fusion/data/seed/items rather than <repo>/data/seed/items." }
 
       - name: Install seedsmith from the lockfile (reproducible env)
         shell: pwsh
