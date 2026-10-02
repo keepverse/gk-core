@@ -30,8 +30,23 @@ import subprocess
 import sys
 from pathlib import Path
 
+# `scripts/lib` is not a package, so it is put on the path the way every other script in this
+# repository reaches it (scripts/checks/common.py does exactly this) rather than duplicated here.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+import keepverse_roots  # noqa: E402
+
 # --------------------------------------------------------------------------------------
 # IO seams. A test replaces these with in-memory equivalents.
+#
+# WHY A PATH IS RESOLVED AGAINST ITS OWNER. The split moved prose out of this repository:
+# `docs/guide/**` and CONTRIBUTING.md are gk-workflow's, `web/fusion-rpg-web/**` is gk-web's, and only
+# README.md is gk-core's. A path in a rules file is still named the way that tree is named NEXT TO
+# the thing that owns it, so resolving it against `git rev-parse --show-toplevel` produced a path that
+# could not exist. That is not a cosmetic difference: rendered_outputs() derives the rendered pages it
+# must exclude from the content sources that EXIST, so with this repository's own tracked set it derived
+# an empty exclusion while in_scope() still globbed `docs/guide/**` as INCLUDED - the tool reported
+# clean having renamed nothing, which is the exact failure these tests exist to prevent (plan risk 4).
+# The same rule is scripts/lib/keepverse_roots.owning_base, which every other split-era caller uses.
 
 def repo_root() -> str:
     out = subprocess.run(
@@ -41,31 +56,61 @@ def repo_root() -> str:
 
 
 def tracked_files() -> list[str]:
-    """Every tracked path, repo-relative with forward slashes, sorted."""
-    out = subprocess.run(["git", "ls-files"], capture_output=True, text=True, check=True)
-    return sorted(line.strip() for line in out.stdout.splitlines() if line.strip())
+    """Every tracked path in the WORKSPACE, repo-relative with forward slashes, sorted.
+
+    The union of each repository's own `git ls-files`, this repository first (keepverse_roots.repo_bases
+    puts the starting repository first, and that order is the contract: a repository's own path is
+    always its own). Repo-relative on purpose - that is the vocabulary a rules file is written in, so
+    the union needs no rewriting and a path stays comparable with the globs that name it.
+    """
+    paths: set[str] = set()
+    for base in keepverse_roots.repo_bases(keepverse_roots.core_root()):
+        out = subprocess.run(["git", "ls-files"], capture_output=True, text=True, cwd=str(base))
+        if out.returncode != 0:
+            continue
+        paths.update(line.strip().replace("\\", "/") for line in out.stdout.splitlines() if line.strip())
+    return sorted(paths)
+
+
+def owned(rel: str) -> Path:
+    """`rel` resolved against the repository that CARRIES it, falling back to this one.
+
+    The fallback is keepverse_roots.owned_path's own fail-closed answer: a path no repository carries
+    comes back as the caller spelled it, so the caller reports MISSING FILE rather than quietly reading
+    something else.
+    """
+    return keepverse_roots.owned_path(rel, keepverse_roots.core_root())
 
 
 def read_text(rel: str) -> str:
-    return (Path(repo_root()) / rel).read_text(encoding="utf-8")
+    return owned(rel).read_text(encoding="utf-8")
 
 
 def write_text(rel: str, text: str) -> None:
-    (Path(repo_root()) / rel).write_text(text, encoding="utf-8", newline="")
+    owned(rel).write_text(text, encoding="utf-8", newline="")
 
 
 def dirty_files(rels: list[str]) -> set[str]:
     """The subset of `rels` with uncommitted changes. `apply` refuses each one."""
     if not rels:
         return set()
-    out = subprocess.run(
-        ["git", "status", "--porcelain", "--"] + rels,
-        capture_output=True, text=True, check=True, cwd=repo_root(),
-    )
+    # Grouped by OWNER, because `git status` only sees paths inside its own repository: asking gk-core
+    # about a gk-workflow file answers "no such path" rather than "clean", which would let `apply`
+    # overwrite uncommitted work in a sibling. One invocation per repository that actually carries
+    # something in the set, so a path nothing owns is still checked here before being refused below.
+    by_base: dict[Path, list[str]] = {}
+    for rel in rels:
+        by_base.setdefault(keepverse_roots.owning_base(rel, keepverse_roots.core_root())
+                           or keepverse_roots.core_root(), []).append(rel)
     dirty = set()
-    for line in out.stdout.splitlines():
-        if len(line) > 3:
-            dirty.add(line[3:].strip().strip('"'))
+    for base, group in by_base.items():
+        out = subprocess.run(
+            ["git", "status", "--porcelain", "--"] + group,
+            capture_output=True, text=True, cwd=str(base),
+        )
+        for line in out.stdout.splitlines():
+            if len(line) > 3:
+                dirty.add(line[3:].strip().strip('"'))
     return dirty
 
 

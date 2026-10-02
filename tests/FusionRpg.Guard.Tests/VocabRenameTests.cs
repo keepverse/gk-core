@@ -46,6 +46,19 @@ writes = []
 dirty = set(request.get("dirty", []))
 
 # The five IO seams, replaced with one in-memory tree. The rules file is the one real read.
+# Captured BEFORE the in-memory overrides below, so the scope/paths actions can restore the tool's
+# REAL tracked set instead of re-implementing `git ls-files` here. That duplication is what let the
+# split go unnoticed: this harness answered with gk-core's own file list while the rules file names
+# trees in gk-workflow and gk-web, so the rendered-page exclusion it derives came back empty.
+REAL_TRACKED = vr.tracked_files
+# read_text is restored alongside it, and for the same reason. rendered_outputs() derives the rendered
+# pages it must exclude by READING each real content source through read_text; with the in-memory
+# lambda in place, every one of those reads raised FileNotFoundError and was swallowed by the caller's
+# `except (ValueError, OSError): continue`, so the derivation silently collapsed to its `fixed` list.
+# A swallowed missing file read as "this mechanism has no rendered page", which is the opposite of the
+# truth for 133 of them.
+REAL_READ = vr.read_text
+
 vr.repo_root = lambda: ""
 vr.tracked_files = lambda: sorted(store)
 vr.read_text = lambda rel: store[rel] if rel in store else Path(rel).read_text(encoding="utf-8")
@@ -82,10 +95,11 @@ if action == "scan":
     report["after"] = p["changed"]
     report.update(rows(p))
 elif action == "paths":
-    # The derived scope needs the real tracked set (the generated pages come from real content files),
-    # while the in-memory store stays the source of truth for every mutation action.
-    vr.tracked_files = lambda: sorted(subprocess.run(
-        ["git", "ls-files"], capture_output=True, text=True, check=True).stdout.split())
+    # The derived scope needs the real tracked set AND the real reads (the generated pages come from
+    # real content files), while the in-memory store stays the source of truth for every mutation
+    # action.
+    vr.tracked_files = REAL_TRACKED
+    vr.read_text = REAL_READ
     code, out = cli("plan", "--rules", request["rules"], "--phase", phase,
                    "--paths", *request["paths"])
     report["exit"] = code
@@ -94,8 +108,8 @@ elif action == "paths":
         report["replacements"] = parsed["replacements"]
         report["residue"] = parsed["residue"]
 elif action == "scope":
-    vr.tracked_files = lambda: sorted(subprocess.run(
-        ["git", "ls-files"], capture_output=True, text=True, check=True).stdout.split())
+    vr.tracked_files = REAL_TRACKED
+    vr.read_text = REAL_READ
     phase_rules = next(p for p in rules["phases"] if p["id"] == phase)
     include, exclude = phase_rules["include"], phase_rules.get("exclude", [])
     rendered = vr.rendered_outputs(phase_rules)
