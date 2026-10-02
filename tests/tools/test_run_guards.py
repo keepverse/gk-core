@@ -51,7 +51,8 @@ REGISTRY_REASONS = {
     "EXEMPTION-INCOMPLETE", "EXEMPTION-CATCH-ALL",
 }
 OTHER_REASONS = {
-    "CI-RANGE-REQUIRED", "CI-RANGE-MALFORMED", "UNKNOWN-GUARD", "NO-GUARDS-SELECTED",
+    "CI-RANGE-REQUIRED", "CI-RANGE-MALFORMED", "CI-RANGE-UNRESOLVED",
+    "UNKNOWN-GUARD", "NO-GUARDS-SELECTED",
     "NO-GATING-GUARDS", "GUARD-SCRIPT-MISSING", "GUARD-RANGE-REQUIRED", "POWERSHELL-NOT-ON-PATH",
     "LOCAL-ARG-MALFORMED",
 }
@@ -248,6 +249,43 @@ class TheRange(TemporaryRoot):
             with self.assertRaises(rg.Refusal) as caught:
                 rg.resolve_ci_range("ci", "not-a-range", self.root)
         self.assertEqual(caught.exception.reason, "CI-RANGE-MALFORMED")
+
+    def test_a_WELL_FORMED_range_that_does_NOT_resolve_REFUSES_by_name(self) -> None:
+        # The defect this pins, measured 2026-10-02: a base that is not a commit in THIS repository
+        # was passed straight through, and the failure surfaced from whichever guard diffs first as
+        # `GIT-FAILED git diff ... fatal: unknown revision`, reported as THAT GUARD BEING RED. A
+        # cross-repository SHA read as a genuine generated-seed failure and was misdiagnosed as one
+        # before the SHA was noticed. "0 red" therefore rested on a range string nobody had checked.
+        with mock.patch.object(rg, "repo_is_git", return_value=True):
+            with self.assertRaises(rg.Refusal) as caught:
+                rg.resolve_ci_range("ci", "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef..HEAD", self.root)
+        self.assertEqual(caught.exception.reason, "CI-RANGE-UNRESOLVED")
+
+    def test_an_UNRESOLVED_head_REFUSES_too_not_just_the_base(self) -> None:
+        with mock.patch.object(rg, "repo_is_git", return_value=True):
+            with self.assertRaises(rg.Refusal) as caught:
+                rg.resolve_ci_range("ci", "HEAD..nosuchhead0000000000000000000000", self.root)
+        self.assertEqual(caught.exception.reason, "CI-RANGE-UNRESOLVED")
+
+    def test_a_resolvable_range_is_PASSED_through_unchanged(self) -> None:
+        # The refusal must not swallow a legitimate range. `repo_is_git` is mocked in this suite but
+        # the `git rev-parse` probe is a REAL call, and TemporaryRoot is a plain directory rather
+        # than a repository - so the probe has to be made to succeed explicitly. Asserting it
+        # resolved on its own was my first attempt and it failed for exactly that reason.
+        ok = subprocess.CompletedProcess(args=["git"], returncode=0, stdout="deadbeef\n", stderr="")
+        with mock.patch.object(rg, "repo_is_git", return_value=True), \
+             mock.patch.object(rg.subprocess, "run", return_value=ok):
+            self.assertEqual(rg.resolve_ci_range("ci", "HEAD~1..HEAD", self.root), "HEAD~1..HEAD")
+
+    def test_an_UNRESOLVED_range_still_REFUSES_when_the_probe_really_fails(self) -> None:
+        # Same real-call caveat, the other way: a probe returning non-zero must produce the refusal
+        # rather than being waved through, so the two cases cannot both pass by accident.
+        fail = subprocess.CompletedProcess(args=["git"], returncode=1, stdout="", stderr="fatal: bad revision")
+        with mock.patch.object(rg, "repo_is_git", return_value=True), \
+             mock.patch.object(rg.subprocess, "run", return_value=fail):
+            with self.assertRaises(rg.Refusal) as caught:
+                rg.resolve_ci_range("ci", "HEAD~1..HEAD", self.root)
+        self.assertEqual(caught.exception.reason, "CI-RANGE-UNRESOLVED")
 
     def test_a_LOCAL_run_with_NO_range_is_LEGAL(self) -> None:
         with mock.patch.object(rg, "repo_is_git", return_value=True):

@@ -200,6 +200,27 @@ def resolve_ci_range(tier: str, ci_range: str, root: Path) -> str:
     if tier == "ci" and ci_range.strip() and ".." not in ci_range.strip():
         raise Refusal("range", "CI-RANGE-MALFORMED",
                       f"CI guard range is malformed; expected <base>..<head>: {ci_range}")
+
+    # A range that is well-FORMED but does not resolve is refused here, by name. Without this the
+    # failure surfaces from whichever guard happens to diff first, as
+    # `GIT-FAILED git diff ... fatal: unknown revision` reported as THAT GUARD BEING RED - so a
+    # typo reads as "a guard failed" rather than "you passed a bad range", and every "0 red" claim
+    # silently rests on a range string nobody checked. Measured 2026-10-02: passing a commit from a
+    # DIFFERENT repository produced exactly that, and it was misread as a real generated-seed
+    # failure before the cross-repo SHA was noticed.
+    if tier == "ci" and is_git and ci_range.strip():
+        base, _, head = ci_range.strip().partition("..")
+        for label, rev in (("base", base.strip()), ("head", head.strip())):
+            if not rev:
+                continue
+            probe = subprocess.run(
+                ["git", "rev-parse", "--verify", "--quiet", f"{rev}^{{commit}}"],
+                cwd=root, capture_output=True, text=True)
+            if probe.returncode != 0:
+                raise Refusal("range", "CI-RANGE-UNRESOLVED",
+                              f"CI guard range {label} does not resolve to a commit in this "
+                              f"repository: {rev!r}. A range from another repository, a typo, or a "
+                              f"pruned ref looks identical to a red guard until it is named here.")
     return ci_range.strip()
 
 
