@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 SUMMARY = 'the item seed reachability gate'
-CHECK = ('python', '-m', 'seedsmith', 'check', '--adapter', 'items', '--gate', '../../data/seed/items')
+CHECK = ('python', '-m', 'seedsmith', 'check', '--adapter', 'items', '--gate', '../../../gk-data/packs/fusion/data/seed/items')
 PREFLIGHT = ('python',)
 WORKING_DIRECTORY = 'tools/seedsmith'
 FAIL_HINT = 'item seed corpus has reachability gaps'

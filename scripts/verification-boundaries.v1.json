@@ -167,7 +167,7 @@
     "passivetreerostergen": "tests/FusionRpg.PassiveTreeRosterGen.Tests/FusionRpg.PassiveTreeRosterGen.Tests.csproj",
     "seedsmith": {
       "runner": "pytest",
-      "root": "tools/seedsmith",
+      "root": "tools/seedsmith", "repo": "gk-forge",
       "tests": "tests"
     },
     "ip-censor": {
@@ -177,7 +177,7 @@
     },
     "manager-fail-closed": {
       "runner": "pytest",
-      "root": ".claude/cmdc-agents/scripts",
+      "root": ".claude/cmdc-agents/scripts", "repo": "gk-workflow",
       "tests": "."
     },
     "tuning-py": {

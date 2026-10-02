@@ -724,6 +724,14 @@
       "source": "docs/architecture/ip-censor-map.md (Release gate; owner ruling IC-3)",
       "guards": [],
       "unguardableReason": "the scan gates the RELEASE only — never a commit, a verify-change.ps1 run or a CI job (IC-3) — so it is a release step, not a guard script: .github/workflows/release.yml's `IP release gate (ip-censor, IC-3)` step runs `python -m ipcensor.report scan --format json --fail-on enforced --authored-only` before `Publish player pack`, with each command's exit checked"
+    },
+    {
+      "id": "positional-citations-still-resolve",
+      "source": "docs/DESIGN-GATE.md:219 - A citation nobody can open is not evidence, whatever it claims. The rows it guards are INDEX rows, so every decisions.md:<line> and DESIGN-GATE.md:<line> in the tree is POSITIONAL: inserting a row above one silently invalidates every citation below it, and nothing about the edited row is itself wrong.",
+      "guards": [
+        "decision-citations"
+      ],
+      "unguardableReason": null
     }
   ]
 }

@@ -29,6 +29,7 @@ public class GeneratorCheckCiParityTests
         var repoRoot = FindRepoRoot();
         var checksDir = Path.Combine(repoRoot, "scripts", "checks");
         var ci = File.ReadAllText(Path.Combine(repoRoot, ".github", "workflows", "ci.yml"));
+        var jobBase = CiLayout.JobBaseDirectory(ci);
         var ciSteps = ParseCiSteps(ci);
 
         // The glob must actually match. A filter that silently matches nothing reads as PARITY
@@ -48,18 +49,61 @@ public class GeneratorCheckCiParityTests
                             + "otherwise match nothing and read as parity green)");
                 continue;
             }
+            // A wrapper declares its working directory the way that tree is named next to the thing
+            // that owns it - `.` is gk-core itself, `tools/seedsmith` is gk-forge's - so both it and
+            // the CI step are reduced to the workspace-relative spelling a runner would use before
+            // being compared. The command itself is still matched literally: that duplication is the
+            // thing being kept honest, so the text must be the same text. See <see cref="CiLayout"/>.
+            var expected = CiLayout.OwningWorkspaceRelative(workingDirectory);
+            if (expected is null)
+            {
+                missing.Add($"{name}: working-directory '{workingDirectory}' is owned by no repository, "
+                            + "so its CI location cannot be decided");
+                continue;
+            }
             // seam-coverage S1: gen-content-validate's own `--db <scratch dir>` is never the same two
             // places (CI passes `$env:RUNNER_TEMP/atom-validate-db`; the wrapper creates and removes
             // its own temp directory locally, since a runner-only env var resolves to nothing here) -
             // compare only the command UP TO AND INCLUDING `--db` for any wrapper that has one.
             var dbIndex = command.IndexOf(" --db", StringComparison.Ordinal);
             var matchCommand = dbIndex >= 0 ? command[..(dbIndex + " --db".Length)] : command;
-            var matched = ciSteps.Any(s => s.Body.Contains(matchCommand, StringComparison.Ordinal) && s.WorkingDirectory == workingDirectory);
+            var matched = ciSteps.Any(s =>
+                s.Body.Contains(matchCommand, StringComparison.Ordinal)
+                && CiLayout.Normalize(CiLayout.StepWorkingDirectory(s.WorkingDirectory, jobBase)) == expected);
             if (!matched)
-                missing.Add($"{name}: no ci.yml step at working-directory '{workingDirectory}' runs '{matchCommand}'");
+                missing.Add($"{name}: no ci.yml step at working-directory '{expected}' runs '{matchCommand}'");
         }
 
         Assert.True(missing.Count == 0, string.Join("\n  ", missing));
+    }
+
+    /// <summary>Falsifier for the directory comparison: a step running the wrapper's real command in
+    /// some OTHER repository's directory is still a parity failure. The owning lookup decides where a
+    /// declared path lives; it must not decide that a command counts from anywhere.</summary>
+    [Fact]
+    public void A_step_in_a_different_directory_is_not_parity()
+    {
+        const string planted =
+            "    defaults:\n" +
+            "      run:\n" +
+            "        working-directory: gk-core\n" +
+            "    steps:\n" +
+            "      - name: fake\n" +
+            "        working-directory: gk-web\n" +
+            "        run: |\n" +
+            "          dotnet run --project ../gk-forge/tools/TreeBinder -- --check\n";
+
+        const string wrapperCommand = "dotnet run --project ../gk-forge/tools/TreeBinder -- --check";
+        var jobBase = CiLayout.JobBaseDirectory(planted);
+        var expected = CiLayout.OwningWorkspaceRelative(".");
+        var stepRunningIt = ParseCiSteps(planted)
+            .Single(s => s.Body.Contains(wrapperCommand, StringComparison.Ordinal));
+
+        // The command IS present in the file, so the only thing that can reject this step is the
+        // directory: gk-web is not the repository that owns `.`, which is gk-core.
+        Assert.Equal("gk-core", expected);
+        Assert.Equal("gk-web", CiLayout.Normalize(CiLayout.StepWorkingDirectory(stepRunningIt.WorkingDirectory, jobBase)));
+        Assert.NotEqual(expected, CiLayout.Normalize(CiLayout.StepWorkingDirectory(stepRunningIt.WorkingDirectory, jobBase)));
     }
 
     /// <summary>Guard tests never invoke a generator for real here (python-test-lane Testing note:
@@ -78,10 +122,11 @@ public class GeneratorCheckCiParityTests
         Assert.Contains(expectedFragment, command!, StringComparison.Ordinal);
     }
 
-    private sealed record CiStep(string WorkingDirectory, string Body);
+    private sealed record CiStep(string? WorkingDirectory, string Body);
 
-    /// <summary>Every `- name:` step in `ci.yml`, as its own `working-directory` (`.` when the step
-    /// has none, meaning the repo root default) and the full text between that step and the next.</summary>
+    /// <summary>Every `- name:` step in `ci.yml`, as its own `working-directory` — null when the step
+    /// declares none, which means the job's `defaults.run.working-directory` and not the repository
+    /// root — and the full text between that step and the next.</summary>
     private static List<CiStep> ParseCiSteps(string ciText)
     {
         var lines = ciText.Replace("\r\n", "\n").Split('\n');
@@ -90,7 +135,7 @@ public class GeneratorCheckCiParityTests
         var body = new System.Text.StringBuilder();
         void Flush()
         {
-            if (body.Length > 0) steps.Add(new CiStep(currentWorkingDirectory ?? ".", body.ToString()));
+            if (body.Length > 0) steps.Add(new CiStep(currentWorkingDirectory, body.ToString()));
         }
         foreach (var line in lines)
         {

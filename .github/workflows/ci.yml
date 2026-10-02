@@ -35,22 +35,34 @@ jobs:
     # This bound is generous for the real runtime (normally well under it) and only exists to fail
     # fast with SOME signal rather than run to the platform default.
     timeout-minutes: 60
+    # The generators and seedsmith resolve gk-core and the content pack through KeepverseRoots,
+    # which walks UP looking for a directory holding gk-core/ NEXT TO gk-data/. This repository is
+    # checked out into gk-core/ precisely so that walk can succeed - CreatureSpeciesGen's own usage
+    # line says "found by walking" - and so that a step's `--project ../gk-forge/tools/X` resolves
+    # to the sibling checkout. These two variables are the same answer by CONFIGURATION rather than
+    # by layout: KeepverseRoots.Core() and .Content() return them BEFORE they walk
+    # (KeepverseRoots.cs:79 and :93), so a step that needs a root gets it even if the walk is
+    # disturbed. Paths are configuration (docs: every port and install path is), never a literal
+    # that happens to hold on one machine.
+    env:
+      KEEPVERSE_CORE_ROOT: ${{ github.workspace }}/gk-core
+      KEEPVERSE_CONTENT_ROOT: ${{ github.workspace }}/gk-data/packs/fusion
     defaults:
       run:
-        # gk-core itself is checked out into gk-core/ (see the checkout step), so this restores the
-        # working directory every step had when the repository was checked out at the root. Steps
-        # that declare their own working-directory override it - and those are exactly the ones
-        # repointed at a sibling below.
+        # This repository is checked out into gk-core/ (see the first checkout step), so a step
+        # that declares no working-directory of its own runs inside gk-core/ - the directory every
+        # generator step's `--project ../gk-forge/tools/X` is written against. A step that DOES
+        # declare one resolves against the workspace root, not against this default, so the sibling
+        # steps below name gk-forge/, gk-web/ and gk-workflow/ in full.
         working-directory: gk-core
     steps:
+      # This repository, checked out into gk-core/ rather than at the workspace root, so the
+      # sibling checkouts below sit BESIDE it. That single fact is what makes the generator steps
+      # work: each one names its project as `../gk-forge/tools/X`, which from gk-core/ resolves to
+      # the gk-forge/ checkout, and which from the workspace root would resolve one level above the
+      # runner's own directory and find nothing.
       - uses: actions/checkout@v4
         with:
-          # Checked out into gk-core/ rather than at the workspace root. The generator and seedsmith
-          # tools resolve their content by walking UP to a directory holding gk-core/ NEXT TO
-          # gk-data/ - CreatureSpeciesGen's own usage line says "found by walking". With this
-          # repository AT the root there is no gk-core/ directory, so that walk can never succeed
-          # no matter which siblings are checked out beside it. Every step keeps its original
-          # working directory because `defaults.run.working-directory` below is set to gk-core.
           path: gk-core
           # Full history is required: a push may contain several commits, and the generated-seed
           # guard must inspect the complete event range rather than only the last commit.

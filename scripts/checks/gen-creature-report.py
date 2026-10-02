@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 SUMMARY = 'creature corpus-coverage metrics, gated'
-CHECK = ('python', '-m', 'seedsmith', 'report', '--gate', '--creature-dump', '../../data/seed/creatures/_dump')
+CHECK = ('python', '-m', 'seedsmith', 'report', '--gate', '--creature-dump', '../../../gk-data/packs/fusion/data/seed/creatures/_dump')
 PREFLIGHT = ('python',)
 WORKING_DIRECTORY = 'tools/seedsmith'
 FAIL_HINT = 'creature corpus-coverage metrics found a gated finding — see output above'

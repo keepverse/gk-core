@@ -105,7 +105,16 @@ STUB_REGISTER_RELPATH = "docs/architecture/stub-register.md"
 REGISTRY_FIELDS = ("schemaVersion", "projects", "boundaries", "knownRed")
 BOUNDARY_FIELDS = ("id", "kind", "paths", "project", "verificationId", "guards", "level", "testFiles",
                    "selfSelect")
-PYTEST_PROJECT_FIELDS = ("runner", "root", "tests")
+PYTEST_PROJECT_FIELDS = ("runner", "root", "tests", "repo")
+# A pytest project whose `root` is not inside THIS repository says which repository owns it. The
+# split moved trees out from under roots that are named the way a tree is named NEXT TO its owner
+# (`tools/seedsmith` is gk-forge's, `.claude/cmdc-agents/scripts` is gk-workflow's), and nothing in
+# the root itself records that. Without the field a CI-wiring guard has to GUESS the owner from the
+# filesystem, and a guess is environment-dependent: gk-workflow is the workspace ROOT in a full
+# workspace and a `gk-workflow/` subdirectory on a runner, so the same guard would pass in CI and
+# fail locally. Closed vocabulary for the same reason VALID_RUNNERS is - a typo in an owner is a
+# wire-up pointing nowhere, and it must fail here rather than at run time.
+VALID_OWNING_REPOS = ("gk-forge", "gk-web", "gk-workflow", "gk-fusion", "gk-content", "gk-data")
 SCRIPT_PROJECT_FIELDS = ("runner", "script")
 # registry-contract C7 / python-test-lane D1. A closed vocabulary the code owns: a fourth runner is a
 # reviewed change to this list, never a data edit, because a runner with no code path would just defer
@@ -386,6 +395,10 @@ def check_projects(root: Path, projects: dict, failures: list[str]) -> None:
                 continue
             if runner.casefold() == "pytest":
                 only_fields(value, PYTEST_PROJECT_FIELDS, f"project '{pid}'", failures)
+                if "repo" in value and str(value["repo"]) not in VALID_OWNING_REPOS:
+                    failures.append(
+                        f"project '{pid}' names an owner outside the vocabulary: {value['repo']} "
+                        f"(one of {', '.join(VALID_OWNING_REPOS)})")
                 pytest_root = str(value.get("root", ""))
                 if not is_relative_registry_path(pytest_root):
                     failures.append(f"invalid pytest root: {pid}: {pytest_root}")

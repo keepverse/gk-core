@@ -188,6 +188,34 @@ class TheClosedVocabularies(unittest.TestCase):
         self.assertEqual(("schemaVersion", "projects", "boundaries", "knownRed"),
                          guard.REGISTRY_FIELDS)
 
+    def test_the_owning_repository_vocabulary_is_closed(self) -> None:
+        # A pytest project whose root is not inside this repository says which repository owns it,
+        # and that value is a vocabulary the code owns like any other: a typo would wire a CI step to a
+        # directory nobody can check out. Asserted as a tuple so a registry edit cannot widen it.
+        self.assertEqual(("gk-forge", "gk-web", "gk-workflow", "gk-fusion", "gk-content", "gk-data"),
+                         guard.VALID_OWNING_REPOS)
+        self.assertIn("repo", guard.PYTEST_PROJECT_FIELDS)
+
+    def test_a_pytest_project_may_declare_the_repository_that_owns_its_root(self) -> None:
+        with Fixture() as f:
+            f.project()
+            f.doc["projects"] = {"py": {"runner": "pytest", "root": "tests", "tests": "tests",
+                                         "repo": "gk-forge"}}
+            f.boundary(project="py")
+            got = guard.check(f.write().root)
+        self.assertEqual("OK", got["verdict"], got["problems"])
+
+    def test_an_owner_outside_the_vocabulary_is_reported(self) -> None:
+        with Fixture() as f:
+            f.project()
+            f.doc["projects"] = {"py": {"runner": "pytest", "root": "tests", "tests": "tests",
+                                         "repo": "gk-forg"}}
+            f.boundary(project="py")
+            got = guard.check(f.write().root)
+        self.assertEqual("FAIL", got["verdict"])
+        self.assertTrue(any("names an owner outside the vocabulary" in p for p in got["problems"]),
+                        got["problems"])
+
     def test_a_runner_outside_the_vocabulary_is_reported(self) -> None:
         with Fixture() as f:
             f.project()

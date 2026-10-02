@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 SUMMARY = "the creature corpus dump's self-consistency against its manifest"
-CHECK = ('dotnet', 'run', '--project', '../gk-forge/tools/CreatureCorpusDump', '-c', 'Release', '--', '--verify', 'data/seed/creatures/_dump')
+CHECK = ('dotnet', 'run', '--project', '../gk-forge/tools/CreatureCorpusDump', '-c', 'Release', '--', '--verify', '../gk-data/packs/fusion/data/seed/creatures/_dump')
 PREFLIGHT = ('dotnet',)
 WORKING_DIRECTORY = '.'
 FAIL_HINT = 'creature corpus dump under data/seed/creatures/_dump is not self-consistent with its own manifest — see output above'
