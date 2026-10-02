@@ -27,10 +27,25 @@ public class GeneratorCheckCiParityTests
     public void Every_gen_wrapper_command_matches_a_ci_step_at_the_same_working_directory()
     {
         var repoRoot = FindRepoRoot();
-        var checksDir = Path.Combine(repoRoot, "scripts", "checks");
         var ci = File.ReadAllText(Path.Combine(repoRoot, ".github", "workflows", "ci.yml"));
-        var jobBase = CiLayout.JobBaseDirectory(ci);
-        var ciSteps = ParseCiSteps(ci);
+
+        Assert.True(ParityViolations(ci, Path.Combine(repoRoot, "scripts", "checks")).Count == 0,
+            string.Join("\n  ", ParityViolations(ci, Path.Combine(repoRoot, "scripts", "checks"))));
+    }
+
+    /// <summary>SEAM. The parity rule as a pure function of the ci.yml TEXT, so a test can drive it with
+    /// a planted workflow instead of only the real one.
+    ///
+    /// Before this existed the rule lived inside the [Fact] and read the real ci.yml and the real
+    /// wrappers, which left it with no seam at all. Two consequences, both measured: the step parser
+    /// could not be pinned for a nameless step (the same correction IS pinned in
+    /// CiPytestWiringTests.WiredPytestRoots, and a mutation control here proved nothing could detect it),
+    /// and a fix for it could not be landed without appearing untestable. The wrapper directory is still
+    /// a parameter rather than being hard-coded, so the fake never has to invent one.</summary>
+    private static IReadOnlyList<string> ParityViolations(string ciText, string checksDir)
+    {
+        var jobBase = CiLayout.JobBaseDirectory(ciText);
+        var ciSteps = ParseCiSteps(ciText);
 
         // The glob must actually match. A filter that silently matches nothing reads as PARITY
         // GREEN for fifteen wrappers that are no longer there, which is the exact vacuous-pass shape
@@ -72,7 +87,59 @@ public class GeneratorCheckCiParityTests
                 missing.Add($"{name}: no ci.yml step at working-directory '{expected}' runs '{matchCommand}'");
         }
 
-        Assert.True(missing.Count == 0, string.Join("\n  ", missing));
+        return missing;
+    }
+
+    /// <summary>Drives the parity rule through its seam with a workflow whose wrapper command sits in a
+    /// step written WITHOUT a name, immediately after a step that declares a different directory.
+    ///
+    /// Keying the parser on `- name:` merged the nameless step into its predecessor, so the command was
+    /// credited to the wrong repository's directory. The same correction is pinned in
+    /// CiPytestWiringTests; this is the falsifier that makes it pinnable HERE, which it was not until
+    /// <see cref="ParityViolations"/> existed.</summary>
+    [Fact]
+    public void A_wrapped_command_in_a_nameless_step_is_not_credited_to_the_previous_step_directory()
+    {
+        var checksDir = Path.Combine(FindRepoRoot(), "scripts", "checks");
+        var wrapper = Path.Combine(checksDir, "gen-resource-ownership.py");
+        Assert.True(File.Exists(wrapper), "missing " + wrapper);
+        var (command, workingDirectory) = ReadSpec(File.ReadAllText(wrapper));
+        Assert.NotNull(command);
+        var expected = CiLayout.OwningWorkspaceRelative(workingDirectory);
+        Assert.NotNull(expected);
+
+        // The command is in the NAMELESS step. It runs in the job base, not in gk-web.
+        var planted =
+            "    defaults:\n" +
+            "      run:\n" +
+            "        working-directory: " + expected + "\n" +
+            "    steps:\n" +
+            "      - name: unrelated\n" +
+            "        working-directory: gk-web\n" +
+            "        run: |\n" +
+            "          echo nothing to do with the check\n" +
+            "      - uses: actions/checkout@v4\n" +
+            "        run: |\n" +
+            "          " + command + "\n";
+
+        var missing = ParityViolations(planted, checksDir);
+
+        // Only the nameless step runs that command, and it runs in the job base, so parity HOLDS.
+        Assert.DoesNotContain(missing, m => m.Contains("gen-resource-ownership.py"));
+
+        // The same workflow with the command on the NAMED step in gk-web is NOT parity, which is what
+        // proves the directory is being compared rather than the command merely being present.
+        var misplaced =
+            "    defaults:\n" +
+            "      run:\n" +
+            "        working-directory: " + expected + "\n" +
+            "    steps:\n" +
+            "      - name: misplaced\n" +
+            "        working-directory: gk-web\n" +
+            "        run: |\n" +
+            "          " + command + "\n";
+        Assert.Contains(ParityViolations(misplaced, checksDir),
+            m => m.Contains("gen-resource-ownership.py"));
     }
 
     /// <summary>Falsifier for the directory comparison: a step running the wrapper's real command in
@@ -138,6 +205,18 @@ public class GeneratorCheckCiParityTests
     private static List<CiStep> ParseCiSteps(string ciText)
     {
         var lines = ciText.Replace("\r\n", "\n").Split('\n');
+        // The indent of the first step entry, so a step is recognised by its position in the list rather
+        // than by carrying a name.
+        var stepIndent = -1;
+        foreach (var candidate in lines)
+        {
+            var trimmedCandidate = candidate.TrimStart();
+            if (trimmedCandidate.StartsWith("- ", StringComparison.Ordinal))
+            {
+                stepIndent = candidate.Length - trimmedCandidate.Length;
+                break;
+            }
+        }
         var steps = new List<CiStep>();
         string? currentWorkingDirectory = null;
         var body = new System.Text.StringBuilder();
@@ -148,7 +227,15 @@ public class GeneratorCheckCiParityTests
         foreach (var line in lines)
         {
             var trimmed = line.TrimStart();
-            if (trimmed.StartsWith("- name:", StringComparison.Ordinal))
+            var lineIndent = line.Length - trimmed.Length;
+            // A step starts at ANY `- ` at the step list's own indent - `- name:`, `- uses:`, or anything
+            // else - not only at a name. Keying on `- name:` alone merged a step written as a bare
+            // `- uses:` into its predecessor, so its command was credited to the PREVIOUS step's
+            // directory; this file's own self-checkout is that shape. Actions runs each step in its own
+            // directory, so a step that declares none runs in the job base - which is what the null
+            // WorkingDirectory already means to StepWorkingDirectory. The indent is compared so a nested
+            // `- ` inside a `with:` block is not read as a sibling step.
+            if (trimmed.StartsWith("- ", StringComparison.Ordinal) && lineIndent == stepIndent)
             {
                 Flush();
                 currentWorkingDirectory = null;
