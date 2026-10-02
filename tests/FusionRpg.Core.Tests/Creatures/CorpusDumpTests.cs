@@ -286,4 +286,120 @@ public class CorpusDumpTests : IDisposable
         Assert.False(ok);
         Assert.Contains(DumpWriter.TypeBaseStatsFileName, reason);
     }
+
+    /// <summary>Writes a committed-shaped capture whose DECLARED hash is stale, which is the exact
+    /// committed-state defect this mode exists to repair: a hash left behind by a renderer that has
+    /// since changed, with every payload byte still correct.</summary>
+    string SeedStaleBaseStatsHash()
+    {
+        var outputRoot = Path.Combine(_dir, "_dump");
+        Directory.CreateDirectory(outputRoot);
+        var rendered = DumpWriter.RenderTypeBaseStatsFile(DumpWriter.BuildTypeBaseStatsFile(SampleBaseStats()));
+        var path = Path.Combine(outputRoot, DumpWriter.TypeBaseStatsFileName);
+        var node = (JsonObject)JsonNode.Parse(Encoding.UTF8.GetString(rendered))!;
+        node["contentHash"] = new string('0', 64);
+        File.WriteAllText(path, node.ToJsonString());
+        return outputRoot;
+    }
+
+    [Fact]
+    public void Base_stat_rehash_reports_a_stale_declared_hash_rather_than_leaving_it_red_forever()
+    {
+        // The shape that was blocking `--verify` on the committed tree, measured 2026-10-02: the file was
+        // written 2026-09-30 04:18, the LF-renderer fix landed 2026-10-01 22:05, and nothing re-stamped
+        // the hash afterwards. A finding the tool can detect but not re-stamp is permanent, so the tool
+        // that reports it must also be able to repair it.
+        var outputRoot = SeedStaleBaseStatsHash();
+        var (beforeOk, _) = DumpWriter.VerifyCommittedTypeBaseStats(outputRoot);
+        Assert.False(beforeOk);
+
+        var rehash = DumpWriter.RehashTypeBaseStats(outputRoot);
+        Assert.True(rehash.Ok, rehash.Reason);
+        Assert.True(rehash.Changed);
+        Assert.True(rehash.Written);
+        Assert.Equal(new string('0', 64), rehash.DeclaredHash);
+        Assert.NotEqual(rehash.DeclaredHash, rehash.RecomputedHash);
+
+        // The repair is only real if the reader that reported it now agrees.
+        var (afterOk, afterReason) = DumpWriter.VerifyCommittedTypeBaseStats(outputRoot);
+        Assert.True(afterOk, afterReason);
+    }
+
+    [Fact]
+    public void Base_stat_rehash_moves_the_hash_and_nothing_else()
+    {
+        // A rehash that rewrites a payload is not a rehash. Asserted field by field rather than by
+        // byte-counting, so the guarantee is readable: every other field, and the whole entry table,
+        // must come back identical - including capturedUtc, which answers "when did the game write
+        // this?" and must never be stamped "now" by a mode that captured nothing.
+        var outputRoot = SeedStaleBaseStatsHash();
+        var path = Path.Combine(outputRoot, DumpWriter.TypeBaseStatsFileName);
+        var before = JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+
+        var rehash = DumpWriter.RehashTypeBaseStats(outputRoot);
+        Assert.True(rehash.Ok, rehash.Reason);
+
+        var after = JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+        Assert.Equal(
+            before.Select(kv => kv.Key).OrderBy(k => k, StringComparer.Ordinal),
+            after.Select(kv => kv.Key).OrderBy(k => k, StringComparer.Ordinal));
+        foreach (var key in before.Select(kv => kv.Key))
+        {
+            if (key == "contentHash") continue;
+            Assert.True(before[key]!.ToJsonString() == after[key]!.ToJsonString(), $"'{key}' moved");
+        }
+        Assert.NotEqual(before["contentHash"]!.GetValue<string>(), after["contentHash"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void Base_stat_rehash_is_idempotent_because_re_running_must_be_byte_identical()
+    {
+        // The same rule the manifest rehash holds: an already-current file is a SUCCESS that writes
+        // nothing. Churning the file on every run would make it impossible to tell a re-stamp from an
+        // unrelated edit, and would break the byte-identical-rerun contract the corpus check relies on.
+        var outputRoot = SeedStaleBaseStatsHash();
+        Assert.True(DumpWriter.RehashTypeBaseStats(outputRoot).Changed);
+
+        var second = DumpWriter.RehashTypeBaseStats(outputRoot);
+        Assert.True(second.Ok, second.Reason);
+        Assert.False(second.Changed);
+        Assert.False(second.Written);
+        Assert.Null(second.ManifestBytes);
+
+        var bytesAfterSecond = File.ReadAllBytes(Path.Combine(outputRoot, DumpWriter.TypeBaseStatsFileName));
+        Assert.True(DumpWriter.RehashTypeBaseStats(outputRoot).Ok);
+        Assert.Equal(
+            bytesAfterSecond,
+            File.ReadAllBytes(Path.Combine(outputRoot, DumpWriter.TypeBaseStatsFileName)));
+    }
+
+    [Fact]
+    public void Base_stat_rehash_refuses_a_missing_capture_rather_than_reporting_success()
+    {
+        var outputRoot = Path.Combine(_dir, "_dump");
+        Directory.CreateDirectory(outputRoot);
+        var rehash = DumpWriter.RehashTypeBaseStats(outputRoot);
+        Assert.False(rehash.Ok);
+        Assert.Contains("TBSREHASH-NO-FILE", rehash.Reason);
+        Assert.Null(rehash.ManifestBytes);
+    }
+
+    [Fact]
+    public void Base_stat_rehash_refuses_a_malformed_entry_without_writing_anything()
+    {
+        // Fail-closed on shape, proven against a real file rather than asserted from the return value
+        // alone: a refusal that had already written would leave the tree worse than it found it.
+        var outputRoot = SeedStaleBaseStatsHash();
+        var path = Path.Combine(outputRoot, DumpWriter.TypeBaseStatsFileName);
+        var node = (JsonObject)JsonNode.Parse(File.ReadAllText(path))!;
+        ((JsonObject)node["entries"]![0]!).Remove("statsJson");
+        File.WriteAllText(path, node.ToJsonString());
+        var bytesBeforeRefusal = File.ReadAllBytes(path);
+
+        var rehash = DumpWriter.RehashTypeBaseStats(outputRoot);
+        Assert.False(rehash.Ok);
+        Assert.Contains("TBSREHASH-ENTRY-SHAPE", rehash.Reason);
+        Assert.Null(rehash.ManifestBytes);
+        Assert.Equal(bytesBeforeRefusal, File.ReadAllBytes(path));
+    }
 }
