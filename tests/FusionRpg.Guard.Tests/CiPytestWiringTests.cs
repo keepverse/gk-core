@@ -202,6 +202,35 @@ public class CiPytestWiringTests
             $"'{owned}' resolved but does not exist under the workspace root");
     }
 
+    /// <summary>A step written without a name is still a step, and Actions runs it in the JOB BASE -
+    /// not in whatever directory the previous step happened to declare. Keying the scan on `- name:`
+    /// merged such a step into its predecessor, so a pytest line in a nameless step was charged to the
+    /// previous step's working-directory. This file's self-checkout is a bare `- uses:`, so the shape is
+    /// real, not hypothetical.</summary>
+    [Fact]
+    public void A_nameless_step_is_not_charged_to_the_previous_step_directory()
+    {
+        const string planted =
+            "    defaults:\n" +
+            "      run:\n" +
+            "        working-directory: gk-core\n" +
+            "    steps:\n" +
+            "      - name: first\n" +
+            "        working-directory: gk-web\n" +
+            "        run: |\n" +
+            "          echo not a test\n" +
+            "      - uses: actions/checkout@v4\n" +
+            "        run: |\n" +
+            "          python -m pytest . -q\n";
+
+        var wired = WiredPytestRoots(planted, CiLayout.JobBaseDirectory(planted));
+
+        // The pytest line is in the NAMELESS step, so it runs in the job base - gk-web belongs to the
+        // first step, which runs no test at all.
+        Assert.Contains("gk-core", wired);
+        Assert.DoesNotContain("gk-web", wired);
+    }
+
     private sealed record PytestProject(string Id, string Root, string? OwningRepo);
 
     /// <summary>Every project id whose registry value is an object with <c>runner: "pytest"</c>, as
@@ -231,6 +260,18 @@ public class CiPytestWiringTests
     static HashSet<string> WiredPytestRoots(string ciText, string jobBase)
     {
         var lines = ciText.Replace("\r\n", "\n").Split('\n');
+        // The indent of the first step entry, used below so a step is recognised by its position in
+        // the list rather than by carrying a name.
+        var stepIndent = -1;
+        foreach (var candidate in lines)
+        {
+            var trimmedCandidate = candidate.TrimStart();
+            if (trimmedCandidate.StartsWith("- ", StringComparison.Ordinal))
+            {
+                stepIndent = candidate.Length - trimmedCandidate.Length;
+                break;
+            }
+        }
         var wired = new HashSet<string>(StringComparer.Ordinal);
         string? currentWorkingDirectory = null;
         var sawPytestLine = false;
@@ -244,7 +285,14 @@ public class CiPytestWiringTests
         foreach (var line in lines)
         {
             var trimmed = line.TrimStart();
-            if (trimmed.StartsWith("- name:", StringComparison.Ordinal))
+            var lineIndent = line.Length - trimmed.Length;
+            // A step starts at ANY `- ` at the step list's own indent - `- name:`, `- uses:`, or anything
+            // else - not only at a name. Keying on `- name:` alone let a step written as a bare `- uses:`
+            // keep the PREVIOUS step's working-directory, and this file's self-checkout is exactly that
+            // shape. Actions runs every step in its own directory, so the truthful attribution for a step
+            // that declares none is the job base - which is what the caller's null already means. The
+            // indent is compared so a nested `- ` inside a `with:` block is not read as a sibling step.
+            if (trimmed.StartsWith("- ", StringComparison.Ordinal) && lineIndent == stepIndent)
             {
                 Flush();
                 currentWorkingDirectory = null;
