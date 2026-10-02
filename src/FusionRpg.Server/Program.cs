@@ -2,6 +2,7 @@
 using FusionRpg.CheatCore;
 using FusionRpg.Contracts;
 using FusionRpg.Core;
+using FusionRpg.Core.Workspace;
 using FusionRpg.Core.Overlay;
 using FusionRpg.Data;
 using FusionRpg.Data.Abstractions;
@@ -1962,15 +1963,45 @@ app.MapGet("/api/almanac/seed/{side}/{typeId:int}", (string side, int typeId, Rp
 
 app.MapPost("/api/almanac/seed/rebuild", (RpgStore store) => Results.Ok(store.RebuildAlmanacSeed()));
 
+const string ALMANAC_ENRICHMENT_EXPORT_RELATIVE =
+    "data/seed/external-reference/almanac-enrichment/pvz-fusion-almanac-3.6.1.json";
+
+// The enrichment export is the CONTENT PACK's, and after the split that is two segments further out
+// than the walk this used to do: it asked each ancestor of the app directory for
+// `data/seed/external-reference/...`, which passes through `<workspace>/data` (absent) and keeps going
+// to the drive root. So the endpoint answered 404 "file not found" for an export that is committed at
+// `gk-data/packs/fusion/data/seed/external-reference/almanac-enrichment/pvz-fusion-almanac-3.6.1.json`
+// — and the E2E test that proves enrichment works could never have passed. The pack is asked FIRST
+// through KeepverseRoots; the walk stays as the fallback so a legacy single-tree layout is unchanged.
+static string? AlmanacEnrichmentExportPath()
+{
+    var relative = ALMANAC_ENRICHMENT_EXPORT_RELATIVE.Replace('/', Path.DirectorySeparatorChar);
+    try
+    {
+        var inPack = Path.Combine(KeepverseRoots.Content(), relative);
+        if (File.Exists(inPack)) return inPack;
+    }
+    catch (DirectoryNotFoundException)
+    {
+        // No pack beside this deployment: fall through to the walk rather than crash the endpoint.
+    }
+
+    var dir = new DirectoryInfo(AppContext.BaseDirectory);
+    while (dir is not null)
+    {
+        var candidate = Path.Combine(dir.FullName, relative);
+        if (File.Exists(candidate)) return candidate;
+        dir = dir.Parent;
+    }
+    return null;
+}
+
 app.MapPost("/api/almanac/seed/enrich", (RpgStore store) =>
 {
-    var dir = new DirectoryInfo(AppContext.BaseDirectory);
-    while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "data", "seed", "external-reference", "almanac-enrichment", "pvz-fusion-almanac-3.6.1.json")))
-        dir = dir.Parent;
-    if (dir is null)
-        return Results.Problem("enrichment export file not found (data/seed/external-reference/almanac-enrichment/pvz-fusion-almanac-3.6.1.json)", statusCode: 404);
+    var path = AlmanacEnrichmentExportPath();
+    if (path is null)
+        return Results.Problem("enrichment export file not found (" + ALMANAC_ENRICHMENT_EXPORT_RELATIVE + ")", statusCode: 404);
 
-    var path = Path.Combine(dir.FullName, "data", "seed", "external-reference", "almanac-enrichment", "pvz-fusion-almanac-3.6.1.json");
     List<AlmanacEnrichmentImportRow>? rows;
     try
     {
