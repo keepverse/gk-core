@@ -63,11 +63,26 @@ public sealed record DumpPayload(
 /// <summary>
 /// The committed envelope (`_manifest.json`). <see cref="CapturedUtc"/> is the store's own
 /// <c>max(RebuiltUtc)</c> — never wall-clock time (spec-corpus-dump.md §2).
+///
+/// <para><b>Two hashes, because they answer different questions.</b>
+/// <see cref="ContentHash"/> is over the payload files' raw bytes: it answers "are the bytes on disk
+/// the bytes I wrote", and any drift in ANY field — including a timestamp — must move it, or
+/// <c>--verify</c> would wave through a re-captured tree. <see cref="DataHash"/> is the same four files
+/// with the volatile stamp fields normalised to a fixed sentinel: it answers "did the GAME DATA
+/// change", which is the question a generator's staleness key asks.</para>
+///
+/// <para>They had to be split because the payloads carry 986 stamp fields (677 plant + 227 zombie
+/// rebuiltUtc, 82 spawn-baseline capturedUtc), so a single hash made every derived record stale every
+/// time the dump was re-captured — even with no data change. Measured: changing only the timestamps
+/// moved the old hash while a one-field data change was indistinguishable from it. spec-anchor-emit.md
+/// already requires staleness to be "compared by recorded value, not by timestamp", and this is the
+/// field that finally lets an implementation honour that.</para>
 /// </summary>
 public sealed record DumpManifest(
     int DumpFormatVersion,
     string CapturedUtc,
     string ContentHash,
+    string DataHash,
     int PlantCount,
     int ZombieCount,
     int BaselineCount,
