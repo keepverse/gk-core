@@ -50,21 +50,40 @@ static class CiLayout
     /// under a job that declares no default it is the workspace root.</summary>
     public static string JobBaseDirectory(string ciText)
     {
-        // Match the defaults block only. A `working-directory:` inside a step belongs to that step,
-        // and reading the last one in the file would silently rebase every step on one step's path.
-        var defaults = Regex.Match(ciText, @"(?m)^(\s*)defaults:\s*$");
-        if (!defaults.Success) return ".";
-        var indent = defaults.Groups[1].Value.Length;
-        foreach (var line in ciText[(defaults.Index + defaults.Length)..].Split('\n'))
+        // EVERY job's default is collected, not just the first. `defaults.run.working-directory` is
+        // per-job, so one file-global base is only correct while the file declares a single job - and an
+        // audit demonstrated the false green that follows otherwise: with job A defaulting to gk-core
+        // and job B to gk-web, reading the first base and applying it to the whole file counts a pytest
+        // step that runs in gk-web as wired at gk-core. Refusing is the conservative direction; silently
+        // taking the first is the false-green one.
+        var found = new List<string>();
+        var lines = ciText.Replace("\r\n", "\n").Split('\n');
+        for (var i = 0; i < lines.Length; i++)
         {
-            var trimmed = line.TrimStart();
-            var lineIndent = line.Length - trimmed.Length;
-            // A line indented no further than `defaults:` has left the block.
-            if (trimmed.Length > 0 && lineIndent <= indent) break;
-            if (trimmed.StartsWith("working-directory:", StringComparison.Ordinal))
-                return trimmed["working-directory:".Length..].Trim().Replace('\\', '/');
+            var open = Regex.Match(lines[i], @"^(\s*)defaults:\s*$");
+            if (!open.Success) continue;
+            var indent = open.Groups[1].Value.Length;
+            for (var j = i + 1; j < lines.Length; j++)
+            {
+                var trimmed = lines[j].TrimStart();
+                var lineIndent = lines[j].Length - trimmed.Length;
+                // A line indented no further than `defaults:` has left the block.
+                if (trimmed.Length > 0 && lineIndent <= indent) break;
+                if (!trimmed.StartsWith("working-directory:", StringComparison.Ordinal)) continue;
+                found.Add(trimmed["working-directory:".Length..].Trim().Replace('\\', '/'));
+                break;
+            }
         }
-        return ".";
+
+        if (found.Count == 0) return ".";
+        if (found.Count > 1)
+            throw new InvalidOperationException(
+                $"ci.yml declares {found.Count} different defaults.run.working-directory values "
+                + $"({string.Join(", ", found)}). A step's effective directory depends on WHICH JOB it "
+                + "is in, so one file-global base would apply one job's directory to the others and could "
+                + "report a step as wired when it runs somewhere else. Resolve the base per job rather "
+                + "than accept one that is right for every job but one.");
+        return found[0];
     }
 
     /// <summary>The directory a step actually runs in: its own <c>working-directory</c> when it has
@@ -112,17 +131,37 @@ static class CiLayout
         return null;
     }
 
-    /// <summary>The same repository list <c>common.py</c>'s <c>owning_base</c> consults: the
-    /// repository under test first, then the siblings the split produced. Fixed on purpose - a
-    /// search upward until something matches would let an unrelated directory answer for a tree,
-    /// which is the failure mode this helper exists to remove.</summary>
+    /// <summary>The repositories consulted for ownership, as paths RELATIVE TO THE WORKSPACE, this
+    /// repository first.
+    ///
+    /// A deliberate superset, and NOT a mirror of <c>keepverse_roots.repo_bases</c>: an earlier version
+    /// of this comment claimed it was one, and an audit showed the claim false on the very tree the
+    /// split created. <c>repo_bases</c> yields the workspace root ITSELF (gk-workflow is checked out at
+    /// the workspace root in a full workspace) and the content pack (gk-data/packs/fusion); this list
+    /// named <c>gk-workflow/</c> and <c>gk-data</c> as subdirectories, which is how they appear on a
+    /// runner and which matches NEITHER form locally. So both spellings are probed, plus the two roots
+    /// repo_bases has and this list originally lacked. A path no repository carries still returns null,
+    /// so a moved tree cannot make a gate quietly pass.
+    ///
+    /// Order is the contract: this repository first, so a repository's own path is always its own.
+    /// </summary>
     static IEnumerable<string> Repositories()
     {
         var workspace = KeepverseRoots.Workspace();
         var core = RelativeTo(workspace, KeepverseRoots.Core());
         if (core != ".") yield return core;
-        foreach (var sibling in new[] { "gk-forge", "gk-web", "gk-workflow", "gk-fusion", "gk-content", "gk-data" })
+        foreach (var sibling in new[] { "gk-forge", "gk-web", "gk-fusion", "gk-content", "gk-data" })
             yield return sibling;
+        // gk-workflow is checked out AT THE WORKSPACE ROOT in a full workspace, so `.` covers it. The
+        // `gk-workflow/` spelling only appears on a runner, and nothing needs it: cross-repository
+        // ownership goes through the DECLARED `repo` field, not through this probe, and every wrapper's
+        // own WORKING_DIRECTORY resolves to gk-core or gk-forge in both layouts. It was in an earlier
+        // draft of this list and a mutation control proved no test can detect its removal, so it is gone
+        // rather than left as a branch nothing exercises.
+        yield return ".";
+        // The content pack, which is a directory INSIDE gk-data rather than gk-data itself, so the
+        // `gk-data` entry above cannot resolve a `data/...` path.
+        yield return RelativeTo(workspace, KeepverseRoots.Content());
     }
 
     static string RelativeTo(string root, string path)

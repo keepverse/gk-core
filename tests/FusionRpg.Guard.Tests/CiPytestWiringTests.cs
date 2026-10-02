@@ -133,6 +133,75 @@ public class CiPytestWiringTests
             + string.Join(", ", bad));
     }
 
+    /// <summary>`defaults.run.working-directory` is PER JOB. One file-global base applied to a
+    /// multi-job workflow reports a step as wired at a directory it does not run in — an audit built
+    /// exactly that two-job file and the guard passed a step that only ever ran in gk-web — so the
+    /// reader refuses the ambiguity instead of taking the first job's base.
+    ///
+    /// The single-job case is asserted in the same test, so this cannot be satisfied by refusing every
+    /// workflow: a refusal that also rejected a one-job file would hide the real ci.yml behind a
+    /// different error.</summary>
+    [Fact]
+    public void A_workflow_whose_jobs_declare_different_bases_is_refused_rather_than_guessed()
+    {
+        const string twoJobs =
+            "jobs:\n" +
+            "  a:\n" +
+            "    defaults:\n" +
+            "      run:\n" +
+            "        working-directory: gk-core\n" +
+            "    steps:\n" +
+            "      - name: x\n" +
+            "        run: |\n" +
+            "          python -m pytest tests/tools -q\n" +
+            "  b:\n" +
+            "    defaults:\n" +
+            "      run:\n" +
+            "        working-directory: gk-web\n" +
+            "    steps:\n" +
+            "      - name: y\n" +
+            "        run: |\n" +
+            "          python -m pytest . -q\n";
+
+        var ex = Assert.Throws<InvalidOperationException>(() => CiLayout.JobBaseDirectory(twoJobs));
+        Assert.Contains("2 different defaults", ex.Message);
+
+        const string oneJob =
+            "jobs:\n  a:\n    defaults:\n      run:\n        working-directory: gk-core\n"
+            + "    steps:\n      - name: x\n        run: |\n          echo hi\n";
+        Assert.Equal("gk-core", CiLayout.JobBaseDirectory(oneJob));
+    }
+
+    /// <summary>Falsifier for the ownership list: gk-workflow is checked out AT THE WORKSPACE ROOT in a
+    /// full workspace, not into a <c>gk-workflow/</c> subdirectory, so a list that names only the
+    /// subdirectory resolves nothing and reports a real project's directory as unowned. This is the
+    /// tree the split created, and the audit showed the two resolvers disagreeing on exactly it.</summary>
+    [Fact]
+    public void A_gk_workflow_path_resolves_although_that_repository_IS_the_workspace_root()
+    {
+        var owned = CiLayout.OwningWorkspaceRelative(".claude/cmdc-agents/scripts");
+
+        Assert.NotNull(owned);
+        Assert.True(Directory.Exists(Path.Combine(KeepverseRoots.Workspace(), owned!)),
+            $"'{owned}' resolved but does not exist under the workspace root");
+    }
+
+    /// <summary>Falsifier for the content-pack entry. The pack is a directory INSIDE gk-data
+    /// (gk-data/packs/fusion), so the plain <c>gk-data</c> entry cannot resolve a <c>data/...</c> path,
+    /// and without the pack entry every content path resolves to nothing. Pinned so that entry cannot be
+    /// deleted silently.</summary>
+    [Fact]
+    public void A_content_path_resolves_against_the_pack_not_against_gk_data_itself()
+    {
+        var owned = CiLayout.OwningWorkspaceRelative("data/seed/items");
+
+        Assert.NotNull(owned);
+        Assert.True(owned!.StartsWith("gk-data/packs/", StringComparison.Ordinal),
+            $"a data/ path must resolve against the pack, got '{owned}'");
+        Assert.True(Directory.Exists(Path.Combine(KeepverseRoots.Workspace(), owned)),
+            $"'{owned}' resolved but does not exist under the workspace root");
+    }
+
     private sealed record PytestProject(string Id, string Root, string? OwningRepo);
 
     /// <summary>Every project id whose registry value is an object with <c>runner: "pytest"</c>, as

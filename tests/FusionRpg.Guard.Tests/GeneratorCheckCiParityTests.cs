@@ -67,9 +67,7 @@ public class GeneratorCheckCiParityTests
             // compare only the command UP TO AND INCLUDING `--db` for any wrapper that has one.
             var dbIndex = command.IndexOf(" --db", StringComparison.Ordinal);
             var matchCommand = dbIndex >= 0 ? command[..(dbIndex + " --db".Length)] : command;
-            var matched = ciSteps.Any(s =>
-                s.Body.Contains(matchCommand, StringComparison.Ordinal)
-                && CiLayout.Normalize(CiLayout.StepWorkingDirectory(s.WorkingDirectory, jobBase)) == expected);
+            var matched = ciSteps.Any(s => IsParityStep(s, matchCommand, expected, jobBase));
             if (!matched)
                 missing.Add($"{name}: no ci.yml step at working-directory '{expected}' runs '{matchCommand}'");
         }
@@ -99,11 +97,21 @@ public class GeneratorCheckCiParityTests
         var stepRunningIt = ParseCiSteps(planted)
             .Single(s => s.Body.Contains(wrapperCommand, StringComparison.Ordinal));
 
-        // The command IS present in the file, so the only thing that can reject this step is the
-        // directory: gk-web is not the repository that owns `.`, which is gk-core.
-        Assert.Equal("gk-core", expected);
-        Assert.Equal("gk-web", CiLayout.Normalize(CiLayout.StepWorkingDirectory(stepRunningIt.WorkingDirectory, jobBase)));
-        Assert.NotEqual(expected, CiLayout.Normalize(CiLayout.StepWorkingDirectory(stepRunningIt.WorkingDirectory, jobBase)));
+        // Both directions go through the PRODUCTION predicate. The planted step carries the right
+        // command in gk-web, which is not the repository that owns `.`, so it is not parity; the same
+        // step body placed in the owning directory IS parity. Delete the directory clause from
+        // IsParityStep and the first assertion fails - the mutation this test exists to catch. The
+        // layout-specific spelling is no longer asserted here on purpose: pinning `gk-core` made the
+        // test go red in a legacy single-repository checkout, where the directory it names is `.`.
+        Assert.NotNull(expected);
+        Assert.False(IsParityStep(stepRunningIt, wrapperCommand, expected!, jobBase),
+            "the command is present but in the wrong repository's directory, so this is not parity");
+        Assert.True(IsParityStep(new CiStep(expected, stepRunningIt.Body), wrapperCommand, expected!, jobBase),
+            "the same command in the owning directory IS parity");
+        // And the command is still required: a step in the RIGHT directory running something else is
+        // not parity either, or the directory clause would be the only thing under test.
+        Assert.False(IsParityStep(new CiStep(expected, "run: |\n  python -m pytest . -q\n"),
+            wrapperCommand, expected!, jobBase));
     }
 
     /// <summary>Guard tests never invoke a generator for real here (python-test-lane Testing note:
@@ -163,6 +171,17 @@ public class GeneratorCheckCiParityTests
     /// containing a space or a quote is rendered the way a human would retype it — and the same
     /// rendering `checks/common.py` produces, so a wrapper and this test cannot disagree about the
     /// spelling of their own command.</summary>
+    /// <summary>THE parity rule: this step runs the command LITERALLY, in the wrapper's own directory.
+    ///
+    /// Named rather than inlined so the falsifier below exercises this and not a copy of it. An audit
+    /// caught that the first version of that falsifier re-implemented the rule inside the test body, so
+    /// deleting the directory clause from the production lambda left the falsifier green - a test named
+    /// "a step in a different directory is not parity" that could not fail for exactly that mutation.
+    /// Both directions of the falsifier now go through this one method.</summary>
+    private static bool IsParityStep(CiStep step, string matchCommand, string expected, string jobBase)
+        => step.Body.Contains(matchCommand, StringComparison.Ordinal)
+           && CiLayout.Normalize(CiLayout.StepWorkingDirectory(step.WorkingDirectory, jobBase)) == expected;
+
     private static (string? Command, string WorkingDirectory) ReadSpec(string text)
     {
         var check = Regex.Match(text, @"(?m)^CHECK\s*=\s*\((.*?)\)\s*$", RegexOptions.Singleline);
