@@ -471,13 +471,47 @@ public class MaterialCorpusTests
 
         // `materials.json` also carries the 3599 `trophy.*` display rows, so counting every entry measures
         // the FILE rather than the materials corpus this test is about. Measured 2026-10-01: the file holds
-        // 3633 entries of which 3599 are `trophy.*` and 34 are materials - 14 shard (10 issuable plus the
-        // 4 legacy rows below), 8 substrate, 6 essence, 3 catalyst, 3 assurance. A trophy row is a real
-        // item and is gated by its own tests; folding 3599 of them into a materials count is what produced
-        // `Expected: 31, Actual: 3633`, which reads as a population blow-out and is not one.
-        var runtimeIds = doc.RootElement.GetProperty("entries").EnumerateArray()
+        // 3633 entries of which 3599 are `trophy.*`, 3 are `assurance.*`, and 31 are the cost materials this
+        // test is about - 14 shard (10 issuable plus the 4 legacy rows below), 8 substrate, 6 essence,
+        // 3 catalyst. A trophy row is a real item and is gated by its own tests; folding 3599 of them into a
+        // materials count is what produced `Expected: 31, Actual: 3633`, which reads as a population blow-out
+        // and is not one.
+        //
+        // WHY THIS SELECTS BY DECLARED CLASS AND NOT BY PREFIX. It used to filter with a hand-typed
+        // `!id.StartsWith("trophy.")`, which is wrong in both directions: the three `assurance.*` rows were
+        // counted as cost materials - this test failed with `Expected: 31, Actual: 34` - and a renamed
+        // prefix would have silently stopped being counted instead. Every row declares its own
+        // `materialClass` and the enum is the closed vocabulary, so the selection is derived from that and
+        // the closure is asserted: an eighth class now fails BY NAME instead of quietly shifting a count.
+        var entries = doc.RootElement.GetProperty("entries").EnumerateArray().ToList();
+
+        // The enum documents which members mint a cost id, and it is those two and no others: Trophy's ids
+        // are a population injected by a host registry, Assurance's are a closed three-id set of their own.
+        // Naming the two exceptions is the derivation; a third would be a change to the enum's own
+        // contract, which is what the closure assertion below exists to catch.
+        static bool MintsCostId(MaterialClass c) => c is not (MaterialClass.Trophy or MaterialClass.Assurance);
+
+        // `default` is MaterialClass.Souls, which mints a cost id - so an unparseable class would read as
+        // one. That cannot happen here: every class is asserted to parse BEFORE this helper is used, and
+        // Assert throws on the first miss.
+        static MaterialClass ParseClass(string text) =>
+            Enum.TryParse<MaterialClass>(text, ignoreCase: true, out var parsed) ? parsed : default;
+
+        var declaredClasses = entries
+            .Select(e => e.GetProperty("materialClass").GetString()!)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(c => c, StringComparer.Ordinal)
+            .ToList();
+        foreach (var declared in declaredClasses)
+            Assert.True(Enum.TryParse<MaterialClass>(declared, ignoreCase: true, out _),
+                $"materials.json declares materialClass '{declared}', which is not a MaterialClass member");
+
+        Assert.Equal(new[] { "assurance", "trophy" },
+            declaredClasses.Where(c => !MintsCostId(ParseClass(c))).ToList());
+
+        var runtimeIds = entries
+            .Where(e => MintsCostId(ParseClass(e.GetProperty("materialClass").GetString()!)))
             .Select(e => e.GetProperty("runtimeId").GetString()!)
-            .Where(id => !id.StartsWith("trophy.", StringComparison.Ordinal))
             .ToList();
 
         var legacyCount = runtimeIds.Count(MaterialCatalog.IsLegacyShardId);
@@ -497,5 +531,20 @@ public class MaterialCorpusTests
         // exactly as tasks/item-todo.md requires (their retirement is a separate, unauthorized move).
         Assert.All(runtimeIds.Where(MaterialCatalog.IsLegacyShardId),
             id => Assert.False(MaterialCatalog.IsIssuable(id), id));
+
+        // The three excluded `assurance.*` rows are the corpus half of a closed pair the CODE owns, so
+        // they are checked for IDENTITY rather than for size: the shipped set must be exactly the ids
+        // `materialgen` is documented to author. A fourth assurance row fails by id here, which is the
+        // point — a count would have been a number to bump.
+        var assuranceIds = entries
+            .Where(e => string.Equals(e.GetProperty("materialClass").GetString(), "assurance",
+                StringComparison.OrdinalIgnoreCase))
+            .Select(e => e.GetProperty("runtimeId").GetString()!)
+            .OrderBy(id => id, StringComparer.Ordinal)
+            .ToList();
+        Assert.Equal(
+            MaterialCatalog.AssuranceVerbs.Select(MaterialCatalog.AssuranceId)
+                .OrderBy(id => id, StringComparer.Ordinal).ToList(),
+            assuranceIds);
     }
 }
