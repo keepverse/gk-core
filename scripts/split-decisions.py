@@ -35,7 +35,14 @@ import pathlib
 import re
 import sys
 
-REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
+# The docs are the WORKSPACE ROOT's, not this repository's: the split moved docs/ up a level, so a
+# parent-of-this-file root resolved to a path that does not exist and made every run refuse with
+# "does not exist" instead of checking anything. Resolved through the same shim 23 sibling scripts
+# use - and `workspace_root(` is the token kvsplit's rules/scan.v1.json `resolvers` looks for.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "lib"))
+from keepverse_roots import workspace_root  # noqa: E402  (the path shim above must run first)
+
+REPO_ROOT = pathlib.Path(workspace_root())
 DECISIONS = REPO_ROOT / "docs" / "architecture" / "decisions.md"
 OUT_DIR = REPO_ROOT / "docs" / "architecture" / "decisions"
 
