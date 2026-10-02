@@ -66,7 +66,7 @@ public class ContractFixtureTests : IAsyncLifetime
     static async Task AssertFixtureMatches(string fileName, JsonNode live)
     {
         var json = live.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n";
-        var path = Path.Combine(RepoRoot(), FixtureDir, fileName);
+        var path = Path.Combine(FixtureRoot(), FixtureDir, fileName);
 
         if (Environment.GetEnvironmentVariable("FUSIONRPG_BLESS_CONTRACT_FIXTURES") == "1")
         {
@@ -78,8 +78,18 @@ public class ContractFixtureTests : IAsyncLifetime
         Assert.Equal(json.Replace("\r\n", "\n"), (await File.ReadAllTextAsync(path)).Replace("\r\n", "\n"));
     }
 
-    static string RepoRoot()
-    {
-        return KeepverseRoots.Core();
-    }
+    /// <summary>The repository that OWNS these fixtures, which is gk-web and not this one.
+    ///
+    /// The fixture paths are still spelled the way they were before the split
+    /// (`web/fusion-rpg-web/...`), which resolved correctly only while every repository lived in
+    /// one tree. Resolved against `KeepverseRoots.Core()` they name a directory this repository has
+    /// never had, so all six of these tests failed on `missing fixture ... run with
+    /// FUSIONRPG_BLESS_WORLD_FIXTURE=1` — a remedy that could not have worked, because the blessing
+    /// wrote to the same wrong place. `KeepverseRoots.Web()` is the owning repository and the paths
+    /// are already relative to it, so the declared spelling did not have to change.
+    ///
+    /// Named for what it returns rather than kept as `RepoRoot`, because a helper called RepoRoot
+    /// that returns gk-web is the kind of small lie that produced this failure in the first place.
+    /// </summary>
+    static string FixtureRoot() => KeepverseRoots.Web();
 }
