@@ -556,8 +556,19 @@ jobs:
       - name: IP advisory scan (ip-censor, IC-3)
         shell: pwsh
         run: |
+          # The directory is created here because it does not exist in a fresh checkout: gk-core has
+          # no `tasks/` tree at all, and nothing writes one. That made this step SILENT rather than red.
+          # Measured 2026-10-02: a pwsh redirect to a path whose parent is missing raises
+          # "Could not find a part of the path", does NOT run the command, and leaves $LASTEXITCODE at
+          # 0 - so the `throw` below never fired, no artifact was produced, and the upload step's own
+          # `if-no-files-found: warn` downgraded the missing file to a warning. CI went green having run
+          # no IP scan at all, which is the one outcome worse than a red step.
+          New-Item -ItemType Directory -Force -Path tasks/ip-censor | Out-Null
           python -m ipcensor.report scan --format json > tasks/ip-censor/ci-scan.json
           if ($LASTEXITCODE -ne 0) { throw "ip-censor's advisory scan crashed (a code defect, not an IP finding)" }
+          if (-not (Test-Path tasks/ip-censor/ci-scan.json)) { throw "ip-censor's advisory scan wrote no artifact - the redirect failed, and $LASTEXITCODE does not report that" }
+          $findings = (Get-Item tasks/ip-censor/ci-scan.json).Length
+          if ($findings -lt 1000) { throw "ip-censor's advisory scan artifact is $findings bytes; a real report is ~900KB, so this is a truncated write rather than a clean scan" }
 
       - name: Upload the advisory IP scan
         if: always()
