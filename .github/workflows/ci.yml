@@ -35,12 +35,71 @@ jobs:
     # This bound is generous for the real runtime (normally well under it) and only exists to fail
     # fast with SOME signal rather than run to the platform default.
     timeout-minutes: 60
+    defaults:
+      run:
+        # gk-core itself is checked out into gk-core/ (see the checkout step), so this restores the
+        # working directory every step had when the repository was checked out at the root. Steps
+        # that declare their own working-directory override it - and those are exactly the ones
+        # repointed at a sibling below.
+        working-directory: gk-core
     steps:
       - uses: actions/checkout@v4
         with:
+          # Checked out into gk-core/ rather than at the workspace root. The generator and seedsmith
+          # tools resolve their content by walking UP to a directory holding gk-core/ NEXT TO
+          # gk-data/ - CreatureSpeciesGen's own usage line says "found by walking". With this
+          # repository AT the root there is no gk-core/ directory, so that walk can never succeed
+          # no matter which siblings are checked out beside it. Every step keeps its original
+          # working directory because `defaults.run.working-directory` below is set to gk-core.
+          path: gk-core
           # Full history is required: a push may contain several commits, and the generated-seed
           # guard must inspect the complete event range rather than only the last commit.
           fetch-depth: 0
+
+      # The split moved the generators, seedsmith, the web and the fail-closed helpers out of this
+      # repository, but every gate stayed here - this file is deliberately the single complete gate
+      # list, and release.yml calls it as a required superset job. So it is given sight of its
+      # siblings rather than the gates being scattered into the repositories that own the code.
+      - name: Checkout gk-forge (generators, seedsmith, validators)
+        uses: actions/checkout@v4
+        with:
+          repository: keepverse/gk-forge
+          path: gk-forge
+
+      - name: Checkout gk-web (the web gates)
+        uses: actions/checkout@v4
+        with:
+          repository: keepverse/gk-web
+          path: gk-web
+
+      - name: Checkout gk-workflow (the fail-closed regression helpers)
+        uses: actions/checkout@v4
+        with:
+          repository: keepverse/gk-workflow
+          path: gk-workflow
+
+      # gk-data is PRIVATE and stays private. Every content gate below reads it, so an absent token
+      # is a named refusal that throws BEFORE any gate runs - the job fails closed rather than
+      # passing a subset of its declared coverage while reporting the whole list.
+      - name: Refuse without the private-content token
+        shell: pwsh
+        env:
+          TOKEN: ${{ secrets.KEEPVERSE_DATA_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:TOKEN)) {
+            throw ("gk-core CI needs secrets.KEEPVERSE_DATA_TOKEN to check out the private gk-data " +
+                   "pack. The content gates read gk-data/packs/fusion/data/** - the generated-seed " +
+                   "staleness guards, the item and creature validators, the corpus dump --verify and " +
+                   "every seedsmith audit - and they walk up to find it next to gk-core. This gate " +
+                   "fails closed rather than skipping them.")
+          }
+
+      - name: Checkout gk-data (private content pack)
+        uses: actions/checkout@v4
+        with:
+          repository: keepverse/gk-data
+          token: ${{ secrets.KEEPVERSE_DATA_TOKEN }}
+          path: gk-data
 
       - name: Resolve complete verification range
         id: verification-range
@@ -75,7 +134,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: web/fusion-rpg-web/package-lock.json
+          cache-dependency-path: gk-web/web/fusion-rpg-web/package-lock.json
 
       - name: Numeric-overflow guard (power-plan.md P0.6)
         shell: pwsh
@@ -105,8 +164,8 @@ jobs:
           # (gk-data/packs/fusion/data/generated/creatures/**) to the repo — --check regenerates every real classified
           # anchor and fails if any file on disk differs, catching a hand-edited generated file or a
           # tuning change nobody re-ran the generator for (spec-species-generator.md §7).
-          dotnet run --project tools/CreatureSpeciesGen -- --check
-          if ($LASTEXITCODE -ne 0) { throw "CreatureSpeciesGen --check found the generated tree stale — run 'dotnet run --project tools/CreatureSpeciesGen' and commit the result" }
+          dotnet run --project ../gk-forge/tools/CreatureSpeciesGen -- --check
+          if ($LASTEXITCODE -ne 0) { throw "CreatureSpeciesGen --check found the generated tree stale — run 'dotnet run --project ../gk-forge/tools/CreatureSpeciesGen' and commit the result" }
 
       - name: family-expand staleness guard (E43, spec-family-expand.md §3.1/§5 test 2)
         shell: pwsh
@@ -115,8 +174,8 @@ jobs:
           # same CreatureSpeciesGen --check pattern above — --check regenerates every atom row from the
           # 98 authored affix families + tier-bands.v1.json and fails if any generated file on disk
           # differs, or if a generated file's source family no longer exists.
-          dotnet run --project tools/FamilyExpandGen -- --check
-          if ($LASTEXITCODE -ne 0) { throw "FamilyExpandGen --check found the generated tree stale — run 'dotnet run --project tools/FamilyExpandGen' and commit the result" }
+          dotnet run --project ../gk-forge/tools/FamilyExpandGen -- --check
+          if ($LASTEXITCODE -ne 0) { throw "FamilyExpandGen --check found the generated tree stale — run 'dotnet run --project ../gk-forge/tools/FamilyExpandGen' and commit the result" }
 
       - name: species-build plan staleness guard (T1.8, spec-redistribution-plan.md §"Commands")
         shell: pwsh
@@ -126,8 +185,8 @@ jobs:
           # --check pattern above — --check replans the whole real corpus and fails if the committed
           # file differs, OR if the replanned corpus falls outside the shipped parity band (Phase 3's
           # own refusal, exit 1) — a near-miss never ships silently.
-          dotnet run --project tools/CreatureBuildPlanGen -- --check
-          if ($LASTEXITCODE -ne 0) { throw "CreatureBuildPlanGen --check found the plan stale or out of band — run 'dotnet run --project tools/CreatureBuildPlanGen' and commit the result" }
+          dotnet run --project ../gk-forge/tools/CreatureBuildPlanGen -- --check
+          if ($LASTEXITCODE -ne 0) { throw "CreatureBuildPlanGen --check found the plan stale or out of band — run 'dotnet run --project ../gk-forge/tools/CreatureBuildPlanGen' and commit the result" }
 
       - name: passive-tree catalog staleness guard (H9, spec-tree-binder.md §"Commands")
         shell: pwsh
@@ -138,8 +197,8 @@ jobs:
           # `seedsmith trees plan --check` (the PLAN's own byte-identity check, Python side, not yet
           # wired into this workflow either) — this is the CATALOG half, C# side, one step lower in
           # the pipeline (tree-plan -> tree-language -> tree-binder).
-          dotnet run --project tools/TreeBinder -- --check
-          if ($LASTEXITCODE -ne 0) { throw "TreeBinder --check found the generated catalog stale — run 'dotnet run --project tools/TreeBinder -- --seed data/seed/passive-tree --out data/generated/passive-tree' and commit the result" }
+          dotnet run --project ../gk-forge/tools/TreeBinder -- --check
+          if ($LASTEXITCODE -ne 0) { throw "TreeBinder --check found the generated catalog stale — run 'dotnet run --project ../gk-forge/tools/TreeBinder -- --seed data/seed/passive-tree --out data/generated/passive-tree' and commit the result" }
 
       - name: Balance guard (class-system-todo.md P5.3 — termination HARD, dominance-mechanism HARD, dominance-verdict SOFT)
         shell: pwsh
@@ -464,7 +523,7 @@ jobs:
           # Blocking:false by construction and only report. Budget checking stays out — no ceiling
           # data exists in the schema yet (rarity table has no budget column); A-G1 is what
           # introduces the first such data.
-          dotnet run --project tools/AtomImporter -c Release -- --check --validate --db "$env:RUNNER_TEMP/atom-validate-db"
+          dotnet run --project ../gk-forge/tools/AtomImporter -c Release -- --check --validate --db "$env:RUNNER_TEMP/atom-validate-db"
           if ($LASTEXITCODE -ne 0) { throw "content validation gate failed - see the lint / power drift lines above" }
 
       - name: Creature corpus dump is self-consistent (seed-to-concrete T1.2)
@@ -475,18 +534,18 @@ jobs:
           # here. This re-hashes the committed payload files on disk and checks them against
           # _manifest.json's declared hash and counts — it catches a hand-edit or a bad merge, not
           # drift against the live game (that is the owner-run `--check` against a real database).
-          dotnet run --project tools/CreatureCorpusDump -c Release -- --verify data/seed/creatures/_dump
+          dotnet run --project ../gk-forge/tools/CreatureCorpusDump -c Release -- --verify ../gk-data/packs/fusion/data/seed/creatures/_dump
           if ($LASTEXITCODE -ne 0) { throw "creature corpus dump under data/seed/creatures/_dump is not self-consistent with its own manifest — see output above" }
 
       - name: Validate item seed corpus
         shell: pwsh
         run: |
-          dotnet run --project tools/ItemSeedValidator -c Release
+          dotnet run --project ../gk-forge/tools/ItemSeedValidator -c Release
           if ($LASTEXITCODE -ne 0) { throw "item seed corpus failed validation" }
 
       - name: Install seedsmith from the lockfile (reproducible env)
         shell: pwsh
-        working-directory: tools/seedsmith
+        working-directory: gk-forge/tools/seedsmith
         run: |
           # G0.1 (spec-dependency-baseline.md): seedsmith declared ZERO dependencies until
           # 2026-09-01, so this job ran against whatever the runner happened to have. `jieba` was
@@ -502,7 +561,7 @@ jobs:
 
       - name: tools/tuning own tests (test-verification-boundary python-test-lane, R15)
         shell: pwsh
-        working-directory: tools/tuning
+        working-directory: gk-core/tools/tuning
         run: |
           # pytest is installed by the seedsmith lockfile step above; this step must stay after it.
           python -m pytest . -q -p no:cacheprovider --continue-on-collection-errors
@@ -516,7 +575,7 @@ jobs:
       # step's `working-directory` must be exactly the project's `root` for that guard to count it.
       - name: tools audit scripts' own tests (pipeline-audit-scripts)
         shell: pwsh
-        working-directory: .
+        working-directory: gk-core
         run: |
           # Stdlib-only tests; pytest itself comes from the seedsmith lockfile step above.
           python -m pytest tests/tools -q -p no:cacheprovider --continue-on-collection-errors
@@ -524,7 +583,7 @@ jobs:
 
       - name: Fail-closed merge/acceptance regression
         shell: pwsh
-        working-directory: .claude/cmdc-agents/scripts
+        working-directory: gk-workflow/.claude/cmdc-agents/scripts
         run: |
           python -m pytest test_fail_closed_pipeline.py -q -p no:cacheprovider
           if ($LASTEXITCODE -ne 0) { throw "fail-closed merge/acceptance regression failed" }
@@ -536,7 +595,7 @@ jobs:
       # neither blocks CI on a finding (owner ruling IC-3).
       - name: tools/ip-censor own tests (ip-censor wiring, T1)
         shell: pwsh
-        working-directory: tools/ip-censor
+        working-directory: gk-core/tools/ip-censor
         run: |
           python -m pip install -r requirements.lock
           if ($LASTEXITCODE -ne 0) { throw "ip-censor lockfile install failed" }
@@ -598,9 +657,9 @@ jobs:
           # measure-only, per spec-metrics.md §4's normal calibration discipline.
           python -m pytest tests -q --continue-on-collection-errors
           if ($LASTEXITCODE -ne 0) { throw "seedsmith's own test suite failed" }
-          python -m seedsmith check --adapter items --gate ../../data/seed/items
+          python -m seedsmith check --adapter items --gate ../../../gk-data/packs/fusion/data/seed/items
           if ($LASTEXITCODE -ne 0) { throw "item seed corpus has reachability gaps" }
-        working-directory: tools/seedsmith
+        working-directory: gk-forge/tools/seedsmith
 
       - name: Creature anchor contract audits clean (seed-to-concrete T1.7 / Checkpoint 1)
         shell: pwsh
@@ -610,7 +669,7 @@ jobs:
           # unconditionally rather than starting measure-only like a balance metric would.
           python -m seedsmith creatures contract --audit
           if ($LASTEXITCODE -ne 0) { throw "creature anchor contract has a numeric-smuggling finding — see output above" }
-        working-directory: tools/seedsmith
+        working-directory: gk-forge/tools/seedsmith
 
       - name: Structure anchor contract audits clean (base-defense structure-schema, module 23)
         shell: pwsh
@@ -620,7 +679,7 @@ jobs:
           # creature anchor contract step above does for its own schema.
           python -m seedsmith structures contract --audit
           if ($LASTEXITCODE -ne 0) { throw "structure anchor contract has a numeric-smuggling finding — see output above" }
-        working-directory: tools/seedsmith
+        working-directory: gk-forge/tools/seedsmith
 
       - name: Creature corpus-coverage metrics (seed-to-concrete T1.10)
         shell: pwsh
@@ -628,9 +687,9 @@ jobs:
           # --creature-dump only (no --corpus): isolates the two creature-dump metrics from the item
           # corpus's own EmptyPartition/Balance/Distribution families, which need a real --corpus
           # to mean anything and would otherwise report noise here.
-          python -m seedsmith report --gate --creature-dump ../../data/seed/creatures/_dump
+          python -m seedsmith report --gate --creature-dump ../../../gk-data/packs/fusion/data/seed/creatures/_dump
           if ($LASTEXITCODE -ne 0) { throw "creature corpus-coverage metrics found a gated finding — see output above" }
-        working-directory: tools/seedsmith
+        working-directory: gk-forge/tools/seedsmith
 
       - name: Creature roster metrics gate (seed-to-concrete T2.10/T2.12/Checkpoint 2)
         shell: pwsh
@@ -646,7 +705,7 @@ jobs:
           # its job, not a regression in this step itself.
           python -m seedsmith creatures metrics --gate
           if ($LASTEXITCODE -ne 0) { throw "creature roster metrics found a gated finding — see output above" }
-        working-directory: tools/seedsmith
+        working-directory: gk-forge/tools/seedsmith
 
       - name: Fusion-recipe seed staleness guard (creature-seed module 17/T8.3, spec-fusion-recipe-generator.md §3)
         shell: pwsh
@@ -664,8 +723,8 @@ jobs:
           # live model call to stay green — a real drift always has a one-line fix: re-run
           # `python -m seedsmith.adapters.creatures.fusion.reconcile` and commit the result.
           python -m seedsmith.adapters.creatures.fusion.reconcile --check
-          if ($LASTEXITCODE -ne 0) { throw "fusion-recipe seed is stale — run 'python -m seedsmith.adapters.creatures.fusion.reconcile' (from tools/seedsmith) and commit the result" }
-        working-directory: tools/seedsmith
+          if ($LASTEXITCODE -ne 0) { throw "fusion-recipe seed is stale — run 'python -m seedsmith.adapters.creatures.fusion.reconcile' (from gk-forge/tools/seedsmith) and commit the result" }
+        working-directory: gk-forge/tools/seedsmith
 
       - name: Trophy id registry staleness guard (species-gear-chain T34, spec-species-materials.md § Design 4)
         shell: pwsh
@@ -678,8 +737,8 @@ jobs:
           # rows the current roster/tuning would mint — never on its own initiative removes a row,
           # because issued trophy ids are append-only (player inventory).
           python -m seedsmith.adapters.items.trophyplan.run --check
-          if ($LASTEXITCODE -ne 0) { throw "trophy registry is stale — run 'python -m seedsmith.adapters.items.trophyplan.run --write' (from tools/seedsmith) and commit the result" }
-        working-directory: tools/seedsmith
+          if ($LASTEXITCODE -ne 0) { throw "trophy registry is stale — run 'python -m seedsmith.adapters.items.trophyplan.run --write' (from gk-forge/tools/seedsmith) and commit the result" }
+        working-directory: gk-forge/tools/seedsmith
 
       - name: Creature preflight, CI mode (seed-to-concrete T1.8 — checks 1-4/7-9, no local model)
         shell: pwsh
@@ -690,10 +749,10 @@ jobs:
           # stay green; it never authorizes a run.
           python -m seedsmith creatures preflight --skip-model
           if ($LASTEXITCODE -ne 0) { throw "creature preflight (checks 1-4, 7-9) failed — see output above" }
-        working-directory: tools/seedsmith
+        working-directory: gk-forge/tools/seedsmith
 
       - name: Web unit tests
-        working-directory: web/fusion-rpg-web
+        working-directory: gk-web/web/fusion-rpg-web
         shell: pwsh
         run: |
           if (-not (Test-Path package-lock.json)) { throw "web package-lock.json is required; npm ci is the only supported install" }
@@ -706,21 +765,21 @@ jobs:
           }
 
       - name: Web build
-        working-directory: web/fusion-rpg-web
+        working-directory: gk-web/web/fusion-rpg-web
         shell: pwsh
         run: |
           npm run build
           if ($LASTEXITCODE -ne 0) { throw "npm run build failed" }
 
       - name: Web bundle budget (GG-38 — Checkpoint G §19 check 13)
-        working-directory: web/fusion-rpg-web
+        working-directory: gk-web/web/fusion-rpg-web
         shell: pwsh
         run: |
           npm run check:bundle
           if ($LASTEXITCODE -ne 0) { throw "entry chunk is over budget, or Phaser/recharts leaked into it — see output above" }
 
       - name: Web i18n catalog is current (Checkpoint G — lingui extract clean)
-        working-directory: web/fusion-rpg-web
+        working-directory: gk-web/web/fusion-rpg-web
         shell: pwsh
         run: |
           npm run extract
@@ -728,11 +787,11 @@ jobs:
           $diff = git status --porcelain -- src/i18n/locales
           if ($diff) {
             Write-Host $diff
-            throw "extracted i18n catalog is out of date — run 'npm run extract' in web/fusion-rpg-web and commit the result"
+            throw "extracted i18n catalog is out of date — run 'npm run extract' in gk-web/web/fusion-rpg-web and commit the result"
           }
 
       - name: Web e2e tests (Checkpoint G §19 checks 3/7/11 — reachability, axe, viewport)
-        working-directory: web/fusion-rpg-web
+        working-directory: gk-web/web/fusion-rpg-web
         shell: pwsh
         run: |
           npx playwright install --with-deps chromium
