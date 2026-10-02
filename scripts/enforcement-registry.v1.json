@@ -1,744 +1,744 @@
 {
- "schemaVersion": 1,
- "guards": {
-  "actor-hub": {
-   "script": "scripts/guard-actor-hub.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "battle-responsibility": {
-   "script": "scripts/guard-battle-responsibility.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "bench-compile": {
-   "script": "scripts/guard-bench-compile.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "citation-stability": {
-   "script": "scripts/guard-citation-stability.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "class-system": {
-   "script": "scripts/guard-class-system.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "clock-seam": {
-   "script": "scripts/guard-clock-seam.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "dal": {
-   "script": "scripts/guard-dal.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "debug-scope": {
-   "script": "scripts/guard-debug-scope.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "decision-citations": {
-   "script": "scripts/check-decision-citations.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "doc-citations": {
-   "script": "scripts/audit-doc-citations.py",
-   "args": {
-    "ci": [
-     "--strict"
-    ],
-    "local": [
-     "--strict"
-    ]
-   },
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "funnel-delta": {
-   "script": "scripts/guard-funnel-delta.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "game-profile": {
-   "script": "scripts/guard-game-profile.py",
-   "tier": "local",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": "needs a real game install (-GameDir / -ExpectedProfile); the hard boundary keeps game binaries off CI runners, so it can only run on the owner's machine"
-  },
-  "generated-seed": {
-   "script": "scripts/guard-generated-seed.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null,
-   "args": {
-    "ci": [
-     "--require-explicit-range",
-     "--range",
-     "{ciRange}"
-    ]
-   }
-  },
-  "injector-compile": {
-   "script": "scripts/guard-injector-compile.py",
-   "tier": "local",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": "needs the game's MelonLoader interop assemblies (FUSIONRPG_ML_GAMEDIR); FusionRpg.Injector is not built in CI for the same reason CiWiringGuardTests exempts Injector.Tests"
-  },
-  "magic-numbers": {
-   "script": "scripts/audit-magic-numbers.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "narrative": {
-   "script": "scripts/guard-narrative.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null,
-   "args": {
-    "ci": [
-     "--run-trait-filter"
-    ]
-   }
-  },
-  "open-identity": {
-   "script": "scripts/guard-open-identity.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "overflow": {
-   "script": "scripts/audit-overflow.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "population-pin": {
-   "script": "scripts/guard-population-pin.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "power": {
-   "script": "scripts/guard-power.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "repo-boundary": {
-   "script": "scripts/guard-repo-boundary.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "secondary-no-unity": {
-   "script": "scripts/guard-secondary-no-unity.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "session-boundary": {
-   "script": "scripts/session-boundary-check.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null,
-   "ciEntry": "own-step",
-   "ciEntryReason": "CI/release invoke the session-boundary check as an explicit reviewed-diff step; the local runner still owns the direct/worktree check."
-  },
-  "sim-fabrication": {
-   "script": "scripts/guard-sim-fabrication.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "single-writer": {
-   "script": "scripts/guard-single-writer.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "stat-pairs": {
-   "script": "scripts/guard-stat-pairs.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "test-content-root": {
-   "script": "scripts/guard-test-content-root.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "test-substrate": {
-   "script": "scripts/guard-test-substrate.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "tuning-immutability": {
-   "script": "scripts/guard-tuning-immutability.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  },
-  "verification-boundaries": {
-   "script": "scripts/guard-verification-boundaries.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null,
-   "ciEntry": "own-step",
-   "ciEntryReason": "ci.yml isolates this in its own 'Verification-boundary integrity' step deliberately: it gates the registry verify-change reads, and a shared pwsh block could make its exit unreachable behind an earlier guard's exit."
-  },
-  "vocabulary-mirror": {
-   "script": "scripts/guard-vocabulary-mirror.py",
-   "tier": "ci",
-   "status": "gating",
-   "backlogModule": null,
-   "localReason": null
-  }
- },
- "verificationExemptions": [
-  {
-   "id": "local-operational-scripts",
-   "paths": [
-    "scripts/coverage.*",
-    "scripts/deploy-play.py",
-    "scripts/dump_game_profile.py",
-    "scripts/dump_melon_p0.py",
-    "scripts/fetch_bepinex_refs.py",
-    "scripts/gate_class_system_phase9.py",
-    "scripts/mutate.*",
-    "scripts/prepare_injector_refs.py",
-    "scripts/test_substrate_leak_alarm.py",
-    "scripts/wait_for_deploy.py"
-   ],
-   "reason": "Owner-run operational tooling has no deterministic repository test target; its callers and release/CI steps own execution evidence. These exact paths are explicit exemptions, not a broadened scripts boundary."
-  },
-  {
-   "id": "live-diagnostic-scripts",
-   "paths": [
-    "scripts/lawn_combat_observer.py",
-    "scripts/probe_sim_shield.py",
-    "scripts/prove-slot-connection.py",
-    "scripts/prove_aptitude.py",
-    "scripts/prove_live_probe.py"
-   ],
-   "reason": "Live/game-install diagnostics require a legal local game and are intentionally outside CI; the exact file list keeps the exemption visible and prevents a future scripts/** bypass."
-  },
-  {
-   "id": "shared-script-libraries",
-   "paths": [
-    "scripts/lib/DebugStatusApply.*",
-    "scripts/lib/LiveLawnSetup.*",
-    "scripts/lib/debug_status_apply.py",
-    "scripts/lib/keepverse_roots.py",
-    "scripts/lib/live_lawn_setup.py"
-   ],
-   "reason": "Shared operational helper libraries are exercised by their owning live/deploy callers; they are not standalone test projects and are explicitly named here rather than hidden by a broad root."
-  },
-  {
-   "id": "github-templates",
-   "paths": [
-    ".github/CODEOWNERS",
-    ".github/ISSUE_TEMPLATE/bug_report.yml",
-    ".github/ISSUE_TEMPLATE/config.yml",
-    ".github/ISSUE_TEMPLATE/feature_request.yml",
-    ".github/PULL_REQUEST_TEMPLATE.md"
-   ],
-   "reason": "Repository metadata and issue templates have no executable test target; their syntax is reviewed as configuration, and the exemption is exact rather than a .github/** bypass."
-  },
-  {
-   "id": "unmapped-tool-sentinel-project",
-   "paths": [
-    "tools/HybridViability/HybridViability.csproj"
-   ],
-   "reason": "CORRECTED 2026-10-01. This row said: 'The project file is explicitly bounded, while Program.cs intentionally remains unmapped as the existing refusal sentinel; mapping that source requires the separately owned verification-boundaries handoff.' Both halves were no longer true. The owner row 'hybrid-viability-tool' now covers 'tools/HybridViability/**', so Program.cs IS mapped, and the planner returns a plan for it rather than refusing - which is why the guard test that asserted this refusal had to be corrected rather than pointed elsewhere. There is no longer an unmapped-sentinel source: measured over 1455 real .cs files under src/ and tools/, every one is either bounded by an owner row or covered by a verificationExemption, and every exemption states a reason. The project file itself is now covered by the same owner row, so this row matches a path that is already bounded; it is kept rather than deleted because removing a row is a topology change and its harmless redundancy is not one. The closure property is what guards the hazard this row was written for, and FusionRpg.Guard.Tests.No_real_source_file_is_silently_unhandled_by_the_registry asserts it by name."
-  },
-  {
-   "id": "local-tool-trees",
-   "paths": [
-    "tools/ActionTimingProbe/**",
-    "tools/AffixMetricsGate/**",
-    "tools/CommitmentProbe/**",
-    "tools/CreatureCorpusEmit/**",
-    "tools/CreatureQualityReport/**",
-    "tools/CreatureRecipeDistributionIndex/**",
-    "tools/CreatureRecipeReconcileInput/**",
-    "tools/DominanceBaseline/**",
-    "tools/ForecastProbe/**",
-    "tools/FusionRpg.PackSmoke/**",
-    "tools/GameMetaDump/**",
-    "tools/ProveAptitude/**",
-    "tools/ReactionLaneProbe/**",
-    "tools/RealDataAggregate/**",
-    "tools/ResidualFitLoop/**",
-    "tools/SquadHarness/**",
-    "tools/TurnOrderProbe/**"
-   ],
-   "reason": "These bounded owner-run probe, report, and harness tools have no independent path-owned test project; their callers and release/CI checks own the evidence. Each tool root is named explicitly rather than exempting tools/**."
-  },
-  {
-   "id": "local-python-tool-trees",
-   "paths": [
-    "tools/debug-mcp/**",
-    "tools/live_test/**"
-   ],
-   "reason": "These bounded Python operational tools are intentionally owner/live-run surfaces; the repository has no CI pytest project for either tree. The exact tool roots are explicit exemptions, not a Python catch-all."
-  },
-  {
-   "id": "tool-assets",
-   "paths": [
-    "tools/sprite-debug/assets/**"
-   ],
-   "reason": "The sprite-debug asset manifest is authored tooling data with no executable verification target; it is explicitly bounded to the asset directory."
-  },
-  {
-   "id": "standalone-python-audit",
-   "paths": [
-    "scripts/sweep-power-coefficients.py"
-   ],
-   "reason": "This standalone owner-run audit has no pytest project; it is explicitly exempt and must not be used to broaden the Python boundary."
-  },
-  {
-   "id": "retired-verification-boundaries-lib",
-   "paths": [
-    "scripts/lib/VerificationBoundaries.ps1"
-   ],
-   "reason": "Retired. The live implementation is scripts/lib/verification_boundaries.py, which the guard row guard-verification-boundary-tests already covers through the glob scripts/lib/verification_boundaries.*. This path is named EXACTLY rather than by that glob because the two stems differ by an underscore (VerificationBoundaries vs verification_boundaries) and pattern_match confines a wildcard to the final segment, so no single legal glob covers both. Measured 2026-09-28: the owner-row shape naming this path is refused by the guard's stale-exact-path rule, and the broader glob scripts/lib/*.ps1 would resolve but would also claim KeepverseRoots.ps1 and LiveLawnSetup.ps1, giving two unrelated tools the wrong owner. The path was ALREADY unmapped before this change -- --deleted-paths refused with BOUNDARY-MISSING -- so this entry closes a pre-existing gap rather than repairing a regression."
-  },
-  {
-   "id": "f13-schema-upgrade-proof",
-   "paths": [
-    "tasks/reports/f13_schema_upgrade_proof.py"
-   ],
-   "reason": "A one-off F13 regression proof, previously named by NO exemption row at all -- a mapping gap, not a judgement about the tool. The row exists so the retired PowerShell path and its Python replacement resolve to one owner, and so the next reader can see the gap was closed rather than inherited."
-  },
-  {
-   "id": "smoke-player-pack",
-   "paths": [
-    "scripts/smoke_player_pack.py"
-   ],
-   "reason": "A player-pack smoke test, previously named by NO exemption row at all -- a mapping gap, not a judgement about the tool. One of four tracked .ps1 files the registry did not name, measured 2026-09-29. The row exists so the retired PowerShell path and its Python replacement resolve to one owner."
-  },
-  {
-   "id": "regen-class-system-baselines",
-   "paths": [
-    "scripts/regen_class_system_baselines.py"
-   ],
-   "reason": "The class-system baseline regenerator, previously named by NO exemption row at all -- a mapping gap, not a judgement about the tool. One of four tracked .ps1 files the registry did not name, measured 2026-09-29. The row exists so the retired PowerShell path and its Python replacement resolve to one owner."
-  }
- ],
- "invariants": [
-  {
-   "id": "dg-1-two-async-systems",
-   "source": "docs/DESIGN-GATE.md §2.1",
-   "guards": [],
-   "unguardableReason": "no scan can tell that the RPG works from past events rather than reading PvZ's current state"
-  },
-  {
-   "id": "dg-2-record-then-drain",
-   "source": "docs/DESIGN-GATE.md §2.2",
-   "guards": [],
-   "unguardableReason": "the pipeline's record-then-drain shape is a design property; the guards cover the writes and the deltas, not the timing"
-  },
-  {
-   "id": "dg-3-deltas-not-absolutes",
-   "source": "docs/DESIGN-GATE.md §2.3",
-   "guards": [
-    "funnel-delta"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "dg-4-single-writer",
-   "source": "docs/DESIGN-GATE.md §2.4",
-   "guards": [
-    "single-writer"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "dg-5-funnel-single-path",
-   "source": "docs/DESIGN-GATE.md §2.5",
-   "guards": [
-    "funnel-delta"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "dg-6-sql-only-in-data",
-   "source": "docs/DESIGN-GATE.md §2.6",
-   "guards": [
-    "dal"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "dg-7-game-is-simulation",
-   "source": "docs/DESIGN-GATE.md §2.7",
-   "guards": [],
-   "unguardableReason": "a product-shape claim; no static scan decides it, and the transport half is already covered by secondary-no-unity"
-  },
-  {
-   "id": "dg-8-foundation-sealed",
-   "source": "docs/DESIGN-GATE.md §2.8",
-   "guards": [],
-   "unguardableReason": "Foundation is sealed at a contract version; no repo-wide scan can tell a forbidden edit from a legal extension"
-  },
-  {
-   "id": "dg-9-standalone-first",
-   "source": "docs/DESIGN-GATE.md §2.9",
-   "guards": [
-    "repo-boundary"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "claude-plan-paths",
-   "source": "AGENTS.md/CLAUDE.md (frozen planning paths)",
-   "guards": [
-    "repo-boundary"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "dg-10-perf-main-thread",
-   "source": "docs/DESIGN-GATE.md §2.10",
-   "guards": [],
-   "unguardableReason": "needs a live probe with real frame data; no static scan decides a main-thread cost"
-  },
-  {
-   "id": "dg-11-no-hard-ceilings",
-   "source": "docs/DESIGN-GATE.md §2.11",
-   "guards": [
-    "power"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "dg-12-balance-surface-is-data",
-   "source": "docs/DESIGN-GATE.md §2.12",
-   "guards": [
-    "magic-numbers"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "dg-13-magnitudes-fit-range",
-   "source": "docs/DESIGN-GATE.md §2.13",
-   "guards": [
-    "overflow"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "dg-14-one-power-ladder",
-   "source": "docs/DESIGN-GATE.md §2.14",
-   "guards": [
-    "power"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "dg-15-solid",
-   "source": "docs/DESIGN-GATE.md §2.15",
-   "guards": [
-    "actor-hub",
-    "battle-responsibility",
-    "vocabulary-mirror",
-    "open-identity"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "dg-16-cache-trigger-set",
-   "source": "docs/DESIGN-GATE.md §2.16",
-   "guards": [],
-   "unguardableReason": "needs a per-cache trigger declaration; no scan can tell which edges a cache should hear"
-  },
-  {
-   "id": "pr-rpg-layer-only",
-   "source": "docs/PRINCIPLES.md §3–§4",
-   "guards": [
-    "secondary-no-unity",
-    "single-writer",
-    "funnel-delta"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-one-actor-hub",
-   "source": "docs/PRINCIPLES.md §4",
-   "guards": [
-    "actor-hub"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-stat-counterbalance",
-   "source": "docs/PRINCIPLES.md §11 (spec-stat-taxonomy.md §6.2)",
-   "guards": [
-    "stat-pairs"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-free-build-no-class",
-   "source": "docs/PRINCIPLES.md §11",
-   "guards": [
-    "class-system"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-tuning-immutable",
-   "source": "docs/PRINCIPLES.md §6 (AGENTS.md/CLAUDE.md)",
-   "guards": [
-    "tuning-immutability"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-generated-seed",
-   "source": "docs/PRINCIPLES.md §6",
-   "guards": [
-    "generated-seed"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-debug-api-scope",
-   "source": "docs/PRINCIPLES.md §10",
-   "guards": [
-    "debug-scope"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-test-substrate",
-   "source": "docs/PRINCIPLES.md §7",
-   "guards": [
-    "test-substrate"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-test-content-root",
-   "source": "docs/architecture/software-architecture.md §11 (tasks/keepverse-split-plan.md 'Resolver contract'; tests/Shared/KeepverseRoots.cs)",
-   "guards": [
-    "test-content-root"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-verification-registry-integrity",
-   "source": "docs/PRINCIPLES.md §7 (verification registry)",
-   "guards": [
-    "verification-boundaries"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-session-boundary",
-   "source": "docs/contributing/session-boundary.md",
-   "guards": [
-    "session-boundary"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-commit-attribution",
-   "source": "docs/contributing/agent-git.md",
-   "guards": [],
-   "unguardableReason": "the git gate (commit-tool, hooks, commit-policy guard) was retired by the owner on 2026-09-19; no-watermark is prose-only now"
-  },
-  {
-   "id": "pr-game-profile-lock",
-   "source": "docs/runbook/local-dev.md (game-profiles.json)",
-   "guards": [
-    "game-profile"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-injector-compiles",
-   "source": "docs/PRINCIPLES.md §1 (Injector host)",
-   "guards": [
-    "injector-compile"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-bench-compiles",
-   "source": "docs/architecture/test-verification-boundary/spec-registry-contract.md C5",
-   "guards": [
-    "bench-compile"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-buy-before-build",
-   "source": "docs/PRINCIPLES.md §9",
-   "guards": [],
-   "unguardableReason": "a preference for a maintained library over a hand-rolled one; no scan can tell a justified dependency from an unjustified one"
-  },
-  {
-   "id": "pr-plan-paths",
-   "source": "docs/PRINCIPLES.md §2",
-   "guards": [],
-   "unguardableReason": "which tasks/<program>-plan.md a session writes is a workflow rule; the frozen legacy paths land with guard-repo-boundary (module repo-boundary)"
-  },
-  {
-   "id": "pr-contract-not-population",
-   "source": "docs/PRINCIPLES.md §7 (validation-ssot.md)",
-   "guards": [
-    "population-pin"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-tuning-immutability",
-   "source": "docs/architecture/tunables-ssot.md T4",
-   "guards": [],
-   "unguardableReason": "no guard yet; guard-tuning-immutability (module tuning-immutability) enforces that a published version's values never change"
-  },
-  {
-   "id": "pr-doc-citations",
-   "source": "docs/DESIGN-GATE.md §3 (spec-doc-citation-gate.md)",
-   "guards": [
-    "doc-citations"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "guard-narrative-row-map",
-   "source": "tasks/npc-story-events-plan.md §4 D3",
-   "guards": [
-    "narrative"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "narrative-tuning-no-default",
-   "source": "docs/architecture/npc-story-events/spec-narrative-vocabulary.md §4–§5",
-   "guards": [
-    "narrative"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "ns-one-narrative-text-dto",
-   "source": "docs/architecture/npc-story-events/spec-narrative-text.md §2",
-   "guards": [
-    "narrative"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "ns6-doctrine-no-magnitude",
-   "source": "docs/architecture/npc-story-events/spec-counter-doctrine.md §3",
-   "guards": [
-    "narrative"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "ns6-reading-aggregate-only",
-   "source": "docs/architecture/npc-story-events/spec-counter-doctrine.md §1",
-   "guards": [
-    "narrative"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "ns-one-content-theta-producer",
-   "source": "docs/architecture/npc-story-events/spec-host-content-theta.md §SOLID (npc-story-events NR2.18)",
-   "guards": [
-    "narrative"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-sim-honesty",
-   "source": "tasks/rpg-simulator-decisions.md D4 (b) (owner, 2026-09-22) — the never-fabricate boundary's review is an automated guard",
-   "guards": [
-    "sim-fabrication"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-clock-seam",
-   "source": "docs/architecture/rpg-simulator-spec-clock-seam.md §1 (owner rulings B1 (a) / B2 (b) / B3 (a)) — the server's wall clock is an INPUT, not an ambient fact",
-   "guards": [
-    "clock-seam"
-   ],
-   "unguardableReason": null
-  },
-  {
-   "id": "pr-creative-mode",
-   "source": "docs/contributing/creative-mode.md",
-   "guards": [],
-   "unguardableReason": "a creative run's gates are judgments by independent reviewer agents against a written filter, rubric and checklists; no static scan can tell whether a slate was scored honestly or a gate was briefed with the author's conclusions. The mechanical rules a run relies on are covered by their own rows (pr-session-boundary, pr-generated-seed, the guard runner)"
-  },
-  {
-   "id": "ip-enforced-finding-blocks-release",
-   "source": "docs/architecture/ip-censor-map.md (Release gate; owner ruling IC-3)",
-   "guards": [],
-   "unguardableReason": "the scan gates the RELEASE only — never a commit, a verify-change.ps1 run or a CI job (IC-3) — so it is a release step, not a guard script: .github/workflows/release.yml's `IP release gate (ip-censor, IC-3)` step runs `python -m ipcensor.report scan --format json --fail-on enforced --authored-only` before `Publish player pack`, with each command's exit checked"
-  },
-  {
-   "id": "positional-citations-still-resolve",
-   "source": "docs/DESIGN-GATE.md:219 - A citation nobody can open is not evidence, whatever it claims. The rows it guards are INDEX rows, so every decisions.md:<line> and DESIGN-GATE.md:<line> in the tree is POSITIONAL: inserting a row above one silently invalidates every citation below it, and nothing about the edited row is itself wrong.",
-   "guards": [
-    "decision-citations"
-   ],
-   "unguardableReason": null
-  }
- ]
+  "schemaVersion": 1,
+  "guards": {
+    "citation-stability": {
+      "script": "scripts/guard-citation-stability.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "single-writer": {
+      "script": "scripts/guard-single-writer.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "secondary-no-unity": {
+      "script": "scripts/guard-secondary-no-unity.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "funnel-delta": {
+      "script": "scripts/guard-funnel-delta.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "actor-hub": {
+      "script": "scripts/guard-actor-hub.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "battle-responsibility": {
+      "script": "scripts/guard-battle-responsibility.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "open-identity": {
+      "script": "scripts/guard-open-identity.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "dal": {
+      "script": "scripts/guard-dal.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "decision-citations": {
+      "script": "scripts/check-decision-citations.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "test-substrate": {
+      "script": "scripts/guard-test-substrate.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "test-content-root": {
+      "script": "scripts/guard-test-content-root.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "generated-seed": {
+      "script": "scripts/guard-generated-seed.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null,
+      "args": {
+        "ci": [
+          "--require-explicit-range",
+          "--range",
+          "{ciRange}"
+        ]
+      }
+    },
+    "verification-boundaries": {
+      "script": "scripts/guard-verification-boundaries.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null,
+      "ciEntry": "own-step",
+      "ciEntryReason": "ci.yml isolates this in its own 'Verification-boundary integrity' step deliberately: it gates the registry verify-change reads, and a shared pwsh block could make its exit unreachable behind an earlier guard's exit."
+    },
+    "debug-scope": {
+      "script": "scripts/guard-debug-scope.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "magic-numbers": {
+      "script": "scripts/audit-magic-numbers.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "overflow": {
+      "script": "scripts/audit-overflow.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "power": {
+      "script": "scripts/guard-power.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "stat-pairs": {
+      "script": "scripts/guard-stat-pairs.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "session-boundary": {
+      "script": "scripts/session-boundary-check.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null,
+      "ciEntry": "own-step",
+      "ciEntryReason": "CI/release invoke the session-boundary check as an explicit reviewed-diff step; the local runner still owns the direct/worktree check."
+    },
+    "class-system": {
+      "script": "scripts/guard-class-system.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "tuning-immutability": {
+      "script": "scripts/guard-tuning-immutability.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "repo-boundary": {
+      "script": "scripts/guard-repo-boundary.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "vocabulary-mirror": {
+      "script": "scripts/guard-vocabulary-mirror.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "population-pin": {
+      "script": "scripts/guard-population-pin.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "doc-citations": {
+      "script": "scripts/audit-doc-citations.py",
+      "args": {
+        "ci": [
+          "--strict"
+        ],
+        "local": [
+          "--strict"
+        ]
+      },
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "game-profile": {
+      "script": "scripts/guard-game-profile.py",
+      "tier": "local",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": "needs a real game install (-GameDir / -ExpectedProfile); the hard boundary keeps game binaries off CI runners, so it can only run on the owner's machine"
+    },
+    "injector-compile": {
+      "script": "scripts/guard-injector-compile.py",
+      "tier": "local",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": "needs the game's MelonLoader interop assemblies (FUSIONRPG_ML_GAMEDIR); FusionRpg.Injector is not built in CI for the same reason CiWiringGuardTests exempts Injector.Tests"
+    },
+    "bench-compile": {
+      "script": "scripts/guard-bench-compile.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "narrative": {
+      "script": "scripts/guard-narrative.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null,
+      "args": {
+        "ci": [
+          "--run-trait-filter"
+        ]
+      }
+    },
+    "sim-fabrication": {
+      "script": "scripts/guard-sim-fabrication.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
+    "clock-seam": {
+      "script": "scripts/guard-clock-seam.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    }
+  },
+  "verificationExemptions": [
+    {
+      "id": "local-operational-scripts",
+      "paths": [
+        "scripts/coverage.*",
+        "scripts/deploy-play.py",
+        "scripts/dump_game_profile.py",
+        "scripts/dump_melon_p0.py",
+        "scripts/fetch_bepinex_refs.py",
+        "scripts/gate_class_system_phase9.py",
+        "scripts/mutate.*",
+        "scripts/prepare_injector_refs.py",
+        "scripts/test_substrate_leak_alarm.py",
+        "scripts/wait_for_deploy.py"
+      ],
+      "reason": "Owner-run operational tooling has no deterministic repository test target; its callers and release/CI steps own execution evidence. These exact paths are explicit exemptions, not a broadened scripts boundary."
+    },
+    {
+      "id": "live-diagnostic-scripts",
+      "paths": [
+        "scripts/lawn_combat_observer.py",
+        "scripts/probe_sim_shield.py",
+        "scripts/prove-slot-connection.py",
+        "scripts/prove_aptitude.py",
+        "scripts/prove_live_probe.py"
+      ],
+      "reason": "Live/game-install diagnostics require a legal local game and are intentionally outside CI; the exact file list keeps the exemption visible and prevents a future scripts/** bypass."
+    },
+    {
+      "id": "shared-script-libraries",
+      "paths": [
+        "scripts/lib/DebugStatusApply.*",
+        "scripts/lib/LiveLawnSetup.*",
+        "scripts/lib/debug_status_apply.py",
+        "scripts/lib/keepverse_roots.py",
+        "scripts/lib/live_lawn_setup.py"
+      ],
+      "reason": "Shared operational helper libraries are exercised by their owning live/deploy callers; they are not standalone test projects and are explicitly named here rather than hidden by a broad root."
+    },
+    {
+      "id": "github-templates",
+      "paths": [
+        ".github/CODEOWNERS",
+        ".github/ISSUE_TEMPLATE/bug_report.yml",
+        ".github/ISSUE_TEMPLATE/config.yml",
+        ".github/ISSUE_TEMPLATE/feature_request.yml",
+        ".github/PULL_REQUEST_TEMPLATE.md"
+      ],
+      "reason": "Repository metadata and issue templates have no executable test target; their syntax is reviewed as configuration, and the exemption is exact rather than a .github/** bypass."
+    },
+    {
+      "id": "unmapped-tool-sentinel-project",
+      "paths": [
+        "tools/HybridViability/HybridViability.csproj"
+      ],
+      "reason": "CORRECTED 2026-10-01. This row said: 'The project file is explicitly bounded, while Program.cs intentionally remains unmapped as the existing refusal sentinel; mapping that source requires the separately owned verification-boundaries handoff.' Both halves were no longer true. The owner row 'hybrid-viability-tool' now covers 'tools/HybridViability/**', so Program.cs IS mapped, and the planner returns a plan for it rather than refusing - which is why the guard test that asserted this refusal had to be corrected rather than pointed elsewhere. There is no longer an unmapped-sentinel source: measured over 1455 real .cs files under src/ and tools/, every one is either bounded by an owner row or covered by a verificationExemption, and every exemption states a reason. The project file itself is now covered by the same owner row, so this row matches a path that is already bounded; it is kept rather than deleted because removing a row is a topology change and its harmless redundancy is not one. The closure property is what guards the hazard this row was written for, and FusionRpg.Guard.Tests.No_real_source_file_is_silently_unhandled_by_the_registry asserts it by name."
+    },
+    {
+      "id": "local-tool-trees",
+      "paths": [
+        "tools/ActionTimingProbe/**",
+        "tools/AffixMetricsGate/**",
+        "tools/CommitmentProbe/**",
+        "tools/CreatureCorpusEmit/**",
+        "tools/CreatureQualityReport/**",
+        "tools/CreatureRecipeDistributionIndex/**",
+        "tools/CreatureRecipeReconcileInput/**",
+        "tools/DominanceBaseline/**",
+        "tools/ForecastProbe/**",
+        "tools/FusionRpg.PackSmoke/**",
+        "tools/GameMetaDump/**",
+        "tools/ProveAptitude/**",
+        "tools/ReactionLaneProbe/**",
+        "tools/RealDataAggregate/**",
+        "tools/ResidualFitLoop/**",
+        "tools/SquadHarness/**",
+        "tools/TurnOrderProbe/**"
+      ],
+      "reason": "These bounded owner-run probe, report, and harness tools have no independent path-owned test project; their callers and release/CI checks own the evidence. Each tool root is named explicitly rather than exempting tools/**."
+    },
+    {
+      "id": "local-python-tool-trees",
+      "paths": [
+        "tools/debug-mcp/**",
+        "tools/live_test/**"
+      ],
+      "reason": "These bounded Python operational tools are intentionally owner/live-run surfaces; the repository has no CI pytest project for either tree. The exact tool roots are explicit exemptions, not a Python catch-all."
+    },
+    {
+      "id": "tool-assets",
+      "paths": [
+        "tools/sprite-debug/assets/**"
+      ],
+      "reason": "The sprite-debug asset manifest is authored tooling data with no executable verification target; it is explicitly bounded to the asset directory."
+    },
+    {
+      "id": "standalone-python-audit",
+      "paths": [
+        "scripts/sweep-power-coefficients.py"
+      ],
+      "reason": "This standalone owner-run audit has no pytest project; it is explicitly exempt and must not be used to broaden the Python boundary."
+    },
+    {
+      "id": "retired-verification-boundaries-lib",
+      "paths": [
+        "scripts/lib/VerificationBoundaries.ps1"
+      ],
+      "reason": "Retired. The live implementation is scripts/lib/verification_boundaries.py, which the guard row guard-verification-boundary-tests already covers through the glob scripts/lib/verification_boundaries.*. This path is named EXACTLY rather than by that glob because the two stems differ by an underscore (VerificationBoundaries vs verification_boundaries) and pattern_match confines a wildcard to the final segment, so no single legal glob covers both. Measured 2026-09-28: the owner-row shape naming this path is refused by the guard's stale-exact-path rule, and the broader glob scripts/lib/*.ps1 would resolve but would also claim KeepverseRoots.ps1 and LiveLawnSetup.ps1, giving two unrelated tools the wrong owner. The path was ALREADY unmapped before this change -- --deleted-paths refused with BOUNDARY-MISSING -- so this entry closes a pre-existing gap rather than repairing a regression."
+    },
+    {
+      "id": "f13-schema-upgrade-proof",
+      "paths": [
+        "tasks/reports/f13_schema_upgrade_proof.py"
+      ],
+      "reason": "A one-off F13 regression proof, previously named by NO exemption row at all -- a mapping gap, not a judgement about the tool. The row exists so the retired PowerShell path and its Python replacement resolve to one owner, and so the next reader can see the gap was closed rather than inherited."
+    },
+    {
+      "id": "smoke-player-pack",
+      "paths": [
+        "scripts/smoke_player_pack.py"
+      ],
+      "reason": "A player-pack smoke test, previously named by NO exemption row at all -- a mapping gap, not a judgement about the tool. One of four tracked .ps1 files the registry did not name, measured 2026-09-29. The row exists so the retired PowerShell path and its Python replacement resolve to one owner."
+    },
+    {
+      "id": "regen-class-system-baselines",
+      "paths": [
+        "scripts/regen_class_system_baselines.py"
+      ],
+      "reason": "The class-system baseline regenerator, previously named by NO exemption row at all -- a mapping gap, not a judgement about the tool. One of four tracked .ps1 files the registry did not name, measured 2026-09-29. The row exists so the retired PowerShell path and its Python replacement resolve to one owner."
+    }
+  ],
+  "invariants": [
+    {
+      "id": "dg-1-two-async-systems",
+      "source": "docs/DESIGN-GATE.md §2.1",
+      "guards": [],
+      "unguardableReason": "no scan can tell that the RPG works from past events rather than reading PvZ's current state"
+    },
+    {
+      "id": "dg-2-record-then-drain",
+      "source": "docs/DESIGN-GATE.md §2.2",
+      "guards": [],
+      "unguardableReason": "the pipeline's record-then-drain shape is a design property; the guards cover the writes and the deltas, not the timing"
+    },
+    {
+      "id": "dg-3-deltas-not-absolutes",
+      "source": "docs/DESIGN-GATE.md §2.3",
+      "guards": [
+        "funnel-delta"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "dg-4-single-writer",
+      "source": "docs/DESIGN-GATE.md §2.4",
+      "guards": [
+        "single-writer"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "dg-5-funnel-single-path",
+      "source": "docs/DESIGN-GATE.md §2.5",
+      "guards": [
+        "funnel-delta"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "dg-6-sql-only-in-data",
+      "source": "docs/DESIGN-GATE.md §2.6",
+      "guards": [
+        "dal"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "dg-7-game-is-simulation",
+      "source": "docs/DESIGN-GATE.md §2.7",
+      "guards": [],
+      "unguardableReason": "a product-shape claim; no static scan decides it, and the transport half is already covered by secondary-no-unity"
+    },
+    {
+      "id": "dg-8-foundation-sealed",
+      "source": "docs/DESIGN-GATE.md §2.8",
+      "guards": [],
+      "unguardableReason": "Foundation is sealed at a contract version; no repo-wide scan can tell a forbidden edit from a legal extension"
+    },
+    {
+      "id": "dg-9-standalone-first",
+      "source": "docs/DESIGN-GATE.md §2.9",
+      "guards": [
+        "repo-boundary"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "claude-plan-paths",
+      "source": "AGENTS.md/CLAUDE.md (frozen planning paths)",
+      "guards": [
+        "repo-boundary"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "dg-10-perf-main-thread",
+      "source": "docs/DESIGN-GATE.md §2.10",
+      "guards": [],
+      "unguardableReason": "needs a live probe with real frame data; no static scan decides a main-thread cost"
+    },
+    {
+      "id": "dg-11-no-hard-ceilings",
+      "source": "docs/DESIGN-GATE.md §2.11",
+      "guards": [
+        "power"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "dg-12-balance-surface-is-data",
+      "source": "docs/DESIGN-GATE.md §2.12",
+      "guards": [
+        "magic-numbers"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "dg-13-magnitudes-fit-range",
+      "source": "docs/DESIGN-GATE.md §2.13",
+      "guards": [
+        "overflow"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "dg-14-one-power-ladder",
+      "source": "docs/DESIGN-GATE.md §2.14",
+      "guards": [
+        "power"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "dg-15-solid",
+      "source": "docs/DESIGN-GATE.md §2.15",
+      "guards": [
+        "actor-hub",
+        "battle-responsibility",
+        "vocabulary-mirror",
+        "open-identity"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "dg-16-cache-trigger-set",
+      "source": "docs/DESIGN-GATE.md §2.16",
+      "guards": [],
+      "unguardableReason": "needs a per-cache trigger declaration; no scan can tell which edges a cache should hear"
+    },
+    {
+      "id": "pr-rpg-layer-only",
+      "source": "docs/PRINCIPLES.md §3–§4",
+      "guards": [
+        "secondary-no-unity",
+        "single-writer",
+        "funnel-delta"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-one-actor-hub",
+      "source": "docs/PRINCIPLES.md §4",
+      "guards": [
+        "actor-hub"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-stat-counterbalance",
+      "source": "docs/PRINCIPLES.md §11 (spec-stat-taxonomy.md §6.2)",
+      "guards": [
+        "stat-pairs"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-free-build-no-class",
+      "source": "docs/PRINCIPLES.md §11",
+      "guards": [
+        "class-system"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-tuning-immutable",
+      "source": "docs/PRINCIPLES.md §6 (AGENTS.md/CLAUDE.md)",
+      "guards": [
+        "tuning-immutability"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-generated-seed",
+      "source": "docs/PRINCIPLES.md §6",
+      "guards": [
+        "generated-seed"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-debug-api-scope",
+      "source": "docs/PRINCIPLES.md §10",
+      "guards": [
+        "debug-scope"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-test-substrate",
+      "source": "docs/PRINCIPLES.md §7",
+      "guards": [
+        "test-substrate"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-test-content-root",
+      "source": "docs/architecture/software-architecture.md §11 (tasks/keepverse-split-plan.md 'Resolver contract'; tests/Shared/KeepverseRoots.cs)",
+      "guards": [
+        "test-content-root"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-verification-registry-integrity",
+      "source": "docs/PRINCIPLES.md §7 (verification registry)",
+      "guards": [
+        "verification-boundaries"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-session-boundary",
+      "source": "docs/contributing/session-boundary.md",
+      "guards": [
+        "session-boundary"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-commit-attribution",
+      "source": "docs/contributing/agent-git.md",
+      "guards": [],
+      "unguardableReason": "the git gate (commit-tool, hooks, commit-policy guard) was retired by the owner on 2026-09-19; no-watermark is prose-only now"
+    },
+    {
+      "id": "pr-game-profile-lock",
+      "source": "docs/runbook/local-dev.md (game-profiles.json)",
+      "guards": [
+        "game-profile"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-injector-compiles",
+      "source": "docs/PRINCIPLES.md §1 (Injector host)",
+      "guards": [
+        "injector-compile"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-bench-compiles",
+      "source": "docs/architecture/test-verification-boundary/spec-registry-contract.md C5",
+      "guards": [
+        "bench-compile"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-buy-before-build",
+      "source": "docs/PRINCIPLES.md §9",
+      "guards": [],
+      "unguardableReason": "a preference for a maintained library over a hand-rolled one; no scan can tell a justified dependency from an unjustified one"
+    },
+    {
+      "id": "pr-plan-paths",
+      "source": "docs/PRINCIPLES.md §2",
+      "guards": [],
+      "unguardableReason": "which tasks/<program>-plan.md a session writes is a workflow rule; the frozen legacy paths land with guard-repo-boundary (module repo-boundary)"
+    },
+    {
+      "id": "pr-contract-not-population",
+      "source": "docs/PRINCIPLES.md §7 (validation-ssot.md)",
+      "guards": [
+        "population-pin"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-tuning-immutability",
+      "source": "docs/architecture/tunables-ssot.md T4",
+      "guards": [],
+      "unguardableReason": "no guard yet; guard-tuning-immutability (module tuning-immutability) enforces that a published version's values never change"
+    },
+    {
+      "id": "pr-doc-citations",
+      "source": "docs/DESIGN-GATE.md §3 (spec-doc-citation-gate.md)",
+      "guards": [
+        "doc-citations"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "guard-narrative-row-map",
+      "source": "tasks/npc-story-events-plan.md §4 D3",
+      "guards": [
+        "narrative"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "narrative-tuning-no-default",
+      "source": "docs/architecture/npc-story-events/spec-narrative-vocabulary.md §4–§5",
+      "guards": [
+        "narrative"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "ns-one-narrative-text-dto",
+      "source": "docs/architecture/npc-story-events/spec-narrative-text.md §2",
+      "guards": [
+        "narrative"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "ns6-doctrine-no-magnitude",
+      "source": "docs/architecture/npc-story-events/spec-counter-doctrine.md §3",
+      "guards": [
+        "narrative"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "ns6-reading-aggregate-only",
+      "source": "docs/architecture/npc-story-events/spec-counter-doctrine.md §1",
+      "guards": [
+        "narrative"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "ns-one-content-theta-producer",
+      "source": "docs/architecture/npc-story-events/spec-host-content-theta.md §SOLID (npc-story-events NR2.18)",
+      "guards": [
+        "narrative"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-sim-honesty",
+      "source": "tasks/rpg-simulator-decisions.md D4 (b) (owner, 2026-09-22) — the never-fabricate boundary's review is an automated guard",
+      "guards": [
+        "sim-fabrication"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-clock-seam",
+      "source": "docs/architecture/rpg-simulator-spec-clock-seam.md §1 (owner rulings B1 (a) / B2 (b) / B3 (a)) — the server's wall clock is an INPUT, not an ambient fact",
+      "guards": [
+        "clock-seam"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "pr-creative-mode",
+      "source": "docs/contributing/creative-mode.md",
+      "guards": [],
+      "unguardableReason": "a creative run's gates are judgments by independent reviewer agents against a written filter, rubric and checklists; no static scan can tell whether a slate was scored honestly or a gate was briefed with the author's conclusions. The mechanical rules a run relies on are covered by their own rows (pr-session-boundary, pr-generated-seed, the guard runner)"
+    },
+    {
+      "id": "ip-enforced-finding-blocks-release",
+      "source": "docs/architecture/ip-censor-map.md (Release gate; owner ruling IC-3)",
+      "guards": [],
+      "unguardableReason": "the scan gates the RELEASE only — never a commit, a verify-change.ps1 run or a CI job (IC-3) — so it is a release step, not a guard script: .github/workflows/release.yml's `IP release gate (ip-censor, IC-3)` step runs `python -m ipcensor.report scan --format json --fail-on enforced --authored-only` before `Publish player pack`, with each command's exit checked"
+    },
+    {
+      "id": "positional-citations-still-resolve",
+      "source": "docs/DESIGN-GATE.md:219 - A citation nobody can open is not evidence, whatever it claims. The rows it guards are INDEX rows, so every decisions.md:<line> and DESIGN-GATE.md:<line> in the tree is POSITIONAL: inserting a row above one silently invalidates every citation below it, and nothing about the edited row is itself wrong.",
+      "guards": [
+        "decision-citations"
+      ],
+      "unguardableReason": null
+    }
+  ]
 }
