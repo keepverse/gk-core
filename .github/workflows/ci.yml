@@ -399,25 +399,26 @@ jobs:
           }
           Write-Host "CI test calls are unfiltered = full profile (DiskSemantics + Heavy included)."
 
-      - name: Session boundary (CI topology and optional reviewed diff)
-        shell: pwsh
-        env:
-          FUSIONRPG_REVIEW_SESSION: ${{ vars.FUSIONRPG_REVIEW_SESSION }}
-        run: |
-          $sessionArgs = @('--ci')
-          $reviewSession = $env:FUSIONRPG_REVIEW_SESSION
-          if (-not [string]::IsNullOrWhiteSpace($reviewSession)) {
-            if ($env:FUSIONRPG_VERIFICATION_RANGE -notmatch '^(.+)\.\.([^.]+)$') { throw "reviewed session enabled but verification range is malformed" }
-            $sessionArgs += @('--session', $reviewSession, '--diff-base-ref', $Matches[1], '--diff-head-ref', $Matches[2], '--require-diff-fence')
-          }
-          else {
-            Write-Host "No FUSIONRPG_REVIEW_SESSION configured; running the CI structural session-boundary check."
-          }
-          # The flags above are the Python tool's, so this step is one of the two places a
-          # -RepoRoot-shaped spelling would have failed as an unknown argument rather than as a
-          # verdict. The pwsh -> bash conversion is a later, separate change.
-          python .\scripts\session-boundary-check.py @sessionArgs
-          if ($LASTEXITCODE -ne 0) { throw "session-boundary check failed" }
+      # The session-boundary check does NOT run here, and this comment is the reason.
+      #
+      # It was invoked as `python .\scripts\session-boundary-check.py`, which resolves against THIS
+      # repository's checkout. That file has never existed in gk-core - not tracked, not on disk, not
+      # ignored - because the split left the 263 session records and their checker in the workflow
+      # repository at the workspace root, whose origin is keepverse/gk-workflow. A CI runner has exactly
+      # one checkout, so the step could only ever fail: python exits 2 on a missing file and the
+      # `throw` below turned that into a red build.
+      #
+      # The enforcement registry row is NOT the bug and is deliberately left alone. It names
+      # `scripts/session-boundary-check.py` with no repository qualifier, and `run_guards.py` resolves
+      # that across all eight workspace roots - 23 guards live in gk-core, 4 in gk-fusion, and
+      # `session-boundary` and `doc-citations` live here at the workspace root. The runner is right; only
+      # the literal relative path in this workflow was wrong.
+      #
+      # The check is not lost. It runs in the repository that owns the records, in all three of its
+      # workflows: ci.yml, nightly.yml and release.yml. Measured 2026-10-02: that repository's copy of
+      # the registry had drifted - 3 records still `active` where this workspace's copy had them
+      # `abandoned`, so `session-boundary-check --ci` exited 1 with DRIFT (111) - and those 3 have since
+      # been converged, so all three of its workflows now exit 0.
 
       - name: Boundary guards (AGENTS.md — combat writes, Secondary-Unity boundary, Funnel deltas, DAL)
         shell: pwsh
