@@ -494,15 +494,21 @@ public class DelvePackClaimTests : IDisposable
     [Fact]
     public void The_module_never_rolls_writes_no_assignments_and_reuses_placement()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            if (Directory.Exists(Path.Combine(dir.FullName, "src", "FusionRpg.Injector"))) break;
-            dir = dir.Parent;
-        }
-        Assert.NotNull(dir);
-        var source = File.ReadAllText(Path.Combine(
-            dir!.FullName, "src", "FusionRpg.Data", "Sqlite", "RpgStore.CacheFieldAccessDelve.cs"));
+        // This walk used to look for a directory holding `src/FusionRpg.Injector`, which resolved only
+        // while every repository was one tree. The Injector is gk-fusion's now, so from a test output
+        // directory inside gk-core the walk passed every ancestor and reached the drive root: `dir`
+        // came back null and the test failed on its own `Assert.NotNull(dir)` - reaching NONE of the
+        // seven structural assertions below it about the module it exists to prove.
+        //
+        // The file under test is gk-core's, so the repository is named by the resolver rather than by a
+        // marker directory that has since moved to another repository. The existence check is kept and
+        // made explicit so a wrong root names the path it wanted, instead of surfacing as a bare
+        // FileNotFoundException from ReadAllText.
+        var sourcePath = Path.Combine(
+            KeepverseRoots.Core(), "src", "FusionRpg.Data", "Sqlite",
+            "RpgStore.CacheFieldAccessDelve.cs");
+        Assert.True(File.Exists(sourcePath), $"missing the module under test: {sourcePath}");
+        var source = File.ReadAllText(sourcePath);
 
         Assert.DoesNotContain("System.Random", source); // certain-on-reach: no second roll
         Assert.DoesNotContain("SeededRng", source);
