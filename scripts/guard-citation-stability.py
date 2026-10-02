@@ -41,7 +41,7 @@ import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "lib"))
-from keepverse_roots import workspace_root  # noqa: E402  (the shim above must run first)
+from keepverse_roots import RootNotFound, workspace_root  # noqa: E402  (the shim must run first)
 
 BASELINE = pathlib.Path(__file__).resolve().parent / "citation-stability.v1.json"
 
@@ -115,7 +115,21 @@ def main() -> int:
     ap.add_argument("--update", action="store_true", help="re-baseline, printing what changed")
     args = ap.parse_args()
 
-    ws = pathlib.Path(workspace_root())
+    # The docs are the WORKSPACE ROOT's, so a standalone clone of gk-core cannot supply them. That is
+    # a NAMED refusal, not a crash: calling workspace_root() unguarded raised RootNotFound straight
+    # out of main() and printed a traceback, which is exactly the failure mode this repo's standard
+    # forbids - a missing prerequisite must say which prerequisite is missing and exit non-zero, so a
+    # reader is never left reading a stack to work out what to install.
+    try:
+        ws = pathlib.Path(workspace_root())
+    except RootNotFound as exc:
+        print(f"REFUSING: the cited documents live in the workspace root, which this clone cannot "
+              f"see: {exc}", file=sys.stderr)
+        print("  This guard needs docs/architecture/decisions.md and docs/DESIGN-GATE.md, which are "
+              "gk-workflow's. Set KEEPVERSE_WORKSPACE_ROOT, or run it inside the workspace.",
+              file=sys.stderr)
+        return 2
+
     citations = collect(ws)
     lines = index_lines(ws)
 
