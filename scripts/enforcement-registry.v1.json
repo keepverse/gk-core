@@ -739,6 +739,14 @@
         "decision-citations"
       ],
       "unguardableReason": null
+    },
+    {
+      "id": "citations-still-mean-what-they-claim",
+      "source": "docs/DESIGN-GATE.md:219 - A citation nobody can open is not evidence, whatever it claims. `decision-citations` proves the target EXISTS; this proves it still SAYS what the citing sentence attributes to it. Those are different failures and one does not imply the other: inserting a row above a cited one leaves every citation below it openable and pointing at the wrong line, and three citations here once asserted 'the clock's decisions.md row exists' while resolving to a blank line. The guard fingerprints the cited line's CONTENT rather than its number, so a shift reds even where the renumbering is harmless.",
+      "guards": [
+        "citation-stability"
+      ],
+      "unguardableReason": null
     }
   ]
 }
