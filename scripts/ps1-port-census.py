@@ -233,6 +233,15 @@ def main(argv: list[str] | None = None) -> int:
             if script.endswith(".ps1") and (REPO_ROOT / script).is_file():
                 stems.append(Path(script).stem)
 
+    # `--all` used to end here in a usage error once the port was complete: the census collects
+    # stems from registry rows whose script still ends in .ps1, and after the ban there are none,
+    # so `stems` stayed empty and a FINISHED port reported "pass --tool STEM, or --all" with exit
+    # 2 - indistinguishable from a caller mistake, and unable to report success. A completed
+    # migration is the result this tool exists to produce, so it is now stated as one.
+    if not stems and args.all:
+        print("ps1-port-census: no .ps1 guard remains in enforcement-registry.v1.json - the port is complete.")
+        return 0
+
     if not stems:
         parser.error("pass --tool STEM, or --all")
 
