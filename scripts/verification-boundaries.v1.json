@@ -7236,6 +7236,18 @@
         "index-marker-coverage"
       ],
       "level": "module"
+    },
+    {
+      "id": "citation-stability-guard",
+      "kind": "owner",
+      "paths": [
+        "scripts/guard-citation-stability.py",
+        "scripts/citation-stability.v1.json"
+      ],
+      "guards": [
+        "citation-stability"
+      ],
+      "level": "module"
     }
   ],
   "knownRed": [
