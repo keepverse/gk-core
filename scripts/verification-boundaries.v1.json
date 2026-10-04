@@ -627,17 +627,6 @@
       "level": "module"
     },
     {
-      "id": "index-marker-coverage-guard",
-      "kind": "owner",
-      "paths": [
-        "scripts/guard-index-marker-coverage.py"
-      ],
-      "guards": [
-        "index-marker-coverage"
-      ],
-      "level": "module"
-    },
-    {
       "id": "battle-responsibility-guard",
       "kind": "owner",
       "paths": [
@@ -7236,6 +7225,17 @@
       ],
       "guards": [],
       "level": "focused"
+    },
+    {
+      "id": "index-marker-coverage-guard",
+      "kind": "owner",
+      "paths": [
+        "scripts/guard-index-marker-coverage.py"
+      ],
+      "guards": [
+        "index-marker-coverage"
+      ],
+      "level": "module"
     }
   ],
   "knownRed": [
