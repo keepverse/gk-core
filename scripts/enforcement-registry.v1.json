@@ -776,6 +776,22 @@
         "registry-append-safety"
       ],
       "unguardableReason": null
+    },
+    {
+      "id": "every-index-row-is-claimed-by-exactly-one-category-row",
+      "source": "The generator that maintained the index-to-category correspondence is gone, so `check-decision-citations` validates markers THAT EXIST: it compares a marker's bolded title against the bolded title at the line it names and reports MARKER-DRIFT on a disagreement, and it never reports a row that LACKS a marker. Measured: 8 of 158 decisions.md rows were claimed by nothing at all, and one row carried a marker naming the wrong line - which duplicated another row's claim and went unreported twice over, once because nothing looked for absence and once because the title comparison skips a row that is not bolded. This guard reports an unmarked index row, a marker naming no row, a title disagreement on the row's FIRST CELL bold-normalised for EVERY row, and two category rows claiming one index line.",
+      "guards": [
+        "index-marker-coverage"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "seedsmith-writers-pin-their-newline",
+      "source": "`* text=auto eol=lf` in gk-data's .gitattributes means a file written CRLF is committed LF and `git status` reports it clean, so a byte-comparison test against the committed blob fails for a reason that carries no meaning. Measured on the live corpus: 34 tracked files were w/crlf in the working tree and i/lf in the blob with `git status --porcelain` empty on all 34, produced by two writers that called write_text with no newline=. The scan is ast.parse and never a regex, because a raw text search finds 73 lines containing the token against 67 real call sites - the 6 extra are comments and docstrings.",
+      "guards": [
+        "seedsmith-lf"
+      ],
+      "unguardableReason": null
     }
   ]
 }
