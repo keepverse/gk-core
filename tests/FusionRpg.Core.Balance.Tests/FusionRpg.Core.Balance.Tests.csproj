@@ -17,7 +17,7 @@
       ReferenceOutputAssembly="false" says so instead of implying an assembly dependency that does not
       exist. Conditioned on $(GkForgeAvailable) so a standalone clone evaluates; an unconditioned
       reference to an absent sibling is what made `dotnet build FusionRpg.slnx` fail in a clone.
-      Measured with `git grep FusionRpg.Tools -- tests`: this project has no compile-time use of any
+      Measured with a `git grep FusionRpg.Tools` over tests: this project has no compile-time use of any
       gk-forge namespace.
     -->
     <ProjectReference Include="$(GkForgeRoot)tools\DominanceBaseline\DominanceBaseline.csproj"

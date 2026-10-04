@@ -25,7 +25,7 @@
       quietly conditioned away.
 
       CorpusDumpTests.cs is the only file in the whole gk-core test tree that compiles against a
-      gk-forge namespace — measured with `git grep FusionRpg.Tools -- tests`, whose other hits
+      gk-forge namespace — measured with a `git grep FusionRpg.Tools` over tests, whose other hits
       (RpgSim, FileMove, SquadHarness) are all gk-core's own tools. So unlike the five build-order
       references below, this one cannot become ReferenceOutputAssembly="false": the test calls
       CorpusReader/DumpWriter and constructs DumpAlmanacRow in process.
