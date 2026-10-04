@@ -2,63 +2,63 @@
   "schemaVersion": 1,
   "guards": {
     "citation-stability": {
-      "script": "scripts/guard-citation-stability.py",
+      "script": "scripts/guard-citation-stability.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "single-writer": {
-      "script": "scripts/guard-single-writer.py",
+      "script": "scripts/guard-single-writer.py", "repository": "gk-fusion",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "secondary-no-unity": {
-      "script": "scripts/guard-secondary-no-unity.py",
+      "script": "scripts/guard-secondary-no-unity.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "seedsmith-lf": {
-      "script": "scripts/guard-seedsmith-lf.py",
+      "script": "scripts/guard-seedsmith-lf.py", "repository": "gk-forge",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "funnel-delta": {
-      "script": "scripts/guard-funnel-delta.py",
+      "script": "scripts/guard-funnel-delta.py", "repository": "gk-fusion",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "actor-hub": {
-      "script": "scripts/guard-actor-hub.py",
+      "script": "scripts/guard-actor-hub.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "battle-responsibility": {
-      "script": "scripts/guard-battle-responsibility.py",
+      "script": "scripts/guard-battle-responsibility.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "open-identity": {
-      "script": "scripts/guard-open-identity.py",
+      "script": "scripts/guard-open-identity.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "dal": {
-      "script": "scripts/guard-dal.py",
+      "script": "scripts/guard-dal.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
@@ -66,34 +66,34 @@
     },
     "decision-citations": {
       "script": "scripts/check-decision-citations.py",
-      "tier": "ci",
+      "tier": "ci", "repository": "gk-workflow",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "index-marker-coverage": {
-      "script": "scripts/guard-index-marker-coverage.py",
+      "script": "scripts/guard-index-marker-coverage.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "test-substrate": {
-      "script": "scripts/guard-test-substrate.py",
+      "script": "scripts/guard-test-substrate.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "test-content-root": {
-      "script": "scripts/guard-test-content-root.py",
+      "script": "scripts/guard-test-content-root.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "generated-seed": {
-      "script": "scripts/guard-generated-seed.py",
+      "script": "scripts/guard-generated-seed.py", "repository": "gk-data",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
@@ -107,7 +107,7 @@
       }
     },
     "verification-boundaries": {
-      "script": "scripts/guard-verification-boundaries.py",
+      "script": "scripts/guard-verification-boundaries.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
@@ -116,42 +116,42 @@
       "ciEntryReason": "ci.yml isolates this in its own 'Verification-boundary integrity' step deliberately: it gates the registry verify-change reads, and a shared pwsh block could make its exit unreachable behind an earlier guard's exit."
     },
     "debug-scope": {
-      "script": "scripts/guard-debug-scope.py",
+      "script": "scripts/guard-debug-scope.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "magic-numbers": {
-      "script": "scripts/audit-magic-numbers.py",
+      "script": "scripts/audit-magic-numbers.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "overflow": {
-      "script": "scripts/audit-overflow.py",
+      "script": "scripts/audit-overflow.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "power": {
-      "script": "scripts/guard-power.py",
+      "script": "scripts/guard-power.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "stat-pairs": {
-      "script": "scripts/guard-stat-pairs.py",
+      "script": "scripts/guard-stat-pairs.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "session-boundary": {
-      "script": "scripts/session-boundary-check.py",
+      "script": "scripts/session-boundary-check.py", "repository": "gk-workflow",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
@@ -160,21 +160,21 @@
       "ciEntryReason": "CI/release invoke the session-boundary check as an explicit reviewed-diff step; the local runner still owns the direct/worktree check."
     },
     "class-system": {
-      "script": "scripts/guard-class-system.py",
+      "script": "scripts/guard-class-system.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "tuning-immutability": {
-      "script": "scripts/guard-tuning-immutability.py",
+      "script": "scripts/guard-tuning-immutability.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "repo-boundary": {
-      "script": "scripts/guard-repo-boundary.py",
+      "script": "scripts/guard-repo-boundary.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
@@ -182,20 +182,20 @@
     },
     "vocabulary-mirror": {
       "script": "scripts/guard-vocabulary-mirror.py",
-      "tier": "ci",
+      "tier": "ci", "repository": "gk-core",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "population-pin": {
-      "script": "scripts/guard-population-pin.py",
+      "script": "scripts/guard-population-pin.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "doc-citations": {
-      "script": "scripts/audit-doc-citations.py",
+      "script": "scripts/audit-doc-citations.py", "repository": "gk-workflow",
       "args": {
         "ci": [
           "--strict"
@@ -210,28 +210,28 @@
       "localReason": null
     },
     "game-profile": {
-      "script": "scripts/guard-game-profile.py",
+      "script": "scripts/guard-game-profile.py", "repository": "gk-fusion",
       "tier": "local",
       "status": "gating",
       "backlogModule": null,
       "localReason": "needs a real game install (-GameDir / -ExpectedProfile); the hard boundary keeps game binaries off CI runners, so it can only run on the owner's machine"
     },
     "injector-compile": {
-      "script": "scripts/guard-injector-compile.py",
+      "script": "scripts/guard-injector-compile.py", "repository": "gk-fusion",
       "tier": "local",
       "status": "gating",
       "backlogModule": null,
       "localReason": "needs the game's MelonLoader interop assemblies (FUSIONRPG_ML_GAMEDIR); FusionRpg.Injector is not built in CI for the same reason CiWiringGuardTests exempts Injector.Tests"
     },
     "bench-compile": {
-      "script": "scripts/guard-bench-compile.py",
+      "script": "scripts/guard-bench-compile.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "narrative": {
-      "script": "scripts/guard-narrative.py",
+      "script": "scripts/guard-narrative.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
@@ -243,21 +243,21 @@
       }
     },
     "sim-fabrication": {
-      "script": "scripts/guard-sim-fabrication.py",
+      "script": "scripts/guard-sim-fabrication.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "clock-seam": {
-      "script": "scripts/guard-clock-seam.py",
+      "script": "scripts/guard-clock-seam.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,
       "localReason": null
     },
     "registry-append-safety": {
-      "script": "scripts/guard-registry-append-safety.py",
+      "script": "scripts/guard-registry-append-safety.py", "repository": "gk-core",
       "tier": "ci",
       "status": "gating",
       "backlogModule": null,

@@ -77,6 +77,40 @@ TIERS = ("ci", "local")
 STATUSES = ("gating", "backlog")
 REGISTRY_SCHEMA_VERSION = 1
 DEFAULT_TIMEOUT = 900
+
+# THE `repository` VOCABULARY — a row's `repository` names the repository whose ROOT that guard inspects.
+#
+# WHY THIS FIELD EXISTS, measured rather than inferred. The nine-repository split moved every generated
+# tree (`data/seed/**`, `data/generated/**`) into gk-data's pack while leaving this registry naming bare
+# `scripts/<file>` paths. `generated-seed` therefore ran with gk-core as its root, found all eight of its
+# own declared trees absent, and refused — correctly, and uselessly, on a machine where the corpus sits
+# one directory away. The refusal was honest; the WIRING that made it unavoidable was the defect.
+#
+# `repo` is not a new idea in this codebase: `verification-boundaries.v1.json` already carries a `repo`
+# field with a closed vocabulary (see VALID_OWNING_REPOS in guard-verification-boundaries.py), and the
+# SAME resolver answers both. This is that convention, applied where it was missing.
+#
+# `gk-core` is in the vocabulary and means THIS repository, spelled out rather than inferred, so a row
+# can be explicit about its own root and the wiring check below can require the explicitness.
+GUARD_REPOSITORIES: dict[str, str] = {
+    "gk-core": "core_root",
+    "gk-data": "content_root",
+    "gk-forge": "forge_root",
+    "gk-fusion": "fusion_root",
+    "gk-web": "web_root",
+    "gk-workflow": "workspace_root",
+    "gk-content": "authored_content_root",
+}
+
+# The rows this field was added for, and WHY each one names the repository it does. A schema field with no
+# stated owner is a field nobody fills in next time, and the failure it fixes recurs silently.
+#
+# `gk-data` is a REPOSITORY whose scan root is the PACK (`gk-data/packs/fusion`), not the repository root
+# itself — `content_root()` is what answers that, and it is why the field resolves through the shared
+# resolver rather than joining a directory name onto a sibling path.
+REPOSITORY_OWNERS: dict[str, str] = {
+    "generated-seed": "gk-data",
+}
 # No `summary` stage: `summarise` RETURNS a verdict and an exit code rather than raising, so it
 # cannot refuse. A stage that cannot fail is not a stage, and listing one would invite a case that
 # asserts against something unreachable.
@@ -135,6 +169,15 @@ def read_registry(root: Path) -> dict:
         if row["status"] not in STATUSES:
             raise Refusal("registry", "GUARD-STATUS-INVALID",
                           f"enforcement registry guard '{name}' has invalid status '{row['status']}'")
+        # THE VOCABULARY IS CHECKED HERE, at parse time, rather than at dispatch. A misspelled repository
+        # is a typo in configuration; refusing to parse the catalog means it cannot be discovered by a run
+        # that happened to select the row, and the refusal names the typo instead of the symptom.
+        declared_repo = row.get("repository")
+        if declared_repo is not None and str(declared_repo) not in GUARD_REPOSITORIES:
+            raise Refusal("registry", "GUARD-REPOSITORY-UNKNOWN",
+                          f"enforcement registry guard '{name}' names repository "
+                          f"'{declared_repo}', which is outside the vocabulary (one of "
+                          f"{', '.join(sorted(GUARD_REPOSITORIES))})")
     for exemption in doc.get("verificationExemptions") or []:
         if (not isinstance(exemption, dict)
                 or not str(exemption.get("id") or "").strip()
@@ -225,7 +268,9 @@ def resolve_ci_range(tier: str, ci_range: str, root: Path) -> str:
 
 
 def resolve_guard_args(guard_id: str, row: dict, tier: str, ci_range: str, local_args: dict,
-                       is_git: bool, extension: str = ".py") -> list[str]:
+                       is_git: bool, extension: str = ".py",
+                       subject_root: Path | None = None,
+                       script_path: Path | None = None) -> list[str]:
     """The argv for one guard: the registry's `args` for the tier, plus the caller's local exceptions.
 
     A `{ciRange}` placeholder with no range DROPS ITSELF AND THE SWITCH BESIDE IT. Keeping the switch
@@ -265,6 +310,22 @@ def resolve_guard_args(guard_id: str, row: dict, tier: str, ci_range: str, local
                 continue
             arg = ci_range
         resolved.append(arg)
+    # THE SUBJECT ROOT IS PASSED EXPLICITLY, and only when the guard declares `--root`.
+    #
+    # It is a switch rather than a working directory because the two are different things: a guard's SCRIPT
+    # is found by walking every repository (resolve_guard_script), while its SUBJECT is the one repository
+    # its row names. Passing `--root` makes the subject an argument the guard cannot silently disagree
+    # with.
+    #
+    # IT IS NOT UNCONDITIONAL, and the reason is measured rather than stylistic. Of the 23 guard scripts in
+    # this registry, 22 declare `--root` and one — `audit-doc-citations.py`, dispatched as `doc-citations` —
+    # does not, so passing it blindly is an argparse `unrecognized arguments` exit 2, reported as a red
+    # guard for a wiring change. The switch is therefore read out of the guard's own `add_argument` call,
+    # which is the same static read `missing_interpreters` already makes for `.py`/`.ps1`, rather than
+    # maintained here as a list that a new guard would silently fall out of.
+    if (subject_root is not None and extension.lower() == ".py"
+            and script_path is not None and _accepts_root_flag(script_path)):
+        resolved.extend(["--root", str(subject_root)])
     # The one caller-supplied exception: machine-local values (the game dir) that must never be
     # committed. Everything else comes from the registry.
     switch = "--" if extension.lower() == ".py" else "-"
@@ -314,6 +375,133 @@ def check_selection(guards: list[str], catalog: dict, tier: str, only: list[str]
             and not any(catalog[g]["status"] == "gating" for g in guards)):
         raise Refusal("selection", "NO-GATING-GUARDS",
                       "CI selected no gating guards; an evidence-free guard run is RED")
+
+
+def resolve_guard_root(root: Path, repository: str) -> Path:
+    """The root a guard must inspect, from the row's `repository` field — or REFUSE.
+
+    THE FAILURE THIS FAILS CLOSED AGAINST. A row naming a repository that is not checked out has no
+    subject, so the guard would inspect nothing and — this is the whole point — could report that as
+    clean. Measured on this repository's own `generated-seed`: all eight declared trees absent, the
+    guard's verdict a coverage claim about nothing. So an absent repository STOPS the run here, by
+    name, before any guard is dispatched. It is a refusal and not a skip, because a skip is silence and
+    silence is what let the half-finished migration stay invisible.
+
+    `gk-core` resolves to the runner's own root even where the resolver would refuse: a standalone clone
+    has no workspace to walk up to, and "this repository" is the one root that is present by definition.
+    """
+    accessor_name = GUARD_REPOSITORIES.get(repository)
+    if accessor_name is None:
+        raise Refusal("catalog", "GUARD-REPOSITORY-UNKNOWN",
+                      f"guard repository '{repository}' is outside the vocabulary "
+                      f"(one of {', '.join(sorted(GUARD_REPOSITORIES))})")
+    if repository == "gk-core":
+        return root
+    accessor = globals()[accessor_name]
+    try:
+        resolved = Path(accessor(root))
+    except Exception as exc:
+        raise Refusal("catalog", "GUARD-REPOSITORY-ABSENT",
+                      f"guard repository '{repository}' is not resolvable here: {exc}. The row declares a "
+                      f"subject this checkout does not carry, so its guard would inspect nothing and could "
+                      f"report that as clean. Check the repository out, or set the matching "
+                      f"KEEPVERSE_*_ROOT override.") from exc
+    if not resolved.is_dir():
+        raise Refusal("catalog", "GUARD-REPOSITORY-ABSENT",
+                      f"guard repository '{repository}' resolved to {resolved}, which is not a directory")
+    return resolved
+
+
+def resolve_repo_ranges(entries: list[str], root: Path) -> dict[str, str]:
+    """`NAME=RANGE` pairs, each VERIFIED to resolve in that repository, into a mapping.
+
+    WHY A SEPARATE RANGE PER REPOSITORY. A commit range is a statement about ONE repository's history.
+    Measured on this workspace: gk-core's head `b9499a1` does not resolve in gk-data at all, because the
+    split gave each repository its own history — passing gk-core's range to a guard dispatched into the
+    corpus repository produces `fatal: Invalid revision range`. So a row whose `repository` is not the
+    runner's own cannot be handed the caller's range, and handing it one anyway would be a guard that
+    either fails on git's error or, worse, quietly inspects a range nobody asked about.
+
+    Each range is verified HERE, before any guard runs, for the reason `resolve_ci_range` already
+    verifies the caller's: a range that does not resolve must be named as such rather than surfacing as
+    whichever guard consumed it first.
+    """
+    resolved: dict[str, str] = {}
+    for entry in entries:
+        name, sep, value = entry.partition("=")
+        name = name.strip()
+        if not sep or not name or not value.strip():
+            raise Refusal("arguments", "REPO-RANGE-MALFORMED",
+                          f"expected NAME=RANGE for a per-repository range, got '{entry}'")
+        if name not in GUARD_REPOSITORIES:
+            raise Refusal("arguments", "REPO-RANGE-UNKNOWN-REPOSITORY",
+                          f"per-repository range names '{name}', which is outside the vocabulary "
+                          f"(one of {', '.join(sorted(GUARD_REPOSITORIES))})")
+        base = resolve_guard_root(root, name)
+        for label, rev in (("base", value.partition("..")[0].strip()),
+                           ("head", value.partition("..")[2].strip())):
+            if not rev:
+                continue
+            probe = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{rev}^{{commit}}"],
+                                   cwd=str(base), capture_output=True, text=True)
+            if probe.returncode != 0:
+                raise Refusal("range", "REPO-RANGE-UNRESOLVED",
+                              f"the range for '{name}' does not resolve in {base}: {label} {rev!r}. A "
+                              f"commit range belongs to the repository whose history it names, and the "
+                              f"split gave each repository its own.")
+        resolved[name] = value.strip()
+    return resolved
+
+
+def guard_range_for(guard_id: str, row: dict, root: Path, ci_range: str,
+                    repo_ranges: dict[str, str]) -> str:
+    """The range THIS guard must be given, from the repository its row names.
+
+    A guard whose `repository` is the runner's own gets the caller's range. One that names a different
+    repository gets that repository's own range, and the absence of one is a REFUSAL rather than a
+    fallback to the caller's — because falling back would inspect the wrong repository's history and
+    report the result as though it were the declared subject's.
+    """
+    repository = str(row["repository"])
+    if repository == "gk-core":
+        return ci_range
+    if repository not in repo_ranges:
+        raise Refusal("range", "GUARD-RANGE-UNAVAILABLE",
+                      f"guard '{guard_id}' inspects '{repository}', and no range was supplied for that "
+                      f"repository. A commit range names one repository's history, so this repository's "
+                      f"push range cannot stand in for it. Pass --repo-range {repository}=<base>..<head>.")
+    return repo_ranges[repository]
+
+
+def check_guard_repositories(root: Path, guards: list[str], catalog: dict) -> None:
+    """Every selected row's `repository`, resolved BEFORE dispatch — and every UNDECLARED one refused.
+
+    This is the durable half of the fix, and it is the part that stops the next relocation from being
+    invisible. A half-finished migration produced two different shapes of the same defect, and both are
+    checked here:
+
+      * a row that NAMES a repository which is absent — refused, above, because the guard would inspect
+        nothing;
+      * a row that names NO repository at all — refused here, because after the split an unnamed row is
+        an UNPROVEN claim. It used to mean "this repository" when there was one repository; now it means
+        "wherever the runner happens to be", which is how `generated-seed` came to run against a root
+        holding none of its own subject. Requiring the field makes that visible at the registry rather
+        than in a guard's stderr.
+
+    EVERY row is named, including the twenty-odd whose subject is unambiguously gk-core's. That is
+    deliberate: a field only half-filled is a field whose absence means nothing, and the point is that a
+    reader can tell which root each guard inspects by reading the row.
+    """
+    unnamed = [g for g in guards if not str(catalog[g].get("repository") or "").strip()]
+    if unnamed:
+        raise Refusal("catalog", "GUARD-REPOSITORY-UNDECLARED",
+                      f"{len(unnamed)} guard row(s) name no repository, so nothing states which root they "
+                      f"inspect: {', '.join(unnamed)}. Since the split an unnamed row resolves against the "
+                      f"runner's own root, which is how a guard whose subject moved came to run against a "
+                      f"directory holding none of it. Name the repository (one of "
+                      f"{', '.join(sorted(GUARD_REPOSITORIES))}) on every row.")
+    for guard_id in guards:
+        resolve_guard_root(root, str(catalog[guard_id]["repository"]))
 
 
 def _guard_script_bases(root: Path) -> tuple[Path, ...]:
@@ -368,6 +556,23 @@ def resolve_guard_script(root: Path, script: str) -> tuple[Path, Path] | None:
         if candidate.is_file():
             return base, candidate
     return None
+
+
+def _accepts_root_flag(script: Path) -> bool:
+    """Whether this guard declares a `--root` option, read from its own `add_argument` call.
+
+    A STRING SEARCH, and deliberately not an import or an `--help` probe. The guard may be absent a
+    sibling's resolver cannot see, may refuse at import (several raise when their subject is missing), and
+    `--help` would run a process per guard per run. `add_argument("--root"` is the declaration site, it is
+    present in every guard that has the switch, and a guard that gains the switch later is picked up here
+    without this file being edited — which is the property that matters, since a list maintained here
+    would be wrong the moment a guard changed.
+    """
+    try:
+        text = script.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    return '"--root"' in text or "'--root'" in text
 
 
 def check_scripts_exist(root: Path, guards: list[str], catalog: dict) -> None:
@@ -434,7 +639,7 @@ class Report:
 
 
 def dispatch(root: Path, guards: list[str], catalog: dict, tier: str, ci_range: str,
-             local_args: dict, timeout: int) -> Report:
+             local_args: dict, timeout: int, repo_ranges: dict[str, str] | None = None) -> Report:
     """Run every selected guard, collecting EVERY result -- a failure never stops the loop.
 
     The loop is the point: one red guard must not hide a second, which is the masking defect `ci.yml`
@@ -443,6 +648,7 @@ def dispatch(root: Path, guards: list[str], catalog: dict, tier: str, ci_range: 
     "no such path(s): ['src']". That is the runner's contract, not the caller's accident.
     """
     report = Report(tier=tier, ci_range=ci_range, selected=list(guards))
+    repo_ranges = repo_ranges or {}
     is_git = repo_is_git(root)
     for guard_id in guards:
         row = catalog[guard_id]
@@ -459,8 +665,17 @@ def dispatch(root: Path, guards: list[str], catalog: dict, tier: str, ci_range: 
             continue
         # The working directory is the OWNING repository, not gk-core - see resolve_guard_script.
         script_base, script = found
-        argv = resolve_guard_args(guard_id, row, tier, ci_range, local_args, is_git,
-                                  script.suffix)
+        # THE ROW'S `repository` IS THE SUBJECT ROOT, and it is passed as `--root` rather than only used
+        # as a working directory, because a guard that takes `--root` reads its subject from it while its
+        # OWN file may live in another repository. `generated-seed` is exactly that shape: the script is
+        # gk-core's, the corpus is gk-data's. Passing only `cwd` would leave the guard measuring its
+        # declared trees against a repository that has none of them.
+        subject_root = resolve_guard_root(root, str(row["repository"]))
+        # THE RANGE FOLLOWS THE SUBJECT, not the caller. A guard dispatched into another repository is
+        # handed that repository's range, and the absence of one has already refused in main().
+        guard_range = guard_range_for(guard_id, row, root, ci_range, repo_ranges)
+        argv = resolve_guard_args(guard_id, row, tier, guard_range, local_args, is_git,
+                                  script.suffix, subject_root, script)
         extension = script.suffix.lower()
         started = time.monotonic()
         if extension == ".py":
@@ -557,6 +772,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ci-range", default="",
                         help="<base>..<head> for a CI run; required, because a missing range is not a "
                              "green range")
+    parser.add_argument("--repo-range", action="append", default=[], metavar="NAME=RANGE",
+                        help="the <base>..<head> to use for a guard whose registry row names repository "
+                             "NAME; repeatable. A commit range belongs to one repository's history, so a "
+                             "row declaring gk-data cannot be given this repository's range.")
     parser.add_argument("--root", type=Path, default=None)
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT,
                         help=f"seconds per guard (default {DEFAULT_TIMEOUT}; the original had NO timeout "
@@ -576,6 +795,12 @@ def main(argv: list[str] | None = None) -> int:
         guards = select(catalog, args.tier, args.only, args.skip, args.include_backlog)
         check_selection(guards, catalog, args.tier, args.only, args.include_backlog)
         check_scripts_exist(root, guards, catalog)
+        check_guard_repositories(root, guards, catalog)
+        repo_ranges = resolve_repo_ranges(args.repo_range, root)
+        # Every row that names ANOTHER repository must have a range for it, checked BEFORE dispatch so the
+        # answer is a named refusal rather than whichever guard consumed the missing piece first.
+        for guard_id in guards:
+            guard_range_for(guard_id, catalog[guard_id], root, ci_range, repo_ranges)
         report.stages.extend(("selection", "catalog"))
         absent = missing_interpreters([str(catalog[g]["script"]) for g in guards], args.only)
         report.missing_interpreters = absent
@@ -583,7 +808,8 @@ def main(argv: list[str] | None = None) -> int:
             report.environment_note = (f" (PATH lacks {', '.join(absent)}: a red guard that shells out "
                                        f"to one is an environment fault, not a verdict)")
         report.stages.append("interpreters")
-        report = dispatch(root, guards, catalog, args.tier, ci_range, local_args, args.timeout)
+        report = dispatch(root, guards, catalog, args.tier, ci_range, local_args, args.timeout,
+                         repo_ranges)
         report.ci_range = ci_range
         verdict, verdict_exit = summarise(report)
     except Refusal as refusal:

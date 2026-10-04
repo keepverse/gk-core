@@ -109,7 +109,20 @@ IGNORED_NAME_PATTERNS = (r"\.ledger\.json$", r"^data/seed/items/_runs/", r"^data
 # FOLDS CASE, because the original used `-match` and the patterns are lowercase paths.
 PROVENANCE_KEYS = ("model", "promptVersion", "batch")
 
-_NAME_ONLY = ("diff", "--name-only", "--diff-filter=ACMRD")
+# `--relative` IS LOAD-BEARING, and its absence is a measured green-over-nothing.
+#
+# `git diff --name-only` prints paths relative to the REPOSITORY root, always — not to the directory the
+# command ran in. The corpus repository is `gk-data`, whose trees live at `packs/fusion/data/seed/**`, so
+# a run rooted at the pack asked for `data/seed/items/` and received `packs/fusion/data/seed/items/`.
+# Every `TREES` pattern is ANCHORED with `^`, so not one of them could match, and the guard reported:
+#
+#     [guard-generated-seed] clean (43 changed file(s) inspected)      exit 0
+#
+# on a range that genuinely changed the corpus, with 0 of the 43 files reaching a single declared tree.
+# That is the "coverage claim about nothing" this guard exists to refuse, reached from the other
+# direction. `--relative` makes git print paths relative to the directory it was pointed at, which is this
+# guard's `--root`, so the paths it compares are the paths its patterns name.
+_NAME_ONLY = ("diff", "--name-only", "--relative", "--diff-filter=ACMRD")
 
 
 class Refusal(Exception):
