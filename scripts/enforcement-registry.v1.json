@@ -71,6 +71,13 @@
       "backlogModule": null,
       "localReason": null
     },
+    "index-marker-coverage": {
+      "script": "scripts/guard-index-marker-coverage.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
+    },
     "test-substrate": {
       "script": "scripts/guard-test-substrate.py",
       "tier": "ci",
