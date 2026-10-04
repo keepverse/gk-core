@@ -168,8 +168,10 @@ public class AnchorRowContractTests
     {
         // The eleven Str keys are ONE named guard, and the contract must be reading the reader's own
         // list rather than carrying eleven names of its own.
+        // pin: closed-vocabulary AnchorRowContract.StrFields — a twelfth Str key is a reviewed change
         Assert.Equal(11, AnchorRowContract.StrFields.Count);
         Assert.Equal(11, AnchorRowContract.StrFields.Distinct(StringComparer.Ordinal).Count());
+        // pin: closed-vocabulary AnchorRowContract.GuardNames — a new named guard is a reviewed change
         Assert.Equal(17, AnchorRowContract.GuardNames.Count);
         Assert.Equal(17, AnchorRowContract.GuardNames.Distinct(StringComparer.Ordinal).Count());
 
