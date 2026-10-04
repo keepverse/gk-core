@@ -255,6 +255,13 @@
       "status": "gating",
       "backlogModule": null,
       "localReason": null
+    },
+    "registry-append-safety": {
+      "script": "scripts/guard-registry-append-safety.py",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
     }
   },
   "verificationExemptions": [
@@ -759,6 +766,14 @@
       "source": "docs/DESIGN-GATE.md:219 - A citation nobody can open is not evidence, whatever it claims. `decision-citations` proves the target EXISTS; this proves it still SAYS what the citing sentence attributes to it. Those are different failures and one does not imply the other: inserting a row above a cited one leaves every citation below it openable and pointing at the wrong line, and three citations here once asserted 'the clock's decisions.md row exists' while resolving to a blank line. The guard fingerprints the cited line's CONTENT rather than its number, so a shift reds even where the renumbering is harmless.",
       "guards": [
         "citation-stability"
+      ],
+      "unguardableReason": null
+    },
+    {
+      "id": "registry-append-safety-has-one-safe-append-point",
+      "source": "A JSON registry cited BY LINE has exactly one safe insertion point, and nothing in the file says so. Measured: 63 citation instances across 36 documents name verification-boundaries.v1.json, enforcement-registry.v1.json or todo-shapes.v1.json by line number, resolving to 49 distinct keys, and a row inserted above a cited line keeps every citation syntactically valid while silently repointing it at different content. This guard fingerprints the CONTENT of every cited line rather than its number, refuses a citation pointing past the end of its file, and DERIVES each registry's single safe append point from the closing bracket of its append container - so the point is enforced by geometry instead of remembered from a commit message. Sibling of `citations-still-mean-what-they-claim`, which protects the two markdown indexes; this one protects the three registries, which that guard cannot see because it declares its subjects in its own closed tuple.",
+      "guards": [
+        "registry-append-safety"
       ],
       "unguardableReason": null
     }

@@ -7248,6 +7248,18 @@
         "citation-stability"
       ],
       "level": "module"
+    },
+    {
+      "id": "registry-append-safety-guard",
+      "kind": "owner",
+      "paths": [
+        "scripts/guard-registry-append-safety.py",
+        "scripts/registry-append-safety.v1.json"
+      ],
+      "guards": [
+        "registry-append-safety"
+      ],
+      "level": "module"
     }
   ],
   "knownRed": [
