@@ -22,10 +22,18 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FusionRpg.Data\FusionRpg.Data.csproj" />
     <ProjectReference Include="..\..\src\FusionRpg.Contracts\FusionRpg.Contracts.csproj" />
-    <!-- CreatureSpeciesImportCliTests launches this tool's apphost as a genuinely separate process.
-         Referencing it makes the test host's own build produce that apphost next to the test dll —
-         without it the test relied on a prebuilt bin/ that nothing in the build (or CI) created, so
-         it only passed where the tool happened to have been built by hand. -->
-    <ProjectReference Include="$(GkForgeRoot)tools\CreatureSpeciesImport\CreatureSpeciesImport.csproj" />
+    <!-- CreatureSpeciesImportCliTests launches this tool's apphost as a genuinely separate process, so
+         there is NO assembly reference here — `ReferenceOutputAssembly="false"` states the real
+         relationship instead of implying one that does not exist. The reference exists only so the
+         test host's own build produces that apphost next to the test dll; without it the test relied
+         on a prebuilt bin/ that nothing in the build (or CI) created, so it only passed where the tool
+         happened to have been built by hand.
+         Conditioned on $(GkForgeAvailable) so a standalone gk-core clone evaluates: the tool lives in
+         gk-forge, and an unconditioned reference to an absent sibling is what made
+         `dotnet build FusionRpg.slnx` fail outright in a clone. In a clone the test fails on a
+         missing executable, which says what is actually wrong; it is never counted as passing. -->
+    <ProjectReference Include="$(GkForgeRoot)tools\CreatureSpeciesImport\CreatureSpeciesImport.csproj"
+                      Condition="'$(GkForgeAvailable)' == 'true'"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

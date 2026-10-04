@@ -11,7 +11,18 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FusionRpg.Core\FusionRpg.Core.csproj" />
     <ProjectReference Include="..\..\tools\CombatSim\CombatSim.csproj" />
-    <ProjectReference Include="$(GkForgeRoot)tools\DominanceBaseline\DominanceBaseline.csproj" />
+    <!--
+      DominanceBaseline is gk-forge's project and this project SPAWNS its apphost (the Balance fixtures
+      run it as a separate process), so the relationship is build-order only and
+      ReferenceOutputAssembly="false" says so instead of implying an assembly dependency that does not
+      exist. Conditioned on $(GkForgeAvailable) so a standalone clone evaluates; an unconditioned
+      reference to an absent sibling is what made `dotnet build FusionRpg.slnx` fail in a clone.
+      Measured with `git grep FusionRpg.Tools -- tests`: this project has no compile-time use of any
+      gk-forge namespace.
+    -->
+    <ProjectReference Include="$(GkForgeRoot)tools\DominanceBaseline\DominanceBaseline.csproj"
+                      Condition="'$(GkForgeAvailable)' == 'true'"
+                      ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\tools\ProvePredictor\ProvePredictor.csproj" />
     <ProjectReference Include="..\..\tools\RealDataAggregate\RealDataAggregate.csproj" />
     <ProjectReference Include="..\..\tools\ResidualFitLoop\ResidualFitLoop.csproj" />

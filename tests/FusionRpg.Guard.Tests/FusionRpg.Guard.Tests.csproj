@@ -26,8 +26,14 @@
     <!-- Build-order only: ClassSystemBaselineRegenTests runs scripts/regen-class-system-baselines.ps1,
          which launches these tools with dotnet run and no build step, in the tests' own configuration. The
          reference makes building this project build them, so no test spawns a build and a fresh
-         checkout has the binaries (cold-process-test-build precedent). No assembly is referenced. -->
+         checkout has the binaries (cold-process-test-build precedent). No assembly is referenced.
+         The gk-forge one is additionally Conditioned on $(GkForgeAvailable): DominanceBaseline is
+         gk-forge's project, so a standalone clone cannot build it, and an unconditioned reference to
+         an absent sibling made the whole solution build fail. Same relationship as CombatSim above —
+         a binary the tests spawn, never a type they compile against. -->
     <ProjectReference Include="..\..\tools\CombatSim\CombatSim.csproj" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="$(GkForgeRoot)tools\DominanceBaseline\DominanceBaseline.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="$(GkForgeRoot)tools\DominanceBaseline\DominanceBaseline.csproj"
+                      Condition="'$(GkForgeAvailable)' == 'true'"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

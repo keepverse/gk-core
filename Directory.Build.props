@@ -13,6 +13,36 @@
   </PropertyGroup>
 
   <!--
+    ── gk-forge availability, the ONE switch that gates every cross-repository reference ───────────
+    A path is configuration (A8), so nothing here names a machine: `GkForgeRoot` above is a RELATIVE
+    sibling hop and an explicit -p:GkForgeRoot= outranks it. This only asks whether whatever that
+    resolves to actually exists, and publishes the answer as a boolean a csproj can Condition on.
+
+    WHY IT IS NEEDED. gk-core is a standalone repository and must build with every sibling absent, but
+    seven ProjectReferences pointed at `$(GkForgeRoot)tools/...` with NO Condition. In an isolated clone
+    those resolve to a directory that does not exist: MSBuild emitted MSB9008 for each and
+    `dotnet build FusionRpg.slnx` failed. Measured in a clone at fa21ebc: exit 1, one hard error
+    (CorpusDumpTests.cs CS0234 on namespace FusionRpg.Tools) and eight MSB9008 warnings across four
+    projects — one failure taking down the whole graph.
+
+    WHY A BOOLEAN AND NOT A PER-REFERENCE CONDITION. Seven sites each re-deriving "does the sibling
+    exist" is seven places to get it wrong, and the failure mode is silent: a Condition written against
+    the wrong root drops a reference nobody notices until a tool binary goes stale. One switch, read by
+    every consumer, is the only form where the answer is the same answer everywhere.
+
+    WHAT THIS DOES NOT DO. It does not make the dependency disappear — it makes it HONEST. A reference
+    that is Conditioned on the sibling's presence is still a dependency, and the one gk-core project
+    that genuinely compiles against gk-forge's code is called out by name in
+    tests/FusionRpg.Core.Tests/FusionRpg.Core.Tests.csproj and enforced by guard-repo-boundary.py's
+    B4 rule, so the residual cannot quietly become permanent. See AGENTS.md §"Standalone" for the
+    standing decision and what closing it properly would require.
+  -->
+  <PropertyGroup>
+    <GkForgeAvailable Condition="'$(GkForgeAvailable)' == '' and Exists('$(GkForgeRoot)')">true</GkForgeAvailable>
+    <GkForgeAvailable Condition="'$(GkForgeAvailable)' == ''">false</GkForgeAvailable>
+  </PropertyGroup>
+
+  <!--
     Apply the repo-wide test hang guard (test.runsettings) to every test project, so a
     local `dotnet test` cannot block forever with no report. CI passes blame-hang
     explicitly; this makes the same protection the default for everyone else.

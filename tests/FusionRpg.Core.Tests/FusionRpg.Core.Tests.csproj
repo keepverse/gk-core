@@ -20,7 +20,42 @@
          needs the DAL and the tool's own writer/reader, same shape FusionRpg.Data.Tests already
          has for RpgStore, just scoped to this one module. -->
     <ProjectReference Include="..\..\src\FusionRpg.Data\FusionRpg.Data.csproj" />
-    <ProjectReference Include="$(GkForgeRoot)tools\CreatureCorpusDump\CreatureCorpusDump.csproj" />
+    <!--
+      THE ONE CROSS-REPOSITORY COMPILE DEPENDENCY LEFT IN gk-core, and it is recorded rather than
+      quietly conditioned away.
+
+      CorpusDumpTests.cs is the only file in the whole gk-core test tree that compiles against a
+      gk-forge namespace — measured with `git grep FusionRpg.Tools -- tests`, whose other hits
+      (RpgSim, FileMove, SquadHarness) are all gk-core's own tools. So unlike the five build-order
+      references below, this one cannot become ReferenceOutputAssembly="false": the test calls
+      CorpusReader/DumpWriter and constructs DumpAlmanacRow in process.
+
+      The three options were weighed and this is the fourth:
+        (a) MOVE CorpusReader + DumpWriter into gk-core. Architecturally the RIGHT direction — every
+            one of the seven gk-forge projects references gk-core, so each of these edges is a project
+            cycle, and gk-core ALREADY owns the dump's record shapes in
+            src/FusionRpg.Core/Creatures/Generation/DumpEnvelope.cs, whose own docstring says they are
+            "held here, next to the game code rather than inside the console tool". The move finishes
+            a relocation that was started correctly and stopped halfway. It is NOT DONE because a move
+            is a two-repository edit: gk-forge's tools/CreatureCorpusDump must drop the two files and
+            keep Program.cs, and gk-core's fence does not reach gk-forge. Copying them here instead
+            would leave TWO copies of the renderer, and then this test would validate a copy production
+            never runs — a green test proving nothing, which is worse than the reference it replaced.
+        (b) SHELL OUT to the apphost, as the nine sibling fixtures already do. Rejected on the
+            repository's own testing substrate rule: the tool's default mode takes a server DATA DIR,
+            so the in-memory DataTestStore this class is built around would have to become a real
+            on-disk SQLite database — and "disk only when the disk is the thing under test" is a hard
+            rule here. Here the DUMP TREE is under test; the database is a fixture.
+        (c) DELETE the coverage. Not on the table: this file is the module's whole behavioural contract
+            (byte-identical rerun, manifest hash sensitivity, CJK non-escaping, null-vs-absent).
+
+      So the reference is Conditioned on the sibling being present, the test file is excluded from
+      compilation under the SAME condition, and guard-repo-boundary.py's B4 rule fails if either half is
+      ever changed alone. In a workspace nothing changes. In a standalone clone the file is absent and
+      THAT IS VISIBLE — it is not silently skipped, and it is not counted as passing.
+    -->
+    <ProjectReference Include="$(GkForgeRoot)tools\CreatureCorpusDump\CreatureCorpusDump.csproj"
+                      Condition="'$(GkForgeAvailable)' == 'true'" />
     <!-- Cold-process tool fixtures (2026-09-12). Nine test classes shell out to these tools with a
          no-build Release invocation, but nothing ever built them: the tool bin folders are untracked
          and the test project did not reference them, so CI (and any clean clone) either ran a stale
@@ -30,17 +65,17 @@
          Referencing each tool makes `dotnet test` build it in the same configuration, so the
          no-build invocation finds a binary that matches the source. This mirrors the apphost
          convention FusionRpg.AtomImporter.Tests established for the same reason. -->
-    <ProjectReference Include="$(GkForgeRoot)tools\DominanceBaseline\DominanceBaseline.csproj" />
+    <ProjectReference Include="$(GkForgeRoot)tools\DominanceBaseline\DominanceBaseline.csproj" Condition="'$(GkForgeAvailable)' == 'true'" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\tools\ResidualFitLoop\ResidualFitLoop.csproj" />
     <ProjectReference Include="..\..\tools\RealDataAggregate\RealDataAggregate.csproj" />
     <ProjectReference Include="..\..\tools\CombatSim\CombatSim.csproj" />
-    <ProjectReference Include="$(GkForgeRoot)tools\CreatureQualityReport\CreatureQualityReport.csproj" />
+    <ProjectReference Include="$(GkForgeRoot)tools\CreatureQualityReport\CreatureQualityReport.csproj" Condition="'$(GkForgeAvailable)' == 'true'" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\tools\ProveAptitude\ProveAptitude.csproj" />
     <!-- ProvePredictor had no test that would notice it breaking until solid-remediation T1.8;
          referencing it here is what makes its apphost land beside the test dll, the same
          pattern CombatSim and ProveAptitude already use. -->
     <ProjectReference Include="..\..\tools\ProvePredictor\ProvePredictor.csproj" />
-    <ProjectReference Include="$(GkForgeRoot)tools\CreatureSpeciesGen\CreatureSpeciesGen.csproj" />
+    <ProjectReference Include="$(GkForgeRoot)tools\CreatureSpeciesGen\CreatureSpeciesGen.csproj" Condition="'$(GkForgeAvailable)' == 'true'" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
     <!-- These have no Unity/Harmony/BepInEx deps (pure Core types only) — compile for unit tests
@@ -49,6 +84,20 @@
          of FileRpgConfig.cs. PatronAuraOverlay.cs itself was removed 2026-09-06 (patron-absorption,
          `seed-to-concrete` T6.2) — its combat math moved to the compiled-atom grant path. -->
     <Compile Include="..\FusionRpg.Data.Tests\DataTestStore.cs" Link="TestSupport\DataTestStore.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--
+      The file half of the ONE cross-repository compile dependency, gated by the SAME Condition as the
+      reference above — the two must move together, which is what guard-repo-boundary.py B4 asserts.
+
+      It is excluded rather than left to fail compilation, and the difference matters: an unhandled
+      CS0234 in this file took down FusionRpg.Core.Tests and with it every assembly downstream, which
+      is how one sibling's absence turned into 9,615 failing tests whose names said nothing about the
+      real cause. Excluding it keeps the project honest about what it can still test. The coverage is
+      NOT deleted — the file is committed, byte for byte, and every one of its cases runs in a
+      workspace, where GkForgeAvailable is true.
+    -->
+    <Compile Remove="Creatures\CorpusDumpTests.cs" Condition="'$(GkForgeAvailable)' != 'true'" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\fixtures\effects\**\*" Link="fixtures\effects\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />

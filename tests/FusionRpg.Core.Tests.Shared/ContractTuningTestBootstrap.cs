@@ -117,9 +117,6 @@ internal static class ContractTuningTestBootstrap
         // (walk up to the dir holding gk-fusion/src/FusionRpg.Injector), never from the CWD.
         // v2 (AE1.4): the shipped version production loads — a test bootstrap on v1 would hide a
         // reader/publish split.
-        FusionRpg.Core.Actions.ActionBaseTuningHub.Configure(
-            FusionRpg.Core.Actions.ActionBaseTuningLoader.Parse(
-                File.ReadAllText(Path.Combine(CoreRoot(), "data", "tuning", "action-base.v2.json"))));
         SummoningTuningHub.Configure(DefaultSummoning);
         WorldAiPolicy.Configure(DefaultAi);
         VfxTuningHub.Configure(DefaultVfx);
@@ -127,23 +124,70 @@ internal static class ContractTuningTestBootstrap
         PowerTuningHub.Configure(DefaultPower);
         RungPolicy.Configure(DefaultActionRungs);
         ItemsTuningHub.Configure(DefaultItems);
+
+        // ── THE FIVE ROOT-RESOLVING CONFIGURES, and why they are not inline above ───────────────────
+        //
+        // These five read a FILE through a root resolver, and they used to sit inline in this
+        // [ModuleInitializer]. That made a missing sibling an ASSEMBLY-WIDE failure: a
+        // DirectoryNotFoundException out of a module initializer surfaces as a
+        // TypeInitializationException against whichever test happened to touch the type first, so
+        // every test in the assembly — including the thousands that read no content at all — was
+        // reported as failing for a reason that named neither gk-data nor the pack. Measured in an
+        // isolated clone at fa21ebc: 9,615 of 10,024 tests failed, and the number said "everything",
+        // which is the one reading that carries no information.
+        //
+        // THE THROW IS NOT BEING WEAKENED. KeepverseRoots.Content()/Core() still throw exactly as
+        // they do, and a test that actually needs one of these five registries still fails — from
+        // the hub's own "has not been configured" error, at the test that needed it. What moved is
+        // only WHERE the absence is discovered: from "before any test in the assembly can run" to
+        // "at the first test that genuinely reads the content". That is the placement the owner
+        // asked about, and this is the answer: the throw is right, a module initializer is the wrong
+        // place to reach for a root, and the lazy-per-need shape is already the house pattern
+        // (ParamParityGuardTests stores Func<string> for the same reason).
+        //
+        // Where the content IS reachable — a workspace, or any clone with gk-data beside it — every
+        // branch below takes the same path it took before, so this is inert there.
+        ConfigureRootedHubs();
+    }
+
+    /// <summary>Why the five root-resolved hubs were skipped, or null when they were configured.
+    /// Exposed so a test can assert that an absent content pack is REPORTED rather than silently
+    /// leaving a hub unconfigured — the difference between an honest red and a green that proves
+    /// nothing.</summary>
+    internal static string? RootResolutionRefusal { get; private set; }
+
+    static void ConfigureRootedHubs()
+    {
+        string content;
+        try
+        {
+            content = KeepverseRoots.Content();
+        }
+        catch (Exception ex) when (ex is DirectoryNotFoundException or IOException or UnauthorizedAccessException)
+        {
+            RootResolutionRefusal =
+                "CONTENT-ROOT-UNREACHABLE: the four authored content registries below were NOT "
+                + "configured because no content pack resolves from this checkout. " + ex.Message;
+            return;
+        }
+
         // commander-identity SE4.2/SE4.3: the process-wide commander directory, read from the real
         // authored registry exactly like production does (Core never touches a path).
         FusionRpg.Core.Commanders.CommanderDirectoryHub.Configure(
             FusionRpg.Core.Commanders.DataCommanderDirectory.Parse(
                 File.ReadAllText(Path.Combine(
-                    KeepverseRoots.Content(), "data", "seed", "commanders", "_registry", "default-commanders.v1.json"))));
+                    content, "data", "seed", "commanders", "_registry", "default-commanders.v1.json"))));
         // identity-rename T13: the lead-names registry, same convention — a world template names
         // its empires from it and an empty save is named from it, so every test that builds either
         // needs it configured before production's own boot would.
         FusionRpg.Core.Narrative.LeadNamesHub.Configure(FusionRpg.Core.Narrative.LeadNames.Parse(
                 File.ReadAllText(Path.Combine(
-                    KeepverseRoots.Content(), "data", "seed", "narrative", "_registry", "names.en.v1.json"))));
+                    content, "data", "seed", "narrative", "_registry", "names.en.v1.json"))));
         // save-identity SE4.12: the authored new-save registry, same convention.
         FusionRpg.Core.Saves.NewSaveEmpiresHub.Configure(
             FusionRpg.Core.Saves.NewSaveEmpires.Parse(
                 File.ReadAllText(Path.Combine(
-                    KeepverseRoots.Content(), "data", "seed", "saves", "_registry", "new-save-empires.v1.json"))));
+                    content, "data", "seed", "saves", "_registry", "new-save-empires.v1.json"))));
         // species-gear-chain T34b: the trophy id registry, read from the real committed generated
         // corpus exactly like production does (Core never reads a file itself) — every test in this
         // assembly that names a real trophy id (e.g. "trophy.species.abyssswordstar.1") resolves it
@@ -151,7 +195,23 @@ internal static class ContractTuningTestBootstrap
         FusionRpg.Core.Items.Materials.MaterialCatalog.ConfigureTrophyRegistry(
             FusionRpg.Core.Items.Materials.MaterialCatalog.ParseTrophyRegistryIds(
                 File.ReadAllText(Path.Combine(
-                    KeepverseRoots.Content(), "data", "seed", "items", "materials", "trophy-registry.json"))));
+                    content, "data", "seed", "items", "materials", "trophy-registry.json"))));
+
+        // action-base reads gk-core's OWN data/tuning, so it is resolved separately and last: it is
+        // the one of the five that a standalone clone should still be able to satisfy, and keeping it
+        // out of the content block means a missing content pack cannot take it down with the other four.
+        try
+        {
+            FusionRpg.Core.Actions.ActionBaseTuningHub.Configure(
+                FusionRpg.Core.Actions.ActionBaseTuningLoader.Parse(
+                    File.ReadAllText(Path.Combine(CoreRoot(), "data", "tuning", "action-base.v2.json"))));
+        }
+        catch (Exception ex) when (ex is DirectoryNotFoundException or IOException or UnauthorizedAccessException)
+        {
+            RootResolutionRefusal =
+                "CORE-ROOT-UNREACHABLE: action-base.v2.json was NOT configured because gk-core could "
+                + "not resolve its own root from this checkout. " + ex.Message;
+        }
     }
 
     public static readonly ContractTuning DefaultContracts = new(
