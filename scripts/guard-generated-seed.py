@@ -121,6 +121,23 @@ class Refusal(Exception):
         self.detail = detail
 
 
+#: THE RESOLVER, LOADED FROM THIS REPOSITORY'S OWN lib/ and never reimplemented here — a second
+#: private walk is the thing gk-core's own test-content-root guard refuses, and `owning_base` is what
+#: every sibling guard uses to find a path across the split.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+try:
+    from keepverse_roots import owning_base  # noqa: E402  (the insert above must run first)
+except ImportError as _resolver_error:      # a fixture, or a repository missing scripts/lib/
+    print(f"[{GUARD_ID}] WARNING: the workspace resolver is unavailable ({_resolver_error}); paths resolve "
+          f"against --root only. In a real repository scripts/lib/keepverse_roots.py is missing, and every "
+          f"cross-repository tree would then be reported absent — which is a refusal, not a scan.",
+          file=sys.stderr)
+
+    def owning_base(rel: str, root: Path | None = None) -> Path | None:
+        base = Path(root) if root is not None else Path(".")
+        return base if (base / rel).exists() else None
+
+
 def _git(root: Path, args: list[str]) -> list[str]:
     """Run git, return its trimmed non-empty stdout lines, or REFUSE.
 
@@ -251,7 +268,18 @@ def declared_trees_present(root: Path) -> list[str]:
         literal = re.split(r"[$^*+?()\[\]{}|\\]", body, maxsplit=1)[0].strip("/")
         if not literal:
             continue
-        if not (root / literal).is_dir():
+        # RESOLVED AGAINST THE REPOSITORY THAT OWNS IT, so the guard inspects the corpus in a WORKSPACE
+        # instead of refusing there. This is the pattern every sibling guard already uses
+        # (`owning_base`), and it is why run_guards.py carries a `_guard_script_bases` resolver at all:
+        # the SCRIPT lives in gk-core and its SUBJECT does not.
+        #
+        # Without it this guard is red in the workspace too — measured at b9499a1, `run_guards.py
+        # --tier ci` reporting `guards failed: generated-seed` with GENERATED-TREES-ABSENT on a machine
+        # where gk-data sits right beside gk-core. A refusal where an answer exists is the same defect as
+        # the green-over-nothing, in the opposite direction, and it is the more expensive of the two: it
+        # turns a working gate red and trains the reader to pass `--only` around it.
+        base = owning_base(literal, root) or root
+        if not (base / literal).is_dir():
             missing.append(literal)
     # PARTIAL COVERAGE IS ITS OWN ANSWER, AND IT IS NOT A REFUSAL. A tree is present when its own
     # directory exists, so a root carrying SOME of the corpus and not the rest is a checkout that can be
