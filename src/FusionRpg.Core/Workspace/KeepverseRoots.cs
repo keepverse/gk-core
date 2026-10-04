@@ -66,34 +66,51 @@ public static class KeepverseRoots
             if (Directory.Exists(Path.Combine(root, "gk-core")) &&
                 Directory.Exists(Path.Combine(root, "gk-data")))
                 return (false, root);
-            // ── A STANDALONE gk-core CLONE, and why it is not the legacy probe ────────────────────────
-            // The owner's ruling is that gk-core must be genuinely standalone, and a standalone clone
-            // matches NEITHER probe above: it carries FusionRpg.slnx and data/tuning, but not data/seed
-            // (that is gk-data's), and it is not a directory holding gk-core/ beside gk-data/ because it
-            // IS the gk-core. So Detect() returned null and Detected() threw for EVERY caller.
-            //
-            // MEASURED, at 638072b in an isolated clone with every sibling absent: `dotnet test` reported
-            // 12,435 of 12,556 failures carrying `KeepverseRoots.cs:line 292` — the Detected() throw —
-            // and the count said "everything", which is the one reading that carries no information. The
-            // two accessors that legitimately CAN answer in a clone were failing with the ones that
-            // genuinely cannot, which is why the refusal was worth keeping but not worth firing here.
-            //
-            // WHAT THIS RECOGNISES IS NARROW AND DELIBERATE: `src/` plus `data/tuning/` is what makes a
-            // directory the ENGINE repository, and gk-core owns exactly those two. It is deliberately
-            // NOT data/seed — recognising a repository that claims to carry the derived corpus is the
-            // misdetection the data/tuning refinement above already fixed once, and reintroducing it in
-            // the other direction would undo that.
-            //
-            // ReportED AS Legacy=false with Root = this directory, so Core() returns it (that is what
-            // Core() means: the repository holding src/ and data/tuning/) while Content(), Fusion(),
-            // Forge() and Web() still REFUSE - each for its own named reason, because none of them can be
-            // answered here. A clone is not a partial workspace pretending to be a whole one; it is a
-            // whole engine repository with the parts that are not gk-core genuinely absent, and saying so
-            // per accessor is more useful than one throw that cannot say which.
+            dir = dir.Parent;
+        }
+        return null;
+    }
+
+    /// <summary>The engine repository itself, by the shape only gk-core has: <c>src/</c> +
+    /// <c>data/tuning/</c> beside <c>FusionRpg.slnx</c>. Null when no such directory is above
+    /// <paramref name="start"/>.
+    ///
+    /// <para><b>WHY THIS IS NOT A THIRD PROBE INSIDE <see cref="Detect"/>.</b> It was, and it broke
+    /// the workspace: gk-core satisfies this shape at its OWN root, so a walk upward from inside gk-core
+    /// stopped there and returned "standalone" before it ever reached the directory one level up that
+    /// actually holds <c>gk-core/</c> beside <c>gk-data/</c>. Every content path then resolved against
+    /// gk-core instead of the gk-data pack. Caught by running the workspace suite — the failure was
+    /// <c>86 failed / 0 passed</c> in <c>DungeonTestFiles</c>, all of them throwing
+    /// <see cref="Content"/>, which is a workspace that had stopped working.</para>
+    ///
+    /// <para><b>So it is a FALLBACK, reached only after <see cref="Detect"/> has raised</b> — which is
+    /// exactly the shape the Python <c>core_root()</c> already had, and the two now agree because they
+    /// are guarded by the same idea: a layout that is only <i>absent siblings</i> must never outrank a
+    /// layout that was actually detected. NEAREST WINS is not negotiable, and this is what it is
+    /// protecting.</para>
+    ///
+    /// <para><b>WHAT IT RECOGNISES IS NARROW AND DELIBERATE.</b> <c>src/</c> plus <c>data/tuning/</c> is
+    /// what makes a directory the engine repository, and gk-core owns exactly those two. It is
+    /// deliberately NOT <c>data/seed</c>: recognising a repository that claims to carry the derived
+    /// corpus is the misdetection the <c>data/tuning</c> refinement in <see cref="Detect"/> fixed once,
+    /// and reintroducing it in the other direction would undo that.</para>
+    ///
+    /// <para><b>THE MEASUREMENT THAT MADE IT NECESSARY.</b> At 638072b, in an isolated clone with every
+    /// sibling absent, <c>dotnet test</c> reported 12,435 of 12,556 failures carrying
+    /// <c>KeepverseRoots.cs:line 292</c> — the <see cref="Detected"/> throw — and the count said
+    /// "everything", which is the one reading that carries no information. <see cref="Core"/> can answer
+    /// in a clone and was failing with the accessors that genuinely cannot.</para>
+    /// </summary>
+    public static string? StandaloneCore(string? start = null)
+    {
+        var dir = new DirectoryInfo(StartAt(start));
+        while (dir is not null)
+        {
+            var root = dir.FullName;
             if (File.Exists(Path.Combine(root, "FusionRpg.slnx")) &&
                 Directory.Exists(Path.Combine(root, "src")) &&
                 Directory.Exists(Path.Combine(root, "data", "tuning")))
-                return (false, root);
+                return root;
             dir = dir.Parent;
         }
         return null;
@@ -107,17 +124,6 @@ public static class KeepverseRoots
         if (Env("KEEPVERSE_CONTENT_ROOT") is { } env) return env;
         var (legacy, root) = Detected(start);
         if (legacy) return root;
-        // A standalone clone is not a workspace with a missing pack; it is a repository that does not
-        // hold the corpus AT ALL, and the two want different sentences. Measured in a clone: the pack
-        // message said "the workspace was detected at <gk-core clone>", which is false and sent the
-        // reader looking for a misconfigured pack name in a repository that has no pack directory to
-        // configure.
-        if (Directory.Exists(Path.Combine(root, "src")) && !Directory.Exists(Path.Combine(root, "gk-data")))
-            throw new DirectoryNotFoundException(
-                $"No content root: '{root}' is a standalone gk-core clone, which carries src/ and " +
-                $"data/tuning/ but not the derived corpus (gk-data). The corpus is not missing here, it " +
-                $"is not part of this repository. Set KEEPVERSE_CONTENT_ROOT to read one, or work in the " +
-                "Keepverse workspace where gk-data sits beside gk-core.");
         var pack = Path.Combine(root, "gk-data", "packs", Env("KEEPVERSE_PACK") ?? DefaultPack);
         if (!Directory.Exists(pack))
             throw new DirectoryNotFoundException(
@@ -131,13 +137,24 @@ public static class KeepverseRoots
     public static string Core(string? start = null)
     {
         if (Env("KEEPVERSE_CORE_ROOT") is { } env) return env;
-        var (legacy, root) = Detected(start);
-        if (legacy) return root;
-        // A standalone clone DETECTS at the engine repository itself, so the workspace's "append the
-        // repository name" hop does not apply. `src/` is the discriminator: a workspace root holds
-        // gk-core/ and gk-data/ and no src/, so this cannot fire in one.
-        if (Directory.Exists(Path.Combine(root, "src"))) return root;
-        return Path.Combine(root, "gk-core");
+        try
+        {
+            var (legacy, root) = Detected(start);
+            return legacy ? root : Path.Combine(root, "gk-core");
+        }
+        catch (DirectoryNotFoundException)
+        {
+            // No layout at all. A STANDALONE CLONE IS ONE, and it is this repository: it carries
+            // FusionRpg.slnx, src/ and data/tuning/. Returning it here is what makes `dotnet build` and
+            // the content-free tests work with every sibling absent.
+            //
+            // The fallback is reached ONLY after Detect() has failed, which is the property that keeps a
+            // workspace working: see StandaloneCore()'s own comment for the regression that putting this
+            // probe inside Detect() caused, and why "a layout that is only absent siblings must never
+            // outrank a detected layout" is the rule rather than a preference.
+            if (StandaloneCore(start) is { } standalone) return standalone;
+            throw;
+        }
     }
 
     /// <summary>
