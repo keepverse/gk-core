@@ -59,7 +59,11 @@ guard's baseline is a different decision with its own proof burden.
 FAILS CLOSED. Every prerequisite is a named refusal with exit 2, never a traceback and never a green
 run. This guard needs BOTH roots and says which one is missing: the registries are gk-core's own, but
 all 63 citation instances live in the workspace root's `docs/` and `tasks/`, so a standalone gk-core
-clone can supply the targets and not the citers. It writes nothing except under `--update`.
+clone can supply the targets and not the citers. It writes nothing except under `--update`, and it
+writes with `newline=""` because Python's default text mode translates `\n` to `\r\n` on Windows -
+which is how a first version of `--update` left 59 CR bytes in a file `.gitattributes` mandates as LF.
+Git normalises them on commit, so the damage is invisible in the blob and permanent in the working
+copy.
 
 ONE REGISTRY'S CITATIONS ARE ALREADY WRONG, AND THE GUARD SAYS SO ON EVERY RUN. Measured, not
 assumed: all seven `enforcement-registry.v1.json` citations resolve to different content than they
@@ -523,7 +527,8 @@ def main(argv: "list[str] | None" = None) -> int:
                   file=sys.stderr)
             return 2
         BASELINE.write_text(json.dumps({"fingerprints": current, "unverified": []},
-                                       indent=1, sort_keys=True) + "\n", encoding="utf-8")
+                                       indent=1, sort_keys=True) + "\n",
+                            encoding="utf-8", newline="")
         print(f"re-baselined {len(current)} citation(s) -> {BASELINE.name}")
         return 0
 
@@ -566,7 +571,8 @@ def main(argv: "list[str] | None" = None) -> int:
         # clearing a debt declaration, or a debt could be erased by re-baselining - which is the one
         # thing a re-baseline must never be able to do.
         stored["fingerprints"] = current
-        BASELINE.write_text(json.dumps(stored, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+        BASELINE.write_text(json.dumps(stored, indent=1, sort_keys=True) + "\n",
+                            encoding="utf-8", newline="")
         print(f"re-baselined {len(current)} citation(s) -> {BASELINE.name}")
         print(f"  added   {len(added)}: {', '.join(added) if added else '(none)'}")
         print(f"  changed {len(modified)}: {', '.join(modified) if modified else '(none)'}")
