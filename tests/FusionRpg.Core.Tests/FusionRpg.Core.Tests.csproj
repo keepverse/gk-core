@@ -65,17 +65,45 @@
          Referencing each tool makes `dotnet test` build it in the same configuration, so the
          no-build invocation finds a binary that matches the source. This mirrors the apphost
          convention FusionRpg.AtomImporter.Tests established for the same reason. -->
-    <ProjectReference Include="$(GkForgeRoot)tools\DominanceBaseline\DominanceBaseline.csproj" Condition="'$(GkForgeAvailable)' == 'true'" ReferenceOutputAssembly="false" />
+    <!-- No ReferenceOutputAssembly here either, for the reason the CreatureQualityReport row above
+         gives in full: this project's apphost (DominanceBaseline.exe) is copied but its .dll is not, so a
+         process launched from this directory dies with "The application to execute does not exist". The
+         CONDITION is what keeps the standalone case honest; the assembly relationship is not. -->
+    <ProjectReference Include="$(GkForgeRoot)tools\DominanceBaseline\DominanceBaseline.csproj" Condition="'$(GkForgeAvailable)' == 'true'" />
     <ProjectReference Include="..\..\tools\ResidualFitLoop\ResidualFitLoop.csproj" />
     <ProjectReference Include="..\..\tools\RealDataAggregate\RealDataAggregate.csproj" />
     <ProjectReference Include="..\..\tools\CombatSim\CombatSim.csproj" />
-    <ProjectReference Include="$(GkForgeRoot)tools\CreatureQualityReport\CreatureQualityReport.csproj" Condition="'$(GkForgeAvailable)' == 'true'" ReferenceOutputAssembly="false" />
+    <!-- ReferenceOutputAssembly="false" IS NOT ENOUGH FOR AN APPHOST, AND THE TEST PROVES IT.
+
+         With the default (true), building this project copies the tool's .dll AND its apphost .exe
+         beside the test dll. With it false, MSBuild still BUILDS the project but copies NOTHING — and
+         ToolProcess.StartInfo launches the .exe, which is a native host that loads `<tool>.dll` from its
+         own directory. So the exe lands, the dll does not, and the tool dies on first launch:
+
+             The application to execute does not exist:
+             ...\bin\Debug\net8.0\CreatureQualityReport.dll
+
+         Measured: at 66258d0 (default true) the clone-side output carried BOTH exe and dll for all
+         three gk-forge tools; with false it carries exe only. Four tests went red on it
+         (CreatureQualityReportTests x2, CreatureSpeciesGenExplainTests x2), all with exit
+         -2147450726 and empty stdout/stderr — a failure that names neither the tool nor the cause.
+
+         `Private=false` (not `ReferenceOutputAssembly`) is the flag that means "build it, do not
+         reference its assembly, but do NOT copy its output here" — and combined with the apphost
+         convention the other fixtures use, the tool must be launched through `dotnet <dll>` instead.
+         ToolProcess already has that fallback; what it needs is for the dll to EXIST. So the reference
+         goes back to the default (true) and the CONDITION does the standalone work: the dependency is
+         declared plainly, and a clone simply does not build a tool it cannot run.
+    -->
+    <ProjectReference Include="$(GkForgeRoot)tools\CreatureQualityReport\CreatureQualityReport.csproj"
+                      Condition="'$(GkForgeAvailable)' == 'true'" />
+    <ProjectReference Include="$(GkForgeRoot)tools\CreatureSpeciesGen\CreatureSpeciesGen.csproj"
+                      Condition="'$(GkForgeAvailable)' == 'true'" />
     <ProjectReference Include="..\..\tools\ProveAptitude\ProveAptitude.csproj" />
     <!-- ProvePredictor had no test that would notice it breaking until solid-remediation T1.8;
          referencing it here is what makes its apphost land beside the test dll, the same
          pattern CombatSim and ProveAptitude already use. -->
     <ProjectReference Include="..\..\tools\ProvePredictor\ProvePredictor.csproj" />
-    <ProjectReference Include="$(GkForgeRoot)tools\CreatureSpeciesGen\CreatureSpeciesGen.csproj" Condition="'$(GkForgeAvailable)' == 'true'" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
     <!-- These have no Unity/Harmony/BepInEx deps (pure Core types only) — compile for unit tests

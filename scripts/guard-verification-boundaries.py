@@ -390,7 +390,7 @@ def check_projects(root: Path, projects: dict, failures: list[str],
                     continue
                 if not path_exists_anywhere(member, root):
                     owner = _owning_repository(member, root)
-                    if owner is None:
+                    if owner is None or owner == UNATTRIBUTED:
                         failures.append(f"project file missing: {pid}: {member}")
                     elif foreign is not None:
                         foreign[owner].append(f"project {pid}: {member}")
@@ -399,13 +399,12 @@ def check_projects(root: Path, projects: dict, failures: list[str],
                 failures.append(f"invalid project path: {pid}")
                 continue
             if not path_exists_anywhere(value, root):
-                # A `tests/FusionRpg.Launcher.Tests/...` entry names a gk-fusion project and a
-                # `tests/FusionRpg.TreeBinder.Tests/...` entry names gk-forge's, while `tests/` is also
-                # gk-core's own — so this cannot be decided by prefix and is never decided by one.
-                # `_owning_repository` names the siblings it knows and returns UNATTRIBUTED otherwise,
-                # and every unattributable row is REPORTED rather than called stale.
+                # `tests/` is gk-core's own AND a sibling's, so a csproj under it cannot be attributed by
+                # prefix. An unattributable row is a FINDING (see UNATTRIBUTED); a NAMED absent sibling is
+                # counted. A `tests/FusionRpg.TreeBinder.Tests/...` entry therefore reports as a missing
+                # project in a clone, which is the honest reading: this repository cannot see gk-forge.
                 owner = _owning_repository(value, root)
-                if owner is None:
+                if owner is None or owner == UNATTRIBUTED:
                     failures.append(f"project file missing: {pid}")
                 elif foreign is not None:
                     foreign[owner].append(f"project {pid}: {value}")
@@ -528,7 +527,10 @@ def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[
             # repositories named; absent-and-local is a finding.
             if vb.exact_pattern(str(pattern)) and not path_exists_anywhere(str(pattern), root):
                 owner_repo = _owning_repository(str(pattern), root)
-                if owner_repo is None:
+                # A NAMED sibling that is absent, and nothing else, is an absent sibling. An
+                # unattributable path is a finding: this repository does not know who owns it, and
+                # "unknown" must not read as "someone else has it".
+                if owner_repo is None or owner_repo == UNATTRIBUTED:
                     failures.append(f"stale exact path: {bid}: {pattern}")
                 else:
                     foreign[owner_repo].append(f"{bid}: {pattern}")
@@ -754,6 +756,15 @@ def check_known_red(root: Path, doc: dict, failures: list[str]) -> None:
 #: `None` in the value position means "this repository's own" — the prefix belongs to gk-core, so a
 #: missing path there is a genuine stale row and stays a finding.
 FOREIGN_PREFIX_OWNERS: tuple[tuple[str, str], ...] = (
+    # ONLY a repository this guard can RECOGNISE may be reported as an absent sibling. A fixture root,
+    # or any path no sibling could carry, is gk-core's own row and a missing file there is a genuine
+    # stale path.
+    #
+    # "src/FusionRpg.Injector" and "src/FusionRpg.Launcher" are what the split moved out; `src/Fake` and
+    # every other name is not in this list and therefore falls through to the stale finding. That is not
+    # a special case for a test: it is the general rule, stated as a prefix list rather than as "is this
+    # row's owner checkable", because a check that asks whether a row's OWNER is reachable must first be
+    # able to name the owner, and `src/Fake` names nothing.
     ("src/FusionRpg.Injector", "gk-fusion"),
     ("src/FusionRpg.Launcher", "gk-fusion"),
     ("web/fusion-rpg-web", "gk-web"),
@@ -776,6 +787,16 @@ FOREIGN_PREFIX_OWNERS: tuple[tuple[str, str], ...] = (
 #: files (`game-profiles.json`, `scripts/audit-doc-citations.py`, `.agents/skills/**`). These have no
 #: prefix that discriminates — `tests/` is gk-core's own AND gk-forge's — so no honest prefix rule can
 #: place them, and inventing one would be a guess about a sibling's layout.
+#: The bucket for a path this repository cannot attribute to any sibling. ATTRIBUTION IS NOT PROOF OF
+#: ABSENCE, so this bucket produces a FINDING — the fail-closed direction. A path named `src/Fake/Sample.cs`
+#: in a planted fixture, or `tests/FusionRpg.Launcher.Tests/...` where no `repo` field says who owns it, is
+#: not evidence that a sibling is missing; it is evidence that this repository does not know. Treating it
+#: as "probably in a sibling" is what made T13 accept a stale path, and the guard's whole purpose is to
+#: catch one.
+#:
+#: MEASURED: with UNATTRIBUTED treated as reachable, `T13_an_exact_path_that_stops_existing_fails_as_stale`
+#: failed with "guard accepted a stale exact path" — the check C8 was written for, disabled by a change
+#: that was supposed to be about absent siblings.
 UNATTRIBUTED = "(not declared by this repository)"
 
 #: PREFIXES NO SIBLING CARRIES, so a missing path under one of them is gk-core's own stale row and

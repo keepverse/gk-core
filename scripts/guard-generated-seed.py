@@ -253,6 +253,21 @@ def declared_trees_present(root: Path) -> list[str]:
             continue
         if not (root / literal).is_dir():
             missing.append(literal)
+    # PARTIAL COVERAGE IS ITS OWN ANSWER, AND IT IS NOT A REFUSAL. A tree is present when its own
+    # directory exists, so a root carrying SOME of the corpus and not the rest is a checkout that can be
+    # inspected for what it has — and the guard must still say which trees it did not see.
+    #
+    # This was a refusal on "all trees must be present", which is wrong for a partial fixture and
+    # measurably so: `Generated_seed_guard_sees_a_change_in_an_earlier_commit_of_the_range` builds a
+    # fixture root with `data/seed/items/` and `tools/seedsmith/seedsmith/adapters/items/` and nothing
+    # else, and it FAILED with the all-or-nothing rule — "generated seed edited without its generator"
+    # instead of the row it planted. A guard must not refuse to look at the corpus it can see because
+    # other corpora are elsewhere, and the verbosity of the two failures is the same defect in both
+    # directions: one ran over nothing, this one refused over something.
+    #
+    # The real rule is about INSPECTING NOTHING. So the caller gets the count and the names, and decides:
+    # zero present means nothing was inspected and that is a refusal; some present means the scan ran and
+    # its own verdict stands, with the uninspected trees named on stdout.
     return missing
 
 
@@ -274,10 +289,11 @@ def check(root: Path, *, base_ref: str = "", commit_range: str | None = None,
     # to give about a range, so the missing root is the FIRST thing reported — otherwise a caller in a
     # clone would be told to supply a range, supply it, and still get a green that means nothing.
     missing = declared_trees_present(root)
-    if missing:
+    present = len(TREES) - len(missing)
+    if present == 0:
         raise Refusal(
             "GENERATED-TREES-ABSENT",
-            f"{len(missing)} of {len(TREES)} declared generated tree(s) do not exist under {root}: "
+            f"all {len(TREES)} declared generated trees are absent under {root}: "
             + ", ".join(missing)
             + ". This guard's subject is the generated corpus, which the split moved OUT of this "
               "repository (data/seed and data/generated are the gk-data pack's; tools/seedsmith, "
@@ -285,6 +301,12 @@ def check(root: Path, *, base_ref: str = "", commit_range: str | None = None,
               "gk-core clone has nothing for it to inspect. Reporting clean here would be a coverage "
               "claim about nothing. Run it from the Keepverse workspace, or set --root to the "
               "repository that carries the corpus.")
+    if missing:
+        # NAMED, ON STDOUT, AND THE VERDICT STILL STANDS. See declared_trees_present()'s comment: a
+        # partial fixture must be scanned for what it has, and the trees it lacks named rather than
+        # turned into a refusal over the ones it has.
+        print(f"[{GUARD_ID}] NOTE: {present} of {len(TREES)} declared generated tree(s) present under "
+              f"{root}; {len(missing)} absent and therefore NOT inspected: {', '.join(missing)}")
     if require_explicit_range and not commit_range and not base_ref:
         # A push range is not a working tree: the working tree says nothing about what the push
         # contains. `main` turns this into a named refusal and exit 1; reaching it through `check`
