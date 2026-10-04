@@ -44,11 +44,25 @@ import sys
 # "does not exist" instead of checking anything. Resolved through the same shim 23 sibling scripts
 # use - and `workspace_root(` is the token kvsplit's rules/scan.v1.json `resolvers` looks for.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "lib"))
-from keepverse_roots import workspace_root  # noqa: E402  (the path shim above must run first)
+from keepverse_roots import RootNotFound, workspace_root  # noqa: E402  (the shim above runs first)
 
-REPO_ROOT = pathlib.Path(workspace_root())
-GATE = REPO_ROOT / "docs" / "DESIGN-GATE.md"
-OUT_DIR = REPO_ROOT / "docs" / "design-gate"
+# RESOLVED IN A FUNCTION, NOT AT IMPORT — the same correction as split-decisions.py, and for the same
+# measured reason: these module constants raised `keepverse_roots.RootNotFound` DURING IMPORT in a
+# standalone clone, so the tool died with a traceback and exit 1 — indistinguishable, by exit code,
+# from a real "the gate drifted" refusal. The repository's own rule is a NAMED refusal, never an
+# unhandled error. `program_status.py` is the model: it prints the name, the detail and its meaning,
+# and exits 2.
+def _roots() -> "tuple[pathlib.Path, pathlib.Path]":
+    try:
+        root = pathlib.Path(workspace_root())
+    except RootNotFound as exc:
+        print(f"REFUSING [ROOT-NOT-FOUND]: {exc}. This generator's subject is the workspace root's "
+              f"docs/DESIGN-GATE.md, which lives in the Keepverse workspace root and not in this "
+              f"repository — a standalone gk-core clone has no such document to split. Run it from the "
+              f"workspace, or set KEEPVERSE_WORKSPACE_ROOT to the root holding docs/",
+              file=sys.stderr)
+        raise SystemExit(2) from exc
+    return root, root / "docs" / "DESIGN-GATE.md"
 
 FIRST_ROW_LINE = 30
 LAST_ROW_LINE = 65
@@ -111,11 +125,14 @@ def main() -> int:
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
 
-    if not GATE.exists():
-        print(f"REFUSING: {GATE} does not exist")
+    # Resolved here, so an unresolvable root is the NAMED refusal in `_roots()` rather than an
+    # import-time traceback. Both exit 2, which is the point.
+    root, gate = _roots()
+    if not gate.exists():
+        print(f"REFUSING [GATE-MISSING]: {gate} does not exist")
         return 2
 
-    text = GATE.read_text(encoding="utf-8")
+    text = gate.read_text(encoding="utf-8")
     head, rows, tail = parse(text)
 
     missing = [ln for ln, _, _ in rows if ln not in CATEGORY_BY_LINE]
@@ -159,6 +176,7 @@ def main() -> int:
         index.append(f"| {clean} | [{cat}](design-gate/{cat}.md) | |")
     index.extend(tail)
 
+    out = gate.parent / "design-gate"
     files: dict[pathlib.Path, str] = {}
     for cat, cat_rows in by_cat.items():
         body = [
@@ -175,7 +193,7 @@ def main() -> int:
         ]
         for lineno, _topic, raw in cat_rows:
             body.append(f"{raw} <!-- DESIGN-GATE.md:{lineno} -->")
-        files[OUT_DIR / f"{cat}.md"] = "\n".join(body) + "\n"
+        files[out / f"{cat}.md"] = "\n".join(body) + "\n"
 
     new_index = "\n".join(index)
     before_lines = len(text.split("\n"))
@@ -188,18 +206,18 @@ def main() -> int:
     print(f"index lines   : {len(index)}  (unchanged: {len(index) == before_lines})")
     print(f"index size    : {len(new_index.encode()):,} bytes  (was {len(text.encode()):,})")
     for cat in sorted(by_cat):
-        size = len(files[OUT_DIR / f'{cat}.md'].encode('utf-8')) if args.apply else 0
+        size = len(files[out / f'{cat}.md'].encode('utf-8')) if args.apply else 0
         print(f"  {cat:<14} {len(by_cat[cat]):>2} rows  {size:,}b")
 
     if not args.apply:
         print("\n(dry run -- pass --apply to write)")
         return 0
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    out.mkdir(parents=True, exist_ok=True)
     for path, body in files.items():
         path.write_text(body, encoding="utf-8")
-    GATE.write_text(new_index, encoding="utf-8")
-    print(f"\nwrote {len(files)} category files + rewrote {GATE.relative_to(REPO_ROOT)}")
+    gate.write_text(new_index, encoding="utf-8")
+    print(f"\nwrote {len(files)} category files + rewrote {gate.relative_to(root)}")
     return 0
 
 

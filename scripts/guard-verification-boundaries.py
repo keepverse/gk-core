@@ -356,10 +356,19 @@ def only_fields(obj: object, allowed: tuple[str, ...], label: str, failures: lis
             failures.append(f"{label} has unknown field: {name}")
 
 
-def check_projects(root: Path, projects: dict, failures: list[str]) -> None:
+def check_projects(root: Path, projects: dict, failures: list[str],
+                   foreign: dict[str, list[str]] | None = None) -> None:
     """A `projects` value is one of three shapes: a path, an array of paths (a group), or an object
     naming its `runner`. The group's members are all `.csproj` and all real; a `pytest`/`script`
-    project is never grouped."""
+    project is never grouped.
+
+    A PROJECT WHOSE OWNING REPOSITORY IS ABSENT IS COUNTED, NOT ASSERTED. Every project in this
+    registry names its repository, and `repo` is exactly the question "whose file is this" — so it
+    is asked through `_owning_repository`, the same helper the C8 exact-path rule uses, and the two
+    can never disagree about which paths are reachable. Measured at cd04ab6 in a clone: eight
+    `project file missing` and two `pytest root missing`, every one for gk-forge's tools or
+    gk-fusion's Launcher.
+    """
     for pid, value in projects.items():
         if not PROJECT_ID.match(pid):
             failures.append(f"invalid project id: {pid}")
@@ -380,13 +389,26 @@ def check_projects(root: Path, projects: dict, failures: list[str]) -> None:
                     failures.append(f"invalid project path: {pid}: {member}")
                     continue
                 if not path_exists_anywhere(member, root):
-                    failures.append(f"project file missing: {pid}: {member}")
+                    owner = _owning_repository(member, root)
+                    if owner is None:
+                        failures.append(f"project file missing: {pid}: {member}")
+                    elif foreign is not None:
+                        foreign[owner].append(f"project {pid}: {member}")
         elif isinstance(value, str):
             if not is_relative_registry_path(value):
                 failures.append(f"invalid project path: {pid}")
                 continue
             if not path_exists_anywhere(value, root):
-                failures.append(f"project file missing: {pid}")
+                # A `tests/FusionRpg.Launcher.Tests/...` entry names a gk-fusion project and a
+                # `tests/FusionRpg.TreeBinder.Tests/...` entry names gk-forge's, while `tests/` is also
+                # gk-core's own — so this cannot be decided by prefix and is never decided by one.
+                # `_owning_repository` names the siblings it knows and returns UNATTRIBUTED otherwise,
+                # and every unattributable row is REPORTED rather than called stale.
+                owner = _owning_repository(value, root)
+                if owner is None:
+                    failures.append(f"project file missing: {pid}")
+                elif foreign is not None:
+                    foreign[owner].append(f"project {pid}: {value}")
         elif isinstance(value, dict):
             # `-notcontains` FOLDS, so `Runner` and `PYTEST` are accepted spellings.
             runner = str(value.get("runner", ""))
@@ -404,7 +426,12 @@ def check_projects(root: Path, projects: dict, failures: list[str]) -> None:
                     failures.append(f"invalid pytest root: {pid}: {pytest_root}")
                     continue
                 if not path_is_dir_anywhere(pytest_root, root):
-                    failures.append(f"pytest root missing: {pid}: {pytest_root}")
+                    owner = str(value.get("repo", ""))
+                    if owner and not _dir_present(owner, root):
+                        if foreign is not None:
+                            foreign[owner].append(f"pytest root {pid}: {pytest_root}")
+                    else:
+                        failures.append(f"pytest root missing: {pid}: {pytest_root}")
                 if not str(value.get("tests", "")).strip():
                     failures.append(f"pytest project missing 'tests': {pid}")
             elif runner.casefold() == "script":
@@ -420,7 +447,8 @@ def check_projects(root: Path, projects: dict, failures: list[str]) -> None:
 
 
 def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[str],
-                     owner_index: dict) -> list[dict]:
+                     owner_index: dict,
+                     foreign: dict[str, list[str]] | None = None) -> list[dict]:
     """The per-boundary rules, and the owner rows themselves for the coverage walk."""
     boundaries = doc.get("boundaries")
     if not isinstance(boundaries, list):
@@ -428,7 +456,10 @@ def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[
     seen_ids: set[str] = set()
     owner_patterns: dict[str, str] = {}
     owners: list[dict] = []
-    pytest_file_cache: dict[str, list[str]] = {}
+    pytest_file_cache: dict[str, list[str] | None] = {}
+    # The caller owns `foreign` so this function and check_projects share one tally; a direct caller
+    # that passes none gets a private one rather than losing the NOTE entirely.
+    foreign = defaultdict(list) if foreign is None else foreign
 
     def pytest_files(project_id: str) -> list[str]:
         if project_id not in pytest_file_cache:
@@ -436,6 +467,16 @@ def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[
             # Resolved against the OWNING repository, and the corpus is relativised to that same
             # base - the two have to agree or a gk-forge test file is listed under a gk-core name and
             # matches nothing. For a gk-core-owned project this is unchanged.
+            #
+            # AN EMPTY LIST IS ALSO WHAT AN ABSENT PROJECT'S ROOT LOOKS LIKE, and the two are not the
+            # same answer: one means "this project has no tests" (which is a registry defect) and the
+            # other means "the repository holding them is not checked out". Recorded as None for the
+            # second so the caller can name it — see the testFiles rule below.
+            node = (doc.get("projects") or {}).get(project_id)
+            owner = str(node.get("repo", "")) if isinstance(node, dict) else ""
+            if owner and not _dir_present(owner, root):
+                pytest_file_cache[project_id] = None
+                return None
             base = owning_base(dirs.test_dir, root) if dirs else None
             pytest_file_cache[project_id] = (
                 [relative_to(base, p) for p in base.rglob("test_*.py") if p.is_file()]
@@ -472,8 +513,25 @@ def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[
                 owner_patterns[key] = bid
             # C8: an exact pattern that names no file has silently dropped whatever it owned to a wider
             # fallback, with nothing failing until now.
+            #
+            # AN EXACT PATH IN AN ABSENT SIBLING IS NOT A STALE PATH. The paths above
+            # (src/FusionRpg.Injector/**, docs/architecture/**, data/seed/**, tools/seedsmith/**,
+            # .claude/**) each live in a repository this one is not: gk-fusion, gk-workflow, gk-data,
+            # gk-forge. Measured at cd04ab6 in an isolated clone: 82 "stale exact path" findings, every
+            # one a file that exists in the workspace and is absent here because its repository is.
+            # Each was the guard reporting an unreachable question as an answer about the registry.
+            #
+            # A STALE path — one in THIS repository that no longer exists — is still a finding, and is
+            # what C8 was written for: a rename that silently drops a boundary's subject must fail. The
+            # discriminator is which repository would have to carry the path, so it is asked as exactly
+            # that question. Absent-and-foreign is reported once, on stdout, with the count and the
+            # repositories named; absent-and-local is a finding.
             if vb.exact_pattern(str(pattern)) and not path_exists_anywhere(str(pattern), root):
-                failures.append(f"stale exact path: {bid}: {pattern}")
+                owner_repo = _owning_repository(str(pattern), root)
+                if owner_repo is None:
+                    failures.append(f"stale exact path: {bid}: {pattern}")
+                else:
+                    foreign[owner_repo].append(f"{bid}: {pattern}")
 
         projects = doc.get("projects") or {}
         project = boundary.get("project")
@@ -513,7 +571,27 @@ def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[
                 # C7: a group-level VerificationId needs only ONE member to carry the trait — that
                 # member is exactly the one the planner's focused selection will run.
                 members = vb.project_members(projects, project) if project else []
-                if members and not any(
+                node = projects.get(project) if project else None
+                owner = str(node.get("repo", "")) if isinstance(node, dict) else ""
+                # Same discipline as testFiles below: the trait lives in the project's OWN tests, so
+                # when that repository is absent the question cannot be asked. Reported, not asserted.
+                # An UNATTRIBUTED project is counted too — a `tests/**` entry could belong to gk-forge,
+                # and this repository has no way to tell, so it says so rather than asserting.
+                # THE QUESTION IS "CAN THIS PROJECT'S TRAIT BE LOOKED FOR HERE", and it is answered by
+                # asking whether the project's own files resolve in ANY checked-out repository — not by
+                # a prefix guess about which repository owns them. Measured, both directions:
+                #   * guessing by prefix made the guard skip gk-core's OWN projects (a `tests/**`
+                #     csproj is unattributable by prefix), so a well-formed vid that no test carries
+                #     passed — the mutation control below caught exactly that;
+                #   * answering "no" from a missing sibling made it skip the sibling's, which is the
+                #     original defect.
+                # `owning_base` consults every checked-out repository, so this is one question with one
+                # answer in both layouts, and it never weakens the check where the files are present.
+                resolvable = any(owning_base(str(m), root) is not None for m in members)
+                unreachable = bool(members) and not resolvable
+                if unreachable and foreign is not None:
+                    foreign[owner or UNATTRIBUTED].append(f"VerificationId {bid}: {vid}")
+                if not unreachable and members and not any(
                         vb.project_has_trait(root, str(resolved_path(m, root)), str(vid))
                         for m in members):
                     failures.append(f"VerificationId has no matching test trait: {vid}")
@@ -543,6 +621,14 @@ def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[
                 for pattern in test_files:
                     if not is_relative_registry_path(str(pattern)):
                         failures.append(f"invalid testFiles pattern: {bid}: {pattern}")
+                        continue
+                    if actual is None:
+                        # The project's own repository is absent, so the pattern cannot be matched.
+                        # Counted in the NOTE below rather than asserted: measured at cd04ab6 in a
+                        # clone, 30-odd of these for gk-forge and gk-workflow projects alone.
+                        pnode = projects.get(project)
+                        powner = str(pnode.get("repo", "")) if isinstance(pnode, dict) else ""
+                        foreign[powner or UNATTRIBUTED].append(f"testFiles {bid}: {pattern}")
                         continue
                     if not any(vb.pattern_match(f, str(pattern)) for f in actual):
                         failures.append(
@@ -596,12 +682,38 @@ def red_debt_ids(root: Path) -> set[str]:
 def check_known_red(root: Path, doc: dict, failures: list[str]) -> None:
     """python-test-lane D6 rule 4: every `knownRed` entry's fields are exactly {project, test, debt};
     its `project` exists; the test's own file exists under that project; its `debt` resolves to a
-    `red` row in the stub register. No test asserts how many entries exist — only that each is honest."""
+    `red` row in the stub register. No test asserts how many entries exist — only that each is honest.
+
+    AN ENTRY WHOSE OWNING REPOSITORY IS ABSENT IS NOT CHECKED, AND SAYS SO ON STDOUT.
+
+    All five entries in this registry belong to project `seedsmith`, whose node names `repo: gk-forge`.
+    Both questions they ask are therefore questions ABOUT gk-forge — is this test file there, and does
+    SR-25 read `red` in the stub register — and in a standalone gk-core clone neither is answerable:
+    measured at cd04ab6, `dotnet build` clean but this guard reporting ten findings
+    ("knownRed entry's test file does not exist" / "its debt does not resolve to a red row"), which
+    made `verify-change.py` refuse at INTEGRITY-GUARD-FAILED before it classified any path. An agent in
+    a clone could not tell a good change from an unmapped one, because both produced byte-identical
+    output and exit 1.
+
+    THE TENSION, STATED. This check exists because a `knownRed` entry that names a vanished test is
+    worse than no entry: it is a standing claim that a failure is accounted for, and if the test is gone
+    nothing accounts for it. Answering "the repository is not checked out" is not a weakening of that —
+    the entry is still checked, in every repository where it can be — but reporting ABSENCE as a
+    finding is exactly the class of error `red_debt_ids`' own docstring records having already made once
+    ("the entries themselves were fine; the question was unanswerable and the guard answered it
+    confidently"). So the same discipline applies here: fail closed for a path that exists NOWHERE, and
+    say plainly which entries were not examined and why.
+
+    NOT a skip that hides a defect. The stdout line names every skipped entry and its owner, so a run
+    that checked nothing is visibly a run that checked nothing — which is the whole difference between
+    this and the silent pass being fixed.
+    """
     entries = [e for e in (doc.get("knownRed") or []) if e]
     if not entries:
         return
     projects = doc.get("projects") or {}
     red_ids = red_debt_ids(root)
+    unexamined: list[str] = []
     for entry in entries:
         if not isinstance(entry, dict):
             failures.append("knownRed entry is not an object")
@@ -611,8 +723,14 @@ def check_known_red(root: Path, doc: dict, failures: list[str]) -> None:
         project_id = entry.get("project")
         if project_id not in projects:
             failures.append(f"knownRed entry names an unknown project: {project_id}: {test}")
-        test_file = test.split("::")[0]
         node = projects.get(project_id)
+        owner = str(node.get("repo", "")) if isinstance(node, dict) else ""
+        # A project that names NO repo is this repository's own, and is always checkable. Only a named
+        # foreign repo can be absent.
+        if owner and not _repo_present(owner, root):
+            unexamined.append(f"{test} (owned by {owner})")
+            continue
+        test_file = test.split("::")[0]
         base = str(node.get("root", "")) if isinstance(node, dict) else ""
         rel = f"{base.rstrip('/')}/{test_file}" if base else test_file
         if not path_exists_anywhere(rel, root):
@@ -621,6 +739,126 @@ def check_known_red(root: Path, doc: dict, failures: list[str]) -> None:
         if debt not in red_ids:
             failures.append(f"knownRed entry's debt does not resolve to a red row: "
                             f"{entry.get('debt')}: {test}")
+    if unexamined:
+        print(f"[{GUARD_ID}] NOTE: {len(unexamined)} knownRed entr(y/ies) NOT examined — the "
+              f"repository that owns them is not checked out here, so the question cannot be asked "
+              f"(this is an absent sibling, not a stale entry):")
+        for item in unexamined:
+            print(f"  - {item}")
+
+
+#: Which repository carries which repository-relative PREFIX, for the "absent sibling or stale row?"
+#: question. The prefixes are the ones the split moved; each is measured, not assumed, and every one is
+#: checked with `is_dir()` on the owning repository so a path is never attributed by string shape alone.
+#:
+#: `None` in the value position means "this repository's own" — the prefix belongs to gk-core, so a
+#: missing path there is a genuine stale row and stays a finding.
+FOREIGN_PREFIX_OWNERS: tuple[tuple[str, str], ...] = (
+    ("src/FusionRpg.Injector", "gk-fusion"),
+    ("src/FusionRpg.Launcher", "gk-fusion"),
+    ("web/fusion-rpg-web", "gk-web"),
+    ("tools/seedsmith", "gk-forge"),
+    ("tools/Creature", "gk-forge"),
+    ("tools/DominanceBaseline", "gk-forge"),
+    ("tools/ItemSeedValidator", "gk-forge"),
+    ("tools/FamilyExpandGen", "gk-forge"),
+    (".claude", "gk-workflow"),
+    ("tasks", "gk-workflow"),
+    ("docs", "gk-workflow"),
+    ("data/seed", "gk-data"),
+    ("data/generated", "gk-data"),
+)
+
+
+#: The bucket name for a path this repository cannot attribute to ANY repository — not gk-core's own
+#: (which would be a finding), and not a sibling it can name (which `_owning_repository` reports by
+#: name). Measured at cd04ab6 in a clone: eight `tests/*.csproj` project entries and three root-level
+#: files (`game-profiles.json`, `scripts/audit-doc-citations.py`, `.agents/skills/**`). These have no
+#: prefix that discriminates — `tests/` is gk-core's own AND gk-forge's — so no honest prefix rule can
+#: place them, and inventing one would be a guess about a sibling's layout.
+UNATTRIBUTED = "(not declared by this repository)"
+
+#: PREFIXES NO SIBLING CARRIES, so a missing path under one of them is gk-core's own stale row and
+#: stays a finding. Derived by measuring every sibling rather than by listing what gk-core has: gk-forge
+#: and gk-fusion both own a `tests/` and a `scripts/`, which is precisely why those two prefixes are
+#: absent here. Anything NOT in this table and not in FOREIGN_PREFIX_OWNERS is unattributed, which is
+#: reported — so the classification errs toward SAYING IT CANNOT TELL, never toward calling a sibling's
+#: file stale.
+CORE_OWNED_PREFIXES: tuple[str, ...] = (
+    "src/FusionRpg.Core",
+    "src/FusionRpg.Contracts",
+    "src/FusionRpg.Data",
+    "src/FusionRpg.Bridge",
+    "src/FusionRpg.Server",
+    "src/FusionRpg.CheatCore",
+    "data/tuning",
+    "tools/CombatSim",
+    "tools/ProveAptitude",
+    "tools/ProvePredictor",
+    "tools/RealDataAggregate",
+    "tools/ResidualFitLoop",
+    "tools/CreatureCorpusDump",
+)
+
+
+def _owning_repository(rel: str, root: Path) -> str | None:
+    """The repository that WOULD carry `rel`, or None when it is gk-core's own and it is a real finding.
+
+    A returned name means "not stale" — unreachable, or unattributable. Never "the row has rotted".
+    """
+    rel = str(rel).replace("\\", "/").strip()
+    for prefix, repo in FOREIGN_PREFIX_OWNERS:
+        if rel == prefix or rel.startswith(prefix + "/"):
+            return None if _dir_present(repo, root) else repo
+    for prefix in CORE_OWNED_PREFIXES:
+        if rel == prefix or rel.startswith(prefix + "/"):
+            return None
+    return UNATTRIBUTED
+
+
+#: Every repository a registry path can name, and the ACCESSOR that answers for it. One mapping, used
+#: by both helpers below, so "which repository owns this" is asked one way and never two.
+#:
+#: `workspace_root` is the resolver's answer, not a `root/docs` probe. Measured: gk-core carries NEITHER
+#: `docs/` nor `tasks/` (the split moved both up a level), so the obvious local probe reported the
+#: workspace absent even in a full workspace and would have downgraded four real boundary paths
+#: (tasks/sessions/**, .claude/cmdc-agents/**) to unverified there. Asking the resolver is the same
+#: question the paths themselves are resolved through, so the two cannot disagree.
+_REPO_ACCESSORS = {
+    "gk-forge": "forge_root",
+    "gk-fusion": "fusion_root",
+    "gk-web": "web_root",
+    "gk-data": "content_root",
+    "gk-workflow": "workspace_root",
+}
+
+
+def _dir_present(repo: str, root: Path) -> bool:
+    """Whether the named repository is actually on disk here.
+
+    gk-core is this repository and is present by definition. Everything else is asked of the resolver,
+    and every accessor here REFUSES when its subject is absent — which is the answer wanted here, so the
+    exception is the mechanism rather than something swallowed.
+    """
+    if repo == "gk-core":
+        return True
+    name = _REPO_ACCESSORS.get(repo)
+    if name is None or _shared_owning_base is None:
+        return True        # unknown name, or no resolver: do not invent an absence
+    accessor = globals().get(name)
+    if accessor is None:
+        return True
+    try:
+        return Path(accessor(root)).is_dir()
+    except Exception:
+        return False
+
+
+def _repo_present(owner: str, root: Path) -> bool:
+    """Whether the named repository is checked out. See `_dir_present`, which answers this for every
+    registry repository from one mapping — a project's `repo` field names a sibling, and the question
+    is identical to the one an exact boundary path asks."""
+    return _dir_present(owner, root)
 
 
 @dataclass
@@ -838,10 +1076,14 @@ def check(root: Path, skip_coverage_walk: bool = False, want_report: bool = Fals
                 guard_catalog[gid] = str(entry.get("script", ""))
 
     projects = doc["projects"]
-    check_projects(root, projects, failures)
+    # ONE accumulator for every "absent sibling, therefore unanswerable" case in this run, created
+    # here so check_projects and check_boundaries report into the same tally and the NOTE below can
+    # state one total instead of three that have to be added up by the reader.
+    foreign: dict[str, list[str]] = defaultdict(list)
+    check_projects(root, projects, failures, foreign)
 
     owner_index: dict[str, str] = {}
-    owners = check_boundaries(root, doc, guard_catalog, failures, owner_index)
+    owners = check_boundaries(root, doc, guard_catalog, failures, owner_index, foreign)
 
     walked = not skip_coverage_walk
     walk = Walk()
@@ -850,6 +1092,23 @@ def check(root: Path, skip_coverage_walk: bool = False, want_report: bool = Fals
         check_test_projects(root, doc, walk.tests_files, walk.tools_test_files, failures)
 
     check_known_red(root, doc, failures)
+
+    if foreign:
+        # ONE note for the whole run, per absent repository, with the count. Every row in it is a
+        # registry entry this repository cannot reach and therefore did not examine — a path, a project
+        # file, a pytest root, a testFiles pattern or a VerificationId trait. They are not findings: each
+        # is still checked in every checkout where its repository is present, and the workspace run is
+        # what proves that (this guard exits 0 there with no NOTE at all).
+        #
+        # WHY IT IS PRINTED RATHER THAN SWALLOWED: a run that examined none of these must be visibly a
+        # run that examined none. Silence is what made the 300-odd findings this replaces read as a
+        # verdict about the registry, and it would make a genuine green here indistinguishable from one
+        # that skipped the reachable half.
+        print(f"[{GUARD_ID}] NOTE: {sum(len(v) for v in foreign.values())} registry entr(y/ies) NOT "
+              f"examined — the repository that owns each is not checked out here. Absent siblings, not "
+              f"stale rows:")
+        for repo in sorted(foreign):
+            print(f"  - {repo}: {len(foreign[repo])} entr(y/ies)")
 
     report = None
     if want_report:

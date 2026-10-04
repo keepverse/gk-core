@@ -206,7 +206,13 @@ def core_root(start: Path | None = None) -> Path:
             if _is_core_root(candidate):
                 return candidate
         raise
-    return d if kind == "legacy" else d / "gk-core"
+    # A STANDALONE clone resolves at the engine repository itself, so the workspace's "append the
+    # repository name" hop does not apply to it. Kept in step with KeepverseRoots.Core() in C#, which
+    # discriminates the same way, because the two are byte-compared by guard ResolverCopyParityTests
+    # and a divergence between them is a divergence in the CONTRACT rather than in one copy of it.
+    if not _is_core_root(d):
+        return d / "gk-core"
+    return d
 
 
 def fusion_root(start: Path | None = None) -> Path:

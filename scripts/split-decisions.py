@@ -40,11 +40,43 @@ import sys
 # "does not exist" instead of checking anything. Resolved through the same shim 23 sibling scripts
 # use - and `workspace_root(` is the token kvsplit's rules/scan.v1.json `resolvers` looks for.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "lib"))
-from keepverse_roots import workspace_root  # noqa: E402  (the path shim above must run first)
+from keepverse_roots import RootNotFound, workspace_root  # noqa: E402  (the path shim above first)
 
-REPO_ROOT = pathlib.Path(workspace_root())
-DECISIONS = REPO_ROOT / "docs" / "architecture" / "decisions.md"
-OUT_DIR = REPO_ROOT / "docs" / "architecture" / "decisions"
+# RESOLVED IN A FUNCTION, NOT AT IMPORT. These three module constants were resolved at import time, so a
+# checkout with no resolvable workspace raised `keepverse_roots.RootNotFound` DURING IMPORT and the tool
+# died with a traceback and exit 1 — the same exit as a real "the split drifted" refusal, and the same
+# shape this repository's own rule forbids: an UNHANDLED error where a NAMED refusal belongs.
+# Measured in an isolated gk-core clone at cd04ab6: `split-decisions.py --check` and
+# `audit-program-pipeline.py --check` both printed a bare traceback ending in
+# `keepverse_roots.RootNotFound: no legacy repo or Keepverse workspace above ...`, while
+# `program_status.py` — the model this is aligned to — printed a named refusal and exited 2.
+#
+# WHY IT MUST NOT BE SILENTLY TOLERATED EITHER: this tool's subject is the WORKSPACE ROOT's
+# decisions.md, which gk-core does not carry. A standalone clone genuinely cannot answer, so the honest
+# outcome is a named refusal that says which document it wanted and where it looked.
+def _roots() -> "tuple[pathlib.Path, pathlib.Path]":
+    """The workspace root, and the decisions.md this tool splits.
+
+    THE FILE NAME IS `decisions.md`, NOT THE DIRECTORY `decisions/`. Those two were conflated when
+    the import-time constants were replaced by this function: the returned path became
+    `docs/architecture/decisions` and the file read then hit the CATEGORY DIRECTORY of an
+    already-split workspace — a PermissionError on a directory, which is neither the tool's
+    refusal nor a report about the split. Caught by running the workspace `--check` after the edit,
+    which is the only reason it was caught at all: the clone cannot reach this code path.
+    """
+    try:
+        root = pathlib.Path(workspace_root())
+    except RootNotFound as exc:
+        print(f"REFUSING [ROOT-NOT-FOUND]: {exc}. This generator's subject is the workspace root's "
+              f"docs/architecture/decisions.md, which lives in the Keepverse workspace root and not in "
+              f"this repository — a standalone gk-core clone has no such document to split. Run it from "
+              f"the workspace, or set KEEPVERSE_WORKSPACE_ROOT to the root holding docs/.",
+              file=sys.stderr)
+        raise SystemExit(2) from exc
+    return root, root / "docs" / "architecture" / "decisions.md"
+
+
+
 
 # Line numbers are stable within the table because the split preserves them; the
 # category is keyed by the ORIGINAL line so this file is auditable by eye
@@ -138,11 +170,14 @@ def main() -> int:
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
 
-    if not DECISIONS.exists():
-        print(f"REFUSING: {DECISIONS} does not exist")
+    # Resolved here, so an unresolvable root is the NAMED refusal above rather than an import-time
+    # traceback. Both exit 2, which is the point: the two failures must not read as one.
+    root, decisions = _roots()
+    if not decisions.exists():
+        print(f"REFUSING [DECISIONS-MISSING]: {decisions} does not exist")
         return 2
 
-    text = DECISIONS.read_text(encoding="utf-8")
+    text = decisions.read_text(encoding="utf-8")
     preamble, rows, trailing = parse(text)
 
     unclassified = [ln for ln, _, _ in rows if ln not in CATEGORY_BY_LINE]
@@ -169,6 +204,7 @@ def main() -> int:
     index.extend(trailing)
 
     # ---- category files ----------------------------------------------------
+    out = decisions.parent / "decisions"
     files: dict[pathlib.Path, str] = {}
     for cat, cat_rows in by_cat.items():
         body = [
@@ -177,15 +213,15 @@ def main() -> int:
             f"**{CATEGORY_BLURB[cat]}**",
             "",
             f"Index: [../decisions.md](../decisions.md). Rows are listed with their original line "
-            f"number in `decisions.md`, so a `{DECISIONS.name}:<line>` citation points at the same "
-            f"decision it did before the {DECISIONS.name} split.",
+            f"number in `decisions.md`, so a `{decisions.name}:<line>` citation points at the same "
+            f"decision it did before the {decisions.name} split.",
             "",
             "| Topic | Decision |",
             "|---|---|",
         ]
         for lineno, _topic, raw in cat_rows:
             body.append(f"{raw} <!-- decisions.md:{lineno} -->")
-        files[OUT_DIR / f"{cat}.md"] = "\n".join(body) + "\n"
+        files[out / f"{cat}.md"] = "\n".join(body) + "\n"
 
     new_index = "\n".join(index)
 
@@ -200,7 +236,7 @@ def main() -> int:
     print(f"index lines     : {len(index)}  (unchanged: {len(index) == len(text.split(chr(10)))})")
     print(f"index size      : {len(new_index.encode()):,} bytes  (was {len(text.encode()):,})")
     for cat in sorted(by_cat):
-        size = len(files[OUT_DIR / f"{cat}.md"].encode("utf-8")) if args.apply else 0
+        size = len(files[out / f"{cat}.md"].encode("utf-8")) if args.apply else 0
         marker = f"{size:,}b" if args.apply else ""
         print(f"  {cat:<14} {len(by_cat[cat]):>3} rows  {marker}")
 
@@ -208,11 +244,11 @@ def main() -> int:
         print("\n(dry run -- pass --apply to write)")
         return 0
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    out.mkdir(parents=True, exist_ok=True)
     for path, body in files.items():
         path.write_text(body, encoding="utf-8")
-    DECISIONS.write_text(new_index, encoding="utf-8")
-    print(f"\nwrote {len(files)} category files + rewrote {DECISIONS.relative_to(REPO_ROOT)}")
+    decisions.write_text(new_index, encoding="utf-8")
+    print(f"\nwrote {len(files)} category files + rewrote {decisions.relative_to(root)}")
     return 0
 
 

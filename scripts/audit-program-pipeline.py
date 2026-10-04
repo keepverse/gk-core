@@ -72,9 +72,38 @@ from pathlib import Path
 # class `gk-core/scripts/guard-test-content-root.py` refuses in tests, and the `workspace_root(` token kvsplit's
 # `rules/scan.v1.json` `resolvers` looks for.
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
-from keepverse_roots import workspace_root  # noqa: E402  (the path shim above must run first)
+from keepverse_roots import RootNotFound, workspace_root  # noqa: E402  (the shim above runs first)
 
-REPO = workspace_root()
+# RESOLVED WITH A NAMED REFUSAL INSTEAD OF AN IMPORT-TIME TRACEBACK.
+#
+# `docs/`, `tasks/` and `scripts/` are the WORKSPACE root's, and this audit reads all three. In a
+# standalone gk-core clone none of them is here, so `workspace_root()` raises `RootNotFound` — and it
+# used to raise it DURING IMPORT, so the tool died with a traceback and exit 1. Measured in an isolated
+# clone at cd04ab6, against the sibling that gets this right:
+#
+#     audit-program-pipeline.py --check   -> keepverse_roots.RootNotFound traceback, exit 1
+#     program_status.py                  -> PROGRAM-STATUS REFUSED [name]: <meaning>, exit 2
+#
+# The exit codes are IDENTICAL, which is the whole defect: a reader cannot tell "this audit found
+# nothing" from "this audit could not run", and a CI step reading the code concludes the document chain
+# is intact. The repository's own rule is a NAMED refusal, and this is now one.
+#
+# `REPO` is still bound at import because sixteen functions take it as a DEFAULT ARGUMENT, and Python
+# evaluates those at definition time. It is bound to the workspace root when there is one, and to this
+# repository's own directory when there is not — a value that is never read, because `main()` refuses
+# before `audit()` is reached. That keeps every signature unchanged, which matters more here than the
+# tidiness of a lazy default: an audit that could still run against the wrong root would be worse than
+# one that refuses.
+_ROOT_REFUSAL: str | None = None
+try:
+    REPO = workspace_root()
+except RootNotFound as exc:
+    REPO = Path(__file__).resolve().parent.parent
+    _ROOT_REFUSAL = (
+        f"{exc}. This audit's subject is the workspace root's docs/, tasks/ and scripts/ — the "
+        f"idea -> spec -> plan -> todo document chain — and a standalone gk-core clone carries none "
+        f"of them. Run it from the Keepverse workspace, or set KEEPVERSE_WORKSPACE_ROOT to the root "
+        f"holding docs/ and tasks/.")
 
 # Structural: how far into a document the status line may sit. Headers are
 # short; a status buried past this is prose, not a header.
@@ -880,6 +909,14 @@ def main() -> int:
                     help=f"stalled-todo threshold in days (default {DEFAULT_STALE_DAYS})")
     ap.add_argument("--root", type=Path, default=REPO, help=argparse.SUPPRESS)
     args = ap.parse_args()
+
+    # The refusal is honoured UNLESS the caller named a root explicitly. `--root` exists precisely so a
+    # caller can point this at a checkout the resolver cannot see, and refusing after being handed a
+    # root would make that flag useless — while honouring it is what keeps the exit code honest.
+    if _ROOT_REFUSAL is not None and args.root == REPO:
+        print("AUDIT-PROGRAM-PIPELINE REFUSED: ROOT-NOT-FOUND", file=sys.stderr)
+        print(f"  {_ROOT_REFUSAL}", file=sys.stderr)
+        return 2
 
     findings = audit(repo=args.root, stale_days=args.stale_days)
     if args.only:
