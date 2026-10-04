@@ -427,6 +427,10 @@ class Report:
     missing_interpreters: list[str] = field(default_factory=list)
     environment_note: str = ""
     stages: list[str] = field(default_factory=list)
+    #: Guards that exited 0 while writing to stderr — a CLEAN VERDICT THAT ALSO SAID SOMETHING. Not a
+    #: failure: these guards passed. Recorded because the alternative is a reader who cannot tell
+    #: "checked and passed" from "could not check, said so, and the exit code was 0 anyway".
+    degraded: list[str] = field(default_factory=list)
 
 
 def dispatch(root: Path, guards: list[str], catalog: dict, tier: str, ci_range: str,
@@ -519,9 +523,23 @@ def summarise(report: Report) -> tuple[str, str]:
         red_ids = set(report.red_gating)
         codes = {r["exit"] for r in report.results if r["id"] in red_ids and r["exit"] != 0}
         worst = EXIT_UNDISPATCHABLE if EXIT_UNDISPATCHABLE in codes else (max(codes) if codes else 0)
-        return (f"guards failed: {', '.join(report.red_gating)}{report.environment_note}",
+        return (f"guards failed: {', '.join(report.red_gating)}{_degraded_note(report)}"
+                f"{report.environment_note}",
                 worst or EXIT_FAILED)
-    return f"GUARDS OK - {len(report.results)} guard(s) run, 0 red", EXIT_OK
+    return f"GUARDS OK - {len(report.results)} guard(s) run, 0 red{_degraded_note(report)}", EXIT_OK
+
+
+def _degraded_note(report: Report) -> str:
+    """The count of clean-verdict guards that also wrote to stderr, or nothing.
+
+    Appended to the verdict line rather than printed separately, because the verdict line is what a CI
+    log's reader sees first and "0 red" must not be able to sit alone above an unexamined subject.
+    """
+    if not report.degraded:
+        return ""
+    return (f"; {len(report.degraded)} exited 0 while writing to stderr "
+            f"({', '.join(report.degraded)}) — a clean verdict that also declined to answer, "
+            f"read the stderr above before treating 0 red as coverage")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -589,10 +607,29 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  {'id':<44} {'tier':<7} {'status':<9} {'exit':>5} {'s':>6}")
     for row in report.results:
         print(f"  {row['id']:<44} {row['tier']:<7} {row['status']:<9} {row['exit']:>5} {row['seconds']:>6}")
-        if row["exit"] != 0 and row["stderr"]:
-            print(f"    --- {row['id']} stderr ---")
+        # STDERR IS SHOWN FOR A RED ROW *AND* FOR A GREEN ONE THAT WROTE ANY.
+        #
+        # The condition used to be `row["exit"] != 0 and row["stderr"]`, which is right about findings
+        # and wrong about refusals: this repository's guards print a NAMED REFUSAL to stderr and exit 0
+        # when they cannot reach their subject — guard-generated-seed's CI-RANGE-REQUIRED,
+        # guard-verification-boundaries' registry note, guard-population-pin's EXIT_FORGE_ROOT_MISSING.
+        # Under the old condition every one of those printed a clean table row with its refusal
+        # discarded, so "GUARDS OK - 26 guard(s) run, 0 red" was a run in which an unknown number of
+        # guards inspected nothing. That is the defect the module docstring's own line 23 describes —
+        # the stderr log was deleted — reproduced one level up, in the summary rather than the temp
+        # file.
+        #
+        # The fix surfaces the text; it does not change any exit code, so a guard that genuinely passed
+        # still passes. A green row that wrote to stderr is now VISIBLE as having written to stderr,
+        # which is the difference between a real green and an unreached one.
+        if row["stderr"]:
+            label = (f"--- {row['id']} stderr ---" if row["exit"] != 0
+                     else f"--- {row['id']} stderr (exit 0: a clean verdict that also said this) ---")
+            print(f"    {label}")
             for line in row["stderr"].splitlines():
                 print(f"    {line}")
+        if row["exit"] == 0 and row["stderr"]:
+            report.degraded.append(row["id"])
     if report.backlog:
         print("\nBACKLOG (not gating - a backlog guard never fails the run):")
         for row in report.results:

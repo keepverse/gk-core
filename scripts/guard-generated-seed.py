@@ -57,6 +57,19 @@ GIT_TIMEOUT = 300
 
 # Generated is the emitted output; Sources are the generator code plus the tuning/registry inputs the
 # generator reads. Touching any Source is the sanctioned way to change Generated.
+#
+# THE SUBJECT IS NOT IN gk-core. Measured at 724f0a1 in an isolated gk-core clone, every one of these
+# eight trees is ABSENT — `data/seed` and `data/generated` live in the gk-data pack, and
+# `tools/seedsmith`, `tools/FamilyExpandGen` and `tools/ItemSeedValidator` are gk-forge's. The guard
+# answered the range `d36fe25..HEAD` (3,889 changed files) with
+#
+#     [guard-generated-seed] clean (3889 changed file(s) inspected)
+#
+# and exit 0. Not one of the 3,889 is under a declared tree: 202 are `data/tuning/**`, which is
+# gk-core's own and matches no tree here, and the rest are `src/`, `tests/` and `scripts/`. So the
+# count was a coverage claim about nothing, and the verdict was green because there was nothing to
+# check — the exact "silent pass" class this guard's own docstring says its git handling exists to
+# remove, arrived at from the other direction.
 TREES: tuple[dict[str, object], ...] = (
     {"generated": r"^data/seed/items/",
      "sources": (r"^tools/seedsmith/seedsmith/adapters/items/",
@@ -212,6 +225,37 @@ def has_generator_provenance(root: Path, rel_path: str) -> bool:
     return False
 
 
+def declared_trees_present(root: Path) -> list[str]:
+    """The declared `generated` roots that do not exist under `root`, as repo-relative strings.
+
+    A guard whose declared scan root is absent must REFUSE, not pass. That is the whole fix, and it is
+    the same rule the two sibling guards in this repository already state for themselves:
+    guard-population-pin.py names `EXIT_FORGE_ROOT_MISSING` for its unreachable scan root, and
+    guard-vocabulary-mirror.py refuses on the same condition. This one had no such check, which is why
+    it was the only one of the three that reported green while inspecting nothing.
+
+    THE PROBE IS THE ROOT DIRECTORY, DERIVED FROM THE PATTERN, not a hardcoded list — so a tree added
+    to TREES is covered by this automatically instead of needing a second edit nobody would remember.
+    `^data/seed/items/` yields `data/seed/items`; a pattern with no literal prefix is skipped rather
+    than guessed at, because inventing a path for it would produce a refusal about the wrong directory.
+    """
+    missing: list[str] = []
+    for tree in TREES:
+        pattern = str(tree["generated"])
+        # THE LEADING `^` IS AN ANCHOR, NOT CONTENT, and splitting on it as though it were a
+        # metacharacter yields an EMPTY literal — which is why the first version of this function found
+        # nothing to refuse on and the guard still reported green. Every pattern in TREES begins with
+        # `^`, so the whole check was inert until this stripped it first. Caught by running it in the
+        # clone, where a check that finds nothing is indistinguishable from one that is not there.
+        body = pattern.lstrip("^")
+        literal = re.split(r"[$^*+?()\[\]{}|\\]", body, maxsplit=1)[0].strip("/")
+        if not literal:
+            continue
+        if not (root / literal).is_dir():
+            missing.append(literal)
+    return missing
+
+
 def check(root: Path, *, base_ref: str = "", commit_range: str | None = None,
           require_explicit_range: bool = False) -> dict:
     """`require_explicit_range` is the CI contract, and it must be GATED.
@@ -226,6 +270,21 @@ def check(root: Path, *, base_ref: str = "", commit_range: str | None = None,
     if commit_range and base_ref:
         raise Refusal("RANGE-AND-BASEREF",
                       "generated-seed accepts either --range or --base-ref, not both")
+    # BEFORE the range check, and deliberately so. A guard that cannot see its subject has no verdict
+    # to give about a range, so the missing root is the FIRST thing reported — otherwise a caller in a
+    # clone would be told to supply a range, supply it, and still get a green that means nothing.
+    missing = declared_trees_present(root)
+    if missing:
+        raise Refusal(
+            "GENERATED-TREES-ABSENT",
+            f"{len(missing)} of {len(TREES)} declared generated tree(s) do not exist under {root}: "
+            + ", ".join(missing)
+            + ". This guard's subject is the generated corpus, which the split moved OUT of this "
+              "repository (data/seed and data/generated are the gk-data pack's; tools/seedsmith, "
+              "tools/FamilyExpandGen and tools/ItemSeedValidator are gk-forge's), so a standalone "
+              "gk-core clone has nothing for it to inspect. Reporting clean here would be a coverage "
+              "claim about nothing. Run it from the Keepverse workspace, or set --root to the "
+              "repository that carries the corpus.")
     if require_explicit_range and not commit_range and not base_ref:
         # A push range is not a working tree: the working tree says nothing about what the push
         # contains. `main` turns this into a named refusal and exit 1; reaching it through `check`
