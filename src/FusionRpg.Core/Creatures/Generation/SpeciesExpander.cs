@@ -96,8 +96,7 @@ public static class SpeciesExpander
         // "unresolved"`, both zero magnitude channels). Failing loud here is strictly safer: a
         // species that cannot be generated correctly must refuse generation, not ship silently
         // stat-less.
-        bool IsKnownAptitude(string family) =>
-            aptitudeTuning.Edges.Any(e => string.Equals(e.Source, family, StringComparison.Ordinal));
+        bool IsKnownAptitude(string family) => IsKnownAptitudeFamily(aptitudeTuning, family);
 
         void ApplyAptitude(string family, long shareMilli)
         {
@@ -201,6 +200,16 @@ public static class SpeciesExpander
         };
     }
 
+    /// <summary>Whether <paramref name="family"/> is a known aptitude, read off the tuning file's own
+    /// <c>edges[].source</c> values with the SAME ordinal comparison <see cref="Expand"/> applies.
+    ///
+    /// <para>Public and static so there is exactly ONE such test in the tree. It was a local function
+    /// inside <see cref="Expand"/> until the anchor-contract predicate needed the same answer, and
+    /// two implementations of "is this a known aptitude" is precisely how a contract ends up true of
+    /// one consumer and not the other.</para></summary>
+    public static bool IsKnownAptitudeFamily(AptitudeTuning tuning, string family) =>
+        tuning.Edges.Any(e => string.Equals(e.Source, family, StringComparison.Ordinal));
+
     /// <summary>Resolves the anchor's own DERIVED rank id into the closed enum, or null when the
     /// anchor recorded that rank was SKIPPED (an unresolved threatBand or rarity) — spec
     /// Assumption 4: skip, don't fabricate. The anchor is the one derivation site
@@ -210,7 +219,7 @@ public static class SpeciesExpander
     /// one-authority rule exists to prevent. An id outside the closed vocabulary is a real anchor
     /// defect and throws, exactly as an unknown <c>rarity</c>/<c>elementPrimary</c> does above —
     /// never a silent null, which would read as "rank was skipped".</summary>
-    static CreatureRank? ResolveRank(AnchorRow anchor)
+    public static CreatureRank? ResolveRank(AnchorRow anchor)
     {
         if (anchor.Rank is null) return null;
         if (CreatureRankIds.TryParse(anchor.Rank, out var parsed)) return parsed;
@@ -218,7 +227,11 @@ public static class SpeciesExpander
             $"'{anchor.SpeciesId}': rank '{anchor.Rank}' is not a known CreatureRank");
     }
 
-    static long LookupOrThrow(IReadOnlyDictionary<string, long> table, string key, string speciesId, string field)
+    /// <summary>The tempo/reach table lookup, raised. Public so the anchor-contract predicate reports
+    /// this message verbatim instead of a paraphrase that could say something the table does not.
+    /// The table is the one <c>creature-shape.v1.json</c> loaded into, compared with its own
+    /// <see cref="StringComparer.Ordinal"/>: neither trims nor folds case.</summary>
+    public static long LookupOrThrow(IReadOnlyDictionary<string, long> table, string key, string speciesId, string field)
     {
         if (table.TryGetValue(key, out var v)) return v;
         throw new InvalidOperationException($"'{speciesId}': {field} '{key}' has no entry in creature-shape.v1.json");

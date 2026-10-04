@@ -65,48 +65,94 @@ public sealed class AnchorRowRejection : Exception
 /// array of anchor objects, `gk-data/packs/fusion/data/seed/creatures/species/**.json`).</summary>
 public static class AnchorRowReader
 {
+    /// <summary>
+    /// The keys <see cref="ReadOne"/> reads through <see cref="Str"/>, in THIS reader's own
+    /// evaluation order — and the reader reads them FROM this list, so there is one declaration of
+    /// the set rather than a constant beside the code it is supposed to describe.
+    ///
+    /// <para>Order is load-bearing, not cosmetic: <see cref="ReadOne"/> is fail-fast (it raises at
+    /// the first bad field and never reaches a later one), so which field's message a caller sees
+    /// depends on this sequence. <c>gameTypeId</c> is NOT here — it is the separate integer guard
+    /// (<see cref="TryGameTypeId"/>) and is evaluated between <c>side</c> and <c>elementPrimary</c>;
+    /// that interleaving is recorded here rather than left to be re-derived.</para>
+    ///
+    /// <para><see cref="AnchorRowContract"/> enumerates this same constant instead of restating the
+    /// eleven names, which is the only reason it can be true of this reader rather than of the day
+    /// somebody transcribed it.</para>
+    /// </summary>
+    public static readonly IReadOnlyList<string> StrFields = new[]
+    {
+        "speciesId", "aptitudeSecondary", "elementSecondary",
+        "rarity", "aptitudePrimary", "attackTempo", "reach", "side",
+        // <- `gameTypeId` raises between `side` and `elementPrimary`. It is an int, not a Str.
+        "elementPrimary", "deployMode", "targetPreference",
+    };
+
     public static IReadOnlyList<AnchorRow> ReadAll(string json)
+    {
+        using var doc = RequireArrayDocument(json);
+        var rows = new List<AnchorRow>();
+        foreach (var el in doc.RootElement.EnumerateArray()) rows.Add(ReadOne(el));
+        return rows;
+    }
+
+    /// <summary>
+    /// <see cref="ReadAll"/>'s two FILE-level guards on their own: a document that is not valid
+    /// JSON, and one whose root is not an array. Both produce no row at all, which is why neither
+    /// can be reached from a per-entry check and why restating them in prose leaves them unchecked.
+    ///
+    /// <para>Separated from <see cref="ReadAll"/> so there is one implementation rather than two:
+    /// <see cref="ReadAll"/> calls THIS, and so does <see cref="AnchorRowContract"/>, which is the
+    /// only caller that wants them without the rows.</para>
+    /// </summary>
+    public static JsonDocument RequireArrayDocument(string json)
     {
         JsonDocument doc;
         try { doc = JsonDocument.Parse(json); }
-        catch (JsonException ex) { throw new AnchorRowRejection($"anchor file: not valid JSON — {ex.Message}"); }
-
-        using (doc)
+        catch (JsonException ex)
         {
-            if (doc.RootElement.ValueKind != JsonValueKind.Array)
-                throw new AnchorRowRejection("anchor file: expected a top-level array");
-
-            var rows = new List<AnchorRow>();
-            foreach (var el in doc.RootElement.EnumerateArray()) rows.Add(ReadOne(el));
-            return rows;
+            throw new AnchorRowRejection($"anchor file: not valid JSON — {ex.Message}");
         }
+
+        if (doc.RootElement.ValueKind != JsonValueKind.Array)
+        {
+            doc.Dispose();
+            throw new AnchorRowRejection("anchor file: expected a top-level array");
+        }
+
+        return doc;
     }
 
-    static AnchorRow ReadOne(JsonElement el)
+    public static AnchorRow ReadOne(JsonElement el)
     {
-        var speciesId = Str(el, "speciesId");
-        var aptSecondary = Str(el, "aptitudeSecondary");
-        var elSecondary = Str(el, "elementSecondary");
+        // Every `Str`-guarded key is checked up front, in `StrFields`' own order, so the first
+        // refusal is the same field it has always been — and so the contract enumerates one list
+        // rather than a second copy of eleven names that could drift from this one.
+        foreach (var key in StrFields) Str(el, key);
+        // ... and `gameTypeId` in its own slot between `side` and `elementPrimary`, for the same
+        // reason: the order this method raises in is the order `StrFields` documents.
+        if (!TryGameTypeId(el, out var gameTypeId))
+            throw new AnchorRowRejection("anchor: missing or non-integer 'gameTypeId'");
+
         return new AnchorRow(
-            SpeciesId: speciesId,
-            Rarity: Str(el, "rarity"),
+            SpeciesId: Text(el, "speciesId"),
+            Rarity: Text(el, "rarity"),
             ThreatBand: el.TryGetProperty("threatBand", out var tb) && tb.ValueKind == JsonValueKind.String
                 ? tb.GetString() : null,
-            AptitudePrimary: Str(el, "aptitudePrimary"),
-            AptitudeSecondary: string.Equals(aptSecondary, "none", StringComparison.OrdinalIgnoreCase) ? null : aptSecondary,
+            AptitudePrimary: Text(el, "aptitudePrimary"),
+            AptitudeSecondary: Optional(el, "aptitudeSecondary"),
             Pure: el.TryGetProperty("pure", out var p) && p.ValueKind == JsonValueKind.True,
-            AttackTempo: Str(el, "attackTempo"),
-            Reach: Str(el, "reach"),
+            AttackTempo: Text(el, "attackTempo"),
+            Reach: Text(el, "reach"),
             Variants: StrArray(el, "variants"),
-            Side: Str(el, "side"),
-            GameTypeId: el.TryGetProperty("gameTypeId", out var g) && g.TryGetInt32(out var gi)
-                ? gi : throw new AnchorRowRejection("anchor: missing or non-integer 'gameTypeId'"),
-            ElementPrimary: Str(el, "elementPrimary"),
-            ElementSecondary: string.Equals(elSecondary, "none", StringComparison.OrdinalIgnoreCase) ? null : elSecondary,
-            DeployMode: Str(el, "deployMode"),
+            Side: Text(el, "side"),
+            GameTypeId: gameTypeId,
+            ElementPrimary: Text(el, "elementPrimary"),
+            ElementSecondary: Optional(el, "elementSecondary"),
+            DeployMode: Text(el, "deployMode"),
             Acquisition: StrArray(el, "acquisition"),
             Traits: StrArray(el, "traits"),
-            TargetPreference: Str(el, "targetPreference"),
+            TargetPreference: Text(el, "targetPreference"),
             ThreatBandConfidence: ThreatConfidence(el),
             // R-CS3/R-CS4's mark. Optional on purpose: the whole corpus carries it today, but a
             // pre-mark anchor must read as `creature` rather than be refused for a missing key.
@@ -120,6 +166,64 @@ public static class AnchorRowReader
                 ? rk.GetString() : null);
     }
 
+    /// <summary>The reader's own `Str` guard, raised. Public so `AnchorRowContract` reports the
+    /// consumer's message instead of a paraphrase of it.</summary>
+    public static string Str(JsonElement el, string key) =>
+        el.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String
+            ? v.GetString()!
+            : throw new AnchorRowRejection($"anchor: missing or non-string '{key}'");
+
+    /// <summary>The same test <see cref="Str"/> makes, without the raise — the contract's reason for
+    /// being able to report every bad field in one pass where the consumer stops at the first.</summary>
+    public static bool TryStr(JsonElement el, string key, out string value)
+    {
+        if (el.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String)
+        {
+            value = v.GetString()!;
+            return true;
+        }
+        value = "";
+        return false;
+    }
+
+    /// <summary><c>gameTypeId</c>'s own guard. Found by the contract's differential test, 2026-10-04:
+    /// <c>JsonElement.TryGetInt32</c> does not return false on a non-numeric element — it THROWS
+    /// <see cref="InvalidOperationException"/> — so <c>TryGetProperty &amp;&amp; TryGetInt32</c> raised that
+    /// instead of the <see cref="AnchorRowRejection"/> below for every present-but-non-integer value
+    /// (<c>"20"</c>, <c>true</c>, <c>20.5</c>). The guard's own message promised
+    /// <c>missing or non-integer</c> and could only ever deliver <c>missing</c>.
+    ///
+    /// <para>The <c>ValueKind == Number</c> test below is what makes the message true. It is a fix,
+    /// not a loosening: an unhandled <see cref="InvalidOperationException"/> out of a batch loader is
+    /// a crash the caller cannot attribute to an anchor, and every value this now refuses was already
+    /// refused — just unrecognisably. <see cref="AnchorRowContract"/> needs the non-raising form as
+    /// well, so there is one test here rather than two that can disagree.</para></summary>
+    public static bool TryGameTypeId(JsonElement el, out int gameTypeId)
+    {
+        if (el.TryGetProperty("gameTypeId", out var g) && g.ValueKind == JsonValueKind.Number &&
+            g.TryGetInt32(out var gi))
+        {
+            gameTypeId = gi;
+            return true;
+        }
+        gameTypeId = 0;
+        return false;
+    }
+
+    /// <summary>A key already cleared by the <see cref="StrFields"/> sweep, so it cannot be absent
+    /// and non-null here. Reading it through <see cref="Str"/> again would be a second raise that
+    /// can never fire, which is exactly the kind of guard a coverage count inflates itself with.</summary>
+    static string Text(JsonElement el, string key) => Str(el, key);
+
+    /// <summary>One of the two optional-secondary fields: the literal <c>"none"</c> sentinel, matched
+    /// case-INSENSITIVELY and UNTRIMMED, maps to null. Kept as its own method because the reader's
+    /// mapping is itself a guard — <c>" none"</c> is not the sentinel and must survive as a value.</summary>
+    static string? Optional(JsonElement el, string key)
+    {
+        var value = Str(el, key);
+        return string.Equals(value, "none", StringComparison.OrdinalIgnoreCase) ? null : value;
+    }
+
     static string? ThreatConfidence(JsonElement el)
     {
         if (el.TryGetProperty("_provenance", out var prov) && prov.ValueKind == JsonValueKind.Object &&
@@ -128,11 +232,6 @@ public static class AnchorRowReader
             return tb.GetString();
         return null;
     }
-
-    static string Str(JsonElement el, string key) =>
-        el.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String
-            ? v.GetString()!
-            : throw new AnchorRowRejection($"anchor: missing or non-string '{key}'");
 
     static IReadOnlyList<string> StrArray(JsonElement el, string key) =>
         el.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.Array
