@@ -147,8 +147,16 @@ public static class AnchorRowContract
     /// per-entry predicate is otherwise unchecked, and a whole document is only in hand at a scan.
     /// <paramref name="path"/> is quoted in every message so a scan over 464 files names the file the
     /// way the consumer's own CLI does before it returns 1.</para>
+    ///
+    /// <para><paramref name="tunings"/> is REQUIRED, and that is a correction rather than a
+    /// preference. It was optional in the first draft, which made this method report "could not be
+    /// evaluated" for every row of a real corpus — 900 of them — because a scan caller who omits it
+    /// gets a scan that refuses everything and says nothing useful. A file-shape-only check is one
+    /// line against <see cref="AnchorRowReader.RequireArrayDocument"/>; there is no reason for the
+    /// whole-document entry point to be the lenient one.</para>
     /// </summary>
-    public static IReadOnlyList<string> FileViolations(string json, string path)
+    public static IReadOnlyList<string> FileViolations(
+        string json, string path, AnchorContractTunings tunings)
     {
         var out_ = new List<string>();
         JsonDocument doc;
@@ -158,7 +166,7 @@ public static class AnchorRowContract
         using (doc)
         {
             foreach (var el in doc.RootElement.EnumerateArray())
-                foreach (var v in Violations(el))
+                foreach (var v in Violations(el, tunings))
                     out_.Add($"{path}: {Where(el)}: {v}");
         }
         return out_;

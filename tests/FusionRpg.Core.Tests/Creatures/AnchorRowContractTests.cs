@@ -300,6 +300,14 @@ public class AnchorRowContractTests
             $"accepts ({because}): {string.Join(" | ", reported)}");
     }
 
+    /// <summary>"One of these messages says X". Named because xUnit's
+    /// <c>Assert.Contains(collection, expected)</c> does not resolve against an
+    /// <see cref="IReadOnlyList{T}"/>, and a collection overload that silently does not compile is
+    /// worse than three honest lines.</summary>
+    static void AssertHasSubstring(IReadOnlyList<string> messages, string substring) =>
+        Assert.True(messages.Any(m => m.Contains(substring, StringComparison.Ordinal)),
+            $"expected one of [{string.Join(" | ", messages)}] to contain '{substring}'");
+
     static bool NamesGuard(string message, string guard) => guard switch
     {
         "reader.str-field" => message.Contains("missing or non-string", StringComparison.Ordinal),
@@ -426,27 +434,34 @@ public class AnchorRowContractTests
     [Fact]
     public void TheTwoFileLevelGuardsFireAndNameTheFile()
     {
-        AssertHasSubstring(AnchorRowContract.FileViolations("{ not json", "a.json"), "not valid JSON");
-        AssertHasSubstring(AnchorRowContract.FileViolations("{\"speciesId\":\"x\"}", "a.json"),
+        AssertHasSubstring(AnchorRowContract.FileViolations("{ not json", "a.json", Tunings()),
+            "not valid JSON");
+        AssertHasSubstring(
+            AnchorRowContract.FileViolations("{\"speciesId\":\"x\"}", "a.json", Tunings()),
             "expected a top-level array");
     }
 
-    /// <summary>"One of these messages says X". Named because xUnit's
-    /// <c>Assert.Contains(collection, expected)</c> does not resolve against an
-    /// <see cref="IReadOnlyList{T}"/>, and a collection overload that silently does not compile is
-    /// worse than three honest lines.</summary>
-    static void AssertHasSubstring(IReadOnlyList<string> messages, string substring) =>
-        Assert.True(messages.Any(m => m.Contains(substring, StringComparison.Ordinal)),
-            $"expected one of [{string.Join(" | ", messages)}] to contain '{substring}'");
+    /// <summary>A file scan evaluates every row through the SAME vocabularies a single-row caller
+    /// would, rather than through a lenient path of its own. Asserted because the first draft had
+    /// exactly that defect: it took no tunings, so it reported "could not be evaluated" for all 900
+    /// rows of a real corpus — a scan that refuses everything and says nothing useful.</summary>
+    [Fact]
+    public void AFileScanEvaluatesItsRowsRatherThanDecliningTo()
+    {
+        var violations = AnchorRowContract.FileViolations(
+            "[" + Splice("rarity", "\"legendary\"") + ", " + Legal() + "]", "seed/pea.json", Tunings());
+        var only = Assert.Single(violations);
+        Assert.Contains("CreatureRarity", only, StringComparison.Ordinal);
+        Assert.DoesNotContain("could not be evaluated", only, StringComparison.Ordinal);
+    }
 
     [Fact]
     public void AFileScanNamesTheFileAndTheSpecies()
     {
-        var only = AnchorRowContract.FileViolations(
-            "[" + Splice("rarity", "\"legendary\"") + "]", "seed/pea.json");
-        var onlyMessage = Assert.Single(only);
-        Assert.Contains("seed/pea.json", onlyMessage, StringComparison.Ordinal);
-        Assert.Contains("pea_pult", onlyMessage, StringComparison.Ordinal);
+        var only = Assert.Single(AnchorRowContract.FileViolations(
+            "[" + Splice("rarity", "\"legendary\"") + "]", "seed/pea.json", Tunings()));
+        Assert.Contains("seed/pea.json", only, StringComparison.Ordinal);
+        Assert.Contains("pea_pult", only, StringComparison.Ordinal);
     }
 
     // ---------------------------------------------------------------- document-level guards
