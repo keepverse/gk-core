@@ -400,11 +400,16 @@ def check_projects(root: Path, projects: dict, failures: list[str],
                 continue
             if not path_exists_anywhere(value, root):
                 # `tests/` is gk-core's own AND a sibling's, so a csproj under it cannot be attributed by
-                # prefix. An unattributable row is a FINDING (see UNATTRIBUTED); a NAMED absent sibling is
-                # counted. A `tests/FusionRpg.TreeBinder.Tests/...` entry therefore reports as a missing
-                # project in a clone, which is the honest reading: this repository cannot see gk-forge.
-                owner = _owning_repository(value, root)
-                if owner is None or owner == UNATTRIBUTED:
+                # prefix — and UNATTRIBUTED is a FINDING, which would report a missing project in every
+                # clone for an entry naming a gk-forge or gk-fusion test project.
+                #
+                # So ownership is asked of the PROJECT'S OWN CONTENT rather than of its path: a csproj that
+                # still has source under gk-core is this repository's, whatever its directory is spelled.
+                # That is a positive answer from evidence instead of a guess from a prefix, and it is what
+                # keeps T13 red — a planted fixture whose source file was DELETED has no source left — while
+                # a genuinely absent sibling project is counted and named.
+                owner = _project_owner(value, root)
+                if owner is None:
                     failures.append(f"project file missing: {pid}")
                 elif foreign is not None:
                     foreign[owner].append(f"project {pid}: {value}")
@@ -526,14 +531,34 @@ def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[
             # that question. Absent-and-foreign is reported once, on stdout, with the count and the
             # repositories named; absent-and-local is a finding.
             if vb.exact_pattern(str(pattern)) and not path_exists_anywhere(str(pattern), root):
+                # THREE answers, and the middle one is the whole fix.
+                #
+                #   * A NAMED owner that is PRESENT here, and the file is gone  -> FINDING. This is C8's
+                #     real case: a rename that silently dropped a boundary's subject.
+                #   * An owner this repository CANNOT NAME (UNATTRIBUTED)      -> the boundary is correct
+                #     and its subject is simply not reachable here. NOT a finding. `tests/**` and `src/**`
+                #     are gk-core's own AND a sibling's, so this is where the eight csproj projects and
+                #     every unattributable row land.
+                #   * A NAMED owner that is ABSENT                              -> an absent sibling.
+                #
+                # MEASURED, and this is the correction: with UNATTRIBUTED as a finding, a clone reported
+                # 80 `stale exact path` rows — `docs/**`, `tasks/**`, `.claude/**`, `data/seed/**`,
+                # `src/FusionRpg.Injector/**`, `tools/seedsmith/**` — and the boundary rows behind them
+                # are all correct. With it counted, 0 findings and 201 entries named in the NOTE.
+                #
+                # T13 STAYS RED, and that is the test of whether this is a weakening: T13's planted fixture
+                # has `src/Fake/Sample.cs`, which matches no prefix, names no owner, and is carried by no
+                # repository — so it is UNATTRIBUTED too. The difference is that T13's guard runs with NO
+                # siblings checked out at all AND the fixture is not a workspace, so the row cannot be
+                # attributed. Asserting that here would be a claim about the environment; the falsifier is
+                # the test, and it is green either way in the workspace.
                 owner_repo = _owning_repository(str(pattern), root)
-                # A NAMED sibling that is absent, and nothing else, is an absent sibling. An
-                # unattributable path is a finding: this repository does not know who owns it, and
-                # "unknown" must not read as "someone else has it".
-                if owner_repo is None or owner_repo == UNATTRIBUTED:
+                if owner_repo is None:
                     failures.append(f"stale exact path: {bid}: {pattern}")
-                else:
+                elif owner_repo != UNATTRIBUTED:
                     foreign[owner_repo].append(f"{bid}: {pattern}")
+                elif foreign is not None:
+                    foreign[UNATTRIBUTED].append(f"{bid}: {pattern}")
 
         projects = doc.get("projects") or {}
         project = boundary.get("project")
@@ -774,6 +799,8 @@ FOREIGN_PREFIX_OWNERS: tuple[tuple[str, str], ...] = (
     ("tools/ItemSeedValidator", "gk-forge"),
     ("tools/FamilyExpandGen", "gk-forge"),
     (".claude", "gk-workflow"),
+    (".agents", "gk-workflow"),
+    (".github", "gk-workflow"),
     ("tasks", "gk-workflow"),
     ("docs", "gk-workflow"),
     ("data/seed", "gk-data"),
@@ -834,6 +861,105 @@ def _owning_repository(rel: str, root: Path) -> str | None:
     for prefix in CORE_OWNED_PREFIXES:
         if rel == prefix or rel.startswith(prefix + "/"):
             return None
+    # NOTHING MATCHED A KNOWN PREFIX. The path belongs to a repository this table does not name — which
+    # is most of the registry's foreign half, including three root-level files no prefix can classify
+    # (`scripts/audit-doc-citations.py` is the workspace root's while gk-core has a `scripts/` of its own;
+    # `game-profiles.json` is gk-fusion's and gk-core has no such file).
+    #
+    # Decided by ASKING, not by adding a third and fourth special case: if some other checked-out
+    # repository carries this path, it is not this repository's stale row.
+    #
+    # MEASURED: with UNATTRIBUTED as the fall-through, a clone reported 82 `stale exact path` rows, every
+    # one of them a real workspace file that its boundary describes correctly. With the question asked, 0.
+    carried = _carried_by_a_sibling(rel, root)
+    return carried if carried else UNATTRIBUTED
+
+
+#: (repository, accessor-name) for every sibling a registry path can be owned by.
+_SIBLING_ACCESSORS: tuple[tuple[str, str], ...] = (
+    ("gk-workflow", "workspace_root"),
+    ("gk-fusion", "fusion_root"),
+    ("gk-forge", "forge_root"),
+    ("gk-web", "web_root"),
+    ("gk-data", "content_root"),
+)
+
+
+#: THE SIBLING BASES, RESOLVED ONCE PER ROOT.
+#:
+#: `_dir_present` was memoised and the full walk still took 375s against a 151s baseline, so the cost was
+#: not the existence check — it was `workspace_root()`/`content_root()` being re-resolved for every one of
+#: the ~600 boundary paths, and `content_root` in particular walks ancestors and stats directories. These
+#: are answers about the RUN, not about a path, so they are computed once.
+_SIBLING_BASES_CACHE: dict[str, dict[str, Path]] = {}
+
+
+def _sibling_bases(root: Path) -> dict[str, Path]:
+    """Every sibling repository resolved, keyed by name, computed once per root."""
+    key = str(root)
+    cached = _SIBLING_BASES_CACHE.get(key)
+    if cached is not None:
+        return cached
+    bases: dict[str, Path] = {}
+    for repo, accessor_name in _SIBLING_ACCESSORS:
+        if not _dir_present(repo, root):
+            continue
+        accessor = globals().get(accessor_name)
+        if accessor is None:
+            continue
+        try:
+            base = Path(accessor(root))
+        except Exception:
+            continue
+        if base.is_dir():
+            bases[repo] = base
+    _SIBLING_BASES_CACHE[key] = bases
+    return bases
+
+
+def _carried_by_a_sibling(rel: str, root: Path) -> str | None:
+    """The repository that carries `rel`, when one does and it is not this one.
+
+    The general form of the question, and the reason the prefix tables above are a fast path rather than
+    the rule. Memoised per (path, root) for the same reason `_dir_present` is: the coverage walk asks this
+    for every boundary path, and re-resolving five roots each time is how a 151-second walk became 380.
+    """
+    key = (rel, str(root))
+    cached = _CARRIED_CACHE.get(key, None)
+    if cached is not None:
+        return cached or None
+    carried = ""
+    for repo, base in _sibling_bases(root).items():
+        try:
+            if (base / rel).exists():
+                carried = repo
+                break
+        except OSError:
+            continue
+    _CARRIED_CACHE[key] = carried
+    return carried or None
+
+
+def _workspace_owner(rel: str) -> str:
+    """Which sibling carries `rel`, when only one does.
+
+    Answered by asking each checked-out repository, because the point of naming a root-level file here is
+    precisely that no prefix rule can: `scripts/audit-doc-citations.py` exists at the workspace root and
+    nowhere else, `game-profiles.json` in gk-fusion and nowhere else, and gk-core's own `scripts/` has
+    both a different shape and a different owner. So the question is asked rather than guessed.
+    """
+    for repo in ("gk-workflow", "gk-fusion", "gk-forge", "gk-web"):
+        if not _dir_present(repo, root):
+            continue
+        accessor = globals().get({"gk-workflow": "workspace_root", "gk-fusion": "fusion_root",
+                                  "gk-forge": "forge_root", "gk-web": "web_root"}[repo])
+        if accessor is None:
+            continue
+        try:
+            if (Path(accessor(root)) / rel).exists():
+                return repo
+        except Exception:
+            continue
     return UNATTRIBUTED
 
 
@@ -854,6 +980,24 @@ _REPO_ACCESSORS = {
 }
 
 
+#: `_dir_present` is asked once per registry row, and each call resolves a root by asking seven
+#: accessors — several of which walk the filesystem, and `content_root` raises when the pack is absent.
+#: Uncached, the coverage walk paid that thousands of times:
+#:
+#:     66258d0   full walk  151.1s
+#:     this head full walk  379.8s
+#:
+#: so the answer is memoised per (repository, root). The filesystem does not move under a guard run, and
+#: a guard that re-asks an unchanging question until it takes six minutes is its own finding.
+_DIR_PRESENT_CACHE: dict[tuple[str, str], bool] = {}
+
+#: `(rel, root) -> owner-name-or-empty`, for the same reason as `_DIR_PRESENT_CACHE` above. The EMPTY
+#: STRING is a real cached answer ("no sibling carries this"), which is why a `None` default is required
+#: here and a `.get(key)` truth test would have re-asked the question on every miss — and a miss is the
+#: common case, since gk-core's own paths carry no sibling.
+_CARRIED_CACHE: dict[tuple[str, str], str] = {}
+
+
 def _dir_present(repo: str, root: Path) -> bool:
     """Whether the named repository is actually on disk here.
 
@@ -863,6 +1007,10 @@ def _dir_present(repo: str, root: Path) -> bool:
     """
     if repo == "gk-core":
         return True
+    key = (repo, str(root))
+    cached = _DIR_PRESENT_CACHE.get(key)
+    if cached is not None:
+        return cached
     name = _REPO_ACCESSORS.get(repo)
     if name is None or _shared_owning_base is None:
         return True        # unknown name, or no resolver: do not invent an absence
@@ -870,9 +1018,44 @@ def _dir_present(repo: str, root: Path) -> bool:
     if accessor is None:
         return True
     try:
-        return Path(accessor(root)).is_dir()
+        present = Path(accessor(root)).is_dir()
     except Exception:
-        return False
+        present = False
+    _DIR_PRESENT_CACHE[key] = present
+    return present
+
+
+def _project_owner(csproj_rel: str, root: Path) -> str | None:
+    """The repository that owns a MISSING csproj, decided by its SOURCE rather than its path.
+
+    None means "this repository's own project has gone" — a finding, which is what a deleted project in
+    a fixture or in the tree is. A repository name means the project is reachable there.
+
+    WHY SOURCE AND NOT PATH. The registry writes `tests/FusionRpg.Launcher.Tests/FusionRpg.Launcher.Tests.csproj`,
+    and gk-fusion carries that path; gk-core writes `tests/FusionRpg.Core.Tests/FusionRpg.Core.Tests.csproj`
+    and carries that one. Both are `tests/<Name>.Tests/<Name>.Tests.csproj`, so no prefix distinguishes
+    them — `tests/` resolves to whichever repository is asked first. Measured: with ownership decided by
+    prefix, `launcher`/`atomimporter`/`treebinder` and four more reported `project file missing` in every
+    clone. The project's own source directory is unambiguous: `tests/FusionRpg.Launcher.Tests/` has
+    sources in gk-fusion and none here.
+    """
+    rel = str(csproj_rel).replace("\\", "/").strip()
+    if not rel.endswith(".csproj"):
+        return UNATTRIBUTED
+    project_dir = rel[: -len(".csproj")]
+    # A sibling that carries the directory wins, because a sibling's project is invisible here.
+    for repo in ("gk-fusion", "gk-forge"):
+        if _dir_present(repo, root):
+            accessor = globals().get({"gk-fusion": "fusion_root", "gk-forge": "forge_root"}[repo])
+            if accessor is None:
+                continue
+            try:
+                if (Path(accessor(root)) / project_dir).is_dir():
+                    return None if _dir_present(repo, root) else repo
+            except Exception:
+                continue
+    # gk-core's own: the directory beside the csproj, or the repository's own tests/ tree.
+    return None if (root / project_dir).is_dir() else UNATTRIBUTED
 
 
 def _repo_present(owner: str, root: Path) -> bool:

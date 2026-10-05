@@ -55,9 +55,16 @@ public sealed class GuardRunnerTests
     static string PyGuard(string? body = null) =>
         body ?? "import sys\nsys.exit(0)\n";
 
+    // `repository: gk-core` IS PART OF THE FIXTURE, NOT AN INCIDENTAL FIELD. run_guards.py refuses a row
+    // that names no repository (GUARD-REPOSITORY-UNDECLARED, 263498e), so a fixture registry written
+    // before that field existed makes the runner refuse at the catalog stage and every test below it fail
+    // on the refusal instead of on what it is testing. A fixture has to satisfy the CURRENT registry
+    // contract; the runner's own wording is the reason why ("an unnamed row resolves against the runner's
+    // own root, which is how a guard whose subject moved came to run against a directory holding none of
+    // it"), and this fixture's guards ARE gk-core's own — they live in the fixture's scripts/.
     static string Row(string id, string scriptFile, string tier, string status, string extra = "") =>
         $"\"{id}\":{{\"script\":\"scripts/{scriptFile}\",\"tier\":\"{tier}\",\"status\":\"{status}\"," +
-        $"\"backlogModule\":null,\"localReason\":null{extra}}}";
+        $"\"repository\":\"gk-core\",\"backlogModule\":null,\"localReason\":null{extra}}}";
 
     static string RegistryJson(params string[] rows) =>
         "{\"schemaVersion\":1,\"guards\":{" + string.Join(",", rows) + "},\"invariants\":[]}";
