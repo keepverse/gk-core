@@ -174,6 +174,13 @@ public sealed partial class RpgStore : IRpgDb, IDisposable
             // SE4.14: the specimen's owning empire. NULL on a row whose owner is not a save (pre-migration
             // history, the legacy Zomboss row) until SE4.18 backfills it.
             EnsureColumn(db, "rpg_unique_actors", "empire_id", "TEXT");
+            // debug-origin D1: the marker that keeps a DEBUG fixture out of a player's roster.
+            // Additive and defaulted, so every existing gameplay row reads 0 and needs no data
+            // migration; only `EnsureUniqueActorForAudit` — the audit/debug writer, whose only caller is
+            // `POST /api/debug/derived-audit-actor` — ever sets it. `ListUniqueActors` filters on it.
+            // A pre-existing debug row keeps 0 until the debug seed next runs (its upsert re-stamps),
+            // which is the honest limit of a marker: the store cannot classify a row it did not write.
+            EnsureColumn(db, "rpg_unique_actors", "debug_seeded", "INTEGER NOT NULL DEFAULT 0");
             // species-progression SP0.1: the layer-1b ledger, born keyed (save_id, empire_id) so
             // save-identity's migration owes it nothing.
             EnsureSpeciesModSchemaUnlocked(db);

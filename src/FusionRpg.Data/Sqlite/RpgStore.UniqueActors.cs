@@ -62,6 +62,16 @@ public sealed partial class RpgStore
     /// <summary>
     /// Debug/audit upsert: stable <paramref name="instanceId"/> for the current player's playable
     /// derived-sheet specimen. Sets level (progression surface) without inventing derived values.
+    ///
+    /// <para><b>Every row it writes is marked <c>debug_seeded</c> (debug-origin D1).</b> A debug API may
+    /// trigger a real operation, but its result must never be mistaken for gameplay: without the marker
+    /// this specimen sat in the player's own <see cref="ListUniqueActors(EmpireRef)"/> roster as
+    /// <c>derived-audit</c>, which is a debug fixture wearing a gameplay costume. The marker is set on
+    /// BOTH branches — insert and the ensure-update — so a re-run of the debug seed also re-stamps a row
+    /// an older build created, which is the one legacy case a data-driven marker can reach without
+    /// guessing at an id it did not write. The capability is untouched: this row is still a real
+    /// UniqueActor, still resolvable by id (<see cref="GetUniqueActor"/>), still sheet-composable and
+    /// still the subject of the derived coverage audit — it is only absent from the ROSTER read.</para>
     /// </summary>
     public UniqueActorDto EnsureUniqueActorForAudit(
         long playerId, string instanceId, string side, int typeId, long level)
@@ -97,6 +107,7 @@ public sealed partial class RpgStore
                     UPDATE rpg_unique_actors SET
                       side = $side, type_id = $type, level = $lvl, xp = 0,
                       phase = $phase, match_key = NULL, last_ptr = NULL, deploy_correlation_id = NULL,
+                      debug_seeded = 1,
                       revision = revision + 1, updated_utc = $now
                     WHERE instance_id = $id;
                     """;
@@ -115,8 +126,8 @@ public sealed partial class RpgStore
                 cmd.CommandText = """
                     INSERT INTO rpg_unique_actors(
                       instance_id, player_id, empire_id, side, type_id, phase, level, xp,
-                      match_key, last_ptr, deploy_correlation_id, revision, created_utc, updated_utc)
-                    VALUES($id, $pid, $emp, $side, $type, $phase, $lvl, 0, NULL, NULL, NULL, 0, $now, $now);
+                      match_key, last_ptr, deploy_correlation_id, debug_seeded, revision, created_utc, updated_utc)
+                    VALUES($id, $pid, $emp, $side, $type, $phase, $lvl, 0, NULL, NULL, NULL, 1, 0, $now, $now);
                     """;
                 cmd.Parameters.AddWithValue("$id", id);
                 cmd.Parameters.AddWithValue("$pid", playerId);
@@ -155,6 +166,13 @@ public sealed partial class RpgStore
     /// the answer must never include another empire's specimen just because it shares the save's row.
     /// The match's RUNTIME question (every side on the board) is a different read —
     /// `AtomPushService.OwnersForSave`, never this one.
+    ///
+    /// <para><b>debug-origin D1: a DEBUG-seeded specimen is not in the roster.</b> Filtered by the
+    /// <c>debug_seeded</c> marker <see cref="EnsureUniqueActorForAudit"/> stamps, not by a hardcoded id,
+    /// so a fixture cannot reappear under a renamed constant. The exclusion is here and ONLY here: the
+    /// roster is the player-facing surface, and every by-id read (<see cref="GetUniqueActor"/>,
+    /// <c>/api/actors/{id}/sheet</c>, the derived coverage audit) still resolves the row — the debug
+    /// capability is narrowed, never deleted.</para>
     /// </summary>
     public UniqueActorListDto ListUniqueActors(EmpireRef owner)
     {
@@ -167,7 +185,8 @@ public sealed partial class RpgStore
                 SELECT instance_id, player_id, side, type_id, phase, level, xp,
                        match_key, last_ptr, deploy_correlation_id, revision, created_utc, updated_utc,
                        empire_id
-                FROM rpg_unique_actors WHERE player_id = $pid AND empire_id = $emp
+                FROM rpg_unique_actors
+                WHERE player_id = $pid AND empire_id = $emp AND COALESCE(debug_seeded, 0) = 0
                 ORDER BY created_utc ASC;
                 """;
             cmd.Parameters.AddWithValue("$pid", owner.Save.Value);
