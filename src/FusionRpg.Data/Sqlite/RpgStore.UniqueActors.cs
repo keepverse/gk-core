@@ -5,6 +5,7 @@ using FusionRpg.Core.Actions.Eligibility;
 using FusionRpg.Core.Actions.Unlock;
 using FusionRpg.Core.Creatures;
 using FusionRpg.Core.Effects.Atoms;
+using FusionRpg.Core.Match;
 using FusionRpg.Core.Progression;
 using FusionRpg.Core.Saves;
 using Microsoft.Data.Sqlite;
@@ -198,6 +199,137 @@ public sealed partial class RpgStore
         }
     }
 
+    /// <summary>
+    /// The two live counts <c>unique-deploy-cap</c>'s rule reads, named once so the gate and the
+    /// count can never disagree about what "live" means.
+    /// </summary>
+    /// <param name="ForEmpire">
+    /// Live uniques belonging to the SAME EMPIRE as the specimen being deployed — D6's "at most 5
+    /// unique creatures per side".
+    /// </param>
+    /// <param name="OnBoard">
+    /// Live uniques on the SAME BOARD (<c>match_key</c>) as the run this deploy joins — D6's "10 on
+    /// the board", the frame-budget backstop.
+    /// </param>
+    public readonly record struct LawnUniqueLiveCounts(int ForEmpire, int OnBoard);
+
+    /// <summary>
+    /// Counts what a unique deploy would add to, for <c>TryBeginUniqueDeploy</c>'s cap gate
+    /// (owner ruling D6, "at most 5 unique creatures per side, 10 on the board"). Both counts are
+    /// LIVE UNIQUE counts — phases <see cref="UniqueActorPhases.Deploying"/> and
+    /// <see cref="UniqueActorPhases.ActiveBound"/> only — and nothing else is ever admitted through
+    /// this gate, so both are the whole population the ruling is about.
+    ///
+    /// <para><b>A <c>Deploying</c> row counts, and that is the point.</b> <c>Deploying</c> is a
+    /// RESERVATION: a row queued to the Injector but not yet acked is a specimen that is about to
+    /// exist, and <c>TryBeginUniqueDeploy</c> itself writes <c>phase = Deploying</c> and
+    /// <c>match_key = $mk</c> under the same <c>_gate</c> lock this read holds, so excluding it
+    /// would let a burst of N concurrent calls overshoot the cap by the whole in-flight window. The
+    /// reservation is released by machinery that already exists —
+    /// <c>UniqueActorService.FailExpiredDeploys</c> → <c>FailExpiredUniqueDeploys</c> returns a stuck
+    /// row to <c>Roster</c>. No new lifecycle, no new sweep.</para>
+    ///
+    /// <para><b>The per-empire key is <c>(player_id, empire_id)</c>, compared NULL-SAFELY with
+    /// <c>IS</c>.</b> An empire is that pair — <c>EmpireRef</c> is a save plus an empire id
+    /// (<c>RpgStore.SaveEmpires.cs</c>: "An AI empire's own specimen (Zomboss's mint) is gated by its
+    /// own deploy policy"). Keying on <c>side</c> instead would silently mis-count the day
+    /// <c>deploy.hypno-ally-not-implemented</c> is lifted, since that refusal is the only thing
+    /// keeping a specimen's mechanical side equal to its owner today. <c>IS</c> rather than <c>=</c>
+    /// because a row with no stamped <c>empire_id</c> (pre-<c>save-identity</c> history, or a save
+    /// with no seeded empire) must still OCCUPY a slot next to the other unstamped rows of its own
+    /// save: "NULL never matches" is right for the ownership predicate
+    /// (<c>OwnsSpecimenUnlocked</c>) and wrong for a count, where an unidentifiable row would
+    /// otherwise escape the cap entirely.</para>
+    ///
+    /// <para><b>The board key is <c>match_key</c>; with no match key the count WIDENS, it never
+    /// opens.</b> <paramref name="matchKey"/> is optional on <see cref="TryBeginUniqueDeploy"/> and
+    /// the browser control room sends <c>matchKey: model.matchKey ?? undefined</c>
+    /// (<c>gk-web/.../features/lawn/LawnPage.tsx</c>), so "absent" is a shape real callers produce
+    /// (a deploy outside a live run), not a defect to refuse a player's action over. Rather than skip
+    /// the axis — which would leave the board number unenforced for any caller that omits it — the
+    /// count becomes EVERY live unique in the store: strictly the largest board that can exist, so it
+    /// can only ever refuse a deploy a named-board count would have admitted. That is the opposite of
+    /// the hole a fail-open skip opens, and unlike a refusal it cannot take the whole unique-deploy
+    /// feature down over a missing optional field.</para>
+    ///
+    /// <para><b>A commander seat is counted.</b> <c>SeatLeadingCommander</c> moves a row to
+    /// <c>ActiveBound</c> with the run's <c>match_key</c> and no ptr, so the seat occupies both
+    /// counts. That is the conservative direction for a frame-budget backstop, and it is not a gate on
+    /// the seat itself — seating stays non-fatal by its own contract ("a refused seat is recorded on
+    /// the run, never a gate"). The consequence, stated: an empire already holding its five gets the
+    /// seat REFUSED rather than seated, and the run proceeds without it.</para>
+    /// </summary>
+    internal static LawnUniqueLiveCounts CountLiveUniquesUnlocked(
+        SqliteConnection db, UniqueActorDto subject, string? matchKey)
+    {
+        int forEmpire;
+        using (var cmd = db.CreateCommand())
+        {
+            cmd.CommandText = """
+                SELECT COUNT(*) FROM rpg_unique_actors
+                WHERE player_id = $pid AND empire_id IS $emp AND phase IN ($deploying, $active);
+                """;
+            cmd.Parameters.AddWithValue("$pid", subject.PlayerId);
+            cmd.Parameters.AddWithValue("$emp", (object?)subject.EmpireId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("$deploying", UniqueActorPhases.Deploying);
+            cmd.Parameters.AddWithValue("$active", UniqueActorPhases.ActiveBound);
+            forEmpire = Convert.ToInt32(cmd.ExecuteScalar());
+        }
+
+        int onBoard;
+        using (var cmd = db.CreateCommand())
+        {
+            if (string.IsNullOrWhiteSpace(matchKey))
+            {
+                cmd.CommandText =
+                    "SELECT COUNT(*) FROM rpg_unique_actors WHERE phase IN ($deploying, $active);";
+            }
+            else
+            {
+                cmd.CommandText = """
+                    SELECT COUNT(*) FROM rpg_unique_actors
+                    WHERE match_key = $mk AND phase IN ($deploying, $active);
+                    """;
+                cmd.Parameters.AddWithValue("$mk", matchKey.Trim());
+            }
+            cmd.Parameters.AddWithValue("$deploying", UniqueActorPhases.Deploying);
+            cmd.Parameters.AddWithValue("$active", UniqueActorPhases.ActiveBound);
+            onBoard = Convert.ToInt32(cmd.ExecuteScalar());
+        }
+
+        return new LawnUniqueLiveCounts(forEmpire, onBoard);
+    }
+
+    /// <summary>
+    /// <c>unique-deploy-cap</c>'s admission call, split out of <see cref="TryBeginUniqueDeploy"/> so
+    /// the ruling is enforced in exactly one place and so a mutation of the wiring is visible at a
+    /// single line rather than smeared across the deploy state machine.
+    ///
+    /// <para><b>The unconfigured case ADMITS, and that is a decision with a stated cost.</b>
+    /// <see cref="LawnDeployLimitsTuningHub"/> is configured by the server's composition root from
+    /// <c>data/tuning/lawn-deploy.v1.json</c>, and its loader THROWS on a missing, unparseable or
+    /// self-contradicting file — so a running server cannot reach this branch, because it would not
+    /// have started. The branch exists for a host that loads the store without loading the policy, and
+    /// in that state it admits, because the alternatives are both worse: refusing would fail EVERY
+    /// unique deploy in the game for a missing config file, naming a cap reason that says nothing
+    /// about the real problem, and that is the invisible-breakage failure this change exists to
+    /// remove. Admitting loses frame protection until the host is configured; refusing loses the
+    /// feature. The tuning file also has no built-in default to fall back to by its own contract, so
+    /// there is no third answer to give.</para>
+    ///
+    /// <para><b>No argument is threaded in for this.</b> A caller-supplied <c>LawnDeployLimits?</c>
+    /// would put a "forgot to pass it" footgun directly on the defect class this wiring closes — and
+    /// this is exactly how the cap was unwired in the first place: correct, fully tested, never
+    /// reached. Reading the one process-wide holder means there is nothing to forget.</para>
+    /// </summary>
+    internal static GateResult AdmitUniqueDeploy(SqliteConnection db, UniqueActorDto subject, string? matchKey)
+    {
+        if (!LawnDeployLimitsTuningHub.IsConfigured) return GateResult.Allowed();
+
+        var live = CountLiveUniquesUnlocked(db, subject, matchKey);
+        return LawnUniqueDeployCap.TryAdmit(live.ForEmpire, live.OnBoard, LawnDeployLimitsTuningHub.Tuning.Limits);
+    }
+
     /// <summary>Roster → Deploying. Same correlationId while Deploying is idempotent (ok, queued=false).</summary>
     public (bool Ok, string Reason, UniqueActorDto? Actor, bool Queued) TryBeginUniqueDeploy(
         string instanceId, string correlationId, string? matchKey = null)
@@ -281,6 +413,25 @@ public sealed partial class RpgStore
                     CreatureSpeciesCatalog.Get(creatureProfile.SpeciesId).DeployMode == CreatureDeployMode.HypnoAlly)
                     return (false, "deploy.hypno-ally-not-implemented", row, false);
             }
+
+            // creature-lawn-deploy `unique-deploy-cap` (lawn LW5.1, owner ruling D6: "Lawn deploy cap:
+            // at most 5 unique creatures per side, 10 on the board") — the ONE admission rule on the
+            // concurrency axis of a unique deploy, on the same seam its sibling already uses:
+            // `CapPolicy.TryAdmit` is reached from `MatchRuntime.TryAdmitSpawn` and refuses a spawn with
+            // a `GateResult` reason, so "a cap refuses an admission, in this vocabulary" is how this
+            // codebase already says that. Two limits, one rule, `GateReasons.CapUniquePerEmpire` and
+            // `GateReasons.CapUniqueBoard` — no new result type and no new reason vocabulary, exactly as
+            // the eight refusals above do it.
+            //
+            // PLACEMENT IS LOAD-BEARING, twice over. (1) It sits AFTER the idempotent re-entry branch
+            // above, so a retry of an in-flight deploy is never refused by its own reservation — the row
+            // being retried is one of the rows being counted. (2) It sits BEFORE the reconciliation and
+            // the UPDATE below, so a refusal is a REFUSAL and not a rollback: no trait/magnitude
+            // reconciliation, no phase move, no `match_key` write, no `revision` bump, nothing for the
+            // Injector to undo.
+            var admit = AdmitUniqueDeploy(db, row, matchKey);
+            if (!admit.Ok)
+                return (false, admit.Reason, row, false);
 
             // creature-lawn-deploy T1.2: reconcile trait bindings on every deploy that actually proceeds
             // past every refusal check above — never at mint, so a specimen promoted between two

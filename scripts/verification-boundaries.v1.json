@@ -7260,6 +7260,22 @@
         "registry-append-safety"
       ],
       "level": "module"
+    },
+    {
+      "id": "data-lawn-unique-deploy-cap-wiring",
+      "kind": "owner",
+      "paths": [
+        "src/FusionRpg.Data/Sqlite/RpgStore.UniqueActors.cs",
+        "tests/FusionRpg.Data.Tests/LawnUniqueDeployCapWiringTests.cs",
+        "tests/FusionRpg.Data.Tests/LawnUniqueDeployLimitsTuningCollection.cs"
+      ],
+      "project": "data",
+      "verificationId": "data.lawn-unique-deploy-cap",
+      "guards": [
+        "dal",
+        "test-substrate"
+      ],
+      "level": "focused"
     }
   ],
   "knownRed": [
