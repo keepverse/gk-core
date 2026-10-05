@@ -109,10 +109,13 @@ CONSUMES the path rather than invented here:
 THE SPAWN RESOLVES ITS OWN ARGUMENT 0
 -------------------------------------
 `run()` passes `argv[0]` through `which()` before it spawns, and the reason is measured rather than
-anticipated. `shutil.which("npm")` on an nvm-for-windows install answers `C:\nvm4w\nodejs\npm.CMD`, and
-`CreateProcess` does NOT search `PATHEXT` for a bare program name: measured on this machine,
-`subprocess.run(["npm", "--version"])` raised `FileNotFoundError: [WinError 2]` while the same
-command with the resolved path returned `11.12.1`. Every nvm-windows install therefore refused at
+anticipated. On an nvm-for-windows install `shutil.which("npm")` answers a `npm.CMD` under the Node
+directory, and `CreateProcess` does NOT search `PATHEXT` for a bare program name: measured on this
+machine, `subprocess.run(["npm", "--version"])` raised `FileNotFoundError: [WinError 2]` while the same
+command with the resolved path returned `11.12.1`. The decisive part of that answer is the `.CMD`
+SUFFIX, which is why the committed form of this measurement names the file rather than the install
+path it happened to land on -- a drive letter in a committed file is a machine path, and this one is
+not portable. Every nvm-windows install therefore refused at
 `web/NOT-ON-PATH` -- AFTER a preflight that had already passed on that very `which()` answer, so the
 one place that could see the problem was the one place that could not act on it. It fails closed, so
 nothing shipped broken; nothing shipped at all.
@@ -269,12 +272,13 @@ def resolved_argv(argv: list[str]) -> list[str]:
     spawned, so it is the only place a fix can help every stage, and `dotnet` has the identical exposure
     on any install that ships a shim. Two call sites would be two chances to forget the third.
 
-    **MEASURED, not anticipated.** `shutil.which("npm")` answers `C:\\nvm4w\\nodejs\\npm.CMD` on an
-    nvm-for-windows install, and `CreateProcess` does not search `PATHEXT` for a bare program name:
-    `subprocess.run(["npm", "--version"])` raised `FileNotFoundError: [WinError 2]` while the same
+    **MEASURED, not anticipated.** On an nvm-for-windows install `shutil.which("npm")` answers a
+    `npm.CMD` under the Node directory, and `CreateProcess` does not search `PATHEXT` for a bare program
+    name: `subprocess.run(["npm", "--version"])` raised `FileNotFoundError: [WinError 2]` while the same
     command with the resolved path returned `11.12.1`. So the run refused at `web/NOT-ON-PATH` after a
     preflight had already passed on that same `which()` answer -- the one place that could see the
-    problem was the one place that could not act on it.
+    problem was the one place that could not act on it. The decisive fact is the `.CMD` SUFFIX; the
+    install path that answer happened to carry is machine-local and is deliberately not committed.
 
     **BEHAVIOUR IS UNCHANGED IN BOTH DIRECTIONS**, which is what makes this the narrowest place to put
     it. A real executable with no shim resolves to itself, so the command line is the same command; a

@@ -382,26 +382,29 @@ class TheChokePoint(unittest.TestCase):
 
     def test_the_SPAWN_resolves_argv_0_so_a_CMD_shim_is_executable(self) -> None:
         """THE DEFECT. `CreateProcess` does not search `PATHEXT` for a bare program name, so on an
-        nvm-for-windows install `shutil.which("npm")` answers `...\\npm.CMD` and every publish refused at
+        nvm-for-windows install `shutil.which("npm")` answers a `npm.CMD` and every publish refused at
         `web/NOT-ON-PATH` -- after a preflight that had already passed on that same answer.
 
         Measured on the machine this was written on, and the case asserts the RESOLUTION rather than
         re-measuring the platform: `subprocess.run(["npm", "--version"])` raised
-        `FileNotFoundError: [WinError 2]`, while the resolved path returned `11.12.1`.
+        `FileNotFoundError: [WinError 2]`, while the resolved path returned `11.12.1`. The paths below
+        are POSIX and therefore drive-letter-free, because a committed file may not carry one; the
+        property under test is that `argv[0]` is REPLACED by whatever `which` answered, and that holds
+        for any spelling.
         """
-        with mock.patch.object(pp, "which", return_value=r"C:\nvm4w\nodejs\npm.CMD"), \
+        shim = "/opt/node/bin/npm.CMD"
+        with mock.patch.object(pp, "which", return_value=shim), \
                 mock.patch.object(pp.subprocess, "run") as spawn:
             spawn.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
             pp.run(["npm", "ci"], REPO, 5, "web")
-        self.assertEqual(spawn.call_args[0][0],
-                         [r"C:\nvm4w\nodejs\npm.CMD", "ci"],
+        self.assertEqual(spawn.call_args[0][0], [shim, "ci"],
                          "the program name was passed through unresolved, so a .CMD shim cannot spawn")
 
     def test_a_BARE_EXECUTABLE_that_resolves_to_ITSELF_is_UNCHANGED(self) -> None:
         """The fix must not change what it does for a program that was already spawnable -- an ELF `npm`
-        on Linux, `dotnet.exe` on Windows. `which` answers the same string and the command line is
+        on Linux, `dotnet` under `/usr/lib`. `which` answers the same string and the command line is
         byte-identical, so this is not merely 'close enough'."""
-        for resolved in ("/usr/bin/npm", r"C:\Program Files\dotnet\dotnet.EXE"):
+        for resolved in ("/usr/bin/npm", "/usr/lib/dotnet/dotnet", "/opt/dotnet/dotnet"):
             with self.subTest(resolved=resolved):
                 with mock.patch.object(pp, "which", return_value=resolved), \
                         mock.patch.object(pp.subprocess, "run") as spawn:
