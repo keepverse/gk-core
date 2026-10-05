@@ -2688,7 +2688,6 @@
         "tools/seedsmith/tests/adapters/trees/test_tree_species_plan.py",
         "tools/seedsmith/tests/test_action_generation_batches.py",
         "tools/seedsmith/tests/test_actions_adapter.py",
-        "tools/seedsmith/tests/test_actions_description_completeness.py",
         "tools/seedsmith/tests/test_brief_assembly.py",
         "tools/seedsmith/tests/test_candidate_assembly.py",
         "tools/seedsmith/tests/test_characteristic_pool.py",
@@ -7278,31 +7277,5 @@
       "level": "focused"
     }
   ],
-  "knownRed": [
-    {
-      "project": "seedsmith",
-      "test": "tests/test_actions_description_completeness.py::RealCommittedCorpusCleanPassTests::test_load_committed_reports_zero_loader_findings",
-      "debt": "SR-25"
-    },
-    {
-      "project": "seedsmith",
-      "test": "tests/test_actions_description_completeness.py::RealCommittedCorpusCleanPassTests::test_content_field_missing_is_clean_on_the_real_corpus",
-      "debt": "SR-25"
-    },
-    {
-      "project": "seedsmith",
-      "test": "tests/test_actions_description_completeness.py::RealCommittedCorpusCleanPassTests::test_every_real_committed_action_carries_provenance",
-      "debt": "SR-25"
-    },
-    {
-      "project": "seedsmith",
-      "test": "tests/test_actions_description_completeness.py::RealCommittedCorpusCleanPassTests::test_resumed_plan_is_empty_now_that_every_real_action_has_a_description",
-      "debt": "SR-25"
-    },
-    {
-      "project": "seedsmith",
-      "test": "tests/test_actions_description_completeness.py::RealCommittedCorpusCleanPassTests::test_automatic_backfill_makes_zero_model_calls_and_writes_nothing_when_all_done",
-      "debt": "SR-25"
-    }
-  ]
+  "knownRed": []
 }
