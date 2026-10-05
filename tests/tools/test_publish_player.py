@@ -79,6 +79,19 @@ DECLARED_PS1_REFERENCES = {
 }
 
 
+def plant(root: Path, rel: str, text: str) -> Path:
+    """Write `text` at `root/rel`, creating the parent directories.
+
+    Every marker a case plants goes through here, because a marker that moved into a sub-directory --
+    `src/FusionRpg.Launcher/...`, `docs/runbook/PLAYERS.txt` -- needs its parents, and a case that
+    hand-rolled `write_text` raised FileNotFoundError instead of the refusal it was asserting.
+    """
+    target = root / rel
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8")
+    return target
+
+
 def code_without_retired_dialect(text: str) -> str:
     """Source reduced to the text a retired-dialect CALL could live in: docstrings and comments out, every
     other string and every identifier in."""
@@ -103,23 +116,63 @@ def code_without_retired_dialect(text: str) -> str:
 class Repo:
     """A throwaway repository with the files the pipeline reads, so no stage needs a real build.
 
-    THE WEB PACKAGE IS ITS OWN DIRECTORY, not `web/fusion-rpg-web` under the repo. That is the shape the
-    split produced and the shape the retired layout assumed, so a fixture that recreated the retired
-    shape would have kept the defect alive underneath every stage assertion in this file.
+    THE FOUR ROOTS ARE FOUR SEPARATE TREES, none of them under the repository. That is the shape the
+    split produced: gk-web, gk-fusion and the workspace are all SIBLINGS of gk-core, so a fixture that
+    recreated the retired `web/fusion-rpg-web`, `src/FusionRpg.Launcher` and `docs/runbook/PLAYERS.txt`
+    under this repository would have kept the defect alive underneath every stage assertion in this
+    file. They live beside the repository instead, so a case that forgets to pass one of them gets a
+    NAMED REFUSAL rather than silently resolving against the real workspace -- the blindness the shared
+    resolver's own docstring warns about, and the reason `guards` plant fixtures that carry their own
+    roots.
+
+    `Repo.layout()` never plants these under the repository, so a test that wants to know "does the tool
+    still reach for `<repo>/src/FusionRpg.Launcher`?" can plant it there and watch the run refuse.
     """
 
     def __init__(self, root: Path) -> None:
         self.root = root
-        self.web = root / "packages" / "fusion-rpg-web"
-        for rel in ("packages/fusion-rpg-web", "src/FusionRpg.Server/wwwroot", "src/FusionRpg.Launcher",
-                    "docs/runbook", "scripts"):
+        self.web = self._sibling("web-repo") / "packages" / "fusion-rpg-web"
+        self.fusion = self._sibling("fusion-repo")
+        self.documents = self._sibling("documents-repo")
+        self.web.mkdir(parents=True, exist_ok=True)
+        self.fusion.mkdir(parents=True, exist_ok=True)
+        self.documents.mkdir(parents=True, exist_ok=True)
+        for rel in ("src/FusionRpg.Server/wwwroot", "scripts"):
             (root / rel).mkdir(parents=True, exist_ok=True)
         (self.web / "package.json").write_text("{}", encoding="utf-8")
         (self.web / "package-lock.json").write_text("{}", encoding="utf-8")
-        (root / "docs" / "runbook" / "PLAYERS.txt").write_text("players", encoding="utf-8")
-        (root / "LICENSE").write_text("licence", encoding="utf-8")
-        (root / "game-profiles.json").write_text("{}", encoding="utf-8")
-        (root / "src" / "FusionRpg.Launcher" / "loader-manifest.json").write_text("{}", encoding="utf-8")
+        self.write_fusion_markers()
+        (self.documents / "docs" / "runbook").mkdir(parents=True, exist_ok=True)
+        (self.documents / "docs" / "runbook" / "PLAYERS.txt").write_text("players", encoding="utf-8")
+        (self.documents / "LICENSE").write_text("licence", encoding="utf-8")
+        (self.documents / "NOTICE").write_text("notice", encoding="utf-8")
+
+    def _sibling(self, name: str) -> Path:
+        """A directory BESIDE the repository, never inside it. See the class docstring."""
+        path = self.root.parent / (self.root.name + "-" + name)
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    @staticmethod
+    def catalog() -> str:
+        """A profile catalog the LAUNCHER's own acceptance rule accepts: `profiles` non-empty, every row
+        carrying an `id`. `GameProfileCatalog.LoadFromLauncherBase` requires `Count > 0`, which is why
+        a fixture writing `{}` -- as the pre-split fixture did -- is no longer a catalog at all."""
+        return json.dumps({"defaultProfileId": "pvzrh-3.8.1",
+                           "profiles": [{"id": "pvzrh-3.8.1", "loaders": ["BepInEx"],
+                                         "fingerprints": []}]})
+
+    def write_fusion_markers(self, *, melon: bool = True) -> None:
+        """Every file `required_fusion_markers` asks for in a run with a game dir and a MelonLoader pack.
+
+        Written through the tool's OWN constants rather than spelled out here, so a marker that moves
+        cannot leave the fixture describing the retired path -- which is exactly the rot the retired
+        layout would have reintroduced silently.
+        """
+        for rel in (pp.LAUNCHER_PROJECT_REL, pp.LAUNCHER_MANIFEST_REL, pp.BEP_INJECTOR_PROJECT_REL,
+                    *pp.MELON_INJECTOR_PROJECT_RELS, pp.FUSION_PROFILE_GUARD_REL):
+            plant(self.fusion, rel, "{}")
+        (self.fusion / pp.FUSION_CATALOG_REL).write_text(self.catalog(), encoding="utf-8")
 
     def server_root(self) -> Path:
         """A supplied server root. It must already exist, because the tool checks it before the build."""
@@ -128,8 +181,9 @@ class Repo:
         return server
 
     def roots(self) -> dict[str, Path]:
-        """Both explicit roots, as a caller supplies them."""
-        return {"server_root": self.server_root(), "web_root": self.web}
+        """All FOUR explicit roots, as a caller supplies them."""
+        return {"server_root": self.server_root(), "web_root": self.web,
+                "fusion_root": self.fusion, "documents_root": self.documents}
 
     def game_dir(self) -> Path:
         """A legal game tree, under a sibling of the repo so the parent's probe finds it."""
@@ -209,7 +263,7 @@ class TemporaryRepo(unittest.TestCase):
             self.fake[name].stop()
 
     def publish(self, env: dict[str, str] | None = None, **overrides):
-        """`publish()` with BOTH roots supplied explicitly -- how every caller in this file invokes it.
+        """`publish()` with ALL FOUR roots supplied explicitly -- how every caller in this file invokes it.
 
         `env` is an ENV-OVERRIDE mapping merged over the fixture's, not a whole environment. The
         mechanical rewrite from the positional call sites dropped `self.env(FUSIONRPG_USE_CI_DROP="1")`
@@ -225,7 +279,8 @@ class TemporaryRepo(unittest.TestCase):
         """The layout a case is about, built from the fixture's explicit roots."""
         roots = self.repo.roots()
         roots.update(overrides)
-        return pp.Layout.build(self.root, roots["server_root"], roots["web_root"])
+        return pp.Layout.build(self.root, roots["server_root"], roots["web_root"],
+                               roots["fusion_root"], roots["documents_root"])
 
     def env(self, **overrides) -> dict[str, str]:
         base = {"FUSIONRPG_GAME_DIR": str(self.repo.game_dir())}
@@ -323,6 +378,70 @@ class TheChokePoint(unittest.TestCase):
                 pp.run(["npm", "ci"], REPO, 5, "web")
         self.assertEqual(caught.exception.reason, "NOT-ON-PATH")
 
+    # -- the spawn resolves argv[0] ------------------------------------------------------------------------
+
+    def test_the_SPAWN_resolves_argv_0_so_a_CMD_shim_is_executable(self) -> None:
+        """THE DEFECT. `CreateProcess` does not search `PATHEXT` for a bare program name, so on an
+        nvm-for-windows install `shutil.which("npm")` answers `...\\npm.CMD` and every publish refused at
+        `web/NOT-ON-PATH` -- after a preflight that had already passed on that same answer.
+
+        Measured on the machine this was written on, and the case asserts the RESOLUTION rather than
+        re-measuring the platform: `subprocess.run(["npm", "--version"])` raised
+        `FileNotFoundError: [WinError 2]`, while the resolved path returned `11.12.1`.
+        """
+        with mock.patch.object(pp, "which", return_value=r"C:\nvm4w\nodejs\npm.CMD"), \
+                mock.patch.object(pp.subprocess, "run") as spawn:
+            spawn.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
+            pp.run(["npm", "ci"], REPO, 5, "web")
+        self.assertEqual(spawn.call_args[0][0],
+                         [r"C:\nvm4w\nodejs\npm.CMD", "ci"],
+                         "the program name was passed through unresolved, so a .CMD shim cannot spawn")
+
+    def test_a_BARE_EXECUTABLE_that_resolves_to_ITSELF_is_UNCHANGED(self) -> None:
+        """The fix must not change what it does for a program that was already spawnable -- an ELF `npm`
+        on Linux, `dotnet.exe` on Windows. `which` answers the same string and the command line is
+        byte-identical, so this is not merely 'close enough'."""
+        for resolved in ("/usr/bin/npm", r"C:\Program Files\dotnet\dotnet.EXE"):
+            with self.subTest(resolved=resolved):
+                with mock.patch.object(pp, "which", return_value=resolved), \
+                        mock.patch.object(pp.subprocess, "run") as spawn:
+                    spawn.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="",
+                                                                     stderr="")
+                    pp.run(["npm", "ci"], REPO, 5, "web")
+                self.assertEqual(spawn.call_args[0][0], [resolved, "ci"])
+
+    def test_a_NAME_that_resolves_to_NOTHING_is_passed_through_so_NOT_ON_PATH_still_fires(self) -> None:
+        """The other half of 'unchanged': when `which` answers None the argv must reach `subprocess`
+        UNTOUCHED, or this change would have turned every missing-tool refusal into something else --
+        a new refusal vocabulary is not a fix, it is a second failure mode."""
+        with mock.patch.object(pp, "which", return_value=None), \
+                mock.patch.object(pp.subprocess, "run") as spawn:
+            spawn.side_effect = FileNotFoundError("nope")
+            with self.assertRaises(pp.Refusal) as caught:
+                pp.run(["npm", "ci"], REPO, 5, "web")
+        self.assertEqual(caught.exception.reason, "NOT-ON-PATH")
+        self.assertEqual(spawn.call_args[0][0], ["npm", "ci"])
+
+    def test_the_REAL_npm_answer_on_THIS_machine_is_a_shim_and_it_now_SPAWNS(self) -> None:
+        """THE EVIDENCE, ON THE MACHINE, NOT A MOCK. This is the acceptance case: `npm --version`
+        through the tool's own choke point, with whatever `which` says here. It asserts the version is
+        non-empty and the exit code is zero, so it is a spawn and not a refusal.
+
+        Skipped, never failed, when npm is absent -- a tool that cannot find its own npm is a
+        configuration fact, and this case is about the resolution, not about the installation.
+        """
+        resolved = pp.which("npm")
+        if resolved is None:
+            self.skipTest("npm is not on PATH here, so there is no shim resolution to observe")
+        with mock.patch.object(pp.subprocess, "run") as spawn:
+            spawn.side_effect = lambda argv, **kw: subprocess.CompletedProcess(
+                args=argv, returncode=0, stdout="0.0.0-mock", stderr="")
+            pp.run(["npm", "--version"], REPO, 60, "web")
+        self.assertEqual(spawn.call_args[0][0], [resolved, "--version"])
+        # And UNMOCKED, which is the part that can actually fail: the resolved path has to run.
+        completed = pp.run(["npm", "--version"], REPO, 120, "web")
+        self.assertRegex(completed.strip(), r"\A\d+\.\d+\.\d+", completed)
+
     def test_EVERY_external_command_goes_through_run_and_nothing_else(self) -> None:
         """THE STRUCTURAL CONTRACT, asserted by AST rather than by grepping for an idiom.
 
@@ -349,9 +468,13 @@ class TheChokePoint(unittest.TestCase):
 
     def test_the_pipeline_calls_NPM_CI_before_NPM_BUILD(self) -> None:
         """The order is a contract: a build against an unlocked tree is not reproducible, and CI consumes
-        the result. `VerificationTopologyTests` asserts the same ordering repository-side."""
+        the result. `VerificationTopologyTests` asserts the same ordering repository-side.
+
+        The literals are the RESOLVED-program forms (`[npm, "ci"]`), which is what the code says now that
+        `stage_web` passes `which`'s answer instead of the bare string -- otherwise this case would pass
+        by finding nothing, because `str.index` on a missing substring raises rather than skipping."""
         source = PUBLISH.read_text(encoding="utf-8")
-        self.assertLess(source.index('run(["npm", "ci"]'), source.index('run(["npm", "run", "build"]'))
+        self.assertLess(source.index('run([npm, "ci"]'), source.index('run([npm, "run", "build"]'))
 
     def test_the_tool_never_checks_for_node_modules_before_building(self) -> None:
         """A pre-existing `node_modules` check short-circuits `npm ci`, which is the one step that makes
@@ -431,18 +554,24 @@ class TheGapsFalsificationFound(TemporaryRepo):
             with contextlib.redirect_stdout(buffer):
                 code = pp.main(["--root", str(self.root), "--json", "--timeout", "5",
                                 "--server-root", str(roots["server_root"]),
-                                "--web-root", str(roots["web_root"])])
+                                "--web-root", str(roots["web_root"]),
+                                "--fusion-root", str(roots["fusion_root"]),
+                                "--documents-root", str(roots["documents_root"])])
         self.assertEqual(code, 0, buffer.getvalue())
         report = json.loads(buffer.getvalue())
         self.assertEqual(set(report), {"tool", "verdict", "version", "server_root", "web_root",
+                                       "fusion_root", "documents_root",
                                        "game_dir", "ci_drop", "melon_profile", "plugin_files",
                                        "melon_files", "pdbs_removed", "server_data_present",
                                        "stages", "out"})
         # The resolved roots are IN the envelope, not merely implied by it: a consumer of this JSON has to
         # be able to answer "which tree was this pack built from", and `dist/FusionRpg` in a log line is
-        # not an answer a program can parse.
+        # not an answer a program can parse. ALL FOUR, because a pack is built from four repositories and
+        # a consumer that cannot name three of them cannot tell which tree a marker came from.
         self.assertEqual(report["server_root"], str(roots["server_root"].resolve()))
         self.assertEqual(report["web_root"], str(roots["web_root"].resolve()))
+        self.assertEqual(report["fusion_root"], str(roots["fusion_root"].resolve()))
+        self.assertEqual(report["documents_root"], str(roots["documents_root"].resolve()))
         for banned in ("duration", "elapsed", "timestamp", "started", "finished", "seed"):
             self.assertNotIn(banned, report, f"{banned!r} differs per run, so nothing can assert on it")
 
@@ -518,6 +647,7 @@ class TheLayout(TemporaryRepo):
 #: second thing that can silently select nothing.
 ROOT_RESOLUTION_NODES = (
     "TheExplicitRoots::test_BOTH_roots_supplied_EXPLICITLY_are_RESOLVED_as_given",
+    "TheExplicitRoots::test_ALL_FOUR_roots_supplied_EXPLICITLY_are_RESOLVED_as_given",
     "TheExplicitRoots::test_an_EXPLICIT_root_WINS_over_a_DEFAULT_that_would_also_resolve",
     "TheExplicitRoots::test_a_SERVER_ROOT_that_is_not_a_directory_REFUSES_naming_the_stage_and_the_path",
     "TheExplicitRoots::test_a_SERVER_ROOT_OUTSIDE_the_repository_REFUSES_rather_than_being_deleted",
@@ -525,6 +655,19 @@ ROOT_RESOLUTION_NODES = (
     "TheExplicitRoots::test_a_WEB_ROOT_without_BOTH_npm_MARKS_REFUSES_rather_than_being_used",
     "TheExplicitRoots::test_a_WEB_ROOT_with_BOTH_npm_MARKS_is_ACCEPTED",
     "TheExplicitRoots::test_the_DEFAULT_web_ROOT_is_the_SHARED_RESOLVERS_and_REFUSES_when_it_cannot",
+    "TheExplicitRoots::test_a_FUSION_ROOT_that_is_not_a_directory_REFUSES_naming_the_stage_and_the_path",
+    "TheExplicitRoots::test_a_FUSION_ROOT_missing_ANY_marker_this_run_reads_REFUSES_by_name",
+    "TheExplicitRoots::test_a_FUSION_ROOT_with_ALL_of_this_runs_markers_is_ACCEPTED",
+    "TheExplicitRoots::test_the_CI_DROP_does_NOT_require_the_BepInEx_HOST_PROJECT",
+    "TheExplicitRoots::test_a_MELON_PACK_does_NOT_require_the_Melon_HOSTS_without_a_melon_drop",
+    "TheExplicitRoots::test_the_RETIRED_REPO_RELATIVE_layout_REFUSES_rather_than_being_used",
+    "TheExplicitRoots::test_the_FUSION_and_DOCUMENTS_roots_are_read_from_the_FLAGS_and_not_from_the_REPOSITORY",
+    "TheExplicitRoots::test_a_PRESENT_but_EMPTY_catalog_REFUSES_rather_than_shipping_a_silent_fallback",
+    "TheExplicitRoots::test_a_DOCUMENTS_ROOT_that_is_not_a_directory_REFUSES_naming_the_stage_and_the_path",
+    "TheExplicitRoots::test_a_DOCUMENTS_ROOT_missing_EITHER_marker_REFUSES_by_name",
+    "TheExplicitRoots::test_a_DOCUMENTS_ROOT_with_BOTH_markers_is_ACCEPTED",
+    "TheExplicitRoots::test_the_DEFAULT_fusion_ROOT_is_the_SHARED_RESOLVERS_and_REFUSES_when_it_cannot",
+    "TheExplicitRoots::test_the_DEFAULT_documents_ROOT_is_the_SHARED_RESOLVERS_and_REFUSES_when_it_cannot",
     "TheExplicitRoots::test_a_SUPPLIED_server_ROOT_left_over_from_a_previous_publish_is_EMPTIED",
     "TheExplicitRoots::test_MAIN_exits_NON_ZERO_on_a_root_REFUSAL_and_never_prints_an_empty_success",
     "TheExplicitRoots::test_the_json_envelope_is_PARSEABLE_and_carries_the_ROOTS_on_a_REFUSAL",
@@ -585,6 +728,36 @@ class TheExplicitRoots(TemporaryRepo):
         self.assertEqual(report.server_root, str(roots["server_root"].resolve()))
         self.assertEqual(report.web_root, str(roots["web_root"].resolve()))
         self.assertIn(pp.STAGE_RESOLVE_ROOTS, report.stages)
+
+    def test_ALL_FOUR_roots_supplied_EXPLICITLY_are_RESOLVED_as_given(self) -> None:
+        """THE FIVE PATHS THE SPLIT MOVED, ONTO FOUR ROOTS, EACH VALIDATED BY ITS OWN MARKER.
+
+        This is the case that says what the other two do not: that a run can be handed every tree it
+        needs and reach a pack. The marker column is what each root is validated by, and every marker is
+        the artefact the CONSUMER reads rather than a name that happens to match a directory.
+
+          server     gk-core    no pre-flight marker; after the publish FusionRpg.Server.exe + data/
+          web        gk-web     package.json AND package-lock.json
+          fusion     gk-fusion  src/FusionRpg.Launcher/FusionRpg.Launcher.csproj
+                                src/FusionRpg.Launcher/loader-manifest.json
+                                game-profiles.json (schema-checked)
+                                src/FusionRpg.Injector.BepInEx/...csproj   (no CI drop)
+                                the two MelonLoader hosts + scripts/guard-game-profile.py (Melon drop)
+          documents  workspace  docs/runbook/PLAYERS.txt AND LICENSE
+        """
+        roots = self.repo.roots()
+        self.assertEqual(pp.resolve_fusion_root(self.root, roots["fusion_root"], self.env()),
+                         roots["fusion_root"].resolve())
+        self.assertEqual(pp.resolve_documents_root(self.root, roots["documents_root"]),
+                         roots["documents_root"].resolve())
+        report = self.publish()
+        self.assertEqual(report.fusion_root, str(roots["fusion_root"].resolve()))
+        self.assertEqual(report.documents_root, str(roots["documents_root"].resolve()))
+        self.assertIn(pp.STAGE_RESOLVE_ROOTS, report.stages)
+        # And the four roots are FOUR DIFFERENT DIRECTORIES in the fixture, so this case cannot pass by
+        # one tree quietly answering for all four.
+        self.assertEqual(len({report.server_root, report.web_root, report.fusion_root,
+                              report.documents_root}), 4)
 
     def test_an_EXPLICIT_root_WINS_over_a_DEFAULT_that_would_also_resolve(self) -> None:
         """THE RULE THE WHOLE DEFECT TURNED ON: a default that resolves and an explicit value that
@@ -686,6 +859,315 @@ class TheExplicitRoots(TemporaryRepo):
         # And it agrees with the resolver, rather than being a second implementation of it.
         self.assertEqual(pp.default_web_root(REPO), pp.shared_web_root(REPO) / "web" / "fusion-rpg-web")
 
+    # -- the fusion root refuses --------------------------------------------------------------------------
+
+    def test_a_FUSION_ROOT_that_is_not_a_directory_REFUSES_naming_the_stage_and_the_path(self) -> None:
+        absent = self.root.parent / (self.root.name + "-no-such-fusion")
+        with self.assertRaises(pp.Refusal) as caught:
+            pp.resolve_fusion_root(self.root, absent, self.env())
+        refusal = caught.exception
+        self.assertEqual(refusal.stage, pp.STAGE_RESOLVE_ROOTS)
+        self.assertEqual(refusal.reason, "FUSION-ROOT-MISSING")
+        self.assertIn(str(absent.resolve()), refusal.detail)
+
+    def test_a_FUSION_ROOT_missing_ANY_marker_this_run_reads_REFUSES_by_name(self) -> None:
+        """Existence is not validity, one marker at a time, and the refusal names WHICH one is absent
+        rather than stating a requirement and leaving the reader to work out what failed.
+
+        Driven off the tool's own marker list, so a marker that moves cannot leave this case asserting a
+        requirement the tool no longer has.
+        """
+        for missing in pp.required_fusion_markers(self.env()):
+            with self.subTest(missing=missing):
+                bare = self.root.parent / (self.root.name + "-bare-" + missing.replace("/", "-"))
+                bare.mkdir(parents=True, exist_ok=True)
+                for rel in pp.required_fusion_markers(self.env()):
+                    if rel == missing:
+                        continue
+                    plant(bare, rel, self.repo.catalog() if rel == pp.FUSION_CATALOG_REL else "{}")
+                with self.assertRaises(pp.Refusal) as caught:
+                    pp.resolve_fusion_root(self.root, bare, self.env())
+                self.assertEqual(caught.exception.reason, "FUSION-ROOT-NOT-A-SOURCE-TREE")
+                self.assertEqual(caught.exception.stage, pp.STAGE_RESOLVE_ROOTS)
+                self.assertIn(missing, caught.exception.detail)
+                self.assertIn(str(bare.resolve()), caught.exception.detail)
+
+    def test_a_FUSION_ROOT_with_ALL_of_this_runs_markers_is_ACCEPTED(self) -> None:
+        """The positive twin of the case above. Without it, a resolver that refused EVERY fusion root
+        would pass the refusal case for entirely the wrong reason."""
+        self.assertEqual(pp.resolve_fusion_root(self.root, self.repo.fusion, self.env()),
+                         self.repo.fusion.resolve())
+
+    def test_the_CI_DROP_does_NOT_require_the_BepInEx_HOST_PROJECT(self) -> None:
+        """A MARKER THE RUN WILL NEVER READ MUST NOT BE REQUIRED. Under `FUSIONRPG_USE_CI_DROP=1` the
+        injector is copied prebuilt, so the BepInEx host project is not opened -- and refusing a CI
+        publish for a file it does not touch is a false refusal, which is as wrong as a silent one and
+        harder to argue with because it looks cautious."""
+        env = self.env(FUSIONRPG_USE_CI_DROP="1")
+        self.assertNotIn(pp.BEP_INJECTOR_PROJECT_REL, pp.required_fusion_markers(env))
+        (self.repo.fusion / pp.BEP_INJECTOR_PROJECT_REL).unlink()
+        self.assertEqual(pp.resolve_fusion_root(self.root, self.repo.fusion, env),
+                         self.repo.fusion.resolve(),
+                         "a CI publish refused a fusion root it would never have read")
+        # And the reverse: without the drop it IS required, or a real build would find out at MSBuild.
+        self.assertIn(pp.BEP_INJECTOR_PROJECT_REL, pp.required_fusion_markers(self.env()))
+        with self.assertRaises(pp.Refusal) as caught:
+            pp.resolve_fusion_root(self.root, self.repo.fusion, self.env())
+        self.assertEqual(caught.exception.reason, "FUSION-ROOT-NOT-A-SOURCE-TREE")
+
+    def test_a_MELON_PACK_does_NOT_require_the_Melon_HOSTS_without_a_melon_drop(self) -> None:
+        """The twin of the case above for the MelonLoader half: the hosts and the profile guard join the
+        marker set only when `melon_is_available` says a Melon drop will be built, which is the same
+        predicate `stage_melon` branches on."""
+        self.assertIn(pp.FUSION_PROFILE_GUARD_REL, pp.required_fusion_markers(
+            self.env(FUSIONRPG_ML_GAMEDIR=str(self.repo.melon_dir()))))
+        self.assertNotIn(pp.FUSION_PROFILE_GUARD_REL, pp.required_fusion_markers(self.env()))
+
+    def test_the_RETIRED_REPO_RELATIVE_layout_REFUSES_rather_than_being_used(self) -> None:
+        """THE DEFECT, PLANTED WHERE THE TOOL USED TO LOOK.
+
+        Every path the split moved is planted INSIDE the fixture repository, exactly where the
+        pre-split tool read them from -- and the run still refuses, because the roots were not supplied.
+        A fixture that never planted them would not know that: every other case hands over a valid root,
+        so a derivation that reached back into `<repo>/src/FusionRpg.Launcher` would simply never be
+        exercised, and the case would pass for the wrong reason.
+
+        The refusal names the missing root rather than the file, which is the whole difference between
+        "here is what to pass" and "this pack needs a lockfile".
+        """
+        for rel in ("src/FusionRpg.Launcher/FusionRpg.Launcher.csproj",
+                    "src/FusionRpg.Launcher/loader-manifest.json",
+                    "src/FusionRpg.Injector.BepInEx/FusionRpg.Injector.BepInEx.csproj",
+                    "src/FusionRpg.Injector.MelonLoader/FusionRpg.Injector.MelonLoader.csproj",
+                    "src/FusionRpg.Injector.MelonLoader.39/FusionRpg.Injector.MelonLoader.39.csproj",
+                    "scripts/guard-game-profile.py", "game-profiles.json", "docs/runbook/PLAYERS.txt"):
+            plant(self.root, rel, "{}" if rel.endswith(".json") else "// decoy")
+        plant(self.root, "LICENSE", "decoy licence")
+        # Server and web are supplied; the two roots that no longer exist in this repository are NOT.
+        # The fixture's own siblings are visible to the shared resolvers, so the run must resolve
+        # FUSION/ documents rather than reach back into the decoys.
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = pp.main(["--root", str(self.root), "--timeout", "5",
+                            "--server-root", str(self.repo.server_root()),
+                            "--web-root", str(self.repo.web)])
+        # `Repo` planted the siblings, and the shared resolver finds gk-fusion/workspace only in a real
+        # workspace -- so from a temp tree BOTH defaults refuse. Which one refuses first is the fusion
+        # root, because resolution order is server, web, fusion, documents.
+        self.assertEqual(code, pp.EXIT_FAILED)
+        self.assertIn("FUSION-ROOT-UNRESOLVED", err.getvalue())
+        self.assertEqual(out.getvalue(), "", "a refusal must not also print a success line")
+
+    def test_the_FUSION_and_DOCUMENTS_roots_are_read_from_the_FLAGS_and_not_from_the_REPOSITORY(self) -> None:
+        """The positive twin: with the same decoys planted and all FOUR roots supplied, the pack's
+        documents and manifest come from the supplied trees. Without this, a resolver that quietly
+        preferred `<repo>/...` would pass the refusal case above."""
+        plant(self.root, "NOTICE", "DECOY")
+        plant(self.root, "docs/runbook/PLAYERS.txt", "DECOY")
+        plant(self.root, "src/FusionRpg.Launcher/loader-manifest.json", "DECOY")
+        report = self.publish()
+        out = self.root / "dist" / "FusionRpg"
+        self.assertEqual((out / "NOTICE").read_text(encoding="utf-8"), "notice")
+        self.assertEqual((out / "PLAYERS.txt").read_text(encoding="utf-8"), "players")
+        self.assertEqual((out / "loader-manifest.json").read_text(encoding="utf-8"), "{}")
+        self.assertEqual(report.fusion_root, str(self.repo.fusion.resolve()))
+        self.assertEqual(report.documents_root, str(self.repo.documents.resolve()))
+
+    # -- the documents root refuses -----------------------------------------------------------------------
+
+    def test_a_DOCUMENTS_ROOT_that_is_not_a_directory_REFUSES_naming_the_stage_and_the_path(self) -> None:
+        absent = self.root.parent / (self.root.name + "-no-such-documents")
+        with self.assertRaises(pp.Refusal) as caught:
+            pp.resolve_documents_root(self.root, absent)
+        refusal = caught.exception
+        self.assertEqual(refusal.stage, pp.STAGE_RESOLVE_ROOTS)
+        self.assertEqual(refusal.reason, "DOCUMENTS-ROOT-MISSING")
+        self.assertIn(str(absent.resolve()), refusal.detail)
+
+    def test_a_DOCUMENTS_ROOT_missing_EITHER_marker_REFUSES_by_name(self) -> None:
+        for missing in pp.DOCUMENTS_MARKERS:
+            with self.subTest(missing=missing):
+                bare = self.root.parent / (self.root.name + "-bare-docs-" + missing.replace("/", "-"))
+                bare.mkdir(parents=True, exist_ok=True)
+                for rel in pp.DOCUMENTS_MARKERS:
+                    if rel != missing:
+                        plant(bare, rel, "{}")
+                with self.assertRaises(pp.Refusal) as caught:
+                    pp.resolve_documents_root(self.root, bare)
+                self.assertEqual(caught.exception.reason, "DOCUMENTS-ROOT-NOT-A-DOCUMENT-TREE")
+                self.assertIn(missing, caught.exception.detail)
+                self.assertIn(str(bare.resolve()), caught.exception.detail)
+
+    def test_a_DOCUMENTS_ROOT_with_BOTH_markers_is_ACCEPTED(self) -> None:
+        self.assertEqual(pp.resolve_documents_root(self.root, self.repo.documents),
+                         self.repo.documents.resolve())
+
+    # -- the defaults are the shared resolvers -------------------------------------------------------------
+
+    def test_the_DEFAULT_fusion_ROOT_is_the_SHARED_RESOLVERS_and_REFUSES_when_it_cannot(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            orphan = Path(tmp) / "orphan" / "repo"
+            orphan.mkdir(parents=True)
+            with self.assertRaises(pp.Refusal) as caught:
+                pp.default_fusion_root(orphan)
+            self.assertEqual(caught.exception.reason, "FUSION-ROOT-UNRESOLVED")
+            for hint in ("--fusion-root", "KEEPVERSE_FUSION_ROOT"):
+                self.assertIn(hint, caught.exception.detail, hint)
+        # And it agrees with the resolver, rather than being a second implementation of it.
+        self.assertEqual(pp.default_fusion_root(REPO), pp.shared_fusion_root(REPO))
+
+    def test_the_DEFAULT_documents_ROOT_is_the_SHARED_RESOLVERS_and_REFUSES_when_it_cannot(self) -> None:
+        """`workspace_root()` RAISES rather than guessing when there is no workspace above this
+        repository -- a standalone gk-core clone has no qualifying ancestor -- and a refusal that names
+        the missing root is the answer. A synthesised parent is not."""
+        with tempfile.TemporaryDirectory() as tmp:
+            orphan = Path(tmp) / "orphan" / "repo"
+            orphan.mkdir(parents=True)
+            with self.assertRaises(pp.Refusal) as caught:
+                pp.default_documents_root(orphan)
+            self.assertEqual(caught.exception.reason, "DOCUMENTS-ROOT-UNRESOLVED")
+            for hint in ("--documents-root", "KEEPVERSE_WORKSPACE_ROOT"):
+                self.assertIn(hint, caught.exception.detail, hint)
+        self.assertEqual(pp.default_documents_root(REPO), pp.shared_workspace_root(REPO))
+
+    # -- the profile catalog is SCHEMA-CHECKED, not merely present -----------------------------------------
+
+    def test_a_PRESENT_but_EMPTY_catalog_REFUSES_rather_than_shipping_a_silent_fallback(self) -> None:
+        """THE CASE THAT A PRESENCE CHECK MISSES. `{"profiles": []}` is a file, so a marker that only
+        asked for existence is satisfied -- and the launcher reads an empty `profiles` as "no catalog"
+        and answers from a BUILT-IN table with no diagnostic, while `guard-game-profile.py` reports an
+        uncatalogued profile as ALLOWED. The pack would then detect the wrong game version and nothing
+        anywhere would have failed."""
+        for label, text, expected in (
+            ("empty profiles array", json.dumps({"profiles": []}), "EMPTY"),
+            ("no profiles key", json.dumps({"defaultProfileId": "pvzrh-3.8.1"}), "no 'profiles' array"),
+            ("profiles not an array", json.dumps({"profiles": {}}), "no 'profiles' array"),
+            ("a row with no id", json.dumps({"profiles": [{"displayName": "x"}]}), "has no 'id'"),
+            ("a row that is not an object", json.dumps({"profiles": ["pvzrh-3.8.1"]}), "is not an object"),
+            ("not JSON", "{oh dear", "is not JSON"),
+            ("not an object", json.dumps([1, 2, 3]), "is not a JSON object"),
+        ):
+            with self.subTest(label):
+                (self.repo.fusion / pp.FUSION_CATALOG_REL).write_text(text, encoding="utf-8")
+                problems = pp.profile_catalog_problems(self.repo.fusion / pp.FUSION_CATALOG_REL)
+                self.assertTrue(problems, label)
+                self.assertIn(expected, problems[0], label)
+                with self.assertRaises(pp.Refusal) as caught:
+                    pp.resolve_fusion_root(self.root, self.repo.fusion, self.env())
+                self.assertEqual(caught.exception.reason, "PROFILE-CATALOG-INVALID", label)
+        # And the live repository's own catalog passes, so the rule is not stricter than the real thing.
+        live = owning_base(pp.FUSION_CATALOG_REL, REPO)
+        self.assertIsNotNone(live, "no repository carries game-profiles.json, so the marker is wrong")
+        self.assertEqual(pp.profile_catalog_problems(live / pp.FUSION_CATALOG_REL), [],
+                         "the live catalog is rejected by the rule this change adds")
+
+    def test_an_ABSENT_catalog_is_a_REFUSAL_not_an_absent_file(self) -> None:
+        """Distinct from the schema cases because the refusal has to NAME IT: the launcher csproj copies
+        `..\\..\\game-profiles.json` into the publish output, so a missing catalog is an MSBuild copy
+        error two minutes in rather than a refusal in the first second."""
+        (self.repo.fusion / pp.FUSION_CATALOG_REL).unlink()
+        self.assertEqual(pp.profile_catalog_problems(self.repo.fusion / pp.FUSION_CATALOG_REL),
+                         ["game-profiles.json is absent"])
+
+    # -- the documents the pack ships now come from the documents root -------------------------------------
+
+    def test_NOTICE_and_PLAYERS_come_from_the_DOCUMENTS_ROOT_and_not_the_repository(self) -> None:
+        """`NOTICE` exists at the workspace root and at NO split repository, so before the documents root
+        became an input every pack built since the split shipped without it and nothing said so -- the
+        optional branch simply did not fire. This case plants the file ONLY in the documents root and
+        asserts it reaches the pack, and plants a DECOY in the repository to prove the tool is not
+        reading it from there."""
+        decoy = self.root / "NOTICE"
+        decoy.write_text("NOT THE ENGINE REPOSITORY'S NOTICE", encoding="utf-8")
+        pp.stage_documents(self.layout())
+        out = self.root / "dist" / "FusionRpg"
+        self.assertEqual((out / "NOTICE").read_text(encoding="utf-8"), "notice")
+        self.assertEqual((out / "PLAYERS.txt").read_text(encoding="utf-8"), "players")
+        self.assertEqual((out / "LICENSE").read_text(encoding="utf-8"), "licence")
+
+    def test_EVERY_root_REFUSAL_exits_NON_ZERO_and_writes_NOTHING_to_stdout(self) -> None:
+        """ONE case for the whole refusal vocabulary, and the reason it is one case rather than eleven:
+        "stdout is empty on a refusal" is a property of the ENTRY POINT, so asserting it per refusal
+        would repeat one fact eleven times and let the tenth drift.
+
+        Each entry is driven through `main()` -- not through a resolver -- because `main` is the only
+        place that decides where a refusal's text goes, and a resolver that prints nothing says nothing
+        about the tool.
+        """
+        good = self.repo.roots()
+        cases: list[tuple[str, dict[str, object], str]] = [
+            ("server root absent", {"server_root": self.root / "dist" / "FusionRpg" / "Nope"},
+             "SERVER-ROOT-MISSING"),
+            ("web root absent", {"web_root": self.root.parent / "no-such-web"}, "WEB-ROOT-MISSING"),
+            ("fusion root absent", {"fusion_root": self.root.parent / "no-such-fusion"},
+             "FUSION-ROOT-MISSING"),
+            ("documents root absent", {"documents_root": self.root.parent / "no-such-docs"},
+             "DOCUMENTS-ROOT-MISSING"),
+        ]
+        for label, override, reason in cases:
+            with self.subTest(label):
+                roots = dict(good) | override
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    code = pp.main(["--root", str(self.root), "--timeout", "5",
+                                    "--server-root", str(roots["server_root"]),
+                                    "--web-root", str(roots["web_root"]),
+                                    "--fusion-root", str(roots["fusion_root"]),
+                                    "--documents-root", str(roots["documents_root"])])
+                self.assertEqual(code, pp.EXIT_FAILED, label)
+                self.assertNotEqual(code, 0, label)
+                self.assertIn(pp.STAGE_RESOLVE_ROOTS, err.getvalue(), label)
+                self.assertIn(reason, err.getvalue(), label)
+                self.assertEqual(out.getvalue(), "", f"{label}: a refusal wrote to stdout")
+        # The marker refusals and the catalog refusal, through the same entry point.
+        for missing in (pp.LAUNCHER_MANIFEST_REL, pp.FUSION_CATALOG_REL):
+            with self.subTest(marker=missing):
+                (self.repo.fusion / missing).unlink()
+                try:
+                    out, err = io.StringIO(), io.StringIO()
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = pp.main(["--root", str(self.root), "--timeout", "5",
+                                        "--server-root", str(good["server_root"]),
+                                        "--web-root", str(good["web_root"]),
+                                        "--fusion-root", str(good["fusion_root"]),
+                                        "--documents-root", str(good["documents_root"])])
+                    self.assertEqual(code, pp.EXIT_FAILED)
+                    self.assertEqual(out.getvalue(), "", f"{missing}: a refusal wrote to stdout")
+                    self.assertIn(missing, err.getvalue())
+                finally:
+                    self.repo.write_fusion_markers()
+        # And the empty-catalog refusal, which is the one a presence check would have let through.
+        catalog = self.repo.fusion / pp.FUSION_CATALOG_REL
+        good_catalog = catalog.read_text(encoding="utf-8")
+        try:
+            catalog.write_text(json.dumps({"profiles": []}), encoding="utf-8")
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = pp.main(["--root", str(self.root), "--timeout", "5",
+                                "--server-root", str(good["server_root"]),
+                                "--web-root", str(good["web_root"]),
+                                "--fusion-root", str(good["fusion_root"]),
+                                "--documents-root", str(good["documents_root"])])
+            self.assertEqual(code, pp.EXIT_FAILED)
+            self.assertEqual(out.getvalue(), "", "PROFILE-CATALOG-INVALID wrote to stdout")
+            self.assertIn("PROFILE-CATALOG-INVALID", err.getvalue())
+        finally:
+            catalog.write_text(good_catalog, encoding="utf-8")
+        # `--json` is the other surface, and it is the one a CI step reads. The envelope is its output,
+        # so "stdout is empty" does NOT apply there -- what applies is that it says REFUSED and carries
+        # the stage and the reason, and never a `verdict: OK`.
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer), contextlib.redirect_stderr(io.StringIO()):
+            code = pp.main(["--root", str(self.root), "--json", "--timeout", "5",
+                            "--server-root", str(self.root / "dist" / "FusionRpg" / "Nope"),
+                            "--web-root", str(good["web_root"]),
+                            "--fusion-root", str(good["fusion_root"]),
+                            "--documents-root", str(good["documents_root"])])
+        self.assertEqual(code, pp.EXIT_FAILED)
+        envelope = json.loads(buffer.getvalue())
+        self.assertEqual(envelope["verdict"], "REFUSED")
+        self.assertEqual(envelope["reason"], "SERVER-ROOT-MISSING")
+
     # -- the CLI surface ----------------------------------------------------------------------------------
 
     def test_MAIN_exits_NON_ZERO_on_a_root_REFUSAL_and_never_prints_an_empty_success(self) -> None:
@@ -695,7 +1177,9 @@ class TheExplicitRoots(TemporaryRepo):
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             code = pp.main(["--root", str(self.root), "--timeout", "5",
                             "--server-root", str(self.root / "dist" / "FusionRpg" / "Nope"),
-                            "--web-root", str(self.repo.web)])
+                            "--web-root", str(self.repo.web),
+                            "--fusion-root", str(self.repo.fusion),
+                            "--documents-root", str(self.repo.documents)])
         self.assertEqual(code, pp.EXIT_FAILED)
         self.assertNotEqual(code, 0)
         self.assertIn(pp.STAGE_RESOLVE_ROOTS, err.getvalue())
@@ -709,7 +1193,9 @@ class TheExplicitRoots(TemporaryRepo):
         with contextlib.redirect_stdout(buffer), contextlib.redirect_stderr(io.StringIO()):
             code = pp.main(["--root", str(self.root), "--json", "--timeout", "5",
                             "--server-root", str(self.root / "dist" / "FusionRpg" / "Nope"),
-                            "--web-root", str(self.repo.web)])
+                            "--web-root", str(self.repo.web),
+                            "--fusion-root", str(self.repo.fusion),
+                            "--documents-root", str(self.repo.documents)])
         self.assertEqual(code, pp.EXIT_FAILED)
         envelope = json.loads(buffer.getvalue())       # raises rather than returning None
         self.assertEqual(envelope["tool"], pp.TOOL_ID)
@@ -741,23 +1227,48 @@ class TheExplicitRoots(TemporaryRepo):
     def test_the_RETIRED_MONOREPO_DERIVATION_is_not_reachable_from_the_code(self) -> None:
         """Asserted on the AST, not by grepping for a string. `"fusion-rpg-web"` has to remain in the
         tool -- it is the sub-directory UNDER gk-web -- so the check is on the OPERAND: no path in the code
-        may be assembled as `<something>/"web"/"fusion-rpg-web"` rooted at the repository."""
+        may be assembled as `<something>/"web"/"fusion-rpg-web"` rooted at the repository.
+
+        THE FOUR MOVED PATHS ARE IN THE SAME SHAPE, and would be missed by a check that only knows about
+        the web one. Each is asserted here as its own operand, because each was a live derivation before
+        the split and each resolved to a path no repository has:
+        `root/"src"/"FusionRpg.Launcher"`, `root/"game-profiles.json"`,
+        `root/"docs"/"runbook"/"PLAYERS.txt"` and `root/"scripts"/"guard-game-profile.py"`.
+        """
         offenders: list[str] = []
+        # The OPERAND each retired derivation ended with, as a set of STRINGS. This began life as a set
+        # of (parent, leaf) TUPLES compared against `node.right.value`, which is a string -- so the
+        # membership test was false for every entry, the case collected zero offenders and passed under
+        # the mutant, and the control caught it. Which is the whole reason the control exists: this was
+        # a green assertion that could not have failed.
+        retired_leaves = {"fusion-rpg-web", "FusionRpg.Launcher", "FusionRpg.Injector.BepInEx"}
         for node in ast.walk(ast.parse(PUBLISH.read_text(encoding="utf-8"))):
             if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div) \
-                    and isinstance(node.right, ast.Constant) and node.right.value == "fusion-rpg-web":
+                    and isinstance(node.right, ast.Constant) and node.right.value in retired_leaves:
                 base = node.left
                 if isinstance(base, ast.BinOp) and isinstance(base.op, ast.Div):
                     base = base.left
                 if isinstance(base, ast.Name) and base.id in ("root", "self"):
                     offenders.append(ast.unparse(node))
-        self.assertEqual(offenders, [], f"a retired repo-relative web derivation is reachable: {offenders}")
-        # And `Layout.build` takes BOTH roots as required parameters, so the retired spelling is not
+            # The single-segment ones: `root / "game-profiles.json"`, `root / "NOTICE"` and friends.
+            if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div) \
+                    and isinstance(node.right, ast.Constant) \
+                    and node.right.value in ("game-profiles.json", "NOTICE", "LICENSE",
+                                             "docs", "scripts") \
+                    and isinstance(node.left, ast.Name) and node.left.id in ("root", "self"):
+                offenders.append(ast.unparse(node))
+        self.assertEqual(offenders, [], f"a retired repo-relative derivation is reachable: {offenders}")
+        # And the operands themselves are what the check reasons about -- asserted so a future edit that
+        # re-spells the tuple mistake above cannot pass by changing the constants instead.
+        self.assertEqual(sorted(retired_leaves),
+                         ["FusionRpg.Injector.BepInEx", "FusionRpg.Launcher", "fusion-rpg-web"])
+        # And `Layout.build` takes ALL FOUR roots as required parameters, so the retired spellings are not
         # recoverable from there either -- adding a derivation back would be a visible edit.
         build = [n for n in ast.walk(ast.parse(PUBLISH.read_text(encoding="utf-8")))
                  if isinstance(n, ast.FunctionDef) and n.name == "build"]
         self.assertEqual(len(build), 1)
-        self.assertEqual([a.arg for a in build[0].args.args], ["cls", "root", "server_root", "web_root"])
+        self.assertEqual([a.arg for a in build[0].args.args],
+                         ["cls", "root", "server_root", "web_root", "fusion_root", "documents_root"])
 
 
 class TheOldWalkIsGone(unittest.TestCase):
@@ -970,7 +1481,10 @@ class ThePipeline(TemporaryRepo):
         self.assertEqual(caught.exception.reason, "NO-LOCKFILE")
 
     def test_a_missing_PLAYERS_or_LICENSE_is_REFUSED_rather_than_shipped_without(self) -> None:
-        (self.root / "LICENSE").unlink()
+        """The LICENSE is read from the DOCUMENTS ROOT now, not from the engine repository -- the split
+        moved it -- so the fixture plants it there and the case deletes it there. The assertion is
+        unchanged: a pack never ships without one of the two."""
+        (self.repo.documents / "LICENSE").unlink()
         with self.assertRaises(pp.Refusal) as caught:
             pp.stage_documents(self.layout())
         self.assertEqual(caught.exception.reason, "SOURCE-MISSING")
@@ -980,7 +1494,14 @@ class ThePipeline(TemporaryRepo):
         ported WITHOUT a stem change, unlike this program's snake_case tools. A wrong-but-plausible name
         would survive until a player pack with a MelonLoader drop was actually built."""
         source = PUBLISH.read_text(encoding="utf-8")
-        self.assertIn('"guard-game-profile.py"', source)
+        # The spelling now lives in ONE constant, `FUSION_PROFILE_GUARD_REL`, resolved against the FUSION
+        # root rather than this repository -- so the assertion is on the CONSTANT the stage uses, not on a
+        # quoted literal appearing somewhere in the file, which is a string a comment could satisfy.
+        self.assertTrue(pp.FUSION_PROFILE_GUARD_REL.endswith("guard-game-profile.py"),
+                        f"the guard is named {pp.FUSION_PROFILE_GUARD_REL!r}")
+        self.assertIn("FUSION_PROFILE_GUARD_REL", source)
+        # And the stage must reach it through the FUSION root, since gk-core has no such script at all.
+        self.assertIn("layout.fusion / FUSION_PROFILE_GUARD_REL", source)
         # The guard is gk-fusion's, so the assertion asks its OWNER for it. REPO is gk-core, which has
         # no scripts/guard-game-profile.py at all - so the test that exists to catch a wrong-but-plausible
         # guard name could not run, which is the one failure this class of name typo produces. The tool
@@ -1149,7 +1670,10 @@ class Surface(unittest.TestCase):
                        # The explicit-roots refusals. Every one of them names a path the run LOOKED at,
                        # so a reader is never told a requirement instead of the thing that failed it.
                        "SERVER-ROOT-MISSING", "SERVER-ROOT-OUTSIDE-REPO", "SERVER-EXE-MISSING",
-                       "WEB-ROOT-MISSING", "WEB-ROOT-NOT-A-PACKAGE", "WEB-ROOT-UNRESOLVED"}),
+                       "WEB-ROOT-MISSING", "WEB-ROOT-NOT-A-PACKAGE", "WEB-ROOT-UNRESOLVED",
+                       "FUSION-ROOT-MISSING", "FUSION-ROOT-NOT-A-SOURCE-TREE", "FUSION-ROOT-UNRESOLVED",
+                       "DOCUMENTS-ROOT-MISSING", "DOCUMENTS-ROOT-NOT-A-DOCUMENT-TREE",
+                       "DOCUMENTS-ROOT-UNRESOLVED", "PROFILE-CATALOG-INVALID"}),
             (SYNC, {"DROP-MISSING", "DROP-STALE"}),
         ):
             # THE STAGE ARGUMENT MAY BE A CONSTANT. This pattern used to require a string literal for
