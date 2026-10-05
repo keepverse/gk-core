@@ -262,6 +262,13 @@
       "status": "gating",
       "backlogModule": null,
       "localReason": null
+    },
+    "seedsmith-seam": {
+      "script": "tools/seedsmith/tests/test_transport_seam_wiring.py", "repository": "gk-forge",
+      "tier": "ci",
+      "status": "gating",
+      "backlogModule": null,
+      "localReason": null
     }
   },
   "verificationExemptions": [
