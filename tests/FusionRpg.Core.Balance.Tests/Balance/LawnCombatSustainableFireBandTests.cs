@@ -149,7 +149,7 @@ public class LawnCombatSustainableFireBandTests
         Path.Combine(KeepverseRoots.Core(), "data", "tuning", name);
 
     static BattleResourceTuning LoadBattleResources() =>
-        BattleResourceTuningLoader.Parse(File.ReadAllText(TuningFile("battle-resources.v2.json")));
+        BattleResourceTuningLoader.Parse(File.ReadAllText(TuningFile(BattleResourceTuningFiles.Current)));
 
     static ActionCorpusCostTemplate LoadCostTemplate() =>
         ActionCorpusCostTemplateLoader.Parse(

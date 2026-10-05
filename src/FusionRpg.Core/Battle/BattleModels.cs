@@ -380,8 +380,8 @@ public static class BattleRuleset
         _resourceTuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
 
     static BattleResourceTuning ResourceTuning => _resourceTuning ?? throw new InvalidOperationException(
-        "BattleRuleset.ConfigureResources(...) has not run. The pool shares read " +
-        "data/tuning/battle-resources.v1.json (spec-battle-resources.md §2.2a) — there is no built-in " +
+        "BattleRuleset.ConfigureResources(...) has not run. The pool shares read data/tuning/" +
+        BattleResourceTuningFiles.Current + " (spec-battle-resources.md §2.2a) — there is no built-in " +
         "default to fall back to.");
 
     /// <summary>

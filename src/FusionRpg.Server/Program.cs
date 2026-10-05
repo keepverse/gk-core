@@ -251,6 +251,18 @@ FusionRpg.Core.Battle.BattleTuningHub.Configure(
 // stays on disk for revert; every other reader of this file (tests, tools) still pins v1 directly
 // and gets the old byte-identical zero-regen behaviour, since BattleResourceTuningLoader.Parse
 // treats a missing regen block as an implicit all-zero share.
+// v2 -> v3 (sustainable-fire band, owner decision 2026-10-05): `regenPerSecondShareMilli.stamina`
+// 50 -> 321. Pool and regen are both per-mille shares of `BaseHp(theta)` and so grow with the power
+// ladder, while `action-corpus-cost-templates` `kinds.basic.baseAmountAtRung1` is a FLAT 25 with no
+// theta term — measured through the production functions, the sustainable ceiling cleared the cost
+// only from theta=20 (the pin) up, and a theta=1 rider contributed on 12% of swings. 321 is the
+// smallest share that holds the whole reachable band theta=1..5000; `poolShareMilli` is untouched for
+// every resource, so pool size and burst depth are unchanged. Published via
+// `gk-core/tools/tuning/publish.py battle-resources`, no hand-edit; v2 stays on disk for revert.
+// This reader now goes through `BattleResourceTuningFiles.Current` rather than naming a revision
+// literal: this file named `battle-resources.v2.json` literally, and so did three test readers, so a
+// publish had no way to reach the game or the gate that guards it — the reader-literal debt
+// `CombatAiTuningFiles` and `SocketTuningFiles` already exist to prevent.
 // solid-remediation SR-17 (2026-09-17): the lawn's attrition curve, loaded at startup. Before this
 // NOTHING called LawnAttritionTuningHub.Configure anywhere in src/ or tests/ -- the hub and the tuning
 // file both shipped and neither was ever read, which is the second half of the same dark-carrier debt
@@ -298,7 +310,7 @@ FusionRpg.Core.Items.ItemsTuningHub.Configure(
         File.ReadAllText(Path.Combine(tuningDir, "items.v1.json"))));
 FusionRpg.Core.Battle.BattleRuleset.ConfigureResources(
     FusionRpg.Core.Battle.BattleResourceTuningLoader.Parse(
-        File.ReadAllText(Path.Combine(tuningDir, "battle-resources.v2.json"))));
+        File.ReadAllText(Path.Combine(tuningDir, FusionRpg.Core.Battle.BattleResourceTuningFiles.Current))));
 FusionRpg.Core.Battle.Board.SiegeTuningPolicy.Configure(
     FusionRpg.Core.Battle.Board.SiegeTuningLoader.Parse(
         File.ReadAllText(Path.Combine(tuningDir, "siege.v3.json"))));

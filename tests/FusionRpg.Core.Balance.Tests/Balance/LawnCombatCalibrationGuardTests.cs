@@ -9,7 +9,8 @@ namespace FusionRpg.Core.Tests.Balance;
 
 /// <summary>
 /// `lawn-combat-wire` T11 (spec-lawn-combat-calibration.md, 2026-09-14) — guards the CONTRACT the two
-/// real shipped files (`battle-resources.v2.json`, `action-corpus-cost-templates.v2.json`) must satisfy
+/// real shipped files (the `battle-resources` revision `BattleResourceTuningFiles.Current` names,
+/// `action-corpus-cost-templates.v2.json`) must satisfy
 /// at the pin, never a pinned reading of either number: a balance pass may retune `stamina`'s regen
 /// share or `kinds.basic.baseAmountAtRung1` freely, as long as the sustainable-fire inequality still
 /// holds and the other four resources still carry an explicit, deliberate zero.
@@ -38,9 +39,9 @@ public class LawnCombatCalibrationGuardTests
         return KeepverseRoots.Core();
     }
 
-    static BattleResourceTuning LoadBattleResourcesV2() =>
+    static BattleResourceTuning LoadBattleResources() =>
         BattleResourceTuningLoader.Parse(
-            File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", "battle-resources.v2.json")));
+            File.ReadAllText(Path.Combine(RepoRoot(), "data", "tuning", BattleResourceTuningFiles.Current)));
 
     static ActionCorpusCostTemplate LoadCostTemplateV2() =>
         ActionCorpusCostTemplateLoader.Parse(
@@ -55,7 +56,7 @@ public class LawnCombatCalibrationGuardTests
     [Fact]
     public void StaminaCostNeverExceedsSustainableRegenAtThePin()
     {
-        var resources = LoadBattleResourcesV2();
+        var resources = LoadBattleResources();
         var costTemplate = LoadCostTemplateV2();
 
         var poolMax = checked(BattleRuleset.BaseHp(Pin) * resources.ShareOf("stamina")) / 1000;
@@ -82,7 +83,7 @@ public class LawnCombatCalibrationGuardTests
     [Fact]
     public void OnlyStaminaRegeneratesEveryOtherResourceStaysExplicitlyZero()
     {
-        var resources = LoadBattleResourcesV2();
+        var resources = LoadBattleResources();
 
         foreach (var id in new[] { "hunger", "spirit", "qi", "poise" })
             Assert.Equal(0, resources.RegenShareOf(id));

@@ -13,16 +13,18 @@ namespace FusionRpg.Core.Tests.Battle;
 /// lawn-combat-wire L-N28, owner decision 2026-09-15: battle stamina regen is ON. T11's stamina row
 /// reaches battle through the <c>ResourceBaselineSubsystem</c> that <c>BattleHubCompose</c> registers;
 /// <c>resource-hub-ssot.md</c> §11 is amended to say so. These tests read the real shipped
-/// <c>battle-resources.v2.json</c> through an explicit tuning instance (never the assembly's all-zero
-/// ambient fixture, never by mutating it), so the battle behaviour the owner ruled on is actually covered.
+/// the `battle-resources` revision <c>BattleResourceTuningFiles.Current</c> names through an explicit
+/// tuning instance (never the assembly's all-zero ambient fixture, never by mutating it), so the
+/// battle behaviour the owner ruled on is actually covered.
 /// </summary>
 public class BattleStaminaRegenTests
 {
     const int Theta = 20;
 
-    static BattleResourceTuning RealV2([CallerFilePath] string here = "") =>
+    static BattleResourceTuning RealTuning([CallerFilePath] string here = "") =>
         BattleResourceTuningLoader.Parse(File.ReadAllText(Path.GetFullPath(Path.Combine(
-            Path.GetDirectoryName(here)!, "..", "..", "..", "data", "tuning", "battle-resources.v2.json"))));
+            Path.GetDirectoryName(here)!, "..", "..", "..", "data", "tuning",
+            BattleResourceTuningFiles.Current))));
 
     static ActorDerivedSnapshot BattleActorDerived(BattleResourceTuning tuning)
     {
@@ -45,9 +47,9 @@ public class BattleStaminaRegenTests
     }
 
     [Fact]
-    public void With_the_real_v2_row_a_battle_actor_regenerates_stamina_and_nothing_else()
+    public void With_the_real_shipped_row_a_battle_actor_regenerates_stamina_and_nothing_else()
     {
-        var tuning = RealV2();
+        var tuning = RealTuning();
         var derived = BattleActorDerived(tuning);
 
         Assert.True(ResourceChannelReader.RegenPerMilleTick(derived, "stamina") > 0);
@@ -58,7 +60,7 @@ public class BattleStaminaRegenTests
     [Fact]
     public void A_battle_pool_spends_stamina_and_recovers_it_mid_encounter()
     {
-        var tuning = RealV2();
+        var tuning = RealTuning();
         var derived = BattleActorDerived(tuning);
         var max = ResourceChannelReader.Max(derived, "stamina");
         var ratePerMilleTick = ResourceChannelReader.RegenPerMilleTick(derived, "stamina");
