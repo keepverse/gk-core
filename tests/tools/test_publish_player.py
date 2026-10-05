@@ -9,7 +9,8 @@ The original checked `$LASTEXITCODE` after each native command, so whether a fai
 on nothing ELSE native having run in between -- an invariant no test could see and no code enforced. Here
 one function runs every external command and raises unless it exited 0, so the property is a fact about
 the control flow. `every_external_command_goes_through_run` asserts it by AST rather than by grepping for
-an idiom, and `VerificationTopologyTests` asserts the same thing on the repository side.
+an idiom, and `test_EVERY_external_command_goes_through_run_and_nothing_else` below asserts it over
+this file's AST.
 
 WHY `Server/data` IS PINNED AS A MEASUREMENT
 It was deleted by this script until 2026-09-23 -- a line from the initial commit, with no comment and no
@@ -471,7 +472,9 @@ class TheChokePoint(unittest.TestCase):
 
     def test_the_pipeline_calls_NPM_CI_before_NPM_BUILD(self) -> None:
         """The order is a contract: a build against an unlocked tree is not reproducible, and CI consumes
-        the result. `VerificationTopologyTests` asserts the same ordering repository-side.
+        the result. This case IS that assertion -- it used to defer to a `VerificationTopologyTests`
+        that does not exist in this repository, measured: zero definitions across gk-core, gk-fusion,
+        gk-forge and gk-web, so the ordering was claimed by a name that asserted nothing.
 
         The literals are the RESOLVED-program forms (`[npm, "ci"]`), which is what the code says now that
         `stage_web` passes `which`'s answer instead of the bare string -- otherwise this case would pass

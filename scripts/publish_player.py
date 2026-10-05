@@ -16,8 +16,8 @@ WHY THE POWERSHELL FORM WAS RETIRED
   happened to be the one I care about". That is true only as long as nothing else native runs in between,
   so the safety of the script depends on an invariant no test could see. Here ONE function runs every
   external command and RAISES on a non-zero exit, so the guarantee is structural: there is no path from a
-  native command to the next stage that does not pass through the check. `VerificationTopologyTests`
-  now asserts that structural property instead of grepping for `$LASTEXITCODE`.
+  native command to the next stage that does not pass through the check. The contract suite asserts
+  that structural property over this file's AST instead of grepping for `$LASTEXITCODE`.
 * **NO MACHINE-READABLE OUTPUT.** CI had nothing to assert beyond "did it exit 0", and "did it exit 0" is
   exactly what the build command it replaced already gave. `--json` reports every stage, the resolved
   paths and the version.
@@ -299,7 +299,8 @@ def run(argv: list[str], cwd: Path, timeout: int, stage: str) -> str:
     failure was noticed depended on nothing else native having run in between -- an invariant no test
     could check. Here every native command passes through this function, so "every native command is
     failure-checked" is a property of the control flow rather than a string to grep for, and
-    `VerificationTopologyTests` asserts THAT instead of the old idiom.
+    `TheChokePoint.test_EVERY_external_command_goes_through_run_and_nothing_else` asserts THAT over
+    this file's AST instead of the old idiom.
 
     `argv[0]` goes through `resolved_argv` first, which is the whole reason a Windows shim install can
     reach `npm ci` at all; the details and the measurement are there.
@@ -825,7 +826,8 @@ def stage_web(layout: Layout, timeout: int) -> None:
     """Refresh the locked web dependency tree, then build the UI into the server's wwwroot.
 
     `npm ci` BEFORE `npm run build`, always -- the order is a contract, not a preference, and
-    `VerificationTopologyTests` asserts it. The original also carried the `package-lock.json` check
+    `TheChokePoint.test_the_pipeline_calls_NPM_CI_before_NPM_BUILD` asserts it against this file's
+    source. The original also carried the `package-lock.json` check
     TWICE, identically; one check remains.
 
     The program name is the RESOLVED one rather than the literal `npm`, and the preflight is what makes
