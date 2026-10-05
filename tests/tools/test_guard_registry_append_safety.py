@@ -89,6 +89,46 @@ BETA_ROW = (12, 20)          # 1-based inclusive line span of beta
 TWIN_TEXT = '      "paths": ['
 
 
+# ---------------------------------------------------------------------------------------------
+# a registry whose rows are an ARRAY, which is the only shape the index exists in
+#
+# FIXTURE above is a MAP (`"alpha": {...}`), so nothing in it carries an array index and the
+# index-drop is unobservable there. These two rows are ARRAY elements, equal height, so swapping them
+# moves no line number and leaves the cited bytes identical - the exact shape of the hazard.
+# 1-based line numbers, 21 lines.
+# ---------------------------------------------------------------------------------------------
+
+ARRAY_FIXTURE = "\n".join([
+    "{",                                 # 1
+    '  "rows": [',                       # 2
+    "    {",                             # 3   <- ARRAY_FIRST[0]
+    '      "id": "alpha",',              # 4
+    '      "kind": "owner",',            # 5
+    '      "paths": [',                  # 6   <- ARRAY_CITE
+    '        "alpha/**"',                # 7
+    "      ],",                          # 8
+    '      "project": "core",',          # 9
+    '      "level": "module"',           # 10
+    "    },",                            # 11  <- ARRAY_FIRST[1]
+    "    {",                             # 12  <- ARRAY_SECOND[0]
+    '      "id": "beta",',               # 13
+    '      "kind": "owner",',            # 14
+    '      "paths": [',                  # 15
+    '        "beta/**"',                 # 16
+    "      ],",                          # 17
+    '      "project": "core",',          # 18
+    '      "level": "module"',           # 19
+    "    }",                             # 20  <- ARRAY_SECOND[1]
+    "  ]",                               # 21
+    "}",                                 # 22
+    "",
+])
+ARRAY_LINES = ARRAY_FIXTURE.split("\n")
+ARRAY_FIRST = (3, 11)
+ARRAY_SECOND = (12, 20)
+ARRAY_CITE = 6              # a `      "paths": [` line, byte-identical to line 15
+
+
 def duplicate_alpha_before_itself() -> str:
     """A legal registry in which BETA_PATHS names alpha's `      "paths": [` instead of beta's.
 
@@ -226,6 +266,118 @@ class RowIdentityIsPartOfTheFingerprint(unittest.TestCase):
         self.assertNotEqual(pair0, pair1,
                             "in THIS fixture the path does change; the index-collision case it "
                             "cannot see is covered by the on-disk swap control, not here")
+
+
+class IndexIsNotFingerprinted(unittest.TestCase):
+    """THE OWNER'S RULED CHANGE: the array index is a POSITION and must not be in the fingerprint.
+
+    Two guarantees, and the second is the one that matters, so both are asserted rather than one:
+
+      a row that merely SHIFTED (inserted into above) keeps its fingerprint  -> a re-point can land
+      a row that SLID onto a DIFFERENT row loses its fingerprint              -> the hazard survives
+
+    The negative control is here for the same reason `ContentAxisBlindnessIsReal` exists: without it,
+    the first test also passes for a fingerprint that is simply constant.
+    """
+
+    def test_the_index_free_pair_keeps_the_span_and_drops_only_the_index(self):
+        self.assertEqual(guard.index_free(("<root>/boundaries", "<root>/boundaries/[7]")),
+                         ("<root>/boundaries", "<root>/boundaries"))
+        # a MAP row has no index at all and must come through untouched
+        self.assertEqual(guard.index_free(("<root>/guards/generated-seed",
+                                           "<root>/guards/generated-seed/args")),
+                         ("<root>/guards/generated-seed", "<root>/guards/generated-seed/args"))
+
+    def test_a_map_key_that_merely_looks_indexed_is_not_stripped(self):
+        """Segment-wise, not a substring strip: `row_token` can return a real key with brackets."""
+        self.assertEqual(guard.index_free(("<root>/rows/[0]", "<root>/rows/[0]/paths")),
+                         ("<root>/rows", "<root>/rows/paths"))
+        self.assertEqual(guard.index_free(("<root>/k[0]", "<root>/k[0]")), ("<root>/k[0]", "<root>/k[0]"))
+
+    def test_a_shifted_row_keeps_its_fingerprint(self):
+        """Inserting a row above must not red: nothing about the cited row's identity changed.
+
+        The comparison the guard actually makes is the row's fingerprint BEFORE the shift against its
+        fingerprint AFTER - at the line it MOVED to, because that is where a repaired citation points.
+        Comparing one line number across both states would land on the copy in both and prove nothing.
+        """
+        rows = ARRAY_LINES
+        block = rows[ARRAY_FIRST[0] - 1:ARRAY_FIRST[1]]
+        shifted = "\n".join(rows[:ARRAY_FIRST[0] - 1] + block + rows[ARRAY_FIRST[0] - 1:])
+        json.loads(shifted)
+        doc0, doc1 = json.loads(ARRAY_FIXTURE), json.loads(shifted)
+        before_line = ARRAY_FIRST[0]                     # alpha's own opener, at index 0
+        after_line = before_line + len(block)            # alpha's real body, now at index 1
+        pair0 = guard.row_identity(ARRAY_FIXTURE)[before_line]
+        pair1 = guard.row_identity(shifted)[after_line]
+        self.assertIn("[0]", pair0[1], "the fixture must start at index 0")
+        self.assertIn("[1]", pair1[1], "the inserted row must have pushed it to index 1")
+        self.assertEqual(guard.row_token(doc0, pair0), "id=alpha")
+        self.assertEqual(guard.row_token(doc1, pair1), "id=alpha", "the identity must be unchanged")
+        self.assertEqual(guard.row_fingerprint(pair0, guard.row_token(doc0, pair0)),
+                         guard.row_fingerprint(pair1, guard.row_token(doc1, pair1)),
+                         "a row that merely shifted must keep its fingerprint")
+
+    def test_a_row_that_slid_onto_a_different_row_loses_its_fingerprint(self):
+        """The hazard this axis exists for. Swapping two rows must still red, index-free or not."""
+        rows = ARRAY_LINES
+        a = rows[ARRAY_FIRST[0] - 1:ARRAY_FIRST[1]]
+        b = rows[ARRAY_SECOND[0] - 1:ARRAY_SECOND[1]]
+        # Swapping means beta now CLOSES the array: its `    }` must become `    },` and alpha's
+        # `    },` must become `    }`, or the mutant is not legal JSON and proves nothing.
+        a = list(a); a[-1] = "    }"
+        b = list(b); b[-1] = "    },"
+        swapped = "\n".join(rows[:ARRAY_FIRST[0] - 1] + b + a + rows[ARRAY_SECOND[1]:])
+        doc = json.loads(swapped)
+        cite = ARRAY_CITE                                 # the byte-identical `      "paths": [`
+        self.assertEqual(swapped.split("\n")[cite - 1], ARRAY_LINES[cite - 1],
+                         "the cited bytes must be unchanged, or this control proves nothing")
+        pair = guard.row_identity(swapped)[cite]
+        self.assertEqual(guard.row_token(json.loads(ARRAY_FIXTURE),
+                                         guard.row_identity(ARRAY_FIXTURE)[cite]), "id=alpha")
+        self.assertEqual(guard.row_token(doc, pair), "id=beta",
+                         "the cited line must now sit in the OTHER row")
+        orig = guard.row_fingerprints(ARRAY_FIXTURE, json.loads(ARRAY_FIXTURE))[cite]
+        after = guard.row_fingerprints(swapped, doc)[cite]
+        self.assertNotEqual(orig, after, "S5 must still see a shift onto a different row")
+
+    def test_a_constant_fingerprint_would_fail_both_of_the_above(self):
+        """The negative control: proves the two tests above are not passing for free.
+
+        A fingerprint that ignored BOTH the index and the identity would agree across a shift, so it
+        would pass the first test. It would then also agree across a swap, which is what the second
+        test forbids. Neither test is meaningful alone.
+        """
+        first = guard.row_identity(ARRAY_FIXTURE)[ARRAY_FIRST[1]]
+        second = guard.row_identity(ARRAY_FIXTURE)[ARRAY_SECOND[1]]
+        self.assertNotEqual(guard.row_fingerprint(first, "id=alpha"),
+                            guard.row_fingerprint(second, "id=beta"),
+                            "identity must still separate two different rows")
+        # and the same row at two indexes must agree, or the shift control above cannot pass
+        self.assertEqual(guard.row_fingerprint(("<root>/rows", "<root>/rows/[3]"), "id=x"),
+                         guard.row_fingerprint(("<root>/rows", "<root>/rows/[9]"), "id=x"))
+
+    def test_a_closing_brace_no_longer_carries_its_own_row_identity(self):
+        """THE MEASURED COST OF THE INDEX-DROP, pinned so it cannot be forgotten.
+
+        A closing `},` ends at its PARENT element, so `row_token` returns no identity and the pair is
+        (`rows/[N]`, `rows`). With the index removed that pair is (`rows`, `rows`) - identical for
+        EVERY row in the array. Two closing lines therefore share one fingerprint, where the old
+        index-carrying fingerprint separated them. This is a real narrowing and the live registries
+        hold hundreds of closing lines; it is asserted here as a fact about the shape rather than left
+        for a reader to rediscover. It is why S5 is a row-IDENTITY check and not a line check.
+        """
+        rows = guard.row_identity(ARRAY_FIXTURE)
+        close_first, close_second = ARRAY_FIRST[1], ARRAY_SECOND[1]
+        self.assertEqual(guard.row_token(json.loads(ARRAY_FIXTURE), rows[close_first]), "")
+        self.assertNotEqual(rows[close_first], rows[close_second],
+                            "the scanner still distinguishes them; only the fingerprint cannot")
+        self.assertEqual(guard.row_fingerprint(rows[close_first], ""),
+                         guard.row_fingerprint(rows[close_second], ""),
+                         "the measured narrowing: two closing lines of the same array collide")
+        # and the closing line of a row is still separated from the row's INTERIOR lines
+        self.assertNotEqual(guard.row_fingerprint(rows[close_first], ""),
+                            guard.row_fingerprint(rows[ARRAY_FIRST[1] - 1], "id=alpha"))
 
 
 class ContentAxisBlindnessIsReal(unittest.TestCase):

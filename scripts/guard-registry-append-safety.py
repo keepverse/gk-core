@@ -34,32 +34,53 @@ seven-line `guards` row, which moved `enforcement-registry.v1.json:392` from the
 exemption `regen-class-system-baselines` to the `paths` line of exemption `smoke-player-pack` - both
 byte-identical - and this guard reported OK. That is the defect this axis now closes.
 
-THE ROW AXIS. The row is the pair of JSON elements a line spans: the one open when the line's first
-non-whitespace character is read, and the one open when its last is. The PAIR, because a JSON row is
-written open-brace-first and close-brace-last: the opening `    {` of a boundary belongs both to the
-556-row `boundaries` array and to the boundary it opens, and the closing `    },` belongs both to the
-boundary it closes and to the array it returns to. Taking either endpoint alone under-identifies one
-of those two cases - every opening line of a 556-row array would report the same row, which is the
-defect repeated. The pair is UNIQUE BY CONSTRUCTION: a map key names one member and an array index
-names one element, so no two rows in a file can share a path. That is the property the content
-fingerprint never had, and it is why this axis can certify a line whose text occurs 13 times.
+THE ROW IS AN IDENTITY AND A SPAN, AND THE ARRAY INDEX IS NEITHER. The row is the pair of JSON
+elements a line spans: the one open when the line's first non-whitespace character is read, and the
+one open when its last is. The PAIR, because a JSON row is written open-brace-first and
+close-brace-last: the opening `    {` of a boundary belongs both to the 556-row `boundaries` array
+and to the boundary it opens, and the closing `    },` belongs both to the boundary it closes and to
+the array it returns to. Taking either endpoint alone under-identifies one of those two cases -
+every opening line of a 556-row array would report the same row, which is the defect repeated.
 
-THE ROW IS A POSITION *AND* AN IDENTITY, AND THE POSITION ALONE IS NOT ENOUGH. A first version
+The fingerprint is that pair, that row's declared identity (`id`, `verificationId`, `script`, ...),
+and NOT the array index. The index is a POSITION. Dropping a row in above a cited line moves every
+later row one index up without changing what any of them IS, so a fingerprint carrying the index
+reds a citation whose row was never touched - it reports drift where there is none, and it made this
+axis demand a repair that no correct line could satisfy. Measured, and that was not theoretical:
+with the index in the fingerprint, 35 of the 49 citations were red and ZERO of the 22 target rows
+had a line satisfying the check, so re-pointing a citation retired one finding and created two (a new
+line has no baseline entry on either axis), and only `--update` or `--adopt-rows` could clear them -
+both re-baselining, which is the thing this axis exists to prevent. With the index dropped, a row
+that merely SHIFTED goes green and a row that SLID onto a different row still reds, because the
+identity token is unchanged and the span is unchanged except for its position.
+
+THE IDENTITY TOKEN IS WHAT MAKES THE SHIFT VISIBLE, AND IT IS NOT OPTIONAL. A first version
 fingerprinted the path pair alone and was caught by its own mutation control. Duplicating the
-boundary row ten lines above a cited line lands that line on a byte-identical twin AND in array
-index 6 exactly as before, because the content and the index shift by the same amount - the copy
-takes index 5 and pushes the cited row to index 7, so line 679 names index 6 either way and now
-means the PREVIOUS row. So the fingerprint carries the row's declared identity (`id`,
-`verificationId`, `script`, ...) as well as its position. Position plus identity is what separates
-the row that was there from the row that is there now.
+boundary row ten lines above a cited line lands that line on a byte-identical twin - and under the
+old index-carrying fingerprint it stayed at the same index too, because the content and the index
+shift by the same amount (the copy takes index 5 and pushes the cited row to index 7, so the line
+reported index 6 either way and meant the PREVIOUS row). The token separates "the row that was
+there" from "the row that is there now", and it is the only component that does: with the index
+gone, the token plus the span is the whole discriminator.
+
+THE NARROWING THE INDEX-DROP CAUSES, MEASURED, BECAUSE IT IS NOT SMALL. A closing `},` ends at its
+PARENT element, so `row_token` returns nothing for it and the index was the only thing separating one
+row's closing brace from another's. With the index removed, every closing brace of one array shares
+one fingerprint: measured, `verification-boundaries.v1.json` goes from 4088 distinct fingerprints over
+7308 lines to 2964, and the largest collision class goes from 84 lines to 556 - which is
+`boundaries[0]`'s brace through `boundaries[555]`'s. Seven CITED lines are affected, and they are
+named here because a reader deciding what this axis is worth has to know: `verification-boundaries`
+lines 1369, 1389, 4090, 4100 and 5436, `todo-shapes` line 268, and `verification-boundaries` line 1.
+Every one of the five boundary lines is an unreadable-ambiguous citation already (a closing brace of a
+row a line-and-column scan report names, or a dated defect report's span), so no adjudication is lost
+that was not already unadjudicable - but a shift onto a DIFFERENT closing brace is now invisible, and
+that is the price of the owner's ruling rather than a defect to be fixed later.
 
 WHAT THE ROW AXIS DELIBERATELY DOES NOT DO. It is not a window. It does not fingerprint a row's
 CONTENTS, so editing a row below a cited line stays green - that edit misdirects nothing. It DOES
 fingerprint a row's identity, so renaming a row in place reds. That is a deliberate cost and not an
 oversight: a document that cites `registry.v1.json:679` is pointing at a specific row, so changing
-what that row is called is a change to what the citation means. The known false positive is a cited
-row renamed with no other edit, which a reader resolves by re-pointing the citing sentence - and which
-no fingerprint of the present could let through unnoticed anyway. Refusing a non-unique TEXT would
+what that row is called is a change to what the citation means. Refusing a non-unique TEXT would
 have been the third option and was REJECTED: it would go red on 38 of 49 citations, none of which
 would then be repairable here, and a gate that cannot go green is a gate people re-baseline.
 
@@ -95,7 +116,9 @@ at or above the bracket, which is the state where the array has no safe insertio
     S5 CITED-ROW-CHANGED   a cited line now belongs to a different row. Fires whether or not the
                            content changed, which is the entire point: it is the axis that sees the
                            byte-identical twin. An `unverified` declaration does NOT excuse it,
-                           because a debt declaration is a statement about the past.
+                           because a debt declaration is a statement about the past. It does NOT
+                           fire on a row that merely SHIFTED index - see the fingerprint above; that
+                           is the same meaning at a different line, which is a re-point, not a drift.
 
 REFUSES CLOSED, NEVER SILENTLY CERTIFIES. Beyond the roots and the empty set: a checked registry
 that is not valid JSON, a cited line with no derivable row (an unparseable file, or a line past the
@@ -127,30 +150,48 @@ which is how a first version of `--update` left 59 CR bytes in a file `.gitattri
 Git normalises them on commit, so the damage is invisible in the blob and permanent in the working
 copy.
 
-HOW MUCH IS ALREADY WRONG, MEASURED IN THIS REVISION, AND THE ANSWER IS NOT 7. The old text of this
-docstring said all seven `enforcement-registry.v1.json` citations were wrong and that this was the
-extent of it. Measured against each registry's first commit with the row axis, and with the content
-axis, 35 of the 49 citations sit on a line that has left the row it held on 2026-09-30:
+HOW MUCH IS ALREADY WRONG, MEASURED, AND A FINDING IS NOT A VERDICT ON THE CITATION. Measured against
+each registry's first commit, 35 of the 49 citations sit on a line that has left the row it held on
+2026-09-30:
 
     7   enforcement-registry.v1.json      - all seven, as previously declared
    28   verification-boundaries.v1.json   - NOT previously declared, and not covered by any gate
     0   todo-shapes.v1.json               - one citation, on a file with a single committed state
 
-Ten of the 28 changed ROW while holding the same array index, which is the case the row's identity
-token was added for and which a path-only axis misses too.
-
 The 28 were invisible for a compound reason: the citing documents predate the guard, the registry grew
 many times, and the boundary rows they name were inserted and later removed again by 20fd859 - so the
 cited line ends where it began while having been somewhere else in between. A line that was ever
 occupied by a different row is occupied by that row for a writer who read it then, and no fingerprint
-of the present can speak for that period. Every one of the 35 is a citation whose repair is a
-workspace-root document edit, so it is not this repository's to make.
+of the present can speak for that period.
+
+A FINDING IS A DRIFT MEASUREMENT, NOT A DEFECT VERDICT, AND CONFLATING THE TWO IS THE TRAP THIS AXIS
+SET FOR ITSELF. The guard compares a line against the registry's FIRST COMMIT; a reader of a document
+reads it against TODAY. So all 35 were adjudicated by asking one question - is the row the SENTENCE
+names actually at the cited line today? - and the answer split them three ways: 15 wrong-today (the
+named row is elsewhere, so the document was re-pointed), 7 stale-but-correct (the named row IS at the
+cited line today, so the finding records a historical excursion and the document was left alone), and
+13 unreadable-ambiguous (nine line-and-column citations into a GENERATED scan report whose header
+names a commit absent from both repositories, three dated defect reports whose subject no longer
+exists, and one genuinely two-way ambiguity). Repairing all 35 would have been 13 wrong edits.
+
+TWO OF THE 15 WERE FALSE GREENS UNDER THE INDEX-DROP, AND THE GUARD COULD NOT SEE EITHER. Both sit in a
+row whose token never changed, so dropping the index made them green; reading the sentences showed
+both name a DIFFERENT row. That is the residual limit of this axis stated as a measurement: it can
+see that a row changed, never that a sentence was wrong when the row did not change. The two are
+repaired anyway, and the finding count below is not a claim that 50 citations are broken.
+
+A RE-POINT TO A LINE NO DOCUMENT HAS CITED IS ITSELF A FINDING, AND THAT IS STRUCTURAL, NOT A BUG.
+`--adopt-rows` derives each key from the first commit, and a newly cited line held a different row
+back then, so adopting it records a row today's line does not match: re-pointing can never go green
+under this provenance. The 15 repairs therefore retired 13 findings and raised 30 (one S1 and one S5
+each, for a key with no baseline entry on either axis). Only `--update` clears those, and it is
+refused here on purpose - see the re-baselining argument above. A reader who wants them gone must
+decide that a fresh citation is allowed to be unproven, and that is an owner ruling, not a tool
+setting.
 
 The `unverified` declaration for `enforcement-registry.v1.json` is KEPT and is not superseded by the
 row axis: it records that those citations were wrong BEFORE any baseline existed, which is a fact
-about the past the row axis cannot record because it only compares against 2026-09-30. It is also no
-longer load-bearing for anything: the row axis now reds those same seven without being asked to, and
-it will red them again if they drift further.
+about the past the row axis cannot record because it only compares against 2026-09-30.
 
 A green run therefore means "no cited line has moved or changed row since the recorded baselines",
 never "these citations are correct", and the file itself carries that distinction so it cannot be
@@ -415,8 +456,9 @@ def row_label(pair: "tuple[str, str]") -> str:
     return f"{start.split('/')[-1]} .. {end.split('/')[-1]}"
 
 
-#: Fields that name a row, most specific first. A row's token is what makes two DIFFERENT rows with
-#: the same array index distinguishable, which the index alone cannot do.
+#: Fields that name a row, most specific first. A row's token is what separates "the row that was
+#: there" from "the row that is there now" - and with the array index gone from the fingerprint, it is
+#: the ONLY component that can.
 IDENTITY_FIELDS = ("id", "verificationId", "script", "guard", "name", "project", "test")
 
 
@@ -424,11 +466,12 @@ def row_token(doc: "object", pair: "tuple[str, str]") -> str:
     """The identity of the row `pair` names: the DEEPEST indexed element's declared id, else the
     deepest map key.
 
-    WHY THE INDEX ALONE IS NOT ENOUGH, MEASURED. Duplicating the boundary row ten lines above a cited
-    line lands that line on a byte-identical twin - and lands it in array index 6 exactly as before,
-    because the content and the index shift by the same amount. An index-only fingerprint is blind to
-    that mutation too, which is why the token is here and not optional: index plus identity is what
-    separates "the row that was there" from "the row that is there now".
+    THE TOKEN CARRIES THE AXIS, NOT THE INDEX. The array index is a position and is deliberately not
+    fingerprinted (see `index_free`), so the declared identity is what a row that SLID onto a
+    different row is distinguished by. Measured: duplicating the boundary row ten lines above a cited
+    line lands that line on a byte-identical twin; the token is what makes that red rather than
+    invisible. A token-less row (a closing `},`, whose pair ends at the parent) is the documented
+    limit - it can only be distinguished by its span.
 
     The DEEPEST indexed element, not the outermost: `boundaries` is a map member whose own token would
     be the useless word "boundaries", while `boundaries[6]`'s `id` names the row a reader means.
@@ -464,8 +507,45 @@ def row_token(doc: "object", pair: "tuple[str, str]") -> str:
     return best
 
 
+#: A `[N]` segment of a row path. The array index is a POSITION, and a position is not an identity:
+#: dropping a row in above a cited line moves every later row one index up without changing what any
+#: of them IS. Fingerprinting the index therefore redded a citation whose row was untouched, which is
+#: the defect the owner ruled on - it made the axis report 35 findings and cleared none of the real
+#: hazard, so every honest repair it demanded was impossible to land.
+_INDEX_SEGMENT = re.compile(r"\[\d+\]")
+
+
+def index_free(pair: "tuple[str, str]") -> "tuple[str, str]":
+    """`pair` with every `[N]` segment removed, one segment per path component.
+
+    Segment-wise on purpose, not a substring strip: `row_token` can legitimately return a map KEY that
+    contains brackets, and `paths[N]` where `paths` is a real key must keep its name. Splitting the
+    path on `/` and dropping only the components that are an index outright leaves every named element
+    standing, so what survives is the SHAPE of the row - which element it spans, and what that element
+    is called - and never where in the array it happens to sit.
+
+    WHAT THIS DELIBERATELY DOES NOT DROP IS THE PAIR. A JSON row opens before it closes, so
+    `    {` is the element it OPENS and `    },` the element it CLOSES, and with the index gone every
+    opening line of a 556-row array shares one fingerprint if the pair collapses. Keeping both
+    endpoints is what stops that, and it is why a line that slid onto a DIFFERENT row still reds:
+    the token alone would not carry it, but the token AND the span together do.
+    """
+    return tuple("/".join(seg for seg in path.split("/") if not _INDEX_SEGMENT.fullmatch(seg))
+                 for path in pair)
+
+
 def row_fingerprint(pair: "tuple[str, str]", token: str) -> str:
-    return hashlib.sha256(("\u0000".join((*pair, token))).encode("utf-8")).hexdigest()[:16]
+    """The row a cited line belongs to: the pair of elements it SPANS, plus the row's declared
+    identity, with the array INDEX removed.
+
+    The hazard this axis exists for is a citation sliding onto a DIFFERENT row that looks identical,
+    and the identity token is what separates the row that was there from the row that is there now.
+    Dropping the index does not weaken that: the token is unchanged, and the span is unchanged except
+    for its position - so a swap between two adjacent rows still moves the token, and only a row that
+    MERELY SHIFTED stops redding, which is the correct answer for a citation whose meaning never
+    changed.
+    """
+    return hashlib.sha256(("\u0000".join((*index_free(pair), token))).encode("utf-8")).hexdigest()[:16]
 
 
 def row_fingerprints(text: str, doc: "object") -> "dict[int, str]":
