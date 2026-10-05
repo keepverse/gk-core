@@ -453,23 +453,38 @@ def resolve_repo_ranges(entries: list[str], root: Path) -> dict[str, str]:
     return resolved
 
 
-def guard_range_for(guard_id: str, row: dict, root: Path, ci_range: str,
+def row_consumes_range(row: dict, tier: str) -> bool:
+    """Whether this row's arguments for `tier` actually carry a range.
+
+    A range is only needed by a guard that DIFFS. Measured: of the 34 rows, `generated-seed` is the only
+    one whose `args.ci` carries the `{ciRange}` placeholder, and `decision-citations`/`doc-citations`/
+    `session-boundary` inspect a foreign repository without diffing anything. Requiring a range of those
+    three would make the suite refuse over a value nothing would read — and it did, on the first run of
+    this change, with `GUARD-RANGE-UNAVAILABLE` naming `decision-citations`.
+    """
+    args = [str(a) for a in (row.get("args") or {}).get(tier, [])]
+    return any(a == CI_RANGE_PLACEHOLDER or a in RANGE_SWITCHES for a in args)
+
+
+def guard_range_for(guard_id: str, row: dict, root: Path, ci_range: str, tier: str,
                     repo_ranges: dict[str, str]) -> str:
     """The range THIS guard must be given, from the repository its row names.
 
     A guard whose `repository` is the runner's own gets the caller's range. One that names a different
     repository gets that repository's own range, and the absence of one is a REFUSAL rather than a
     fallback to the caller's — because falling back would inspect the wrong repository's history and
-    report the result as though it were the declared subject's.
+    report the result as though it were the declared subject's. A guard that does not diff needs no range
+    at all, and is not asked for one.
     """
     repository = str(row["repository"])
-    if repository == "gk-core":
+    if repository == "gk-core" or not row_consumes_range(row, tier):
         return ci_range
     if repository not in repo_ranges:
         raise Refusal("range", "GUARD-RANGE-UNAVAILABLE",
-                      f"guard '{guard_id}' inspects '{repository}', and no range was supplied for that "
-                      f"repository. A commit range names one repository's history, so this repository's "
-                      f"push range cannot stand in for it. Pass --repo-range {repository}=<base>..<head>.")
+                      f"guard '{guard_id}' inspects '{repository}' and diffs it, and no range was supplied "
+                      f"for that repository. A commit range names one repository's history, so this "
+                      f"repository's push range cannot stand in for it. Pass "
+                      f"--repo-range {repository}=<base>..<head>.")
     return repo_ranges[repository]
 
 
@@ -665,17 +680,27 @@ def dispatch(root: Path, guards: list[str], catalog: dict, tier: str, ci_range: 
             continue
         # The working directory is the OWNING repository, not gk-core - see resolve_guard_script.
         script_base, script = found
-        # THE ROW'S `repository` IS THE SUBJECT ROOT, and it is passed as `--root` rather than only used
-        # as a working directory, because a guard that takes `--root` reads its subject from it while its
-        # OWN file may live in another repository. `generated-seed` is exactly that shape: the script is
-        # gk-core's, the corpus is gk-data's. Passing only `cwd` would leave the guard measuring its
-        # declared trees against a repository that has none of them.
+        # THE ROW'S `repository` IS THE SUBJECT, and it becomes `--root` ONLY when the guard's own default
+        # cannot already be right — which is exactly when the guard's SCRIPT lives in a different
+        # repository from its SUBJECT.
+        #
+        # Overriding it unconditionally was wrong, and measurably so. `index-marker-coverage` and
+        # `registry-append-safety` are gk-core's own scripts and declare `repository: gk-core`, but both
+        # resolve their subject by WALKING to the workspace root (decisions.md and the citing documents live
+        # there). Handed `--root .../gk-core` they refused on the first run of this change —
+        # `the checked index does not exist: .../gk-core/docs/architecture/decisions.md` and `ZERO
+        # citations found` — so a wiring change broke two gates that were green. Their own default is
+        # already correct and is left alone.
+        #
+        # `generated-seed` is the shape that needs the override: its script is gk-core's, its corpus is
+        # gk-data's, and `--root`'s default (`this script's parent directory`) is necessarily wrong for it.
         subject_root = resolve_guard_root(root, str(row["repository"]))
+        scan_root = subject_root if subject_root.resolve() != script_base.resolve() else None
         # THE RANGE FOLLOWS THE SUBJECT, not the caller. A guard dispatched into another repository is
         # handed that repository's range, and the absence of one has already refused in main().
-        guard_range = guard_range_for(guard_id, row, root, ci_range, repo_ranges)
+        guard_range = guard_range_for(guard_id, row, root, ci_range, tier, repo_ranges)
         argv = resolve_guard_args(guard_id, row, tier, guard_range, local_args, is_git,
-                                  script.suffix, subject_root, script)
+                                  script.suffix, scan_root, script)
         extension = script.suffix.lower()
         started = time.monotonic()
         if extension == ".py":
@@ -800,7 +825,7 @@ def main(argv: list[str] | None = None) -> int:
         # Every row that names ANOTHER repository must have a range for it, checked BEFORE dispatch so the
         # answer is a named refusal rather than whichever guard consumed the missing piece first.
         for guard_id in guards:
-            guard_range_for(guard_id, catalog[guard_id], root, ci_range, repo_ranges)
+            guard_range_for(guard_id, catalog[guard_id], root, ci_range, args.tier, repo_ranges)
         report.stages.extend(("selection", "catalog"))
         absent = missing_interpreters([str(catalog[g]["script"]) for g in guards], args.only)
         report.missing_interpreters = absent

@@ -112,6 +112,11 @@ jobs:
           repository: keepverse/gk-data
           token: ${{ secrets.KEEPVERSE_DATA_TOKEN }}
           path: gk-data
+          # FULL HISTORY, for the same reason gk-core's own checkout asks for it above: the generated-seed
+          # gate is a range gate, and `actions/checkout` defaults to fetch-depth 1, which leaves exactly one
+          # commit and therefore no range at all. Without this the guard would be handed a range it cannot
+          # resolve and refuse — correctly, and for a reason that has nothing to do with the corpus.
+          fetch-depth: 0
 
       - name: Resolve complete verification range
         id: verification-range
@@ -135,6 +140,26 @@ jobs:
           "range=$range" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "FUSIONRPG_VERIFICATION_RANGE=$range" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "Verification range: $range"
+
+          # THE CONTENT REPOSITORY'S OWN RANGE, for guards whose registry row declares `repository: gk-data`.
+          # This push is a gk-core push, so it says nothing about what changed in the corpus — and a commit
+          # range belongs to one repository's history, so gk-core's SHAs do not resolve in gk-data at all.
+          # The gate therefore audits the corpus repository's most recent change against its own history.
+          # Named precisely because its scope IS narrow: it is the tip of the corpus's default branch, not
+          # this push, and the staleness gates below (CreatureSpeciesGen/FamilyExpandGen/TreeBinder --check)
+          # are what cover the whole tree. It exists because the alternative was a guard that reported green
+          # while inspecting nothing.
+          $contentRoot = Join-Path $env:GITHUB_WORKSPACE 'gk-data'
+          $contentHead = (git -C $contentRoot rev-parse HEAD).Trim()
+          $contentBase = (git -C $contentRoot rev-parse --verify --quiet 'HEAD~1^{commit}')
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($contentBase)) {
+            $contentBase = $contentHead   # a single-commit pack: the tip commit is the whole range
+          } else {
+            $contentBase = $contentBase.Trim()
+          }
+          $contentRange = "$contentBase..$contentHead"
+          "FUSIONRPG_CONTENT_RANGE=$contentRange" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Content range: $contentRange"
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
@@ -501,8 +526,34 @@ jobs:
           # The complete push range is supplied by the explicit range step above; no last-commit
           # fallback exists in the runner. The generated-seed registry row invokes its guard with that range and
           # --require-explicit-range.
-          python .\scripts\run_guards.py --tier ci --ci-range $env:FUSIONRPG_VERIFICATION_RANGE
+          #
+          # --repo-range, AND WHY IT IS NEEDED. A commit range belongs to ONE repository's history, and the
+          # split gave every repository its own: measured, gk-core's head does not resolve in gk-data at all,
+          # so `generated-seed` — whose row declares `repository: gk-data`, because the corpus moved to the
+          # pack — cannot be handed this repository's push range. It is given the corpus repository's own
+          # resolved range instead, computed in the range step above. Supplying none is a named refusal
+          # (GUARD-RANGE-UNAVAILABLE), never a fallback to this repository's range, because a fallback would
+          # inspect the wrong repository's history and report it as the declared subject's.
+          python .\scripts\run_guards.py --tier ci --ci-range $env:FUSIONRPG_VERIFICATION_RANGE --repo-range "gk-data=$env:FUSIONRPG_CONTENT_RANGE"
           if ($LASTEXITCODE -ne 0) { throw "run_guards.py --tier ci failed — a gating guard is red; see the summary table above" }
+
+      - name: Registry wiring (a row must name a present repository, an existing script, a findable subject)
+        shell: pwsh
+        run: |
+          # ITS OWN STEP, not a registry row, and the reason is a citation constraint rather than a
+          # preference: `registry-append-safety` fingerprints the content of every line a document cites by
+          # number, and this registry's 7 citations (lines 53, 68, 160, 184, 235, 241, 392) all sit ABOVE
+          # the guards container's close, so inserting a row would move cited line 392. That guard also
+          # reports those 7 citations as ALREADY drifted by 398a6f2, with the repair owned by the workspace
+          # root rather than this repository — so the drift cannot be compensated for from here.
+          #
+          # What it refuses, and each of these was measured rather than imagined: a row naming a repository
+          # that is not checked out (the guard would inspect nothing and could report that as clean), a row
+          # whose script exists nowhere, and a row declaring no repository at all. The third is the shape
+          # that let `generated-seed` run against a directory holding none of its subject while the suite
+          # read green.
+          python .\scripts\guard-registry-wiring.py --root .
+          if ($LASTEXITCODE -ne 0) { throw "guard-registry-wiring.py found a wiring defect — a registry row names a repository, script or subject that is not there. See the findings above; a guard that cannot see its subject reports a verdict about nothing." }
 
       - name: Verification-boundary integrity
         shell: pwsh

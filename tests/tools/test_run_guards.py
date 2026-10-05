@@ -48,6 +48,7 @@ EXIT_VOCABULARY = {0, 1, 64}
 REGISTRY_REASONS = {
     "REGISTRY-MISSING", "REGISTRY-UNREADABLE", "REGISTRY-SCHEMA", "CATALOG-EMPTY",
     "GUARD-EVIDENCE-MISSING", "GUARD-TIER-INVALID", "GUARD-STATUS-INVALID",
+    "GUARD-REPOSITORY-UNKNOWN",
     "EXEMPTION-INCOMPLETE", "EXEMPTION-CATCH-ALL",
 }
 OTHER_REASONS = {
@@ -55,6 +56,11 @@ OTHER_REASONS = {
     "UNKNOWN-GUARD", "NO-GUARDS-SELECTED",
     "NO-GATING-GUARDS", "GUARD-SCRIPT-MISSING", "GUARD-RANGE-REQUIRED", "POWERSHELL-NOT-ON-PATH",
     "LOCAL-ARG-MALFORMED",
+    # The `repository` field's fail-closed paths. Each refuses BEFORE dispatch, because a guard whose
+    # subject is absent would inspect nothing and could report that as clean.
+    "GUARD-REPOSITORY-ABSENT", "GUARD-REPOSITORY-UNDECLARED",
+    "REPO-RANGE-MALFORMED", "REPO-RANGE-UNKNOWN-REPOSITORY", "REPO-RANGE-UNRESOLVED",
+    "GUARD-RANGE-UNAVAILABLE",
 }
 
 
@@ -74,7 +80,11 @@ def code_without_bare_docstrings(text: str) -> str:
 
 
 def guard_row(script: str, tier: str = "local", status: str = "gating", **extra) -> dict:
-    row = {"script": script, "tier": tier, "status": status}
+    # `repository` DEFAULTS TO THIS REPOSITORY so a fixture that is not about the field keeps saying what
+    # it was written to say. Without the default every case here would fail as UNDECLARED, and a suite
+    # where the common path fails is a suite where nobody reads the failures. The undeclared shape is
+    # exercised on purpose, by deleting the key, in RepositoryField below.
+    row = {"script": script, "tier": tier, "status": status, "repository": "gk-core"}
     row.update(extra)
     return row
 
@@ -595,7 +605,7 @@ class TheEnvelope(TemporaryRoot):
         self.assertEqual(set(report), {"tool", "verdict", "summary", "exitCode", "tier", "ci_range",
                                        "selected", "results", "red_gating", "backlog",
                                        "undispatchable", "missing_interpreters", "environment_note",
-                                       "stages"})
+                                       "stages", "degraded"})
         for banned in ("pid", "duration", "elapsed", "timestamp", "started", "finished", "seed"):
             self.assertNotIn(banned, report, f"{banned!r} differs per run, so nothing can assert on it")
 
@@ -610,6 +620,191 @@ class TheEnvelope(TemporaryRoot):
         self.assertNotEqual(code, 0)
         self.assertEqual(json.loads(out)["reason"], "GUARD-SCRIPT-MISSING")
         self.assertEqual(calls, [], "no guard may run once the catalog is known to be incomplete")
+
+
+# ------------------------------------------------------------------------------------------------
+# The `repository` field
+# ------------------------------------------------------------------------------------------------
+
+class RepositoryField(TemporaryRoot):
+    """A row names the repository its guard INSPECTS, and the three ways that fails closed.
+
+    WHY THESE ARE REFUSALS AND NOT SKIPS. A guard whose subject is absent inspects nothing, and nothing it
+    then reports is a finding about the tree -- it is a statement about its own blindness. Measured before
+    this field existed: all 34 rows named no repository, `generated-seed` was dispatched against a root
+    holding none of its eight declared trees, and the only thing that noticed was the guard's stderr.
+    """
+
+    def refusal(self, *args: str) -> dict:
+        code, out, err = self.invoke(*args, "--json")
+        self.assertNotEqual(code, 0, "a wiring defect must not exit 0")
+        payload = json.loads(out)
+        self.assertEqual(payload["verdict"], "REFUSED", err)
+        return payload
+
+    # -- shape 3: no repository declared ------------------------------------------------------------------------------
+    def test_a_row_with_NO_repository_is_refused_by_name(self) -> None:
+        row = guard_row("scripts/g.py")
+        del row["repository"]
+        self.repo.guard("g.py")
+        self.repo.write_registry({"g": row}, [])
+        payload = self.refusal("--tier", "local")
+        self.assertEqual(payload["reason"], "GUARD-REPOSITORY-UNDECLARED")
+        self.assertIn("g", payload["detail"])
+
+    # -- shape 1: the named repository is absent -------------------------------------------------------------------
+    def test_a_row_naming_an_ABSENT_repository_is_refused_and_names_it(self) -> None:
+        self.repo.guard("g.py")
+        self.repo.write_registry({"g": guard_row("scripts/g.py", repository="gk-forge")}, [])
+        payload = self.refusal("--tier", "local")
+        self.assertEqual(payload["reason"], "GUARD-REPOSITORY-ABSENT")
+        self.assertIn("gk-forge", payload["detail"])
+        self.assertIn("inspect nothing", payload["detail"],
+                      "the refusal has to say WHY, or a reader cannot tell it from a broken guard")
+
+    def test_an_absent_repository_dispatch_NOTHING(self) -> None:
+        self.repo.guard("g.py")
+        self.repo.write_registry({"g": guard_row("scripts/g.py", repository="gk-forge")}, [])
+        with mock.patch.object(rg, "dispatch") as dispatched:
+            self.invoke("--tier", "local")
+        dispatched.assert_not_called()
+
+    # -- the vocabulary --------------------------------------------------------------------------------------------
+    def test_a_repository_OUTSIDE_the_vocabulary_is_refused_AT_PARSE_TIME(self) -> None:
+        self.repo.guard("g.py")
+        self.repo.write_registry({"g": guard_row("scripts/g.py", repository="gk-coree")}, [])
+        payload = self.refusal("--tier", "local")
+        self.assertEqual(payload["reason"], "GUARD-REPOSITORY-UNKNOWN")
+        self.assertEqual(payload["stage"], "registry")
+
+    def test_gk_core_resolves_to_the_RUNNER_s_own_root(self) -> None:
+        """`gk-core` means THIS repository even in a standalone clone, where the resolver refuses."""
+        self.assertEqual(rg.resolve_guard_root(self.root, "gk-core"), self.root)
+
+    # -- the subject root reaches the guard --------------------------------------------------------------------------
+    def test_the_declared_repository_is_passed_to_a_guard_that_TAKES_a_root(self) -> None:
+        # A guard whose SCRIPT lives in a different repository from its SUBJECT is the only shape that is
+        # handed `--root`, because only there can its own default be wrong. gk-forge is pinned present via
+        # the resolver's override, and the fixture's script is gk-core's -- so the subject differs.
+        self.repo.guard("g.py",
+                        'import argparse\n'
+                        'p = argparse.ArgumentParser()\n'
+                        'p.add_argument("--root")\n'
+                        'p.parse_args()\n'
+                        'raise SystemExit(0)\n')
+        self.repo.write_registry({"g": guard_row("scripts/g.py", repository="gk-forge")}, [])
+        self.passing()
+        with self.forge_present():
+            code, out, _ = self.invoke("--tier", "local", "--json")
+        self.assertEqual(code, 0, out)
+        report = json.loads(out)
+        self.assertIn("--root", report["results"][0]["argv"],
+                      "a guard whose subject is another repository must be told where that subject is")
+        passed = Path(report["results"][0]["argv"][report["results"][0]["argv"].index("--root") + 1])
+        self.assertEqual(passed.resolve(), self.forge_root_path().resolve())
+
+    def test_a_guard_whose_SUBJECT_is_its_OWN_repository_is_NOT_given_a_root(self) -> None:
+        """`index-marker-coverage` and `registry-append-safety` are gk-core's own scripts declaring
+        `gk-core`, and both resolve their subject by WALKING to the workspace root. Handed
+        `--root .../gk-core` they refused on the first run of this change -- 'the checked index does not
+        exist' and 'ZERO citations found' -- so overriding a correct default broke two green gates."""
+        self.repo.guard("g.py",
+                        'import argparse\n'
+                        'p = argparse.ArgumentParser()\n'
+                        'p.add_argument("--root")\n'
+                        'p.parse_args()\n'
+                        'raise SystemExit(0)\n')
+        self.repo.write_registry({"g": guard_row("scripts/g.py", repository="gk-core")}, [])
+        self.passing()
+        code, out, _ = self.invoke("--tier", "local", "--json")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("--root", json.loads(out)["results"][0]["argv"],
+                         "the guard's own default already resolves its subject; overriding it broke two "
+                         "workspace-scanning gates")
+
+    def test_a_guard_that_declares_NO_root_flag_is_NOT_given_one(self) -> None:
+        """`audit-doc-citations.py` (dispatched as `doc-citations`) has no `--root`; passing one blindly is
+        an argparse exit 2 reported as a red guard."""
+        self.repo.guard("g.py", "import sys\nsys.exit(0)\n")   # no add_argument("--root")
+        self.repo.write_registry({"g": guard_row("scripts/g.py", repository="gk-core")}, [])
+        self.passing()
+        code, out, _ = self.invoke("--tier", "local", "--json")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("--root", json.loads(out)["results"][0]["argv"])
+
+    # -- the range belongs to ONE repository --------------------------------------------------------------------------
+    def forge_present(self):
+        """A sibling that RESOLVES **and is a different directory**, so the range rule is reached rather
+        than the absence rule, and the `--root` override has something to override.
+
+        `keepverse_roots` reads KEEPVERSE_FORGE_ROOT and validates that it names a directory. It has to be
+        a DIFFERENT directory from this fixture's root: the `--root` override is only applied when a guard's
+        script lives in another repository from its subject, so pointing the override at the same directory
+        would make the two identical and the override correctly absent.
+        """
+        sibling = self.root.parent / "forge-sibling"
+        sibling.mkdir(exist_ok=True)
+        return mock.patch.dict(os.environ, {"KEEPVERSE_FORGE_ROOT": str(sibling)})
+
+    def forge_root_path(self) -> Path:
+        sibling = self.root.parent / "forge-sibling"
+        sibling.mkdir(exist_ok=True)
+        return sibling
+
+    # A row that ACTUALLY DIFFS is what needs a range. The fixture carries `{ciRange}` because a row that
+    # does not diff is deliberately NOT asked for one -- `decision-citations` and `doc-citations` inspect a
+    # foreign repository without diffing, and requiring a range of them made this suite refuse on the first
+    # run of the change.
+    def diffing_row(self, repository: str) -> dict:
+        return guard_row("scripts/g.py", tier="ci", repository=repository,
+                         args={"ci": ["--require-explicit-range", "--range", "{ciRange}"]})
+
+    def test_a_row_naming_ANOTHER_repository_needs_A_range_for_IT(self) -> None:
+        self.repo.guard("g.py", "import sys\nsys.exit(0)\n")
+        self.repo.write_registry({"g": self.diffing_row("gk-forge")}, [])
+        with self.forge_present():
+            payload = self.refusal("--tier", "ci", "--ci-range", "HEAD~1..HEAD")
+        self.assertEqual(payload["reason"], "GUARD-RANGE-UNAVAILABLE")
+        self.assertIn("gk-forge", payload["detail"])
+
+    def test_it_does_NOT_fall_back_to_the_CALLERS_range_for_another_repository(self) -> None:
+        """The fallback would inspect the wrong repository's history and report it as the declared
+        subject's, which is the defect this field exists to remove."""
+        self.repo.guard("g.py", "import sys\nsys.exit(0)\n")
+        self.repo.write_registry({"g": self.diffing_row("gk-forge")}, [])
+        with self.forge_present():
+            payload = self.refusal("--tier", "ci", "--ci-range", "HEAD~1..HEAD")
+        self.assertNotIn("HEAD~1..HEAD", payload["detail"].split("--repo-range")[-1])
+
+    def test_a_row_that_does_NOT_diff_is_NOT_asked_for_a_range(self) -> None:
+        """A guard that inspects a foreign repository and never diffs needs no range, and refusing for a
+        value nothing would read is the same mistake as refusing for an absent one."""
+        self.repo.guard("g.py", "import sys\nsys.exit(0)\n")
+        self.repo.write_registry(
+            {"g": guard_row("scripts/g.py", tier="ci", repository="gk-forge")}, [])
+        self.passing()
+        with self.forge_present():
+            code, out, err = self.invoke("--tier", "ci", "--ci-range", "HEAD~1..HEAD", "--json")
+        self.assertEqual(code, 0, err)
+
+    def test_a_repo_range_that_does_NOT_resolve_is_refused_BY_NAME(self) -> None:
+        self.repo.guard("g.py")
+        self.repo.write_registry({"g": guard_row("scripts/g.py", tier="ci")}, [])
+        payload = self.refusal("--tier", "ci", "--ci-range", "HEAD~1..HEAD",
+                               "--repo-range", "gk-core=no-such-ref..also-missing")
+        self.assertEqual(payload["reason"], "REPO-RANGE-UNRESOLVED")
+
+    def test_a_malformed_repo_range_is_refused(self) -> None:
+        self.repo.guard("g.py")
+        self.repo.write_registry({"g": guard_row("scripts/g.py")}, [])
+        payload = self.refusal("--tier", "local", "--repo-range", "no-equals-sign")
+        self.assertEqual(payload["reason"], "REPO-RANGE-MALFORMED")
+
+    def test_a_repo_range_for_an_UNKNOWN_repository_is_refused(self) -> None:
+        self.repo.guard("g.py")
+        self.repo.write_registry({"g": guard_row("scripts/g.py")}, [])
+        payload = self.refusal("--tier", "local", "--repo-range", "gk-nowhere=a..b")
+        self.assertEqual(payload["reason"], "REPO-RANGE-UNKNOWN-REPOSITORY")
 
 
 # ------------------------------------------------------------------------------------------------
