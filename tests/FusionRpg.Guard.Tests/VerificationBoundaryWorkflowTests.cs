@@ -697,26 +697,52 @@ public sealed class VerificationBoundaryWorkflowTests
 
     // ── T13: an exact owner pattern naming a file that is then deleted -> the guard starts passing, ─
     // ──       then fails with "stale exact path" ────────────────────────────────────────────────────
+    //
+    // WHY THE FIXTURE PLANTS ITS SUBJECT UNDER `src/FusionRpg.Core/`. This test planted
+    // `src/Fake/Sample.cs` and was measurably RED — "guard accepted a stale exact path", every run, in
+    // every environment. The cause was the FIXTURE, not the guard. `src/Fake` is named by no row of
+    // `FOREIGN_PREFIX_OWNERS` and no row of `CORE_OWNED_PREFIXES`, so `_owning_repository` answers
+    // UNATTRIBUTED for it, and a temp-dir root has no checked-out sibling that could carry it either
+    // (`_carried_by_a_sibling` asks the sibling bases and finds none). A missing exact path the guard
+    // cannot place is reported in the NOTE and exits 0 BY DESIGN: a clone must not report rows it has no
+    // way to attribute (guard-verification-boundaries.py:544-547). So the assertion was a claim about an
+    // environment the test itself constructs, and no environment could ever satisfy it.
+    //
+    // Attribution in a planted fixture needs no sibling and no workspace: a prefix the registry declares
+    // gk-core's own is answered from `CORE_OWNED_PREFIXES` alone. MEASURED here, with no sibling checked
+    // out and the fixture in the temp dir:
+    //     src/Fake/Sample.cs                -> _owning_repository == UNATTRIBUTED -> NOTE,     exit 0
+    //     src/FusionRpg.Core/Fake/Sample.cs -> _owning_repository == None         -> finding, exit 1
+    //
+    // So this is a correction, NOT a loosening: the property the test is named for is unchanged and
+    // BOTH original assertions stand — exit 0 while the file exists, then a non-zero exit naming the row
+    // AND the stale exact path. What changed is where the fixture plants the file it deletes, so the
+    // guard can answer the question C8 asks. The coupling this adds is real and deliberate: were
+    // `src/FusionRpg.Core` to leave `CORE_OWNED_PREFIXES`, T13 goes red again — correctly, since the
+    // guard could then no longer tell its own `src/` from a sibling's.
 
     [Fact]
     public void T13_an_exact_path_that_stops_existing_fails_as_stale()
     {
         var root = Path.Combine(Path.GetTempPath(), "verification-boundary-t13-" + Guid.NewGuid().ToString("N"));
+        // Under a prefix `CORE_OWNED_PREFIXES` declares gk-core's own, so the guard can attribute this
+        // row with no sibling checked out — which is the whole reason this is not `src/Fake/Sample.cs`.
+        const string Subject = "src/FusionRpg.Core/Fake/Sample.cs";
         try
         {
             Directory.CreateDirectory(Path.Combine(root, "scripts"));
-            Directory.CreateDirectory(Path.Combine(root, "src", "Fake"));
+            Directory.CreateDirectory(Path.Combine(root, "src", "FusionRpg.Core", "Fake"));
             Directory.CreateDirectory(Path.Combine(root, "tests", "Fake"));
-            var samplePath = Path.Combine(root, "src", "Fake", "Sample.cs");
+            var samplePath = Path.Combine(root, "src", "FusionRpg.Core", "Fake", "Sample.cs");
             File.WriteAllText(samplePath, "namespace Fake; public sealed class Sample { }");
             File.WriteAllText(Path.Combine(root, "tests", "Fake", "Fake.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\" />");
             File.WriteAllText(Path.Combine(root, "scripts", "enforcement-registry.v1.json"), """{"schemaVersion":1,"guards":{},"invariants":[]}""");
-            File.WriteAllText(Path.Combine(root, "scripts", "verification-boundaries.v1.json"), """
+            File.WriteAllText(Path.Combine(root, "scripts", "verification-boundaries.v1.json"), $$"""
                 {
                   "schemaVersion": 5,
                   "projects": { "fake": "tests/Fake/Fake.csproj" },
                   "boundaries": [
-                    { "id": "fake-boundary", "kind": "owner", "paths": ["src/Fake/Sample.cs"], "project": "fake", "guards": [], "level": "module" }
+                    { "id": "fake-boundary", "kind": "owner", "paths": ["{{Subject}}"], "project": "fake", "guards": [], "level": "module" }
                   ]
                 }
                 """);
@@ -728,7 +754,9 @@ public sealed class VerificationBoundaryWorkflowTests
 
             var (afterExit, afterStdout, afterStderr) = RunBoundaryGuard(root);
             Assert.True(afterExit != 0, "guard accepted a stale exact path");
-            Assert.Contains("stale exact path: fake-boundary: src/Fake/Sample.cs", afterStdout + afterStderr, StringComparison.Ordinal);
+            // The ROW AND THE PATH, not merely "something failed": an exit that was non-zero for an
+            // unrelated reason would satisfy the line above, and naming them is the property pinned here.
+            Assert.Contains($"stale exact path: fake-boundary: {Subject}", afterStdout + afterStderr, StringComparison.Ordinal);
         }
         finally
         {

@@ -546,12 +546,25 @@ def check_boundaries(root: Path, doc: dict, guard_catalog: dict, failures: list[
                 # `src/FusionRpg.Injector/**`, `tools/seedsmith/**` — and the boundary rows behind them
                 # are all correct. With it counted, 0 findings and 201 entries named in the NOTE.
                 #
-                # T13 STAYS RED, and that is the test of whether this is a weakening: T13's planted fixture
-                # has `src/Fake/Sample.cs`, which matches no prefix, names no owner, and is carried by no
-                # repository — so it is UNATTRIBUTED too. The difference is that T13's guard runs with NO
-                # siblings checked out at all AND the fixture is not a workspace, so the row cannot be
-                # attributed. Asserting that here would be a claim about the environment; the falsifier is
-                # the test, and it is green either way in the workspace.
+                # A ROW THIS REPOSITORY CANNOT PLACE CANNOT BE FAILED HERE, and T13 is where that was
+                # learned. T13's planted fixture used to hold `src/Fake/Sample.cs`: no prefix names it,
+                # and a temp-dir root has no checked-out sibling that could carry it either, so
+                # `_owning_repository` answers UNATTRIBUTED, the row lands in the NOTE, and the guard
+                # exits 0. MEASURED — every environment, not a clone-only reading. The assertion that
+                # followed ("guard accepted a stale exact path") was therefore a claim about an
+                # environment the test itself constructs, and no environment could satisfy it. The
+                # previous version of this comment claimed the test "is green either way in the
+                # workspace"; it was not, and a comment asserting a property the code lacks is the same
+                # defect class as a test asserting one.
+                #
+                # SO THE FIXTURE WAS CORRECTED, NOT THIS BRANCH. T13 now plants its subject under a
+                # prefix CORE_OWNED_PREFIXES declares gk-core's own, where attribution needs neither a
+                # sibling nor a workspace, and it is green with BOTH halves asserted: exit 0 while the
+                # file exists, then a non-zero exit naming the row AND the stale exact path. What this
+                # branch still cannot do is fail an unattributable row, and it must not — that is the
+                # 80-row clone above. The two measured facts point opposite ways, so the line drawn is
+                # not "fail closed" or "fail open": it is that FAILING is reserved for rows this
+                # repository can place, and every row it cannot place is counted and printed instead.
                 owner_repo = _owning_repository(str(pattern), root)
                 if owner_repo is None:
                     failures.append(f"stale exact path: {bid}: {pattern}")
@@ -814,16 +827,25 @@ FOREIGN_PREFIX_OWNERS: tuple[tuple[str, str], ...] = (
 #: files (`game-profiles.json`, `scripts/audit-doc-citations.py`, `.agents/skills/**`). These have no
 #: prefix that discriminates — `tests/` is gk-core's own AND gk-forge's — so no honest prefix rule can
 #: place them, and inventing one would be a guess about a sibling's layout.
-#: The bucket for a path this repository cannot attribute to any sibling. ATTRIBUTION IS NOT PROOF OF
-#: ABSENCE, so this bucket produces a FINDING — the fail-closed direction. A path named `src/Fake/Sample.cs`
-#: in a planted fixture, or `tests/FusionRpg.Launcher.Tests/...` where no `repo` field says who owns it, is
-#: not evidence that a sibling is missing; it is evidence that this repository does not know. Treating it
-#: as "probably in a sibling" is what made T13 accept a stale path, and the guard's whole purpose is to
-#: catch one.
+#: The bucket for a path this repository cannot attribute to any sibling. NOT A FINDING ON ITS OWN, and
+#: this paragraph used to claim the opposite — "ATTRIBUTION IS NOT PROOF OF ABSENCE, so this bucket
+#: produces a FINDING — the fail-closed direction" — which is true of ONE call site and false of the
+#: other. MEASURED at both, in this file:
+#:   * a MISSING PROJECT GROUP MEMBER does fail on UNATTRIBUTED (`:394`): a group NAMES its own members,
+#:     so one this repository cannot place is a question the registry asked and could not answer;
+#:   * a MISSING EXACT PATH in a boundary row is REPORTED, not failed (`:573`): failing there is the
+#:     80-row clone in the note above, every row a real workspace file in a sibling not checked out.
+#: The honest statement is therefore neither "fail closed" nor "fail open" but: FAIL WHAT THIS
+#: REPOSITORY CAN PLACE, AND PRINT EVERYTHING ELSE WITH ITS COUNT. A path named
+#: `tests/FusionRpg.Launcher.Tests/...` where no `repo` field says who owns it, or `src/Fake/Sample.cs` in
+#: a planted fixture, is not evidence that a sibling is missing — it is evidence that this repository does
+#: not know, and the NOTE is where "does not know" goes.
 #:
-#: MEASURED: with UNATTRIBUTED treated as reachable, `T13_an_exact_path_that_stops_existing_fails_as_stale`
-#: failed with "guard accepted a stale exact path" — the check C8 was written for, disabled by a change
-#: that was supposed to be about absent siblings.
+#: MEASURED, and this is the cost of reporting rather than failing: with UNATTRIBUTED treated as
+#: reachable, T13's planted `src/Fake/Sample.cs` was not flagged — which is correct, because nothing can
+#: attribute that row — and T13's FIXTURE was corrected to plant under a prefix this repository owns, so
+#: the check C8 was written for runs there. The guard cannot both refuse to guess and flag a row it has no
+#: way to place; it refuses to guess, and says so.
 UNATTRIBUTED = "(not declared by this repository)"
 
 #: PREFIXES NO SIBLING CARRIES, so a missing path under one of them is gk-core's own stale row and
