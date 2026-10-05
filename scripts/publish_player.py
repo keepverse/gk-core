@@ -25,6 +25,48 @@ WHY THE POWERSHELL FORM WAS RETIRED
   the MelonLoader drop both surfaced as "exit code 1", with no way to ask which. Each stage is named here,
   and the refusal names it.
 
+WHY THE SERVER OUTPUT ROOT AND THE WEB ROOT ARE EXPLICIT INPUTS
+--------------------------------------------------------------
+**The tool could not be run from any of the split repositories.** Two of the paths it needed were
+assembled out of the pre-split monorepo layout, which no longer exists:
+
+* `web/fusion-rpg-web` resolved to `<this repo>/web/fusion-rpg-web`. gk-web is a SIBLING of gk-core, so
+  no number of `..` hops arrives at it, and that path does not exist. Measured before this change, from
+  gk-core with `FUSIONRPG_USE_CI_DROP=1`, the run refused at `web/NO-LOCKFILE` -- a diagnosis that
+  named a lockfile requirement rather than the absent directory it was caused by, which is what a
+  guessed root looks like from the outside.
+* the server publish destination was derived from `<this repo>/dist`, an assumption about where a
+  build artefact belongs to the person running it rather than something the caller stated.
+
+Both are now inputs: `--server-root` and `--web-root`, each validated by MARKER rather than by
+existence, each refusing by stage and by path. The defaults are still taken when nothing was supplied,
+and each default is a rule stated in one line rather than a walk:
+
+* `--web-root` defaults to `keepverse_roots.web_root()/web/fusion-rpg-web` -- the repository's own
+  shared split resolver, the same expression `scripts/prove_actor_hud_live.py` uses. That resolver
+  honours `KEEPVERSE_WEB_ROOT` and REFUSES when the repository is absent, so the default cannot invent
+  one.
+* `--server-root` defaults to `<repo>/dist/FusionRpg/Server`, the pack's own output folder, which this
+  run creates.
+
+A supplied root NEVER falls back to a default, and a supplied root that is invalid REFUSES rather than
+being replaced by a working one -- a silent fallback is how a typo ships a pack built from the wrong
+tree while the command line says otherwise.
+
+THE MARKERS ARE NOT "THE DIRECTORY EXISTS"
+------------------------------------------
+Existence is the weakest possible validity check here, because both roots are directories this tool
+creates or writes into, so existence mostly says the `mkdir` worked. Each root is checked for the
+artefact that makes it the thing it claims to be:
+
+* the web root must hold BOTH `package.json` and `package-lock.json`. Either alone is a broken
+  checkout, not an npm package this run can install from.
+* a SUPPLIED server root must be an existing directory inside the repository (checked before the
+  expensive stages, so a typo costs a second rather than a full npm + `dotnet publish` pipeline), and
+  after the publish it must hold `FusionRpg.Server.exe` AND the `data/` content tree. The default is
+  exempt from the "must already exist" half for one stated reason: it is this tool's own output
+  folder, and the run is what creates it.
+
 WHAT THIS SCRIPT MUST NOT DO
 ----------------------------
 **`Server\\data` STAYS.** It was deleted here until 2026-09-23 -- a line from the initial commit, with no
@@ -62,6 +104,14 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
+# The shared split resolver, for the one default this tool is entitled to derive. gk-web, gk-fusion and
+# gk-data are SIBLINGS of gk-core, so nothing here can reach them by walking upward -- which is why the
+# default asks the repository's own resolver instead of re-deriving the layout. The module lives in this
+# repository, so the import is not optional: a copy of this file without `scripts/lib/` beside it is not
+# a copy of this tool.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from keepverse_roots import RootNotFound, web_root as shared_web_root  # noqa: E402  (the shim must precede it)
+
 TOOL_ID = "publish-player"
 EXIT_OK = 0
 EXIT_FAILED = 1
@@ -78,19 +128,47 @@ MELON_FILE_SUFFIXES = (".dll", ".json", ".pdb", ".cfg")
 PDB_SUFFIX = ".pdb"
 
 STAGES = (
-    "resolve-game-dir", "web", "publish-server", "publish-launcher", "injector",
-    "drop-bep", "melon", "documents", "sweep-pdb",
+    "resolve-roots", "resolve-game-dir", "web", "publish-server", "publish-launcher", "injector",
+    "drop-bep", "melon", "documents", "sweep-pdb", "verify-pack",
 )
+
+#: The first stage, and the one every other stage is downstream of. Both roots are resolved before any
+#: external command runs, so a wrong root costs a second rather than a full npm + publish pipeline.
+STAGE_RESOLVE_ROOTS = "resolve-roots"
+#: The stage that checks the published pack actually contains what a player needs. It exists as a stage
+#: of its own because these two refusals used to be raised at `sweep-pdb`, which named the stage AFTER
+#: the one that could have caused them -- a refusal whose stage name is wrong costs the reader the next
+#: step, which is the whole thing a refusal is for.
+STAGE_VERIFY_PACK = "verify-pack"
+STAGE_RESET_OUTPUT = "reset-output"
+
+#: What makes a directory the npm package this tool builds. BOTH, not either: `npm ci` installs from the
+#: manifest and installs reproducibly only with the lockfile, so a directory carrying one without the
+#: other is a broken checkout rather than a package root.
+WEB_PACKAGE_MARKERS = ("package.json", "package-lock.json")
+#: What makes the published server output usable: the exe the launcher starts, and the content tree
+#: beside it. `SERVER-DATA-MISSING` is the refusal for the second and it predates this change.
+SERVER_PUBLISH_EXE = "FusionRpg.Server.exe"
+SERVER_CONTENT_DIR = "data"
 
 
 class Refusal(Exception):
-    """A named precondition or stage failure. The run says WHICH stage, and never exits 0 having not run."""
+    """A named precondition or stage failure. The run says WHICH stage, and never exits 0 having not run.
+
+    `roots` and `completed` are what a machine-readable refusal carries that the exception message
+    cannot: which roots the run had resolved by the time it stopped, and how far it got. `completed` is
+    empty for a refusal raised by the first stage, which is the honest answer -- it never started -- and a
+    root is absent from `roots` until it has resolved, so the envelope never reports a path it did not
+    use.
+    """
 
     def __init__(self, stage: str, reason: str, detail: str = "") -> None:
         super().__init__(f"{stage}/{reason}: {detail}" if detail else f"{stage}/{reason}")
         self.stage = stage
         self.reason = reason
         self.detail = detail
+        self.roots: dict[str, str] = {}
+        self.completed: tuple[str, ...] = ()
 
 
 def run(argv: list[str], cwd: Path, timeout: int, stage: str) -> str:
@@ -127,6 +205,98 @@ def which(name: str) -> str | None:
 # ------------------------------------------------------------------------------------------------
 # Configuration
 # ------------------------------------------------------------------------------------------------
+
+def default_server_root(root: Path) -> Path:
+    """Where the server publish output goes when the caller states nothing: the pack's own `Server`
+    folder, under this repository's `dist/FusionRpg`.
+
+    ONE SENTENCE, and it is a rule rather than a guess: the pack output belongs to this repository, so
+    the pack's server folder is inside this repository's `dist`. It is not a walk, it names no sibling,
+    and it never consults the environment -- so it cannot silently resolve somewhere else.
+    """
+    return root / "dist" / "FusionRpg" / "Server"
+
+
+def default_web_root(root: Path) -> Path:
+    """The npm package directory when the caller states nothing: `web_root()/web/fusion-rpg-web`, from
+    the repository's own shared split resolver.
+
+    ONE SENTENCE, and it is the same rule `scripts/prove_actor_hud_live.py` uses for the same
+    directory: the npm package sits one level below gk-web, and gk-web is a sibling that no upward walk
+    can reach. The resolver honours `KEEPVERSE_WEB_ROOT` and REFUSES when the repository is absent, so
+    this default cannot invent one -- which is exactly what the retired
+    `<repo>/web/fusion-rpg-web` spelling did.
+    """
+    try:
+        base = shared_web_root(root)
+    except RootNotFound as exc:
+        raise Refusal(STAGE_RESOLVE_ROOTS, "WEB-ROOT-UNRESOLVED",
+                      f"no --web-root was given and the shared split resolver cannot place gk-web from "
+                      f"{root}: {exc}. Pass --web-root <dir> pointing at the folder holding package.json "
+                      f"and package-lock.json (in this workspace gk-web/web/fusion-rpg-web), or set "
+                      f"KEEPVERSE_WEB_ROOT.") from exc
+    return base / "web" / "fusion-rpg-web"
+
+
+def resolve_server_root(root: Path, supplied: Path | None) -> Path:
+    """The server publish output root: the caller's, or the default -- and never one for the other.
+
+    A SUPPLIED root must already be a directory, and must be inside this repository. Both halves are
+    pre-flight checks on purpose: this is the root a recursive `dotnet publish` output is written into,
+    so a typo discovered after `npm ci` and a self-contained publish has cost the whole pipeline. The
+    containment half is the same rule `reset_directory` already enforces before it deletes anything, and
+    it is stated HERE too so the caller learns it before the run rather than after a refusal names a
+    stage three steps further on.
+
+    A SUPPLIED root that fails either check REFUSES. It is never replaced by the default: a silent
+    fallback is how a typo ships a pack built out of a different tree while the command line claims
+    otherwise.
+    """
+    base = root.resolve()
+    if supplied is None:
+        return default_server_root(root)
+    candidate = Path(supplied).resolve()
+    if not candidate.is_dir():
+        raise Refusal(STAGE_RESOLVE_ROOTS, "SERVER-ROOT-MISSING",
+                      f"--server-root is {candidate}, which is not a directory. Create it first: the "
+                      f"check is pre-flight, so a typo costs a second here instead of a full npm and "
+                      f"dotnet publish pipeline. It must be the folder the self-contained server is "
+                      f"published INTO, and it must hold {SERVER_PUBLISH_EXE} and "
+                      f"{SERVER_CONTENT_DIR}/ once the publish has run.")
+    if not candidate.is_relative_to(base):
+        raise Refusal(STAGE_RESOLVE_ROOTS, "SERVER-ROOT-OUTSIDE-REPO",
+                      f"--server-root is {candidate}, which is outside {base}. The pack output is "
+                      f"emptied before every publish, so a root outside this repository is refused "
+                      f"rather than recursively deleted.")
+    return candidate
+
+
+def resolve_web_root(root: Path, supplied: Path | None) -> Path:
+    """The built web/UI root: the caller's, or the shared resolver's -- and never one for the other.
+
+    Checked by MARKER, not by existence, and the distinction is the point: this tool creates and writes
+    into both the default root and a supplied one, so "the directory exists" would mostly report that a
+    `mkdir` worked. `WEB_PACKAGE_MARKERS` is what makes a directory the npm package `npm ci` and
+    `npm run build` can actually run in.
+    """
+    if supplied is None:
+        candidate = default_web_root(root)
+    else:
+        candidate = Path(supplied).resolve()
+    if not candidate.is_dir():
+        raise Refusal(STAGE_RESOLVE_ROOTS, "WEB-ROOT-MISSING",
+                      f"--web-root is {candidate}, which is not a directory. It must be the npm package "
+                      f"directory `npm ci` and `npm run build` run in -- the folder holding "
+                      f"{' and '.join(WEB_PACKAGE_MARKERS)}.")
+    absent = [marker for marker in WEB_PACKAGE_MARKERS if not (candidate / marker).is_file()]
+    if absent:
+        raise Refusal(STAGE_RESOLVE_ROOTS, "WEB-ROOT-NOT-A-PACKAGE",
+                      f"--web-root is {candidate}, which is not an npm package: "
+                      f"{', '.join(absent)} absent. Both are required -- the manifest to install from "
+                      f"and the lockfile to install reproducibly -- so one without the other is a "
+                      f"broken checkout, not a web root.")
+    return candidate
+
 
 def version_from_env(env: dict[str, str]) -> str:
     """`FUSIONRPG_VERSION` with a leading `v` stripped; the default when unset.
@@ -234,9 +404,22 @@ class Layout:
     melon_plugin_out: Path
 
     @classmethod
-    def build(cls, root: Path) -> "Layout":
+    def build(cls, root: Path, server_root: Path, web_root: Path) -> "Layout":
+        """Every path, from RESOLVED roots.
+
+        `server_root` and `web_root` are PARAMETERS and not derived here, and that is the structural
+        half of the fix: with the monorepo spelling assembled inside this method, a caller that forgot
+        an argument would get the pre-split layout back with no diagnostic at all. Making them required
+        means the retired resolution is not reachable from here, so the only way to reintroduce it is to
+        add a derivation back -- which a test can see.
+
+        `out` stays derived, and one line is why: the pack output is this run's own working folder, the
+        `DropIntoGame` tree is laid out beside the server inside it, and a caller who wanted it elsewhere
+        would need a different tree shape rather than a different root.
+        """
         out = root / "dist" / "FusionRpg"
-        return cls(root=root, out=out, server_out=out / "Server", web=root / "web" / "fusion-rpg-web",
+        return cls(root=root, out=out, server_out=Path(server_root),
+                   web=Path(web_root),
                    plugin_out=root / "artifacts" / "plugins" / "FusionRpg",
                    ci_drop=root / "artifacts" / "ci-drop-into-game",
                    drop=out / "DropIntoGame",
@@ -253,15 +436,19 @@ class Layout:
         return self.drop / profile / "MelonLoader"
 
 
-def reset_directory(path: Path, root: Path) -> None:
+def reset_directory(path: Path, root: Path, stage: str = STAGE_RESET_OUTPUT) -> None:
     """Create `path` empty, refusing to remove anything outside the repository.
 
     This is a RECURSIVE DELETE of a path assembled from configuration, and the original ran
     `Remove-Item -Recurse -Force` with no containment check at all. Three of the four are inside the
     repository by construction; the check makes that a measurement rather than an assumption.
+
+    `stage` is a parameter because this used to name every refusal `web`, including the ones it raised
+    while clearing the pack output and the plugin cache. A refusal whose stage is wrong costs the reader
+    exactly the next step a correct one would have given them.
     """
     if not path.resolve().is_relative_to(root.resolve()):
-        raise Refusal("web", "DELETE-OUTSIDE-REPO",
+        raise Refusal(stage, "DELETE-OUTSIDE-REPO",
                       f"refusing to remove {path}: it is outside {root}")
     if path.is_dir():
         shutil.rmtree(path)
@@ -319,6 +506,8 @@ def sweep_pdbs(root: Path) -> int:
 class Report:
     """What the run did. Every field is a READING re-measured each run, never a constant."""
     version: str = ""
+    server_root: str = ""
+    web_root: str = ""
     game_dir: str | None = None
     ci_drop: bool = False
     melon_profile: str | None = None
@@ -455,65 +644,106 @@ def stage_documents(layout: Layout) -> None:
         shutil.copy2(source, destination)
 
 
-def publish(root: Path, env: dict[str, str], timeout: int) -> Report:
+def publish(root: Path, env: dict[str, str], timeout: int, *,
+            server_root: Path | None = None, web_root: Path | None = None) -> Report:
     """The whole pipeline. Raises on the first named failure, leaving the tree as it found it where it
     can -- the output folder is wiped by design, so a partial pack is not a usable pack and is never
-    reported as one."""
+    reported as one.
+
+    The two roots are KEYWORD parameters with `None` defaults rather than required ones, and the reason
+    is the one caller this tool has: `scripts/sync_ci_drop_into_game.py` calls `publish(root, env,
+    timeout)` positionally. A required fourth argument would have broken it, and "no fallback to the old
+    behaviour" is a rule about which ROOTS are used -- not a reason to change a sibling's call site.
+    Passing `None` still means "resolve the default", and the defaults are resolved through the same
+    two validated functions every other path goes through.
+
+    Every refusal raised from here carries the stages that DID complete, so a machine-readable run says
+    how far it got rather than only where it stopped.
+    """
     report = Report(version=version_from_env(env), ci_drop=use_ci_drop(env), stages=[])
-    layout = Layout.build(root)
+    try:
+        resolved_server = resolve_server_root(root, server_root)
+        report.server_root = str(resolved_server)
+        resolved_web = resolve_web_root(root, web_root)
+        report.web_root = str(resolved_web)
+        layout = Layout.build(root, resolved_server, resolved_web)
+        report.stages.append(STAGE_RESOLVE_ROOTS)
 
-    game_dir = resolve_game_dir(root, env)
-    report.game_dir = str(game_dir) if game_dir else None
-    report.stages.append("resolve-game-dir")
+        game_dir = resolve_game_dir(root, env)
+        report.game_dir = str(game_dir) if game_dir else None
+        report.stages.append("resolve-game-dir")
 
-    stage_web(layout, timeout)
-    report.stages.append("web")
+        stage_web(layout, timeout)
+        report.stages.append("web")
 
-    reset_directory(layout.out, root)
-    layout.server_out.mkdir(parents=True, exist_ok=True)
-    reset_directory(layout.plugin_out, root)
-    report.stages.append("reset-output")
+        reset_directory(layout.out, root, STAGE_RESET_OUTPUT)
+        # Emptied, not merely created. A SUPPLIED server root may sit outside the pack tree, and a root
+        # that kept the artefacts of a previous publish would satisfy both checks in `verify-pack` while
+        # describing a publish that never ran.
+        reset_directory(layout.server_out, root, STAGE_RESET_OUTPUT)
+        reset_directory(layout.plugin_out, root, STAGE_RESET_OUTPUT)
+        report.stages.append(STAGE_RESET_OUTPUT)
 
-    stage_publish_server(layout, report.version, timeout)
-    report.stages.append("publish-server")
+        stage_publish_server(layout, report.version, timeout)
+        report.stages.append("publish-server")
 
-    stage_publish_launcher(layout, report.version, timeout)
-    report.stages.append("publish-launcher")
+        stage_publish_launcher(layout, report.version, timeout)
+        report.stages.append("publish-launcher")
 
-    # The published wwwroot is the build's; fall back to the checked-in one only if publish did not put
-    # it there, which is the shape the original used.
-    if not (layout.server_out / "wwwroot").is_dir():
-        copy_tree(layout.root / "src" / "FusionRpg.Server" / "wwwroot", layout.server_out / "wwwroot")
+        # The published wwwroot is the build's; fall back to the checked-in one only if publish did not put
+        # it there, which is the shape the original used.
+        if not (layout.server_out / "wwwroot").is_dir():
+            copy_tree(layout.root / "src" / "FusionRpg.Server" / "wwwroot", layout.server_out / "wwwroot")
 
-    stage_injector(layout, report.version, game_dir, env, timeout)
-    report.stages.append("injector")
+        stage_injector(layout, report.version, game_dir, env, timeout)
+        report.stages.append("injector")
 
-    # Nested DropIntoGame by profile + loader, with the legacy flat and unscoped paths kept for 3.8.1
-    # Bep. Three destinations, one copy each, so a player on any of the three finds the plugin.
-    report.plugin_files = copy_with_suffixes(
-        layout.plugin_out, [layout.drop_bep_legacy(), layout.drop_bep_381(), layout.drop],
-        PLUGIN_FILE_SUFFIXES)
-    report.stages.append("drop-bep")
+        # Nested DropIntoGame by profile + loader, with the legacy flat and unscoped paths kept for 3.8.1
+        # Bep. Three destinations, one copy each, so a player on any of the three finds the plugin.
+        report.plugin_files = copy_with_suffixes(
+            layout.plugin_out, [layout.drop_bep_legacy(), layout.drop_bep_381(), layout.drop],
+            PLUGIN_FILE_SUFFIXES)
+        report.stages.append("drop-bep")
 
-    profile, melon_files = stage_melon(layout, report.version, env, timeout)
-    report.melon_profile, report.melon_files = profile, melon_files
-    report.stages.append("melon")
+        profile, melon_files = stage_melon(layout, report.version, env, timeout)
+        report.melon_profile, report.melon_files = profile, melon_files
+        report.stages.append("melon")
 
-    stage_documents(layout)
-    report.stages.append("documents")
+        stage_documents(layout)
+        report.stages.append("documents")
 
-    report.pdbs_removed = sweep_pdbs(layout.out)
-    report.stages.append("sweep-pdb")
+        # TWO ROOTS, not one. A supplied server root may sit outside the pack tree, and a pdb under a
+        # downloaded server is still a source path from the machine that built it. Sweeping the pack
+        # tree alone would miss exactly the tree a caller was told they could place elsewhere.
+        report.pdbs_removed = sweep_pdbs(layout.out) + sweep_pdbs(layout.server_out)
+        report.stages.append("sweep-pdb")
 
-    report.out = str(layout.out)
-    # Measured, not asserted in prose: the whole reason the `Server\data` tree exists is that a player
-    # install without it silently runs the entire content layer on the code fallback.
-    report.server_data_present = (layout.server_out / "data").is_dir()
-    if not report.server_data_present:
-        raise Refusal("sweep-pdb", "SERVER-DATA-MISSING",
-                      f"{layout.server_out / 'data'} is absent from the published pack. A player install "
-                      f"without it answers SeedTreeNotFound and /health reports "
-                      f"contentSource: codeFallback, so the whole content layer runs on the fallback")
+        report.out = str(layout.out)
+        # Measured, not asserted in prose: the whole reason the `Server\data` tree exists is that a player
+        # install without it silently runs the entire content layer on the code fallback. The exe is
+        # checked FIRST because it is the more fundamental of the two -- a pack without it cannot start
+        # at all, while one without `data` starts and then serves the wrong content, so reporting the
+        # missing exe first would be the more useful of the two refusals.
+        server_exe = layout.server_out / SERVER_PUBLISH_EXE
+        if not server_exe.is_file():
+            raise Refusal(STAGE_VERIFY_PACK, "SERVER-EXE-MISSING",
+                          f"{server_exe} is absent from the published pack, so the launcher has nothing "
+                          f"to start. --server-root named {layout.server_out} and the publish reported "
+                          f"success into it.")
+        report.server_data_present = (layout.server_out / SERVER_CONTENT_DIR).is_dir()
+        if not report.server_data_present:
+            raise Refusal(STAGE_VERIFY_PACK, "SERVER-DATA-MISSING",
+                          f"{layout.server_out / SERVER_CONTENT_DIR} is absent from the published pack. A "
+                          f"player install without it answers SeedTreeNotFound and /health reports "
+                          f"contentSource: codeFallback, so the whole content layer runs on the fallback")
+        report.stages.append(STAGE_VERIFY_PACK)
+    except Refusal as refusal:
+        # Only the roots that actually resolved are recorded, so the envelope can never name a path the
+        # run did not use -- which is the whole failure mode of a fallback.
+        refusal.roots = {"server": report.server_root, "web": report.web_root}
+        refusal.roots = {k: v for k, v in refusal.roots.items() if v}
+        refusal.completed = tuple(report.stages)
+        raise
     return report
 
 
@@ -522,6 +752,20 @@ def main(argv: list[str] | None = None) -> int:
         description="Build a zip folder players can use with no Node and no .NET SDK / Desktop Runtime "
                     "(replaces publish-player.ps1).")
     parser.add_argument("--root", type=Path, default=None, help="the repository")
+    parser.add_argument("--server-root", dest="server_root", type=Path, default=None,
+                        help="the directory the self-contained server is published INTO -- the player "
+                             "pack's Server folder. It must already EXIST and be inside --root (the "
+                             f"check is pre-flight), it is emptied before every publish, and once the "
+                             f"publish has run it must hold {SERVER_PUBLISH_EXE} and "
+                             f"{SERVER_CONTENT_DIR}/. Refused by name if it is missing, is not a "
+                             "directory, or lies outside the repository. "
+                             "Default: <repo>/dist/FusionRpg/Server")
+    parser.add_argument("--web-root", dest="web_root", type=Path, default=None,
+                        help="the npm package directory `npm ci` and `npm run build` run in -- the "
+                             "folder holding " + " and ".join(WEB_PACKAGE_MARKERS) + ". Refused by "
+                             "name if it is not a directory or is missing either marker. "
+                             "Default: the shared split resolver's gk-web/web/fusion-rpg-web "
+                             "(honours KEEPVERSE_WEB_ROOT, and refuses when gk-web is absent)")
     parser.add_argument("--timeout", type=int, default=3600,
                         help="seconds per external command (default 3600; the original had NO timeout "
                              "on any of npm, dotnet publish or dotnet build)")
@@ -530,11 +774,20 @@ def main(argv: list[str] | None = None) -> int:
     root = (args.root or Path(__file__).resolve().parent.parent).resolve()
     env = dict(os.environ)
     try:
-        report = publish(root, env, args.timeout)
+        report = publish(root, env, args.timeout,
+                         server_root=args.server_root, web_root=args.web_root)
     except Refusal as refusal:
         if args.json:
+            # The roots and the completed stages travel WITH the refusal. A machine-readable refusal
+            # that names only the failing stage leaves a consumer unable to tell "the first stage
+            # refused" from "the last one did", and those two have very different causes. A root that
+            # never resolved is `null` rather than the default it would have been: the envelope reports
+            # what the run used, not what it might have used.
             print(json.dumps({"tool": TOOL_ID, "verdict": "REFUSED", "stage": refusal.stage,
-                              "reason": refusal.reason, "detail": refusal.detail}, indent=2))
+                              "reason": refusal.reason, "detail": refusal.detail,
+                              "server_root": refusal.roots.get("server"),
+                              "web_root": refusal.roots.get("web"),
+                              "stagesCompleted": list(refusal.completed)}, indent=2))
         else:
             print(f"PUBLISH-PLAYER REFUSED [{refusal.stage}]: {refusal.reason}", file=sys.stderr)
             if refusal.detail:
@@ -546,6 +799,8 @@ def main(argv: list[str] | None = None) -> int:
                          indent=2))
         return EXIT_OK
 
+    print(f"==> Server publish root: {report.server_root}")
+    print(f"==> Web package root: {report.web_root}")
     if report.game_dir:
         print(f"==> Injector GameDir (refs only): {report.game_dir}")
     else:
