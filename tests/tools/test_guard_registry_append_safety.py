@@ -77,8 +77,13 @@ FIXTURE = "\n".join([
     '      "tier": "ci",',                  # 18
     '      "status": "gating"',              # 19
     "    }",                                # 20
-    "  }",                                  # 21
-    "}",                                    # 22
+    "  },",                                 # 21
+    # An EMPTY append container, so `geometry` has one to locate on this fixture. Not under test
+    # here - the append-point rule has its own assertions - but without it every check below refuses
+    # on the geometry precondition before reaching the axis being exercised.
+    '  "boundaries": [',                    # 22
+    "  ]",                                  # 23
+    "}",                                    # 24
     "",
 ])
 
@@ -479,7 +484,8 @@ class CliSurface(unittest.TestCase):
                               capture_output=True, text=True, encoding="utf-8",
                               errors="replace", timeout=300)
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
-        for flag in ("--report", "--json", "--update", "--adopt-rows", "--root"):
+        for flag in ("--report", "--json", "--update", "--adopt-rows", "--root",
+                     "--accept", "--accept-why"):
             self.assertIn(flag, proc.stdout, f"{flag} is part of the published surface")
 
     def test_update_and_adopt_rows_cannot_run_together(self):
@@ -488,6 +494,504 @@ class CliSurface(unittest.TestCase):
                               errors="replace", timeout=600)
         self.assertEqual(proc.returncode, 2)
         self.assertIn("--adopt-rows", proc.stdout + proc.stderr)
+
+
+# ---------------------------------------------------------------------------------------------
+# `--accept`: recording ONE reviewed citation, and refusing everything that is not one
+#
+# WHY THESE TESTS EXIST AT ALL. The guard could flag an unreviewed citation and had no vocabulary for
+# the opposite state, so an honest repair landed two findings and could only be cleared by a blanket
+# re-baseline. The tests below are therefore as much about the REFUSALS as about the recording: a
+# review flag that accepts anything is a re-baseline with better manners, and the whole value of the
+# flag is that it is one citation wide.
+#
+# `--accept` is exercised through `guard.main` against a temp baseline and a temp citing document,
+# never against the committed one. A test that wrote a review into the real baseline would be a test
+# that changes the thing it measures.
+# ---------------------------------------------------------------------------------------------
+
+ACCEPT_REGISTRY = guard.REGISTRIES[0][0]
+ACCEPT_LINE = ALPHA_PATHS                       # a real line of FIXTURE, inside row `alpha`
+ACCEPT_KEY = f"{ACCEPT_REGISTRY}:{ACCEPT_LINE}"
+BETA_KEY = f"{ACCEPT_REGISTRY}:{BETA_PATHS}"
+
+
+def _fake_core(directory: Path, registry_text: str) -> Path:
+    """A throwaway `core` whose checked registries are FIXTURE (and copies of the real other two).
+
+    `--accept` resolves a citation against the REAL registries on disk, so testing it against
+    FIXTURE - which is the only fixture carrying a deliberate byte-identical twin - means resolving it
+    against a fake core. Without this the token assertions would be about whichever real row happens
+    to sit at the fixture's line numbers, which is a reading and not a contract.
+    """
+    scripts = directory / "scripts"
+    scripts.mkdir(parents=True, exist_ok=True)
+    for _name, rel, _container in guard.REGISTRIES:
+        source = (REPO / rel).read_text(encoding="utf-8") if (REPO / rel).is_file() else "{}\n"
+        (scripts / Path(rel).name).write_text(
+            registry_text if Path(rel).name == ACCEPT_REGISTRY else source,
+            encoding="utf-8", newline="")
+    return directory
+
+
+def _baseline_with_hole() -> dict:
+    """A baseline that is structurally complete but has NO entry for ACCEPT_KEY.
+
+    Complete, because every refusal about a missing axis must not be what is under test; hollow at
+    exactly one key, because that is the state a re-pointed citation is in.
+    """
+    rows = guard.row_identity(FIXTURE)
+    doc = json.loads(FIXTURE)
+    first_key = f"{ACCEPT_REGISTRY}:1"
+    return {"fingerprints": {first_key: guard.fingerprint(FIXTURE.split("\n")[0])},
+            "unverified": [],
+            "rows": {first_key: guard.row_fingerprint(rows[1], guard.row_token(doc, rows[1]))},
+            "rowBaselineSource": {rel: "a" * 40 for _n, rel, _c in guard.REGISTRIES}}
+
+
+def _recorded(key: str, token: str, pair: "tuple[str, str]", why: str = "because") -> dict:
+    """A well-formed `reviewed` record, so a test can vary ONE field and see that field refused."""
+    return {"registry": key.rpartition(":")[0], "line": int(key.rpartition(":")[2]),
+            "citedFrom": "tasks/x.md:1", "rowLabel": guard.row_label(pair), "rowToken": token,
+            "rowFingerprint": guard.row_fingerprint(pair, token),
+            "contentFingerprint": guard.fingerprint(TWIN_TEXT),
+            "adjudication": "corroborated", "recordedOn": "2026-01-01", "why": why}
+
+
+class _AcceptHarness(unittest.TestCase):
+    """A temp baseline, a temp citing document, and a way to read back exactly what was written.
+
+    `assert_nothing_written` compares BYTES, not parsed JSON: a refusal that rewrote the file
+    identically would still be a refusal that touched the thing it refused to touch, and only the
+    byte comparison sees it.
+    """
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory(prefix="gras-accept-")
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.baseline = self.tmp / "baseline.json"
+        self.baseline.write_text(json.dumps(_baseline_with_hole()), encoding="utf-8", newline="")
+        self.citer = self.tmp / "tasks" / "x.md"
+        self.citer.parent.mkdir(parents=True, exist_ok=True)
+        self.write_citer(f"the `alpha` row owns it ({ACCEPT_REGISTRY}:{ACCEPT_LINE})\n")
+        self._original = (guard.BASELINE, guard.collect, guard.evaluate)
+        guard.BASELINE = self.baseline
+        guard.collect = lambda ws: ({ACCEPT_KEY: ("tasks/x.md", 1)}, _refused_counts())
+        self.fake = _fake_core(self.tmp / "fakecore", FIXTURE)
+        _original_evaluate = guard.evaluate
+        guard.evaluate = lambda core, ws: _original_evaluate(self.fake, ws)
+
+    def tearDown(self):
+        guard.BASELINE, guard.collect, guard.evaluate = self._original
+
+    def use_registry(self, text: str) -> None:
+        """Point the resolved registry at `text`, e.g. an on-disk mutant."""
+        _fake_core(self.fake, text)
+        self.read_back = (self.fake / "scripts" / ACCEPT_REGISTRY).read_text(encoding="utf-8")
+        self.assertEqual(self.read_back, text, "the mutant is not what landed on disk")
+
+    def write_citer(self, text: str) -> None:
+        self.citer.write_text(text, encoding="utf-8", newline="")
+
+    def run_guard(self, *args: str) -> "tuple[int, str]":
+        import contextlib
+        import io as _io
+        buf = _io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            code = guard.main(["--root", str(self.tmp), *args])
+        return code, buf.getvalue()
+
+    def stored(self) -> dict:
+        return json.loads(self.baseline.read_text(encoding="utf-8"))
+
+    def assert_nothing_written(self) -> None:
+        self.assertEqual(self.baseline.read_bytes(), self._before,
+                         "a refusal must leave the baseline byte-identical")
+
+    def remember(self) -> bytes:
+        self._before = self.baseline.read_bytes()
+        return self._before
+
+
+class AcceptRecordsTheReview(_AcceptHarness):
+    """The happy path. A test suite that only asserts refusals never proves the flag works."""
+
+    def test_a_cited_key_with_a_reason_is_recorded_on_both_axes(self):
+        self.remember()
+        code, out = self.run_guard("--accept", ACCEPT_KEY, "--accept-why",
+                                   "alpha is the row it names")
+        self.assertEqual(code, 0, out)
+        rec = self.stored()["reviewed"][ACCEPT_KEY]
+        self.assertEqual(rec["registry"], ACCEPT_REGISTRY)
+        self.assertEqual(rec["line"], ACCEPT_LINE)
+        self.assertEqual(rec["rowToken"], "alpha")
+        self.assertEqual(rec["citedFrom"], "tasks/x.md:1")
+        self.assertEqual(rec["contentFingerprint"], guard.fingerprint(TWIN_TEXT))
+        self.assertEqual(rec["rowFingerprint"],
+                         guard.row_fingerprint(guard.row_identity(FIXTURE)[ALPHA_PATHS], "alpha"))
+        self.assertEqual(rec["adjudication"], "corroborated")
+        self.assertEqual(rec["why"], "alpha is the row it names")
+        self.assertRegex(rec["recordedOn"], r"^\d{4}-\d{2}-\d{2}$")
+
+    def test_the_recording_is_printed_not_silent(self):
+        code, out = self.run_guard("--accept", ACCEPT_KEY, "--accept-why", "alpha")
+        self.assertEqual(code, 0)
+        for needle in (ACCEPT_KEY, ACCEPT_REGISTRY, str(ACCEPT_LINE), "alpha",
+                       "corroborated", "tasks/x.md:1", "row identity", "row fingerprint",
+                       "content print", "recorded on", "why"):
+            self.assertIn(needle, out, f"the audit output must state {needle!r}")
+
+    def test_the_recording_is_visible_in_json(self):
+        code, out = self.run_guard("--accept", ACCEPT_KEY, "--accept-why", "alpha", "--json")
+        self.assertEqual(code, 0)
+        payload = json.loads(out)
+        self.assertIn(ACCEPT_KEY, payload["accepted"])
+        self.assertEqual(payload["accepted"][ACCEPT_KEY]["rowToken"], "alpha")
+
+    def test_the_reviewed_axis_is_visible_in_the_gate_json_and_the_report(self):
+        self.run_guard("--accept", ACCEPT_KEY, "--accept-why", "alpha")
+        _, out = self.run_guard("--json")
+        payload = json.loads(out)
+        self.assertIn(ACCEPT_KEY, payload["reviewed"])
+        self.assertEqual(payload["reviewed"][ACCEPT_KEY]["rowToken"], "alpha")
+        _, report = self.run_guard("--report")
+        self.assertIn(ACCEPT_KEY, report)
+        self.assertIn("REVIEWED", report)
+
+    def test_a_reviewed_key_no_longer_reads_as_new_and_is_still_compared(self):
+        self.run_guard("--accept", ACCEPT_KEY, "--accept-why", "alpha")
+        code, out = self.run_guard()
+        self.assertNotIn(f"{ACCEPT_KEY} is a NEW citation", out)
+        self.assertIn("REVIEWED", out, "a green run must state the reviewed axis, not hide it")
+        self.assertIn("compared against a dated", out)
+
+    def test_a_review_still_detects_later_drift(self):
+        """Recording a promise, not clearing a finding: the comparison keeps running."""
+        self.run_guard("--accept", ACCEPT_KEY, "--accept-why", "alpha")
+        date = self.stored()["reviewed"][ACCEPT_KEY]["recordedOn"]
+        drifted = self.stored()
+        drifted["reviewed"][ACCEPT_KEY]["rowFingerprint"] = guard.row_fingerprint(
+            guard.row_identity(FIXTURE)[BETA_PATHS], "beta")
+        self.baseline.write_text(json.dumps(drifted), encoding="utf-8", newline="")
+        code, out = self.run_guard()
+        self.assertEqual(code, 1, "a reviewed key whose row changed must red")
+        self.assertIn(f"{ACCEPT_KEY} now sits in row", out)
+        self.assertIn(date, out, "the finding must name the review's date, not the first commit")
+
+
+
+
+
+class AcceptRefusals(_AcceptHarness):
+    """Every refusal is named, exits 2, and writes NOTHING."""
+
+    def test_a_key_nothing_cites_is_refused(self):
+        self.remember()
+        code, out = self.run_guard("--accept", f"{ACCEPT_REGISTRY}:2", "--accept-why", "x")
+        self.assertEqual(code, 2)
+        self.assertIn("no document in the workspace cites", out)
+        self.assert_nothing_written()
+
+    def test_an_unknown_registry_is_refused(self):
+        self.remember()
+        code, out = self.run_guard("--accept", "not-a-checked-registry.v1.json:1",
+                                   "--accept-why", "x")
+        self.assertEqual(code, 2)
+        self.assertIn("which this guard does not check", out)
+        self.assert_nothing_written()
+
+    def test_a_wildcard_is_refused_and_names_the_flag_that_does_that_job(self):
+        for wildcard in ("*", f"{ACCEPT_REGISTRY}:*", "a,b", f"{ACCEPT_REGISTRY}:[12]"):
+            with self.subTest(wildcard=wildcard):
+                self.remember()
+                code, out = self.run_guard("--accept", wildcard, "--accept-why", "x")
+                self.assertEqual(code, 2)
+                self.assertIn("--adopt-rows", out)
+                self.assertIn("--update", out)
+                self.assert_nothing_written()
+
+    def test_a_range_is_refused_as_a_re_baselining_request(self):
+        self.remember()
+        code, out = self.run_guard("--accept", f"{ACCEPT_REGISTRY}:1-9", "--accept-why", "x")
+        self.assertEqual(code, 2)
+        self.assertIn("non-numeric line", out)
+        self.assertIn("--update", out)
+        self.assert_nothing_written()
+
+    def test_a_bare_registry_is_refused(self):
+        self.remember()
+        code, out = self.run_guard("--accept", ACCEPT_REGISTRY, "--accept-why", "x")
+        self.assertEqual(code, 2)
+        self.assertIn("names no line", out)
+        self.assert_nothing_written()
+
+    def test_a_review_with_no_reason_is_refused(self):
+        for why in ([], ["--accept-why", "   "]):
+            with self.subTest(why=why):
+                self.remember()
+                code, out = self.run_guard("--accept", ACCEPT_KEY, *why)
+                self.assertEqual(code, 2)
+                self.assertIn("--accept-why", out)
+                self.assert_nothing_written()
+
+    def test_a_key_that_already_has_a_baseline_entry_is_refused(self):
+        """Filling a hole is a review; overwriting a comparison is a re-baseline."""
+        baselined = f"{ACCEPT_REGISTRY}:{BETA_PATHS}"
+        self.write_citer(f"the `alpha` row owns it ({ACCEPT_REGISTRY}:{ALPHA_PATHS}) and the "
+                         f"`beta` row ({baselined})\n")
+        guard.collect = lambda ws: ({ACCEPT_KEY: ("tasks/x.md", 1),
+                                    baselined: ("tasks/x.md", 1)}, _refused_counts())
+        # give `beta` a baseline entry on BOTH axes, so only that rule can refuse it
+        payload = self.stored()
+        pair = guard.row_identity(FIXTURE)[BETA_PATHS]
+        payload["fingerprints"][baselined] = guard.fingerprint(TWIN_TEXT)
+        payload["rows"][baselined] = guard.row_fingerprint(pair, "beta")
+        self.baseline.write_text(json.dumps(payload), encoding="utf-8", newline="")
+        self.remember()
+        code, out = self.run_guard("--accept", baselined, "--accept-why", "x")
+        self.assertEqual(code, 2)
+        self.assertIn("ALREADY has a baseline entry", out)
+        self.assertIn("--update", out)
+        self.assert_nothing_written()
+
+    def test_a_line_with_no_resolvable_row_identity_is_refused(self):
+        """A container's closing bracket names no row of its own, so nothing was reviewed."""
+        closing = 23                                           # FIXTURE line 23, `  ]`
+        self.assertEqual(guard.row_token(json.loads(FIXTURE),
+                                         guard.row_identity(FIXTURE)[closing]), "",
+                         "the fixture must carry a line whose row declares no identity")
+        guard.collect = lambda ws: ({f"{ACCEPT_REGISTRY}:{closing}": ("tasks/x.md", 1)},
+                                    _refused_counts())
+        self.remember()
+        code, out = self.run_guard("--accept", f"{ACCEPT_REGISTRY}:{closing}",
+                                   "--accept-why", "x")
+        self.assertEqual(code, 2)
+        self.assertIn("NO declared identity", out)
+        self.assert_nothing_written()
+
+    def test_a_citing_sentence_that_names_a_different_row_is_refused(self):
+        """The refusal that makes the flag a check rather than a label.
+
+        The cited line is FIXTURE line 20, a closing brace whose row token is the MAP key `guards`.
+        The sentence names `scripts/guard-alpha.py`, the declared `script` of a DIFFERENT row of the
+        same registry - so the cross-check is genuinely exercised rather than short-circuited.
+        """
+        key = f"{ACCEPT_REGISTRY}:20"
+        self.assertEqual(guard.row_token(json.loads(FIXTURE),
+                                         guard.row_identity(FIXTURE)[20]), "guards")
+        self.assertIn("scripts/guard-alpha.py",
+                      guard.row_identity_values(json.loads(FIXTURE)))
+        self.write_citer(f"it is `scripts/guard-alpha.py` that owns it ({ACCEPT_REGISTRY}:20)\n")
+        guard.collect = lambda ws: ({key: ("tasks/x.md", 1)}, _refused_counts())
+        self.remember()
+        code, out = self.run_guard("--accept", key, "--accept-why", "x")
+        self.assertEqual(code, 2)
+        self.assertIn("names a DIFFERENT row", out)
+        self.assertIn("guards", out)
+        self.assert_nothing_written()
+
+    def test_a_short_row_name_is_below_the_floor_and_is_not_matched(self):
+        """`IDENTITY_VALUE_MIN` exists so prose words cannot be read as row names, and it has a cost.
+
+        FIXTURE's rows are named `alpha` and `beta`, both under the floor, so a sentence naming one of
+        them cannot be cross-checked at all. The answer must be `unaudited` - never a false `denies`
+        and never a false `corroborated`. Pinning it means a later change to the floor has to say so.
+        """
+        key = f"{ACCEPT_REGISTRY}:20"
+        self.write_citer(f"it is the `alpha` row ({ACCEPT_REGISTRY}:20)\n")
+        guard.collect = lambda ws: ({key: ("tasks/x.md", 1)}, _refused_counts())
+        code, out = self.run_guard("--accept", key, "--accept-why", "read it myself")
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.stored()["reviewed"][key]["adjudication"], "unaudited")
+
+    def test_a_sentence_naming_no_row_is_recorded_as_unaudited_not_as_corroborated(self):
+        """An honest limit, pinned: no name to match means NO machine check was possible."""
+        self.write_citer(f"see line {ACCEPT_LINE} above ({ACCEPT_REGISTRY}:{ACCEPT_LINE})\n")
+        code, out = self.run_guard("--accept", ACCEPT_KEY, "--accept-why", "read it myself")
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.stored()["reviewed"][ACCEPT_KEY]["adjudication"], "unaudited")
+        self.assertIn("NO machine cross-check", out,
+                      "an unaudited record must never read as machine-checked")
+
+    def test_a_coordinated_sentence_is_not_read_as_a_denial(self):
+        """The false refusal this gate exists to avoid, on the real corpus's shape.
+
+        One sentence, two citations of the same registry, two row names. The paragraph-wide scan read
+        the first as DENIED because the second claim names a different row. Two citations in one
+        window means the names are not attributable, so the answer must be `unaudited`.
+        """
+        self.write_citer(f"the seed path (`{ACCEPT_REGISTRY}:{ACCEPT_LINE}`); the core row "
+                         f"(`:{BETA_PATHS}`)\n")
+        code, out = self.run_guard("--accept", ACCEPT_KEY, "--accept-why", "read it myself")
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.stored()["reviewed"][ACCEPT_KEY]["adjudication"], "unaudited")
+
+    def test_one_bad_key_refuses_the_whole_run_and_records_none_of_it(self):
+        """All-or-nothing, asserted: a partial review is a state no reader can interpret."""
+        self.remember()
+        code, out = self.run_guard("--accept", ACCEPT_KEY, "--accept",
+                                   f"{ACCEPT_REGISTRY}:9999", "--accept-why", "x")
+        self.assertEqual(code, 2)
+        self.assertIn("Nothing was written", out)
+        self.assert_nothing_written()
+
+    def test_the_same_key_twice_is_refused(self):
+        self.remember()
+        code, out = self.run_guard("--accept", ACCEPT_KEY, "--accept", ACCEPT_KEY,
+                                   "--accept-why", "x")
+        self.assertEqual(code, 2)
+        self.assertIn("twice", out)
+        self.assert_nothing_written()
+
+    def test_accept_cannot_run_with_update_or_adopt_rows(self):
+        for other in ("--update", "--adopt-rows"):
+            with self.subTest(other=other):
+                self.remember()
+                code, out = self.run_guard("--accept", ACCEPT_KEY, "--accept-why", "x", other)
+                self.assertEqual(code, 2)
+                self.assertIn("--accept cannot run with", out)
+                self.assert_nothing_written()
+
+    def test_accept_why_alone_is_refused(self):
+        self.remember()
+        code, out = self.run_guard("--accept-why", "x")
+        self.assertEqual(code, 2)
+        self.assertIn("--accept-why was given with no --accept", out)
+        self.assert_nothing_written()
+
+    def test_a_duplicate_accept_does_not_re_date_an_existing_review(self):
+        self.run_guard("--accept", ACCEPT_KEY, "--accept-why", "first")
+        first_date = self.stored()["reviewed"][ACCEPT_KEY]["recordedOn"]
+        self.remember()
+        code, out = self.run_guard("--accept", ACCEPT_KEY, "--accept-why", "second")
+        self.assertEqual(code, 2)
+        self.assertIn("already in the `reviewed` axis", out)
+        self.assertEqual(self.stored()["reviewed"][ACCEPT_KEY]["recordedOn"], first_date)
+        self.assert_nothing_written()
+
+
+class ReviewedAxisIsValidated(unittest.TestCase):
+    """A hand-edited or truncated `reviewed` axis refuses rather than being read."""
+
+    def _main_with_reviewed(self, reviewed) -> int:
+        tmp = tempfile.TemporaryDirectory(prefix="gras-reviewed-")
+        self.addCleanup(tmp.cleanup)
+        payload = _baseline_with_hole()
+        payload["reviewed"] = reviewed
+        p = Path(tmp.name) / "baseline.json"
+        p.write_text(json.dumps(payload), encoding="utf-8", newline="")
+        original_baseline, original_collect = guard.BASELINE, guard.collect
+        guard.BASELINE = p
+        guard.collect = lambda ws: (_one_citation(), _refused_counts())
+        try:
+            return guard.main([])
+        finally:
+            guard.BASELINE, guard.collect = original_baseline, original_collect
+
+    def _good(self) -> dict:
+        pair = guard.row_identity(FIXTURE)[ALPHA_PATHS]
+        return {ACCEPT_KEY: _recorded(ACCEPT_KEY, "alpha", pair)}
+
+    def test_a_well_formed_review_is_read_not_refused(self):
+        """Exit 1, not 2: the gate may still have findings elsewhere, but the axis itself is sound."""
+        self.assertEqual(self._main_with_reviewed(self._good()), 1)
+
+    def test_a_key_that_is_not_a_checked_registry_line_refuses(self):
+        pair = guard.row_identity(FIXTURE)[ALPHA_PATHS]
+        for key in ("nonsense", "other.v1.json:1", f"{ACCEPT_REGISTRY}:x", ":1"):
+            with self.subTest(key=key):
+                self.assertEqual(self._main_with_reviewed({key: _recorded(ACCEPT_KEY, "alpha", pair)}),
+                                 2)
+
+    def test_an_unknown_adjudication_refuses(self):
+        rec = self._good()
+        rec[ACCEPT_KEY]["adjudication"] = "probably fine"
+        self.assertEqual(self._main_with_reviewed(rec), 2)
+
+    def test_a_review_with_no_reason_refuses(self):
+        rec = self._good()
+        rec[ACCEPT_KEY]["why"] = "  "
+        self.assertEqual(self._main_with_reviewed(rec), 2)
+
+    def test_a_review_naming_no_citing_document_refuses(self):
+        rec = self._good()
+        rec[ACCEPT_KEY]["citedFrom"] = ""
+        self.assertEqual(self._main_with_reviewed(rec), 2)
+
+    def test_a_review_with_no_usable_fingerprint_refuses(self):
+        for field in ("contentFingerprint", "rowFingerprint"):
+            with self.subTest(field=field):
+                rec = self._good()
+                rec[ACCEPT_KEY][field] = "not-a-fingerprint"
+                self.assertEqual(self._main_with_reviewed(rec), 2)
+
+    def test_a_reviewed_axis_that_is_not_an_object_refuses(self):
+        self.assertEqual(self._main_with_reviewed(["x"]), 2)
+
+    def test_a_review_record_that_is_not_an_object_refuses(self):
+        self.assertEqual(self._main_with_reviewed({ACCEPT_KEY: "alpha"}), 2)
+
+
+class TheReviewAxisDoesNotWeakenTheRowAxis(_AcceptHarness):
+    """THE NEGATIVE CONTROL FOR THE WHOLE FEATURE.
+
+    A flag that records a promise could easily become a flag that stops checking. These assert the
+    opposite: a reviewed key still reds on a shift onto a byte-identical line, and `--update` still
+    cannot invent a review.
+    """
+
+    def setUp(self):
+        super().setUp()
+        pair = guard.row_identity(FIXTURE)[BETA_PATHS]
+        payload = _baseline_with_hole()
+        payload["reviewed"] = {BETA_KEY: _recorded(BETA_KEY, "beta", pair)}
+        self.baseline.write_text(json.dumps(payload), encoding="utf-8", newline="")
+        self.write_citer(f"the `beta` row owns it ({ACCEPT_REGISTRY}:{BETA_PATHS})\n")
+        guard.collect = lambda ws: ({BETA_KEY: ("tasks/x.md", 1)}, _refused_counts())
+
+    def test_a_reviewed_key_is_green_when_nothing_moved(self):
+        code, out = self.run_guard()
+        self.assertEqual(code, 0, out)
+        self.assertIn(BETA_KEY, out)
+
+    def test_a_reviewed_key_still_reds_when_its_row_slides_onto_a_byte_identical_line(self):
+        """The whole hazard, with a REVIEW in place instead of a first-commit baseline.
+
+        The review recorded `beta`'s fingerprint for BETA_PATHS. `duplicate_alpha_before_itself`
+        lands that same line on alpha's byte-identical `      "paths": [`, so the CONTENT
+        fingerprint is unchanged and only the row axis can see it. A review must not have blinded it.
+        """
+        mutant = duplicate_alpha_before_itself()
+        self.assertEqual(guard.normalise(mutant.split("\n")[BETA_PATHS - 1]),
+                         guard.normalise(FIXTURE.split("\n")[BETA_PATHS - 1]),
+                         "the twin line's bytes must be unchanged, or this control proves nothing")
+        self.use_registry(mutant)                       # installed, and read back to prove it
+        code, out = self.run_guard()
+        self.assertEqual(code, 1, "a reviewed key whose row slid must red")
+        self.assertIn(BETA_KEY, out)
+        self.assertIn("REVIEWED", out, "the finding must still name the review's provenance")
+
+    def test_update_still_cannot_write_or_drop_the_reviewed_axis(self):
+        code, out = self.run_guard("--update")
+        self.assertEqual(code, 0, out)
+        self.assertIn(BETA_KEY, self.stored().get("reviewed", {}),
+                      "--update must neither drop nor fabricate a review")
+
+    def test_update_cannot_record_a_review_for_an_unreviewed_key(self):
+        """The property that keeps `--accept` necessary rather than redundant.
+
+        `--update` re-takes the CONTENT axis from the working tree. It has no reviewer and no reason
+        to record, so the key it just fingerprinted must still read as unreviewed afterwards.
+        """
+        fresh = f"{ACCEPT_REGISTRY}:{ALPHA_PATHS}"
+        guard.collect = lambda ws: ({fresh: ("tasks/x.md", 1)}, _refused_counts())
+        code, out = self.run_guard("--update")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn(fresh, self.stored().get("reviewed", {}))
+        code, out = self.run_guard()
+        self.assertEqual(code, 1)
+        self.assertIn("is a NEW citation", out)
 
 
 class LiveBaseline(unittest.TestCase):

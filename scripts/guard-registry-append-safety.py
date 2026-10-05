@@ -119,6 +119,10 @@ at or above the bracket, which is the state where the array has no safe insertio
                            because a debt declaration is a statement about the past. It does NOT
                            fire on a row that merely SHIFTED index - see the fingerprint above; that
                            is the same meaning at a different line, which is a re-point, not a drift.
+    S6 REVIEWED-AXIS       not a finding: the printed inventory of the `reviewed` axis, on every run
+                           green included. It exists so a green run cannot be read as "every citation
+                           was compared against the registry's first commit" when some were compared
+                           against a dated review instead.
 
 REFUSES CLOSED, NEVER SILENTLY CERTIFIES. Beyond the roots and the empty set: a checked registry
 that is not valid JSON, a cited line with no derivable row (an unparseable file, or a line past the
@@ -180,14 +184,16 @@ both name a DIFFERENT row. That is the residual limit of this axis stated as a m
 see that a row changed, never that a sentence was wrong when the row did not change. The two are
 repaired anyway, and the finding count below is not a claim that 50 citations are broken.
 
-A RE-POINT TO A LINE NO DOCUMENT HAS CITED IS ITSELF A FINDING, AND THAT IS STRUCTURAL, NOT A BUG.
+A RE-POINT TO A LINE NO DOCUMENT HAS CITED RAISED A FINDING, AND THAT WAS STRUCTURAL - UNTIL `--accept`.
 `--adopt-rows` derives each key from the first commit, and a newly cited line held a different row
-back then, so adopting it records a row today's line does not match: re-pointing can never go green
-under this provenance. The 15 repairs therefore retired 13 findings and raised 30 (one S1 and one S5
-each, for a key with no baseline entry on either axis). Only `--update` clears those, and it is
-refused here on purpose - see the re-baselining argument above. A reader who wants them gone must
-decide that a fresh citation is allowed to be unproven, and that is an owner ruling, not a tool
-setting.
+back then, so adopting it records a row today's line does not match: re-pointing could never go green
+under that provenance. The 15 repairs therefore retired 13 findings and raised 30 (one S1 and one S5
+each, for a key with no baseline entry on either axis), and the only ways to clear those were
+`--update` and `--adopt-rows` - both blanket re-baselines, which is the thing this guard exists to
+prevent. `--accept` (above) is now the narrow third way, and those 30 findings are recorded as 15
+`--accept` reviews. It is deliberately NOT folded into `--adopt-rows`: a review is dated and attributed,
+an adoption is not, and mixing them would let a blanket re-derivation relabel thirty historical
+excursions as fifteen reviewed citations.
 
 The `unverified` declaration for `enforcement-registry.v1.json` is KEPT and is not superseded by the
 row axis: it records that those citations were wrong BEFORE any baseline existed, which is a fact
@@ -204,13 +210,36 @@ USAGE (from gk-core, or anywhere in the workspace):
     python scripts/guard-registry-append-safety.py --json     # machine-readable verdict
     python scripts/guard-registry-append-safety.py --root P   # a workspace root other than the resolved one
     python scripts/guard-registry-append-safety.py --adopt-rows   # re-derive the ROW axis from history
+    python scripts/guard-registry-append-safety.py --accept verification-boundaries.v1.json:2098 \
+        --accept-why "resume-29's sentence names guard-tests-fallback, and that is the row at 2098"
 
 Exit 0 = no cited line moved or changed row, and every append container is still safe. Exit 1 = an
 S1-S3 or S5 finding. Exit 2 = it could not run, and it names the prerequisite that was missing.
+
+A REVIEW IS A THIRD PROVENANCE AND IS STORED AS ONE. The adopted row axis speaks from each registry's
+first commit and `--update` speaks from the working tree; neither can record "a person read this
+sentence and this is the row it means", so before `--accept` every honest re-point retired one
+finding and raised two and the only escape was a blanket operation. `--accept` writes a key's two
+fingerprints into a separate `reviewed` axis together with the citing document, the row's declared
+identity, the adjudication, the date and a stated reason, and it PRINTS all of it - a silent write
+into a gate's own state is the class of thing this programme distrusts. It can only fill a hole: it
+refuses a key that already has a baseline entry, a key nothing cites, a line with no resolvable row
+identity, and a citing sentence that names a DIFFERENT row than the line holds. It refuses every
+wildcard, range and bare registry name and names `--update`/`--adopt-rows` instead, because the
+entire value of the flag is that it is one citation wide.
+
+THE ADJUDICATION IS REPORTED, NOT ASSUMED, AND `unaudited` IS AN HONEST ANSWER. `corroborated` means
+the citing sentence names the row the cited line is in, which this tool checked. `unaudited` means it
+names no row of that registry at all, so NO machine cross-check was possible and the record rests on
+the reviewer's reading. That second case is common and is not a defect - a document may cite a line
+purely for its content - but it is never presented as machine-checked, and `--json` carries the same
+distinction. The 15 re-pointed citations of the current repair are recorded in full above the
+`unverified` discussion for exactly this reason.
 """
 from __future__ import annotations
 
 import argparse
+import datetime
 import hashlib
 import io
 import json
@@ -630,6 +659,378 @@ def adopt_rows(core: pathlib.Path, keys_by_registry: "dict[str, list[str]]") -> 
 
 
 # ---------------------------------------------------------------------------------------------
+# `--accept <registry>:<line>`: recording ONE reviewed citation, without re-baselining anything
+#
+# THE GAP THIS CLOSES, MEASURED. The guard can detect an unreviewed citation - S1's "no content
+# baseline entry" and S5's "no row baseline entry" - and had NO vocabulary for saying "this one was
+# reviewed". `--update` re-takes every fingerprint from the working tree and `--adopt-rows` re-derives
+# every row from history; both are blanket operations over all 49 keys, and both are exactly what
+# this guard exists to prevent. So an honest repair - a citation re-pointed at the row its sentence
+# names - could land in NO state that was both truthful and green: it retired one finding and raised
+# two, and the only ways to clear those two were the two blanket operations. A gate with no narrow
+# repair is a gate people reach for the blanket one with.
+#
+# WHAT A REVIEW IS, AND WHY IT IS A THIRD KIND OF RECORD. There are three provenances, not two:
+# `--update` records the PRESENT as the promise (blind, and the move that made 6a27e30f9 invisible);
+# `--adopt-rows` records the registry's FIRST COMMIT (date-free, and unable to speak for a citation
+# written after that date - which is every re-point); and `--accept` records a REVIEW: on a stated
+# day, a named citing sentence was read, the row at the cited line was identified, and THAT is what
+# the citation promises from now on. It is strictly weaker than the first-commit axis - it cannot
+# speak for anything before the review - and it is stored separately under `reviewed` so it can
+# never be read as first-commit provenance. `S6 REVIEWED-AXIS` prints every one of them on every
+# run, green included.
+#
+# IT REFUSES, AND EVERY REFUSAL IS NAMED, BECAUSE A REVIEW FLAG THAT ACCEPTS ANYTHING IS A RE-BASELINE
+# WITH BETTER MANNERS. Refused: a key no document cites (a typo must not create a permanent record of
+# a line that does not exist); a line past the end of its file; a line with no resolvable row; a line
+# whose row carries NO declared identity (a closing `},` ends at its parent, so `row_token` returns
+# nothing and there is nothing to say was reviewed); a key that ALREADY has a baseline entry on
+# either axis (filling a hole is recording a review, overwriting a comparison is re-baselining, and
+# the difference is the whole value of the flag); and any wildcard, range, or bare registry name -
+# those are `--update` and `--adopt-rows`, and the message says which.
+#
+# THE SENTENCE CROSS-CHECK IS WHAT MAKES "REVIEWED" A CLAIM AND NOT A LABEL, AND ITS LIMIT IS
+# STATED BECAUSE IT IS REAL. `--accept` reads the citing sentence - the cited line's markdown
+# paragraph, or the single line in a code file - and asks whether it names a row of this registry.
+# If it names one and that is not the row at the cited line, the sentence and the line DISAGREE and
+# the flag refuses: accepting would bless exactly the defect S5 is blind to. If the sentence names
+# the row at the cited line, the record is `corroborated`. If the sentence names no row of this
+# registry at all, no cross-check is possible and the record is `unaudited` - accepted, but printed
+# and reported as resting on the reviewer's own reading rather than on a machine check. It is NOT
+# presented as safe in that case, because it is not: a document that cites a line by number and
+# never says which row it means is exactly the case where only a human can adjudicate.
+# ---------------------------------------------------------------------------------------------
+
+#: The minimum length of a string before it can be treated as naming a row. Below it, ordinary prose
+#: words would collide with a registry's map keys and turn the cross-check into noise.
+IDENTITY_VALUE_MIN = 6
+
+#: How far the cross-check reads either side of the citing line. Bounded on purpose: the sentence is
+#: the claim, and a claim spanning 40 lines is not adjudicable by reading it either.
+CITATION_WINDOW_LINES = 8
+
+#: A line that begins one of these starts a NEW claim, so the window stops there rather than running
+#: on into the next sentence.
+_BLOCK_START = re.compile(r"^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|```|~~~)")
+
+#: The closed vocabulary of adjudications a review record may carry. A record whose value is not one
+#: of these refuses rather than falling back to a default, because "unknown" and "unchecked" are
+#: different facts and a reader must not have to guess which one a record is.
+ADJUDICATIONS = ("corroborated", "unaudited")
+
+
+def row_identity_values(doc: object) -> "set[str]":
+    """Every string this registry uses to NAME A ROW, and nothing else.
+
+    Two sources, and the distinction is the point: an ARRAY row is named by a field it declares
+    (`id`, `verificationId`, `script`, ...), while a MAP row is named by its own key. A row's FIELD
+    NAMES are therefore deliberately excluded - `paths`, `project` and `level` are not identities, and
+    a cross-check that treated them as ones would refuse on any sentence containing the word
+    "project". Depth is bounded so a row's own nested values cannot masquerade as row names.
+    """
+    out: set[str] = set()
+
+    def add(value: object) -> None:
+        if isinstance(value, str) and len(value) >= IDENTITY_VALUE_MIN:
+            out.add(value)
+
+    def declared(node: object) -> None:
+        if isinstance(node, dict):
+            for field in IDENTITY_FIELDS:
+                add(node.get(field))
+        elif isinstance(node, list):
+            for item in node:
+                declared(item)
+
+    def descend(node: object, depth: int) -> None:
+        if depth > 3:
+            return
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if depth >= 1 and isinstance(value, dict):
+                    add(key)              # a MAP row is named by the key it sits under
+                declared(value)
+                descend(value, depth + 1)
+        elif isinstance(node, list):
+            for item in node:
+                declared(item)
+                descend(item, depth + 1)
+
+    if isinstance(doc, dict):
+        for container in doc.values():
+            descend(container, 1)
+    return out
+
+
+def citation_window(path: pathlib.Path, line: int) -> str:
+    """The SENTENCE a citation is asserted in - not the paragraph, and that distinction is load-bearing.
+
+    A markdown citation's claim often wraps, so a claim split across two lines must be read whole. But
+    a PARAGRAPH is not the claim: a report routinely cites three registry lines in one paragraph and
+    names a different row in each, and a window that spans them cross-checks every citation against
+    every other one's row name. Measured on the current corpus, that made `:2862` read as DENIED
+    because the NEXT line names `core-atoms` for a different citation - a false refusal produced by a
+    window one sentence too wide. A citation's sentence therefore ends at:
+
+      * a blank line, or a line opening a new block (a heading, a list item, a fence), because past
+        that point the text is a different claim;
+      * ANY OTHER CITATION OF THE SAME REGISTRY, because the line naming it is a new claim about a
+        new row and its row names belong to that citation, not this one.
+
+    `CITATION_WINDOW_LINES` bounds it in both directions so one citation in a long report cannot drag
+    the whole document in. An unreadable file yields an empty window, which the caller treats as "no
+    cross-check possible", never as "the sentence agrees".
+    """
+    try:
+        lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return ""
+    n = len(lines)
+    anchor = line - 1
+    if not 0 <= anchor < n:
+        return ""
+    registry = CITATION.search(lines[anchor])
+    registry = registry.group("basename") if registry else None
+
+    def stops(text: str, is_anchor: bool) -> bool:
+        if not text.strip() or _BLOCK_START.match(text):
+            return True
+        # A citation of the SAME registry on another line is a different claim. On the anchor line
+        # this is ignored: two citations of one registry in a single line are one sentence making two
+        # coordinated claims, and cutting between them would drop half of each.
+        if not is_anchor and registry and CITATION.search(text) \
+                and CITATION.search(text).group("basename") == registry:
+            return True
+        return False
+
+    first = last = anchor
+    while first > 0 and first > anchor - CITATION_WINDOW_LINES and not stops(lines[first - 1], False):
+        first -= 1
+    while last + 1 < n and last < anchor + CITATION_WINDOW_LINES and not stops(lines[last + 1], False):
+        last += 1
+    return "\n".join(lines[first:last + 1])
+
+
+#: A BARE `:NNNN` continuation - the second and third citations of a sentence that spelled the
+#: registry basename only once. Measured, not theoretical: `:2862-2912`, then "`:5995-6003`" and
+#: "`:878-885`" are three coordinated claims of ONE sentence, and the bare forms are what two of
+#: them look like. Counting only fully-spelled keys read that sentence as citing one line.
+_BARE_CITATION = re.compile(r"(?<![\w.])[:：](?P<line>\d+)")
+
+
+def sentence_registry_keys(window: str) -> "set[str]":
+    """Every line of a checked registry this window points at, spelled or bare.
+
+    A bare `:NNNN` counts ONLY when the window also spells a basename for the same registry, because
+    otherwise the colon is punctuation. A range (`2862-2912`) contributes its opening line, which is
+    the line a citation of that span is anchored at.
+    """
+    spelled = {m.group("basename") for m in CITATION.finditer(window)}
+    keys = {f"{m.group('basename')}:{int(m.group('line'))}" for m in CITATION.finditer(window)}
+    for name in spelled:
+        for m in _BARE_CITATION.finditer(window):
+            keys.add(f"{name}:{int(m.group('line'))}")
+    return keys
+
+
+def adjudicate(window: str, token: str, names: "set[str]", cited_key: str = "") -> str:
+    """How the citing sentence stands to the row at the cited line: `corroborated`, `denies`, or
+    `unaudited`. The three answers are kept apart because only two of them are machine evidence.
+
+    A token is matched on word-ish boundaries (`A-Za-z0-9_` excluded from the boundary set) rather
+    than as a bare substring, so `seedsmith-tests` is not "found" inside `seedsmith-tests-extra` -
+    but a hyphen or a dot IS a boundary, because the registry's own row names contain both and
+    `guard-generated-seed` really does name the row `generated-seed`.
+
+    WHY `denies` REQUIRES A SINGLE-CITATION SENTENCE, MEASURED NOT ASSUMED. The obvious rule - "the
+    sentence names a row of this registry and it is not this row's" - is UNSOUND, and the current
+    corpus proves it. `tasks/reports/resume-21b-effect-pipeline-triage-20260925.md:176` reads "That
+    registry path selects the seed-items corpus/validator checks
+    (`verification-boundaries.v1.json:2862-2912`); the Core source selects the effects-owner boundary
+    (`:5995-6003`); the atom test selects `core-atoms` (`:878-885`)". It is ONE sentence making THREE
+    coordinated claims, and the paragraph-scan version of this check read it as DENIAL because
+    `core-atoms` is named for a DIFFERENT citation - a false refusal of a key a human had verified.
+    Worse, that sentence never spells `seedsmith-items` at all; it says "seed-items", so even a
+    perfect sentence scope would find no name to match.
+
+    So the refusal is gated on what a lexical scan can actually establish: the sentence must carry
+    EXACTLY ONE citation of this registry, must name at least one row identity of it, and must not
+    name the row at the cited line. With two or more citations in one sentence the row names are not
+    attributable to this one by any means this tool has, so the answer is `unaudited` and the
+    reviewer's reading carries it. That is a NARROWER refusal than the naive one and it is the
+    narrowest one that is sound.
+    """
+    if not token:
+        return "unaudited"
+    value = token.split("=", 1)[1] if "=" in token else token
+    pattern = re.compile(r"(?<![A-Za-z0-9_])" + re.escape(value) + r"(?![A-Za-z0-9_])")
+
+    def named_in(text: str) -> bool:
+        return any(re.search(r"(?<![A-Za-z0-9_])" + re.escape(name) + r"(?![A-Za-z0-9_])", text)
+                   for name in names)
+
+    if pattern.search(window):
+        return "corroborated"
+    keys = sentence_registry_keys(window)
+    if cited_key and len(keys) != 1:
+        # A coordinated sentence: its row names belong to claims this scan cannot separate.
+        return "unaudited"
+    if named_in(window):
+        return "denies"
+    return "unaudited"
+
+
+def parse_accept_key(raw: str) -> str:
+    """`raw` -> the canonical `<registry>:<line>` key, or a named refusal. Never a guess.
+
+    A WILDCARD, RANGE, OR BARE REGISTRY IS REFUSED OUTRIGHT, AND THE MESSAGE NAMES THE FLAG THAT
+    DOES THAT JOB. The whole value of `--accept` is that it is narrow: it records one citation a
+    reviewer looked at. `*`, `registry:*`, `registry:100-200` and `registry` are all blanket
+    operations wearing this flag's name, and a review of forty-nine citations is not a review.
+    """
+    if any(ch in raw for ch in "*?[]{},; "):
+        raise CannotRun(
+            f"--accept {raw!r} is a wildcard or a list, and this flag records ONE reviewed citation "
+            f"at a time. Re-baselining every key at once is what --update (content) and --adopt-rows "
+            f"(row) are for, and mixing the two vocabularies is how a blanket re-baseline gets "
+            f"accepted as fifteen individual reviews. Pass one <registry>:<line> per flag.")
+    name, sep, line = raw.rpartition(":")
+    if not sep or not line:
+        raise CannotRun(
+            f"--accept {raw!r} names no line. The shape is <registry>:<line>, one citation per flag. "
+            f"A whole registry is --update or --adopt-rows, not this.")
+    if name not in REL_OF:
+        raise CannotRun(
+            f"--accept {raw!r} names registry {name!r}, which this guard does not check. The checked "
+            f"registries are {', '.join(sorted(REL_OF))}; a review of a file nothing here reads would "
+            f"be a record of nothing.")
+    if not line.isdigit():
+        raise CannotRun(
+            f"--accept {raw!r} names a non-numeric line. This flag records one cited LINE, and a "
+            f"range or a wildcard here is a re-baselining request (--update, --adopt-rows).")
+    return f"{name}:{int(line)}"
+
+
+def token_value(token: str) -> str:
+    """The identity itself, without the `field=` prefix `row_token` adds."""
+    return token.split("=", 1)[1] if "=" in token else token
+
+
+def validate_reviewed(stored: dict, geo_by_name: dict) -> dict:
+    """The `reviewed` axis, validated rather than trusted. Fails closed, like every other axis.
+
+    A hand-edited or truncated record is refused, not read: a review record with no stated reason is
+    a suppression with extra steps, one with no fingerprints is a promise with nothing behind it, and
+    one that duplicates a key already on the adopted axes would put two provenances on one key and
+    make "compared against the registry's first commit" false for it.
+    """
+    reviewed = stored.get("reviewed") or {}
+    if not isinstance(reviewed, dict):
+        raise CannotRun("the baseline's `reviewed` axis is not an object.")
+    for key, entry in sorted(reviewed.items()):
+        name, sep, line = key.rpartition(":")
+        if not sep or name not in geo_by_name or not line.isdigit():
+            raise CannotRun(
+                f"the baseline's `reviewed` record {key!r} is not a `<checked registry>:<line>` key. "
+                f"A record of nothing is indistinguishable from a suppression.")
+        if not isinstance(entry, dict):
+            raise CannotRun(f"the baseline's `reviewed` record for {key} is not an object.")
+        if entry.get("adjudication") not in ADJUDICATIONS:
+            raise CannotRun(
+                f"the baseline's `reviewed` record for {key} carries adjudication "
+                f"{entry.get('adjudication')!r}, which is not one of {list(ADJUDICATIONS)}. 'unknown' "
+                f"and 'unchecked' are different facts and a reader must not have to guess which.")
+        if not str(entry.get("why", "")).strip():
+            raise CannotRun(
+                f"the baseline's `reviewed` record for {key} states no reason. A review with no stated "
+                f"cause cannot be told apart from a blanket re-baseline, which is the thing this axis "
+                f"exists to make impossible.")
+        if not str(entry.get("citedFrom", "")).strip():
+            raise CannotRun(
+                f"the baseline's `reviewed` record for {key} names no citing document. The whole claim "
+                f"of a review is that a sentence was read, so a record without one says nothing.")
+        for field in ("contentFingerprint", "rowFingerprint"):
+            if not re.fullmatch(r"[0-9a-f]{16}", str(entry.get(field, ""))):
+                raise CannotRun(
+                    f"the baseline's `reviewed` record for {key} has no usable {field}. A review "
+                    f"that pins nothing is not a review.")
+    return reviewed
+
+
+def review_records(*, requested: "list[str]", why: str, ws: pathlib.Path,
+                   citations: dict, current: dict, current_rows: dict, current_row_fp: dict,
+                   stored: dict, docs: dict) -> "list[dict]":
+    """Validate EVERY requested key, then return the records. All-or-nothing by construction.
+
+    Nothing is written here. The caller writes once, after this has returned, so a refusal on the
+    fourth key of five leaves the baseline byte-identical to what it was - a review flag that
+    half-applied is a state no reader can interpret.
+    """
+    if not str(why).strip():
+        raise CannotRun(
+            "--accept was given no --accept-why. A review recorded with no stated cause is "
+            "indistinguishable from a suppression, which is the shape this flag must not have. Say "
+            "which sentence you read against which row.")
+    records: list[dict] = []
+    seen: set[str] = set()
+    for raw in requested:
+        key = parse_accept_key(raw)
+        if key in seen:
+            raise CannotRun(f"--accept names {key} twice. One citation is one review.")
+        seen.add(key)
+        name = key.rpartition(":")[0]
+        if key not in citations:
+            raise CannotRun(
+                f"--accept {key}: no document in the workspace cites that line. A review of a line "
+                f"nothing points at records nothing, and a typo here would otherwise create a "
+                f"permanent record of a line that does not exist. Check the line number.")
+        if current[key] is None:
+            raise CannotRun(
+                f"--accept {key}: the line is past the end of its file. A citation that points at "
+                f"nothing has no row to review; re-point the document first.")
+        pair = current_rows[key]
+        if pair is None:
+            raise CannotRun(
+                f"--accept {key}: the line has no resolvable JSON row. This guard will not record a "
+                f"review of a row it cannot name.")
+        token = row_token(docs[name], pair)
+        if not token:
+            raise CannotRun(
+                f"--accept {key}: the line sits in a row with NO declared identity (it is "
+                f"{row_label(pair)}), so there is nothing to record that was reviewed. A closing "
+                f"`}},` ends at its parent element and names no row of its own; a citation of one "
+                f"cannot be adjudicated against it by anyone, including this tool.")
+        if key in stored.get("fingerprints", {}) or key in stored.get("rows", {}):
+            raise CannotRun(
+                f"--accept {key}: this key ALREADY has a baseline entry. Filling a hole is recording a "
+                f"review; overwriting a comparison is re-baselining, and only --update or "
+                f"--adopt-rows may do that. If the line really did drift, the citing sentence has to "
+                f"be re-pointed at the line it means.")
+        if key in (stored.get("reviewed") or {}):
+            raise CannotRun(
+                f"--accept {key}: this key is already in the `reviewed` axis. Re-reviewing it would "
+                f"silently re-date its provenance, and a review is dated precisely so it cannot be.")
+        where = citations[key]
+        window = citation_window(ws / where[0], where[1])
+        verdict = adjudicate(window, token, row_identity_values(docs[name]), cited_key=key)
+        if verdict == "denies":
+            raise CannotRun(
+                f"--accept {key}: the citing sentence names a DIFFERENT row of {name}. "
+                f"{where[0]}:{where[1]} resolves to `{token_value(token)}`, and accepting would "
+                f"bless a citation whose own sentence contradicts the line it points at - the exact "
+                f"defect the row axis is blind to. Re-point the document at the row its sentence "
+                f"names.")
+        records.append({
+            "key": key, "registry": name, "line": int(key.rpartition(":")[2]),
+            "citedFrom": f"{where[0]}:{where[1]}",
+            "rowLabel": row_label(pair), "rowToken": token,
+            "rowFingerprint": current_row_fp[key], "contentFingerprint": current[key],
+            "adjudication": verdict, "recordedOn": datetime.date.today().isoformat(), "why": why.strip(),
+        })
+    return records
+
+
+# ---------------------------------------------------------------------------------------------
 # comment classification: a comment is not an invocation
 #
 # The unit is a COLUMN BOUNDARY per line, not a line. A line that is half statement and half trailing
@@ -931,6 +1332,7 @@ def evaluate(core: pathlib.Path, ws: pathlib.Path) -> dict:
     bodies: dict[str, "list[str]"] = {}
     rows: dict[str, "dict[int, str]"] = {}
     row_pairs: dict[str, "dict[int, tuple[str, str]]"] = {}
+    docs: dict[str, object] = {}
     for name, rel, _ in REGISTRIES:
         text = (core / rel).read_text(encoding="utf-8")
         try:
@@ -942,6 +1344,7 @@ def evaluate(core: pathlib.Path, ws: pathlib.Path) -> dict:
                 f"a content-only check over an unparseable registry is the blind spot this guard "
                 f"exists to close, wearing the file as a disguise.")
         bodies[name] = text.split("\n")
+        docs[name] = doc
         rows[name] = row_fingerprints(text, doc)
         row_pairs[name] = row_identity(text)
 
@@ -985,7 +1388,7 @@ def evaluate(core: pathlib.Path, ws: pathlib.Path) -> dict:
                      f"re-pointed deliberately, or the registry must stop being cited by number."))
 
     return {"citations": citations, "current": current, "currentRows": current_rows,
-            "currentRowFingerprints": current_row_fp,
+            "currentRowFingerprints": current_row_fp, "docs": docs,
             "geometries": geos, "findings": findings, "refused": refused}
 
 
@@ -1000,6 +1403,18 @@ def main(argv: "list[str] | None" = None) -> int:
     parser.add_argument("--adopt-rows", action="store_true",
                         help="derive the ROW axis from each registry's FIRST committed state and "
                              "record the provenance commit")
+    parser.add_argument("--accept", action="append", default=[], metavar="<registry>:<line>",
+                        help="record a REVIEWED baseline for exactly this cited key, and nothing "
+                             "else. Repeatable; one citation per flag. It writes BOTH axes for that "
+                             "key from the working tree today, plus an audit record naming the row, "
+                             "the citing document, the adjudication and the reason - and it refuses a "
+                             "key that is not cited, a line with no resolvable row identity, a key "
+                             "that already has a baseline entry, a citing sentence that names a "
+                             "different row, and any wildcard, range or bare registry name.")
+    parser.add_argument("--accept-why", default="", metavar="TEXT",
+                        help="the reason every --accept in this run is recorded with. REQUIRED with "
+                             "--accept: a review that states no cause is indistinguishable from a "
+                             "suppression.")
     parser.add_argument("--json", action="store_true", help="print the machine-readable verdict")
     parser.add_argument("--root", default="", help="workspace root (default: the resolved workspace root)")
     args = parser.parse_args(argv)
@@ -1009,6 +1424,19 @@ def main(argv: "list[str] | None" = None) -> int:
               "--update re-takes the CONTENT axis from the working tree, which is the move that made "
               "6a27e30f9 invisible; --adopt-rows derives the ROW axis from history. Running both at "
               "once would leave the file claiming a provenance it does not have.", file=sys.stderr)
+        return 2
+
+    if args.accept and (args.update or args.adopt_rows):
+        print(f"REFUSING: --accept cannot run with --update or --adopt-rows. --accept records ONE "
+              f"reviewed citation and touches no other key; the other two re-derive whole axes from "
+              f"the working tree or from history. Running them together would file a per-key review "
+              f"inside a blanket re-baseline, and the record would then claim a narrow provenance it "
+              f"does not have.", file=sys.stderr)
+        return 2
+    if args.accept_why and not args.accept:
+        print("REFUSING: --accept-why was given with no --accept. A reason is recorded with a review, "
+              "never on its own; if you meant to re-baseline, that is --update or --adopt-rows.",
+              file=sys.stderr)
         return 2
 
     core = pathlib.Path(__file__).resolve().parent.parent
@@ -1136,6 +1564,60 @@ def main(argv: "list[str] | None" = None) -> int:
               f"guard checks. A stale provenance entry describes a file nothing reads.", file=sys.stderr)
         return 2
 
+    # ---- the reviewed axis: third provenance, validated like the other two ------------------------
+    try:
+        reviewed = validate_reviewed(stored, geo_by_name)
+    except CannotRun as exc:
+        print(f"REFUSING REGISTRY-APPEND-SAFETY: {exc}", file=sys.stderr)
+        return 2
+
+    # ---- --accept: record ONE reviewed citation, and write only after every key has passed -------
+    if args.accept:
+        try:
+            records = review_records(
+                requested=args.accept, why=args.accept_why, ws=ws, citations=citations,
+                current=current, current_rows=current_rows, current_row_fp=current_row_fp,
+                stored=stored, docs=result["docs"])
+        except CannotRun as exc:
+            print(f"REFUSING REGISTRY-APPEND-SAFETY: {exc}", file=sys.stderr)
+            print("  Nothing was written. A refusal that had already recorded the keys before it "
+                  "would be a partial review, which no reader can interpret.", file=sys.stderr)
+            return 2
+        # All-or-nothing, and the write happens ONCE, here.
+        merged = dict(stored.get("reviewed") or {})
+        for rec in records:
+            merged[rec.pop("key")] = rec
+        stored["reviewed"] = merged
+        BASELINE.write_text(json.dumps(stored, indent=1, sort_keys=True) + "\n",
+                            encoding="utf-8", newline="")
+        audited = stored["reviewed"]
+        if args.json:
+            print(json.dumps({"guard": "registry-append-safety", "ok": True, "accepted": audited,
+                              "rowBaselineSource": row_source,
+                              "note": "recorded per-key reviews; these do NOT speak for anything "
+                                      "before the date each record carries"}, indent=2,
+                             ensure_ascii=False))
+            return 0
+        print(f"RECORDED {len(records)} reviewed citation(s) -> {BASELINE.name}. No other key was "
+              f"touched, and --update/--adopt-rows were not involved.")
+        for key in sorted(audited):
+            rec = audited[key]
+            print(f"  {key}")
+            print(f"      registry        : {rec['registry']}")
+            print(f"      line            : {rec['line']}")
+            print(f"      cited from      : {rec['citedFrom']}")
+            print(f"      row identity    : {rec['rowToken']}  (row {rec['rowLabel']})")
+            print(f"      content print   : {rec['contentFingerprint']}")
+            print(f"      row fingerprint : {rec['rowFingerprint']}")
+            print(f"      adjudication    : {rec['adjudication']}"
+                  f"{'  (the citing sentence names this row; machine-checked)' if rec['adjudication'] == 'corroborated' else '  (the citing sentence names NO row of this registry, so NO machine cross-check was possible - this record rests on the reviewer, not on the tool)'}")
+            print(f"      recorded on     : {rec['recordedOn']}")
+            print(f"      why             : {rec['why']}")
+        print("  A review speaks for nothing BEFORE the date above. It pins the row and the content "
+              "from today forward, so later drift still reds - and it is never presented as "
+              "first-commit provenance.")
+        return 0
+
     # The debt declaration is validated, never trusted: an entry naming a registry this guard does not
     # check would keep printing a claim about nothing.
     unverified = stored.get("unverified") or []
@@ -1188,9 +1670,33 @@ def main(argv: "list[str] | None" = None) -> int:
         return 0
 
     gone = sorted(k for k in baseline if k not in current)
+    reviewed_gone = sorted(k for k in reviewed if k not in current)
+
+    # A REVIEWED key is compared exactly like an adopted one, against the same two axes - which is
+    # the point of storing it separately rather than in `fingerprints`. The only difference is where
+    # the promise came from, and that difference is printed on every run rather than buried.
+    def promised_content(key: str) -> "str | None":
+        if key in baseline:
+            return baseline[key]
+        return (reviewed.get(key) or {}).get("contentFingerprint")
+
+    def promised_row(key: str) -> "str | None":
+        if key in rows_baseline:
+            return rows_baseline[key]
+        return (reviewed.get(key) or {}).get("rowFingerprint")
+
+    def provenance_of(key: str) -> str:
+        rec = reviewed.get(key)
+        if key in baseline or key in rows_baseline or rec is None:
+            return ""
+        if rec.get("adjudication") == "unaudited":
+            return (f" (compared against a REVIEW recorded {rec.get('recordedOn')} with NO machine "
+                    f"cross-check, not against the registry's first commit)")
+        return (f" (compared against a REVIEW recorded {rec.get('recordedOn')}, not against the "
+                f"registry's first commit)")
 
     for key in sorted(current):
-        was = baseline.get(key)
+        was = promised_content(key)
         where = citations[key]
         if current[key] is None:
             findings.append(dict(code="S2-CITATION-PAST-END", registry=key.rpartition(":")[0],
@@ -1199,33 +1705,40 @@ def main(argv: "list[str] | None" = None) -> int:
         elif was is None:
             findings.append(dict(code="S1-CITED-LINE-MOVED", registry=key.rpartition(":")[0],
                                 note=f"{key} is a NEW citation with no content baseline entry "
-                                     f"(cited from {where[0]}:{where[1]})"))
+                                     f"(cited from {where[0]}:{where[1]}). Record a review of it "
+                                     f"with --accept {key} once a human has read the sentence; "
+                                     f"--update would re-baseline all "
+                                     f"{len(current)} citations, which is what this guard exists "
+                                     f"to prevent."))
         elif current[key] != was:
             findings.append(dict(code="S1-CITED-LINE-MOVED", registry=key.rpartition(":")[0],
                                 note=f"{key} now holds different content (cited from {where[0]}:{where[1]}) "
-                                     f"- the line moved, or the row above it grew"))
+                                     f"- the line moved, or the row above it grew"
+                                     f"{provenance_of(key)}"))
 
     # ---- S5, the row axis. The one check that can see a shift onto a byte-identical line. ----------
     for key in sorted(current):
         if current[key] is None:
             continue                      # S2 already speaks for a line past the end of its file
-        was_row = rows_baseline.get(key)
+        was_row = promised_row(key)
         pair = current_rows[key]
         where = citations[key]
         if was_row is None:
             findings.append(dict(code="S5-CITED-ROW-CHANGED", registry=key.rpartition(":")[0],
                                 note=f"{key} is a NEW citation with no row baseline entry, so there is "
                                      f"no first-commit row to compare it against (cited from "
-                                     f"{where[0]}:{where[1]}). It sits in {row_label(pair)} today."))
+                                     f"{where[0]}:{where[1]}). It sits in {row_label(pair)} today. "
+                                     f"Record a review of it with --accept {key}; --adopt-rows "
+                                     f"would re-derive every key from history."))
         elif current_row_fp[key] != was_row:
             findings.append(dict(code="S5-CITED-ROW-CHANGED", registry=key.rpartition(":")[0],
                                 note=f"{key} now sits in row {row_label(pair)} "
                                      f"(cited from {where[0]}:{where[1]}), which is not the row it "
-                                     f"occupied at "
-                                     f"{row_source.get(rel_of(key), 'the registry')[:9]}. The content "
-                                     f"fingerprint may or may not have seen this: when the new row's "
-                                     f"line is byte-identical to the old one, S1 stays silent and only "
-                                     f"this check reds."))
+                                     f"promised"
+                                     f"{provenance_of(key) or ' at ' + row_source.get(rel_of(key), 'the registry')[:9]}"
+                                     f". The content fingerprint may or may not have seen this: when "
+                                     f"the new row's line is byte-identical to the old one, S1 stays "
+                                     f"silent and only this check reds."))
 
     if args.report:
         print(f"REGISTRY APPEND SAFETY REPORT - {len(citations)} citation(s) over "
@@ -1250,8 +1763,19 @@ def main(argv: "list[str] | None" = None) -> int:
               f"written):")
         for rel, sha in sorted(row_source.items()):
             print(f"    {rel:<46} {sha}")
+        if reviewed:
+            print(f"\n  REVIEWED CITATIONS ({len(reviewed)}): recorded by --accept, NOT adopted from "
+                  f"the registries' first commits. Each speaks only from its recorded date forward.")
+            for key in sorted(reviewed):
+                rec = reviewed[key]
+                print(f"    {key:<48} {rec['rowToken']:<38} {rec['adjudication']:<12} "
+                      f"{rec['recordedOn']}  cited from {rec['citedFrom']}")
+                print(f"        why: {rec['why']}")
         if gone:
             print(f"\n  baseline entries no longer cited anywhere ({len(gone)}): {', '.join(gone)}")
+        if reviewed_gone:
+            print(f"\n  REVIEWED entries no longer cited anywhere ({len(reviewed_gone)}): "
+                  f"{', '.join(reviewed_gone)}")
         for entry in unverified:
             print(f"\n  UNVERIFIED {entry['registry']}: {entry['why']}")
         return 0
@@ -1262,6 +1786,10 @@ def main(argv: "list[str] | None" = None) -> int:
                           "geometries": geos,
                           "unverified": unverified,
                           "rowBaselineSource": row_source,
+                          "reviewed": reviewed,
+                          "reviewedNote": "recorded by --accept; these keys are compared against a "
+                                          "dated review, NOT against the registries' first commits, "
+                                          "so a green run over them means no drift since the review",
                           "commentMatchesRefused": result["refused"],
                           "citations": len(citations),
                           "findings": findings}, indent=2, ensure_ascii=False))
@@ -1286,6 +1814,24 @@ def main(argv: "list[str] | None" = None) -> int:
         print(f"  (UNVERIFIED) {entry['registry']}: its cited lines were ALREADY resolving to the wrong "
               f"content before this baseline was taken, so this guard's green run means no FURTHER "
               f"drift, not that the citations are right. Reason: {entry['why']}")
+
+    # The reviewed axis is printed on EVERY run, green included, for the same reason the row axis's
+    # provenance is: "compared against what, and since when" is the whole difference between a
+    # certified citation and a recorded present. A review is the weakest provenance here and hiding
+    # it behind a green would be the exact claim the guard refuses to make elsewhere.
+    if reviewed:
+        unaudited = sorted(k for k, r in reviewed.items() if r.get("adjudication") == "unaudited")
+        print(f"  (REVIEWED) {len(reviewed)} citation(s) are compared against a dated --accept review, "
+              f"NOT against each registry's first commit: a green run over them means no drift SINCE "
+              f"the review, and nothing at all about the period before it.")
+        for key in sorted(reviewed):
+            rec = reviewed[key]
+            print(f"    {key:<48} {rec['rowToken']:<36} {rec['adjudication']:<12} "
+                  f"{rec['recordedOn']}  cited from {rec['citedFrom']}")
+        if unaudited:
+            print(f"    {len(unaudited)} of these had NO machine cross-check (their citing sentence "
+                  f"names no row of the registry), so they rest on a human reading: "
+                  f"{', '.join(unaudited)}")
 
     # A stale baseline key is a NOTE, not a finding: a citation removed on purpose is an edit, not a
     # defect. It is printed because it is the observable proof that the baseline is not being read as a
