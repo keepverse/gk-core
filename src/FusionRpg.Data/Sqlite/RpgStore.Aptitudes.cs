@@ -411,6 +411,89 @@ public sealed partial class RpgStore
         CommanderPoolOfUnlocked(db, owner, _actorThetaFor?.Invoke(owner.Save, owner.Empire) ?? 0,
             AptitudeTuningHub.IsConfigured ? AptitudeTuningHub.Tuning : null);
 
+    // ---- the empire write path — the write twin of the empire-keyed read above -------------------
+
+    /// <summary>Why a write failed, as a closed vocabulary a caller maps to a status code without
+    /// matching on prose. Every refusal is LOUD: there is no outcome in which the caller's allocation
+    /// was silently dropped.</summary>
+    public static class EmpirePoolWrite
+    {
+        /// <summary>The save does not carry <c>owner.Empire</c> in <c>rpg_save_empires</c> — the same
+        /// "never a guessed empire" rule <see cref="CommanderPoolOf"/> applies on the read.</summary>
+        public const string EmpireNotCarried = "empire.notCarried";
+
+        /// <summary>The caller named the save's <b>human</b> empire. That pool is the player's own
+        /// sheet and is written by <see cref="RpgStore.TryReallocate"/> through the priced gate — this
+        /// method refuses it rather than becoming a second, unpriced writer for one key.</summary>
+        public const string HumanEmpireRequiresGate = "empire.humanRequiresGate";
+    }
+
+    /// <summary>
+    /// The NORMAL write path for a <b>non-human</b> empire's commander pool — the write twin of
+    /// <see cref="CommanderPoolOf"/>, and the half that was missing: the read already resolved an
+    /// explicit allocation under the empire's own commander scope key (EP4.17's map D2), but nothing
+    /// could ever persist one, so every non-human pool was a read-time computation.
+    ///
+    /// <para><b>Why this is not <see cref="TryReallocate"/>.</b> That gate prices a reallocation in
+    /// souls and opens with "a non-human payer is refused" (an AI empire has no souls and no
+    /// re-allocation surface). Routing an empire pool through it would mean inventing a souls price for
+    /// an empire that has none — a game rule this path deliberately does not decide. So this writes
+    /// through the same <see cref="SaveAllocationUnlocked"/> upsert-and-prune the gate uses, on the
+    /// same ONE key the read derives, and charges nothing.</para>
+    ///
+    /// <para><b>The key is the directory's, never a literal.</b>
+    /// <see cref="FusionRpg.Core.Commanders.ICommanderDirectory.AllocationScopeKey"/> over that
+    /// empire's <c>DefaultFor</c> commander is exactly how <see cref="CommanderPoolOfUnlocked"/> derives
+    /// the key it reads, so a write and its read cannot disagree, and a registry that changed a
+    /// <c>scopeKeyTemplate</c> moves both together.</para>
+    ///
+    /// <para><b>No schema change.</b> The row is an ordinary <c>(scope='commander',
+    /// scope_key='zomboss:{id}')</c> pair in the table the read already queries, so existing saves need
+    /// no migration and gain nothing until something writes one.</para>
+    ///
+    /// <para><b>An all-zero write CLEARS the pool</b>, because <see cref="SaveAllocationUnlocked"/>
+    /// persists only nonzero rows: the next read then falls through to the read-time default. That is
+    /// the pre-existing shape the human commander scope has always had (see this file's
+    /// <see cref="HasSpeciesOverride"/> note on "an all-zero save leaves no rows"), not a new state.</para>
+    /// </summary>
+    public bool TryWriteEmpireCommanderPool(EmpireRef owner, AptitudeAllocation proposed, out string reason)
+    {
+        if (proposed is null) throw new ArgumentNullException(nameof(proposed));
+
+        lock (_gate)
+        {
+            using var db = OpenUnlocked();
+
+            // Never a guessed empire: the save must actually carry it (the read's own rule), and its
+            // controller is read from data rather than assumed from the empire id.
+            FusionRpg.Core.Saves.EmpireController? controller = null;
+            foreach (var row in EmpiresOfUnlocked(db, owner.Save.Value))
+                if (row.Empire == owner.Empire) controller = row.Controller;
+            if (controller is null)
+            {
+                reason = EmpirePoolWrite.EmpireNotCarried;
+                return false;
+            }
+
+            // The human pool belongs to the priced gate. One key, one writer.
+            if (controller == FusionRpg.Core.Saves.EmpireController.Human)
+            {
+                reason = EmpirePoolWrite.HumanEmpireRequiresGate;
+                return false;
+            }
+
+            var directory = FusionRpg.Core.Commanders.CommanderDirectoryHub.Current;
+            var scopeKey = directory.AllocationScopeKey(directory.DefaultFor(owner.Empire), owner.Save.Value);
+
+            using var tx = db.BeginTransaction();
+            SaveAllocationUnlocked(db, tx, AllocationScope.Commander, scopeKey, proposed);
+            tx.Commit();
+
+            reason = "";
+            return true;
+        }
+    }
+
     // ---- EP1.13 (spec-default-build.md) — EffectiveUniqueAllocation(Unlocked) ---------------------
 
     /// <summary>

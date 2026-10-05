@@ -157,6 +157,143 @@ public class AptitudeEndpointsTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.BadRequest, postResp.StatusCode);
     }
 
+    // ---- the empire write path — POST /allocate?empire=, through the Tier-A seam ---------------
+
+    /// <summary>
+    /// THE silent-drop regression. Before the request type carried an <c>empire</c> property,
+    /// System.Text.Json discarded this body field without complaint and the route answered 200 —
+    /// having written the HUMAN pool for a caller that asked for an empire's. The read-back is
+    /// <c>GET /api/aptitudes/{playerId}</c>'s own <c>commanderByEmpire</c> map: the ordinary read path
+    /// a real client uses, never the write route's own response.
+    /// </summary>
+    [Fact]
+    public async Task Post_allocate_naming_anEmpire_writesThatEmpiresPool_andReadsItBackThroughGet()
+    {
+        Assert.Contains("zomboss", _store.EmpiresOf(_playerId).Select(e => e.Empire.Value));
+        // Zomboss's OWN commander budget, not the player's: a pool is sized by the empire that runs it.
+        // Spending exactly that budget is within budget by construction -- no literal is pinned here.
+        var affordable = ZombossCommanderBudget();
+        Assert.True(affordable > 1, "expected a nonzero Zomboss commander budget");
+
+        var postResp = await _http.PostAsJsonAsync("/api/aptitudes/allocate",
+            new { playerId = _playerId, empire = "zomboss", shares = new Dictionary<string, long> { ["Might"] = affordable - 1, ["Agility"] = 1 } });
+        postResp.EnsureSuccessStatusCode();
+
+        var after = await (await _http.GetAsync($"/api/aptitudes/{_playerId}"))
+            .Content.ReadFromJsonAsync<AptitudesStateDto>();
+        Assert.NotNull(after);
+        Assert.True(after!.CommanderByEmpire.ContainsKey("zomboss"),
+            "expected a zomboss pool on the ordinary read, got [" + string.Join(",", after.CommanderByEmpire.Keys) + "]");
+        Assert.Equal(affordable - 1, after.CommanderByEmpire["zomboss"]["Might"]);
+        Assert.Equal(1, after.CommanderByEmpire["zomboss"]["Agility"]);
+
+        // The human's own sheet is a different pool and must be untouched by an empire-keyed write.
+        Assert.Equal(0, after.Shares["Might"]);
+    }
+
+    /// <summary>The tier flag is genuinely Tier A now: a named non-human empire is SERVED — not refused
+    /// with <c>empire_scope_not_widened</c>, and not answered 200 while quietly writing the human's
+    /// pool. Both halves are asserted, because the second half is what the widening must actually buy:
+    /// a refusal is loud, and so is a success that did something else.</summary>
+    [Fact]
+    public async Task Post_allocate_namingANonHumanEmpire_isServed_notRefusedAndNotSilentlyRedirected()
+    {
+        var postResp = await _http.PostAsJsonAsync("/api/aptitudes/allocate",
+            new { playerId = _playerId, empire = "zomboss", shares = new Dictionary<string, long> { ["Might"] = 1 } });
+        postResp.EnsureSuccessStatusCode();
+
+        using var doc = System.Text.Json.JsonDocument.Parse(await postResp.Content.ReadAsStringAsync());
+        Assert.False(doc.RootElement.TryGetProperty("error", out _), "must not answer empire_scope_not_widened");
+
+        // ...and it landed on the empire's own pool, not the human's.
+        var after = await (await _http.GetAsync($"/api/aptitudes/{_playerId}"))
+            .Content.ReadFromJsonAsync<AptitudesStateDto>();
+        Assert.Equal(1, after!.CommanderByEmpire["zomboss"]["Might"]);
+        Assert.Equal(0, after.Shares["Might"]);
+    }
+
+    [Fact]
+    public async Task Post_allocate_anEmpireThisSaveDoesNotCarry_is404AndPersistsNothing()
+    {
+        var postResp = await _http.PostAsJsonAsync("/api/aptitudes/allocate",
+            new { playerId = _playerId, empire = "not-an-empire-of-this-save", shares = new Dictionary<string, long> { ["Might"] = 1 } });
+
+        Assert.Equal(HttpStatusCode.NotFound, postResp.StatusCode);
+        using var doc = System.Text.Json.JsonDocument.Parse(await postResp.Content.ReadAsStringAsync());
+        Assert.Equal("empire_not_found", doc.RootElement.GetProperty("error").GetString());
+
+        var after = await (await _http.GetAsync($"/api/aptitudes/{_playerId}"))
+            .Content.ReadFromJsonAsync<AptitudesStateDto>();
+        Assert.Equal(0, after!.Shares["Might"]);
+    }
+
+    /// <summary>Naming the save's own human empire is the ordinary priced path, byte for byte: it must
+    /// not become a second unpriced writer for the player's own sheet.</summary>
+    [Fact]
+    public async Task Post_allocate_namingTheHumanEmpire_behavesExactlyLikeOmittingIt()
+    {
+        var human = _store.HumanEmpireOf(_playerId).Value;
+
+        (await _http.PostAsJsonAsync("/api/aptitudes/allocate",
+            new { playerId = _playerId, empire = human, shares = new Dictionary<string, long> { ["Might"] = 2 } }))
+            .EnsureSuccessStatusCode();
+
+        var after = await (await _http.GetAsync($"/api/aptitudes/{_playerId}"))
+            .Content.ReadFromJsonAsync<AptitudesStateDto>();
+        Assert.Equal(2, after!.Shares["Might"]);
+    }
+
+    /// <summary>The general form of the same defect: an UNRECOGNIZED field must be a loud 400, never a
+    /// 200 that quietly did something else. This is what makes the silent drop a one-off rather than a
+    /// property of the endpoint.</summary>
+    [Fact]
+    public async Task Post_allocate_anUnrecognizedField_isRejectedLoudly_neverSilentlyIgnored()
+    {
+        var resp = await _http.PostAsJsonAsync("/api/aptitudes/allocate",
+            new { playerId = _playerId, shares = new Dictionary<string, long> { ["Might"] = 2 }, emipre = "zomboss" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, resp.StatusCode);
+    }
+
+    /// <summary>An over-budget empire pool is refused, never clamped — the same PS-8 rule the human
+    /// route has always held, checked against that EMPIRE's own Theta.</summary>
+    [Fact]
+    public async Task Post_allocate_anEmpirePoolOverThatEmpiresOwnBudget_isRefusedNotClamped()
+    {
+        var affordable = ZombossCommanderBudget();
+        var before = await (await _http.GetAsync($"/api/aptitudes/{_playerId}"))
+            .Content.ReadFromJsonAsync<AptitudesStateDto>();
+
+        var resp = await _http.PostAsJsonAsync("/api/aptitudes/allocate",
+            new { playerId = _playerId, empire = "zomboss", shares = new Dictionary<string, long> { ["Might"] = affordable + 1 } });
+        Assert.Equal(HttpStatusCode.Conflict, resp.StatusCode);
+
+        // The refusal NAMES the empire and the budget it was measured against — so a caller can tell
+        // "your empire pool is too big" from "the human's sheet is too big". A refusal that does not say
+        // which pool it refused is how a per-empire call ends up reported as a player-side failure.
+        using (var doc = System.Text.Json.JsonDocument.Parse(await resp.Content.ReadAsStringAsync()))
+        {
+            Assert.Equal("aptitudes.overbudget", doc.RootElement.GetProperty("reason").GetString());
+            Assert.Equal("zomboss", doc.RootElement.GetProperty("empire").GetString());
+            Assert.Equal(affordable, doc.RootElement.GetProperty("budget").GetInt64());
+        }
+
+        // PS-8 for the empire arm: refused, never silently clamped to the budget. The pool reads back
+        // UNCHANGED from before the attempt -- which for an unwritten pool is its read-time default.
+        var after = await (await _http.GetAsync($"/api/aptitudes/{_playerId}"))
+            .Content.ReadFromJsonAsync<AptitudesStateDto>();
+        Assert.Equal(before!.CommanderByEmpire["zomboss"]["Might"], after!.CommanderByEmpire["zomboss"]["Might"]);
+    }
+
+    /// <summary>Zomboss's own commander budget — Theta from that empire's own commander level
+    /// (EP4.16), never the player's, which is what makes the empire arm's budget check meaningful.</summary>
+    long ZombossCommanderBudget()
+    {
+        var theta = new FusionRpg.Server.Power.ServerPowerIndexProvider(_store, PowerTuningHub.Tuning)
+            .ActorIndexFor(new FusionRpg.Core.Saves.SaveId(_playerId), FusionRpg.Core.Commanders.EmpireId.Zomboss);
+        return PointBudget.PointsFor(AllocationScope.Commander, theta, AptitudeTuningHub.Tuning);
+    }
+
     // ---- EP1.9 -- the allocate routes go through RpgStore.TryReallocate; POST /respec-quote -----
 
     [Fact]
@@ -679,6 +816,10 @@ public class AptitudeEndpointsTests : IAsyncLifetime
         public Dictionary<string, long> Shares { get; set; } = new();
         public Dictionary<string, Dictionary<string, long>> Species { get; set; } = new();
         public SpeciesLayersDto SpeciesLayers { get; set; } = new();
+        public string HumanEmpire { get; set; } = "";
+        /// <summary>ai-empire-species EP4.18 (R23) — every NON-human empire's commander pool for this
+        /// save, the ordinary read endpoint a real client consumes.</summary>
+        public Dictionary<string, Dictionary<string, long>> CommanderByEmpire { get; set; } = new();
     }
 
     sealed class SpeciesLayerRowDto

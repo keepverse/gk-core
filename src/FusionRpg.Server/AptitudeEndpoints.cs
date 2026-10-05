@@ -11,6 +11,7 @@ using FusionRpg.Data;
 using Microsoft.AspNetCore.SignalR;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace FusionRpg.Server;
 
@@ -37,6 +38,12 @@ public static class AptitudeEndpoints
             if (!store.PlayerExists(pid)) return Results.NotFound();
             if (body.Shares is null) return Results.BadRequest(new { reason = "shares.missing" });
 
+            // save-identity SE4.31 — the ONE place an optional `empire` becomes an EmpireRef. Absent is
+            // the save's human empire, so every pre-existing caller is byte-for-byte unchanged. Named
+            // but not an empire of THIS save is a 404, never another save's pool.
+            if (!EmpireScopeRequests.TryResolveAny(store, pid, body.Empire, out var owner, out var scopeRefusal))
+                return scopeRefusal!;
+
             AptitudeAllocation allocation;
             try
             {
@@ -46,6 +53,31 @@ public static class AptitudeEndpoints
             catch (ArgumentException ex)
             {
                 return Results.BadRequest(new { reason = "aptitudes.unknownid", detail = ex.Message });
+            }
+
+            // The per-empire arm. A named NON-human empire is the empire-pool write, at that empire's
+            // OWN Theta (EP4.16's `ActorIndexFor`) — the same budget the read-side pool projection
+            // reports it against, so the write can never land a pool the read would call over-budget.
+            if (owner.Empire != store.HumanEmpireOf(pid))
+            {
+                var empireTheta = (long)powerIndex.ActorIndexFor(new SaveId(pid), owner.Empire);
+                var empireCheck = PointBudget.CheckScope(
+                    AllocationScope.Commander, allocation, empireTheta, AptitudeTuningHub.Tuning);
+                if (!empireCheck.WithinBudget)
+                    return Results.Conflict(new
+                    {
+                        reason = "aptitudes.overbudget",
+                        empire = owner.Empire.Value,
+                        spent = empireCheck.Spent,
+                        budget = empireCheck.Budget,
+                    });
+
+                if (!store.TryWriteEmpireCommanderPool(owner, allocation, out var poolReason))
+                    return Results.BadRequest(new { reason = poolReason, empire = owner.Empire.Value });
+
+                _ = BroadcastBestEffort(hub, new AptitudesUpdatedDto(
+                    pid, "commander", null, null, owner.Empire.Value, Kind: LivenessInvalidationWire.CommanderAllocation));
+                return Results.Ok(ProjectState(store, powerIndex, pid));
             }
 
             var theta = (long)powerIndex.ActorIndex(new StatContext { PlayerId = pid });
@@ -357,6 +389,9 @@ public static class AptitudeEndpoints
         };
     }
 
+    /// <para>Every member is bound; an UNRECOGNIZED member is a 400, not a discarded field with a 200.
+    /// See <see cref="Empire"/> for the defect that rule closes.</para>
+    [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
     public sealed class AllocateAptitudesRequest
     {
         public long? PlayerId { get; set; }
@@ -365,6 +400,21 @@ public static class AptitudeEndpoints
         /// a first allocation or a top-up needs none. <see cref="RpgStore.TryReallocate"/> refuses
         /// `correlation.missing` if a respec omits it.</summary>
         public string? CorrelationId { get; set; }
+
+        /// <summary>
+        /// save-identity SE4.31 — which empire's commander pool this allocation is for. Absent (or
+        /// blank) is the save's <b>human</b> empire, which is what every sender meant before this
+        /// property existed; a NON-human empire routes to <see cref="RpgStore.TryWriteEmpireCommanderPool"/>.
+        ///
+        /// <para><b>This property's ABSENCE was a silent-drop defect, not a neutral default.</b> With
+        /// no such member, System.Text.Json discarded a caller's <c>empire</c> without complaint and
+        /// the route still returned 200 — writing the HUMAN pool for a caller that had asked for an
+        /// empire's. Its declaring type also carries
+        /// <see cref="System.Text.Json.Serialization.JsonUnmappedMemberHandling"/>.<c>Disallow</c>, so
+        /// any <em>other</em> unrecognized field is now a loud 400 rather than a second instance of the
+        /// same defect: a request the server did not fully understand must never report success.</para>
+        /// </summary>
+        public string? Empire { get; set; }
     }
 
     public sealed class AllocateUniqueAptitudesRequest
