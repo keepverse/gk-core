@@ -32,8 +32,12 @@ citation is repaired - which is the population-count assertion the repo standard
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
 import json
+import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -155,6 +159,23 @@ def duplicate_alpha_before_itself() -> str:
 #: which is the filter working, and the reason the key is built here instead.
 FIRST_REGISTRY = guard.REGISTRIES[1][0]
 FIRST_KEY = f"{FIRST_REGISTRY}:1"
+
+#: A registry declared FLAT (no append container), so its keys contain a `.` and a `/`. That is what
+#: makes it the right subject for the trailing-dot test, and spelling its key out literally would make
+#: this file a citing document - see `test_a_sentence_final_dot_...`.
+FLAT_REGISTRY = next(name for name, _rel, container in guard.REGISTRIES if container is None)
+
+
+def _flat_key() -> str:
+    """The flat registry's first key that ends in a plain `.md`, read from the real file.
+
+    Read rather than written out, for the reason above. The `.md` suffix is what makes this key the
+    subject of the trailing-dot test: the citation character class cannot exclude `.` because this key
+    contains one, so the sentence-final dot has to be resolved against the registry.
+    """
+    rel = next(r for n, r, _c in guard.REGISTRIES if n == FLAT_REGISTRY)
+    doc = json.loads((REPO / rel).read_text(encoding="utf-8"))
+    return next(k for k in doc if k.endswith(".md"))
 
 
 def _one_citation() -> dict:
@@ -992,6 +1013,737 @@ class TheReviewAxisDoesNotWeakenTheRowAxis(_AcceptHarness):
         code, out = self.run_guard()
         self.assertEqual(code, 1)
         self.assertIn("is a NEW citation", out)
+
+
+# ---------------------------------------------------------------------------------------------
+# the KEY form: `<registry>#<key>`
+#
+# WHY THIS CLASS EXISTS. The line form's three failures are measured, not suspected: 556
+# byte-identical `    {` lines that one content fingerprint cannot separate; a row fingerprint
+# derived from the array index, which nine recorded reviews have already expired under; and a
+# citation of a generated line-and-column scan record that cannot be re-pointed at all. A key
+# citation names a row by its declared identity, so it is immune to all three - and the only way to
+# know that is to mutate the registry and watch.
+#
+# EVERY MUTANT BELOW IS INSTALLED ON DISK AND READ BACK BEFORE THE GUARD RUNS. Two mutation controls
+# in this programme passed because the mutant was never written; `use_registry` asserts the bytes on
+# disk differ from the clean fixture before the run and match the mutant after it, so a fixture that
+# failed to write cannot produce a green control.
+#
+# MUTANT 4 IS THE ONE THIS CLASS EXISTS FOR. Inserting an unrelated row ABOVE a key-cited row must
+# NOT drift the citation: no line number and no array index appears anywhere in a key row
+# fingerprint, so the row's meaning cannot have changed even though its position moved by nine lines.
+# ---------------------------------------------------------------------------------------------
+
+#: A registry whose rows are an ARRAY, so the mutants can insert above a cited row without moving the
+#: cited row's identity. `alpha` is cited by key; `beta` is the row inserted above it by mutant 4.
+KEY_FIXTURE = "\n".join([
+    "{",                                    # 1
+    '  "boundaries": [',                    # 2
+    "    {",                                # 3   <- beta[0]
+    '      "id": "beta",',                  # 4
+    '      "kind": "owner",',               # 5
+    '      "paths": [',                     # 6
+    '        "beta/**"',                    # 7
+    "      ],",                             # 8
+    '      "project": "core",',             # 9
+    '      "level": "module"',              # 10
+    "    },",                               # 11  <- beta[1]
+    "    {",                                # 12  <- alpha[0]
+    '      "id": "alpha",',                 # 13
+    '      "kind": "owner",',               # 14
+    '      "paths": [',                     # 15
+    '        "alpha/**"',                   # 16
+    "      ],",                             # 17
+    '      "project": "core",',             # 18
+    '      "level": "module"',              # 19
+    "    }",                                # 20  <- alpha[1]
+    "  ]",                                  # 21
+    "}",                                    # 22
+    "",
+])
+
+#: The nine lines mutant 4 inserts immediately after `"boundaries": [`. A row above a cited row, in a
+#: registry whose rows are an array - the exact shape that expires a line citation.
+INSERT_ABOVE = ('  "boundaries": [\n'
+                '    {\n'
+                '      "id": "unrelated",\n'
+                '      "kind": "owner",\n'
+                '      "paths": [\n'
+                '        "unrelated/**"\n'
+                '      ],\n'
+                '      "project": "core",\n'
+                '      "level": "module"\n'
+                '    },')
+
+KEY_ALPHA = f"{ACCEPT_REGISTRY}#alpha"
+KEY_BETA = f"{ACCEPT_REGISTRY}#beta"
+
+
+class _KeyHarness(unittest.TestCase):
+    """A fake `core`, a temp baseline, a temp citing document, and a mutant-aware registry file.
+
+    Everything a `--accept` or a gate run reads comes from the temp tree, so no test here can write to
+    the committed baseline or to the committed registries - a test that changed the thing it measures
+    would measure itself.
+    """
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory(prefix="gras-key-")
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.core = _fake_core(self.tmp, KEY_FIXTURE)
+        self.clean_registry = (self.core / "scripts" / ACCEPT_REGISTRY).read_bytes()
+        self.baseline = self.tmp / "baseline.json"
+        self.baseline.write_text(json.dumps(_baseline_with_hole()), encoding="utf-8", newline="")
+        self.citer = self.tmp / "tasks" / "x.md"
+        self.citer.parent.mkdir(parents=True, exist_ok=True)
+        self.original_baseline = guard.BASELINE
+        self.original_collect = guard.collect
+        self.original_core = None
+        guard.BASELINE = self.baseline
+        guard.collect = lambda ws: ({self.key: ("tasks/x.md", 1)}, _refused_counts())
+        self.addCleanup(self._restore)
+
+    def _restore(self):
+        guard.BASELINE = self.original_baseline
+        guard.collect = self.original_collect
+
+    # the citation this class cites by key
+    key = KEY_ALPHA
+
+    def use_registry(self, text: str) -> None:
+        """Install `text` as the registry ON DISK, then prove it is there.
+
+        The read-back is not ceremony. A mutant control that passed because the mutant was never
+        installed is the exact failure this repo has already paid for twice, so the write is verified
+        against the clean fixture before the guard runs and the mutation is proved different.
+        """
+        path = self.core / "scripts" / ACCEPT_REGISTRY
+        path.write_text(text, encoding="utf-8", newline="")
+        on_disk = path.read_bytes()
+        self.assertEqual(on_disk, text.encode("utf-8").replace(b"\r\n", b"\n"),
+                         "the mutant is not on disk byte-for-byte")
+        self.assertNotEqual(on_disk, self.clean_registry,
+                            "the mutant is byte-identical to the clean fixture, so it is no mutant")
+
+    def write_citer(self, text: str) -> None:
+        self.citer.write_text(text, encoding="utf-8")
+
+    def run_guard(self, *args: str) -> "tuple[int, str]":
+        """Run the guard against the FAKE core, capturing everything it printed.
+
+        `guard.evaluate` resolves the registries relative to `__file__`'s grandparent, so pointing the
+        module at the fake `core` is what makes each mutant real rather than merely described.
+        """
+        original = guard.__file__
+        guard.__file__ = str(self.core / "scripts" / "guard-registry-append-safety.py")
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+                code = guard.main(["--root", str(self.tmp), *args])
+        finally:
+            guard.__file__ = original
+        return code, buf.getvalue()
+
+    def stored(self) -> dict:
+        return json.loads(self.baseline.read_text(encoding="utf-8"))
+
+    def review(self) -> dict:
+        """Record the key citation and return the stored record, failing loudly if it was refused."""
+        code, out = self.run_guard("--accept", self.key, "--accept-why", "because I read it")
+        self.assertEqual(code, 0, out)
+        return self.stored()["reviewedKeys"][self.key]
+
+
+class KeyFormResolution(unittest.TestCase):
+    """The resolution rule, tested against the real registries rather than a guessed shape."""
+
+    def setUp(self):
+        self.docs = {name: json.loads((REPO / rel).read_text(encoding="utf-8"))
+                     for name, rel, _c in guard.REGISTRIES}
+        self.flat = {name: guard.is_flat(name) for name, _r, _c in guard.REGISTRIES}
+
+    def _resolve(self, name: str, key: str) -> dict:
+        return guard.resolve_key(self.docs[name], key, self.flat[name])
+
+    def test_an_array_row_resolves_by_its_declared_id(self):
+        res = self._resolve("verification-boundaries.v1.json", "core-fallback")
+        self.assertEqual(res["status"], "resolved")
+        self.assertEqual(res["container"], "boundaries")
+        self.assertEqual(res["kind"], "array")
+        self.assertEqual(res["token"], "id=core-fallback")
+
+    def test_a_map_row_resolves_by_its_own_key(self):
+        """MEASURED, not assumed: `narrative` is a `guards` map key in this registry, not an
+        `invariants` id. Asserting what the file says rather than what the name suggests is the point
+        - the resolution rule has to be derived from the rows, not from how a key reads."""
+        res = self._resolve("enforcement-registry.v1.json", "narrative")
+        self.assertEqual(res["status"], "resolved")
+        self.assertEqual(res["container"], "guards")
+        self.assertEqual(res["kind"], "map")
+        self.assertEqual(res["token"], "narrative",
+                         "a MAP row is named by its key, not by an `id=` prefix")
+
+    def test_an_invariant_array_row_resolves_by_its_declared_id(self):
+        invariant = self.docs["enforcement-registry.v1.json"]["invariants"][0]["id"]
+        res = self._resolve("enforcement-registry.v1.json", invariant)
+        self.assertEqual(res["status"], "resolved")
+        self.assertEqual(res["container"], "invariants")
+        self.assertEqual(res["token"], f"id={invariant}")
+
+    def test_a_registry_row_map_resolves_by_the_guard_name(self):
+        res = self._resolve("enforcement-registry.v1.json", "citation-stability")
+        self.assertEqual(res["status"], "resolved")
+        self.assertEqual(res["container"], "guards")
+        self.assertEqual(res["kind"], "map")
+        self.assertEqual(res["token"], "citation-stability",
+                         "a MAP row is named by its key, not by an `id=` prefix")
+
+    def test_a_flat_registry_row_resolves_and_its_slash_is_not_a_qualifier(self):
+        res = self._resolve("todo-shapes.v1.json", "tasks/live-probe-todo.md")
+        self.assertEqual(res["status"], "resolved")
+        self.assertEqual(res["container"], "<root>",
+                         "a registry declared with no container has ONE namespace, not one per row")
+        self.assertEqual(res["keyText"], "tasks/live-probe-todo.md",
+                         "`tasks` is not a namespace, so the whole string is the key")
+
+    def test_a_key_that_names_no_row_is_unresolved_and_names_what_it_tried(self):
+        res = self._resolve("verification-boundaries.v1.json", "no-such-row")
+        self.assertEqual(res["status"], "unresolved")
+        self.assertEqual(res["tried"], ["no-such-row"])
+        self.assertIn("boundaries", res["namespaces"])
+
+    def test_the_two_namespaces_really_do_collide_and_the_collision_is_reported(self):
+        """Measured on the real registry: this is why a namespace qualifier exists at all."""
+        index = guard.row_key_index(self.docs["verification-boundaries.v1.json"], flat=False)
+        collisions = {k for k, v in index.items() if len({m["container"] for m in v}) > 1}
+        self.assertIn("core-atoms", collisions, "the collision this guards is no longer in the file")
+        res = self._resolve("verification-boundaries.v1.json", "core-atoms")
+        self.assertEqual(res["status"], "ambiguous")
+        self.assertEqual(res["namespaces"], ["boundaries/array", "projects/map"])
+
+    def test_the_namespace_qualifier_resolves_a_colliding_key(self):
+        for spelled, container in (("boundaries/core-atoms", "boundaries"),
+                                   ("projects/core-atoms", "projects")):
+            with self.subTest(spelled=spelled):
+                res = self._resolve("verification-boundaries.v1.json", spelled)
+                self.assertEqual(res["status"], "resolved")
+                self.assertEqual(res["container"], container)
+
+    def test_a_namespace_this_registry_does_not_have_is_refused_by_name(self):
+        res = self._resolve("verification-boundaries.v1.json", "invented/core-atoms")
+        self.assertEqual(res["status"], "unknown-container")
+        self.assertIn("boundaries", res["namespaces"])
+
+    def test_every_declared_key_in_every_registry_resolves_or_is_reported_ambiguous(self):
+        """A KEY INDEX THAT SILENTLY DROPS A ROW WOULD MAKE THE FORM UNSAFE, SO NONE MAY."""
+        for name, _rel, _c in guard.REGISTRIES:
+            index = guard.row_key_index(self.docs[name], self.flat[name])
+            for key, matches in index.items():
+                with self.subTest(registry=name, key=key):
+                    namespaces = {m["container"] for m in matches}
+                    res = self._resolve(name, key)
+                    self.assertEqual(res["status"],
+                                     "resolved" if len(namespaces) == 1 else "ambiguous")
+                    self.assertTrue(res.get("contentFingerprint") or res.get("namespaces"))
+
+    def test_a_sentence_final_key_resolves_because_the_dot_is_tried_off_the_registry(self):
+        res = self._resolve("todo-shapes.v1.json", "tasks/live-probe-todo.md.")
+        self.assertEqual(res["status"], "resolved")
+        self.assertEqual(res["keyText"], "tasks/live-probe-todo.md")
+
+
+class TheKeyAxesDoTheirJob(_KeyHarness):
+    """THE FOUR MUTANTS, each installed on disk and read back before the guard runs.
+
+    Every one of these is the hazard the key form exists to survive, and every one is a case where a
+    guard that passed would be worse than no guard at all.
+    """
+
+    def test_mutant1_renaming_the_row_a_key_citation_names_is_reported(self):
+        """RENAME the cited row. The key no longer resolves, so the citation names nothing."""
+        self.review()
+        self.use_registry(KEY_FIXTURE.replace('"id": "alpha"', '"id": "alpha-renamed"'))
+        code, out = self.run_guard()
+        self.assertEqual(code, 1, out)
+        self.assertIn("S7-KEY-UNRESOLVED", out)
+        self.assertIn(KEY_ALPHA, out)
+        self.assertIn("names NO row of this registry", out)
+
+    def test_mutant1b_deleting_the_row_a_key_citation_names_is_reported(self):
+        """REMOVE the row. Same finding, and it is the other half of the same hazard."""
+        self.review()
+        without_alpha = "\n".join([
+            "{",
+            '  "boundaries": [',
+            "    {",
+            '      "id": "beta",',
+            '      "kind": "owner",',
+            '      "paths": [',
+            '        "beta/**"',
+            "      ],",
+            '      "project": "core",',
+            '      "level": "module"',
+            "    }",
+            "  ]",
+            "}",
+            "",
+        ])
+        self.use_registry(without_alpha)
+        code, out = self.run_guard()
+        self.assertEqual(code, 1, out)
+        self.assertIn("S7-KEY-UNRESOLVED", out)
+        self.assertIn("names NO row of this registry", out)
+
+    def test_mutant2_changing_the_content_of_the_row_a_key_citation_names_is_reported(self):
+        """EDIT the row under its key. The key still resolves, so only the content axis can see it."""
+        self.review()
+        self.use_registry(KEY_FIXTURE.replace('"alpha/**"', '"alpha/**", "alpha/extra/**"'))
+        code, out = self.run_guard()
+        self.assertEqual(code, 1, out)
+        self.assertIn("S1-KEY-CONTENT-CHANGED", out)
+        self.assertIn("WHOLE CONTENT has changed", out)
+
+    def test_mutant2b_editing_a_row_the_key_does_not_name_stays_green(self):
+        """The control on mutant 2: a key citation is about ITS row, not about the file.
+
+        A fingerprint over the whole FILE would red here and would also have made every registry edit
+        a finding, which is the mistake a per-row fingerprint exists to avoid.
+        """
+        self.review()
+        self.use_registry(KEY_FIXTURE.replace('"beta/**"', '"beta/**", "beta/extra/**"'))
+        code, out = self.run_guard()
+        self.assertEqual(code, 0, out)
+        self.assertIn("GUARD OK", out)
+
+    def test_mutant3_a_key_citation_naming_a_key_that_does_not_resolve_is_reported(self):
+        """A citation of a row that does not exist. Never a silent pass.
+
+        `--accept` REFUSES to record such a key, which is the other half of this check and is
+        asserted here too: a review of a row that is not there cannot be written at all.
+        """
+        self.key = f"{ACCEPT_REGISTRY}#no-such-row"
+        code, out = self.run_guard()
+        self.assertEqual(code, 1, out)
+        self.assertIn("S7-KEY-UNRESOLVED", out)
+        self.assertIn("no-such-row", out)
+        self.assertIn("Tried ['no-such-row']", out, "the finding must name every spelling it tried")
+        # And the review flag refuses it, rather than writing a promise about nothing.
+        code, out = self.run_guard("--accept", self.key, "--accept-why", "read it")
+        self.assertEqual(code, 2, out)
+        self.assertIn("no row of", out)
+
+    def test_mutant3b_a_key_citation_naming_an_ambiguous_key_is_reported_not_guessed(self):
+        """The measured collision: two rows answer, so the guard names both and picks neither."""
+        self.use_registry("\n".join([
+            "{",
+            '  "boundaries": [',
+            '    {',
+            '      "id": "dup",',
+            '      "kind": "owner"',
+            "    }",
+            "  ],",
+            '  "projects": {',
+            '    "dup": [',
+            '      "dup/**"',
+            "    ]",
+            "  }",
+            "}",
+            "",
+        ]))
+        self.key = f"{ACCEPT_REGISTRY}#dup"
+        code, out = self.run_guard()
+        self.assertEqual(code, 1, out)
+        self.assertIn("S7-KEY-AMBIGUOUS", out)
+        self.assertIn("boundaries/array", out)
+        self.assertIn("projects/map", out)
+        self.assertIn("will not pick one", out)
+        # And the review flag refuses it, naming the repair rather than choosing a namespace.
+        code, out = self.run_guard("--accept", self.key, "--accept-why", "read it")
+        self.assertEqual(code, 2, out)
+        self.assertIn(f"#<namespace>/dup", out)
+
+    def test_mutant3c_the_namespace_qualifier_is_the_repair_the_ambiguity_finding_names(self):
+        self.use_registry("\n".join([
+            "{",
+            '  "boundaries": [',
+            '    {',
+            '      "id": "dup",',
+            '      "kind": "owner"',
+            "    }",
+            "  ],",
+            '  "projects": {',
+            '    "dup": [',
+            '      "dup/**"',
+            "    ]",
+            "  }",
+            "}",
+            "",
+        ]))
+        self.key = f"{ACCEPT_REGISTRY}#boundaries/dup"
+        record = self.review()
+        self.assertEqual(record["container"], "boundaries")
+        self.assertEqual(record["rowKey"], "dup")
+        code, out = self.run_guard()
+        self.assertEqual(code, 0, out)
+
+    def test_mutant4_inserting_an_unrelated_row_above_a_key_cited_row_does_NOT_drift(self):
+        """THE CONTROL THIS WHOLE CHANGE EXISTS FOR, and the one to demonstrate most carefully.
+
+        The same insertion on the LINE form moves every later cited line and expires every review
+        under it. Here it moves alpha from `boundaries[1]` to `boundaries[2]` and its line from 12 to
+        21, and the citation must not notice: a key row fingerprint is the namespace, the element kind
+        and the key - no line, no index.
+        """
+        record = self.review()
+        self.assertEqual(record["container"], "boundaries")
+        self.assertEqual(record["kind"], "array")
+        self.use_registry(KEY_FIXTURE.replace('  "boundaries": [', INSERT_ABOVE))
+        # The row really did move: prove it before asserting that moving it changed nothing.
+        alpha_index = KEY_FIXTURE.split("\n").index('      "id": "alpha",') + 1
+        moved_index = KEY_FIXTURE.replace(
+            '  "boundaries": [', INSERT_ABOVE).split("\n").index('      "id": "alpha",') + 1
+        self.assertEqual(moved_index - alpha_index, 9,
+                         "the fixture did not move alpha by nine lines, so the control proves nothing")
+        code, out = self.run_guard()
+        self.assertEqual(code, 0, out)
+        self.assertIn("GUARD OK", out)
+        self.assertIn("1 KEY", out, "the run must still be counting this citation as a KEY citation")
+
+    def test_mutant4b_the_same_insertion_expires_a_line_citation_of_the_same_row(self):
+        """The paired control: it is not that insertion is safe here - it is that the KEY form is why.
+
+        The same nine lines inserted above a citation of a line inside alpha move that line onto a
+        line inside `beta`, and the LINE form's row axis sees it because its fingerprint is the
+        position. Asserted next to mutant 4 because a control that shows only one half is the shape of
+        the mistake this class exists to prevent.
+        """
+        clean = json.loads(KEY_FIXTURE)
+        self.assertEqual(clean["boundaries"][1]["id"], "alpha")
+        alpha_line = next(n for n, line in enumerate(KEY_FIXTURE.split("\n"), 1)
+                          if line.strip().startswith('"alpha/**"'))
+        clean_rows = guard.row_identity(KEY_FIXTURE)
+        clean_token = guard.row_token(clean, clean_rows[alpha_line])
+        self.assertEqual(clean_token, "id=alpha",
+                         "before the insertion, that line is inside alpha")
+        clean["boundaries"].insert(0, {"id": "unrelated", "kind": "owner",
+                                       "paths": ["unrelated/**"], "project": "core",
+                                       "level": "module"})
+        moved_text = json.dumps(clean, indent=2)
+        moved_rows = guard.row_identity(moved_text)
+        moved_token = guard.row_token(clean, moved_rows[alpha_line])
+        self.assertNotEqual(moved_token, "id=alpha",
+                            "after the insertion, the SAME line number is inside a different row")
+        self.assertNotEqual(guard.row_fingerprint(clean_rows[alpha_line], clean_token),
+                            guard.row_fingerprint(moved_rows[alpha_line], moved_token),
+                            "so the LINE form's row axis reds on it")
+        # And the KEY form's row fingerprint cannot see a position, because it has none:
+        self.assertEqual(guard.key_row_fingerprint("boundaries", "array", "alpha"),
+                         guard.key_row_fingerprint("boundaries", "array", "alpha"))
+
+    def test_a_row_that_slides_into_another_namespace_is_reported_on_the_row_axis(self):
+        """Two rows can say the same thing and be two different rows; only identity separates them.
+
+        `alpha` is moved verbatim from the `boundaries` ARRAY into the `projects` MAP. The content
+        fingerprint is therefore IDENTICAL and the key still resolves to exactly one row - so this is
+        the one case the content axis provably cannot see, and the row axis is what reports it. That is
+        the byte-identical twin, transplanted from lines to keys.
+        """
+        self.review()
+        self.use_registry("\n".join([
+            "{",
+            '  "boundaries": [',
+            "    {",
+            '      "id": "beta",',
+            '      "kind": "owner",',
+            '      "paths": [',
+            '        "beta/**"',
+            "      ],",
+            '      "project": "core",',
+            '      "level": "module"',
+            "    }",
+            "  ],",
+            '  "projects": {',
+            '    "alpha": {',
+            '      "id": "alpha",',
+            '      "kind": "owner",',
+            '      "paths": [',
+            '        "alpha/**"',
+            "      ],",
+            '      "project": "core",',
+            '      "level": "module"',
+            "    }",
+            "  }",
+            "}",
+            "",
+        ]))
+        code, out = self.run_guard()
+        self.assertEqual(code, 1, out)
+        self.assertIn("S5-KEY-ROW-CHANGED", out)
+        self.assertIn("now resolves to a different ROW", out)
+        self.assertNotIn("S1-KEY-CONTENT-CHANGED", out,
+                         "the content really is unchanged, so S1 must stay silent - that is the point")
+        self.assertIn("no array index", out.replace("\n", " "))
+
+    def test_the_content_axis_really_is_silent_when_only_the_namespace_changed(self):
+        """The measurement behind the test above, asserted directly so it cannot drift silently."""
+        before = guard.resolve_key(json.loads(KEY_FIXTURE), "alpha", flat=False)
+        after_doc = json.loads(KEY_FIXTURE)
+        alpha_row = after_doc["boundaries"].pop(1)
+        self.assertEqual(alpha_row["id"], "alpha")
+        after_doc["projects"] = {"alpha": alpha_row}
+        after = guard.resolve_key(after_doc, "alpha", flat=False)
+        self.assertEqual(before["status"], "resolved")
+        self.assertEqual(after["status"], "resolved")
+        self.assertNotEqual(before["container"], after["container"])
+        self.assertEqual(before["contentFingerprint"], after["contentFingerprint"],
+                         "the content axis is blind to a namespace slide, which is what S5-KEY exists for")
+        self.assertNotEqual(before["rowFingerprint"], after["rowFingerprint"])
+
+
+class KeyAxisProvenance(unittest.TestCase):
+    """NO BLANKET OPERATION MAY BLESS A KEY CITATION. These are the refusals that make that true."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory(prefix="gras-keyprov-")
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.baseline = self.tmp / "baseline.json"
+        self.baseline.write_text(json.dumps(_baseline_with_hole()), encoding="utf-8", newline="")
+        self.core = _fake_core(self.tmp, KEY_FIXTURE)
+        self.key = KEY_ALPHA
+        self.original_baseline, self.original_collect = guard.BASELINE, guard.collect
+        self.original_core = pathlib.Path(guard.__file__).resolve().parent.parent
+        guard.BASELINE = self.baseline
+        guard.collect = lambda ws: ({self.key: ("tasks/x.md", 1)}, _refused_counts())
+        self.addCleanup(self._restore)
+
+    def _restore(self):
+        guard.BASELINE = self.original_baseline
+        guard.collect = self.original_collect
+        guard.__file__ = str(self.original_core / "scripts" / "guard-registry-append-safety.py")
+
+    def run_guard(self, *args: str) -> "tuple[int, str]":
+        original = guard.__file__
+        guard.__file__ = str(self.core / "scripts" / "guard-registry-append-safety.py")
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+                code = guard.main(["--root", str(self.tmp), *args])
+        finally:
+            guard.__file__ = original
+        return code, buf.getvalue()
+
+    def stored(self) -> dict:
+        return json.loads(self.baseline.read_text(encoding="utf-8"))
+
+    def _seed_review(self) -> None:
+        code, out = self.run_guard("--accept", self.key, "--accept-why", "read it")
+        self.assertEqual(code, 0, out)
+
+    def test_an_unreviewed_key_citation_is_reported_and_names_its_only_repair(self):
+        code, out = self.run_guard()
+        self.assertEqual(code, 1, out)
+        self.assertIn("S8-KEY-NOT-REVIEWED", out)
+        self.assertIn(f"--accept {self.key}", out)
+
+    def test_update_cannot_write_the_key_axis(self):
+        """`--update` is the blanket operation. If it could bless a key, the form would expire too."""
+        code, out = self.run_guard("--update")
+        self.assertEqual(code, 0, out)
+        self.assertIn("STRUCTURALLY CANNOT write it", out)
+        self.assertEqual(self.stored().get("reviewedKeys", {}), {})
+        code, out = self.run_guard()
+        self.assertEqual(code, 1, out)
+        self.assertIn("S8-KEY-NOT-REVIEWED", out)
+
+    def test_update_does_not_drop_an_existing_key_review(self):
+        self._seed_review()
+        before = self.stored()["reviewedKeys"]
+        code, _out = self.run_guard("--update")
+        self.assertEqual(code, 0)
+        self.assertEqual(self.stored()["reviewedKeys"], before)
+
+    def test_a_reviewed_key_is_green_when_nothing_moved(self):
+        self._seed_review()
+        code, out = self.run_guard()
+        self.assertEqual(code, 0, out)
+        self.assertIn("REVIEWED KEYS", out)
+
+    def test_a_reviewed_key_cannot_be_re_reviewed_and_re_dated(self):
+        self._seed_review()
+        recorded_on = self.stored()["reviewedKeys"][self.key]["recordedOn"]
+        code, out = self.run_guard("--accept", self.key, "--accept-why", "again")
+        self.assertEqual(code, 2, out)
+        self.assertIn("already in the `reviewedKeys` axis", out)
+        self.assertEqual(self.stored()["reviewedKeys"][self.key]["recordedOn"], recorded_on)
+
+    def test_a_reviewed_key_names_no_line_anywhere_in_its_record(self):
+        """The whole property, asserted on the record rather than inferred from the fingerprints."""
+        self._seed_review()
+        record = self.stored()["reviewedKeys"][self.key]
+        self.assertNotIn("line", record)
+        self.assertRegex(record["rowFingerprint"], r"^[0-9a-f]{16}$")
+        self.assertRegex(record["contentFingerprint"], r"^[0-9a-f]{16}$")
+
+    def test_the_row_fingerprint_carries_neither_a_line_nor_an_index(self):
+        """Structural, so it cannot rot: three strings and no position of any kind.
+
+        Asserted by BEHAVIOUR rather than by reading the source: there is no argument that could carry a
+        position, and a fingerprint computed from the same three inputs is the same value forever.
+        """
+        import inspect
+        signature = inspect.signature(guard.key_row_fingerprint)
+        self.assertEqual(list(signature.parameters), ["container", "kind", "key"],
+                         "the function takes no position, so it cannot encode one")
+        first = guard.key_row_fingerprint("boundaries", "array", "alpha")
+        second = guard.key_row_fingerprint("boundaries", "array", "beta")
+        self.assertNotEqual(first, second, "two rows under different keys must differ")
+        self.assertEqual(first, guard.key_row_fingerprint("boundaries", "array", "alpha"),
+                         "the fingerprint must be a pure function of namespace, kind and key")
+        self.assertNotEqual(first, guard.key_row_fingerprint("projects", "array", "alpha"),
+                            "the namespace is part of the identity, so a slide between them reds")
+
+    def test_the_content_fingerprint_is_over_the_whole_row_not_one_line(self):
+        """The measurement that makes this form stronger than the line form, asserted as a fact."""
+        doc = json.loads(KEY_FIXTURE)
+        row = doc["boundaries"][1]
+        self.assertEqual(guard.key_content_fingerprint(row),
+                         guard.key_content_fingerprint(dict(reversed(list(row.items())))),
+                         "member order must not change the fingerprint")
+        changed = dict(row, level="focused")
+        self.assertNotEqual(guard.key_content_fingerprint(row),
+                            guard.key_content_fingerprint(changed),
+                            "any field of the row must change it, not only the first line")
+
+    def test_the_key_axis_is_validated_and_an_incomplete_record_refuses(self):
+        self._seed_review()
+        record = self.stored()["reviewedKeys"][self.key]
+        for field in ("why", "citedFrom", "container", "kind", "rowToken", "recordedOn"):
+            with self.subTest(field=field):
+                stored = self.stored()
+                broken = dict(record)
+                broken.pop(field)
+                stored["reviewedKeys"] = {self.key: broken}
+                self.baseline.write_text(json.dumps(stored), encoding="utf-8", newline="")
+                code, out = self.run_guard()
+                self.assertEqual(code, 2, out)
+                self.assertIn(field, out)
+
+    def test_a_line_record_in_the_key_axis_refuses_rather_than_being_read(self):
+        stored = self.stored()
+        stored["reviewedKeys"] = {self.key: {"why": "x", "citedFrom": "y"}}
+        self.baseline.write_text(json.dumps(stored), encoding="utf-8", newline="")
+        code, out = self.run_guard()
+        self.assertEqual(code, 2, out)
+        self.assertIn("reviewedKeys", out)
+
+    def test_a_key_record_in_the_line_axis_refuses_rather_than_being_read(self):
+        """The other direction, and the reason the two axes are not merged."""
+        stored = self.stored()
+        stored["reviewed"] = {self.key: {"why": "x", "citedFrom": "y"}}
+        self.baseline.write_text(json.dumps(stored), encoding="utf-8", newline="")
+        code, out = self.run_guard()
+        self.assertEqual(code, 2, out)
+        self.assertIn("reviewed", out)
+
+
+class KeyFormSurface(unittest.TestCase):
+    """The CLI, the output, and the count a reader uses to judge how much is left to convert."""
+
+    def test_the_two_forms_are_distinguishable_in_the_report(self):
+        proc = subprocess.run([sys.executable, str(SCRIPT), "--report"], cwd=str(REPO),
+                              capture_output=True, text=True, encoding="utf-8",
+                              errors="replace", timeout=900)
+        self.assertIn(proc.returncode, (0, 1), proc.stderr)
+        self.assertIn("CITATION FORMS", proc.stdout)
+        self.assertIn("by LINE", proc.stdout)
+        self.assertIn("by KEY", proc.stdout)
+
+    def test_the_json_carries_the_form_of_every_citation(self):
+        proc = subprocess.run([sys.executable, str(SCRIPT), "--json"], cwd=str(REPO),
+                              capture_output=True, text=True, encoding="utf-8",
+                              errors="replace", timeout=900)
+        payload = json.loads(proc.stdout)
+        self.assertEqual(set(payload["citationsByForm"]), {"line", "key"})
+        self.assertEqual(sum(payload["citationsByForm"].values()), payload["citations"])
+        for g in payload["geometries"]:
+            self.assertEqual(g["lineCitations"] + g["keyCitations"], g["citations"])
+
+    def test_adopt_rows_cannot_write_the_key_axis(self):
+        """Structural, asserted against the source rather than trusted to the code path."""
+        import inspect
+        source = inspect.getsource(guard.adopt_rows)
+        self.assertIn("citation_form(key) != FORM_LINE", source,
+                      "--adopt-rows must skip key citations, not fingerprint them as lines")
+        self.assertIn("structurally cannot write the KEY axis", source)
+
+    def test_the_line_form_is_not_weakened_by_the_key_form(self):
+        """Both forms parse, both are distinguished, and neither is silently reinterpreted."""
+        line = guard.CITATION.search("see verification-boundaries.v1.json:802 for the row")
+        self.assertEqual(guard.citation_form(guard.citation_text(line.group("basename"), line)), "line")
+        self.assertEqual(guard.citation_text(line.group("basename"), line),
+                         "verification-boundaries.v1.json:802")
+        keyed = guard.CITATION.search("see verification-boundaries.v1.json#core-fallback for it")
+        self.assertEqual(guard.citation_form(guard.citation_text(keyed.group("basename"), keyed)), "key")
+        self.assertEqual(guard.citation_text(keyed.group("basename"), keyed),
+                         "verification-boundaries.v1.json#core-fallback")
+
+    def test_a_key_wrapped_in_backticks_or_followed_by_punctuation_is_captured_whole(self):
+        for spelling, expected in (
+                ("`verification-boundaries.v1.json#core-fallback`", "core-fallback"),
+                ("verification-boundaries.v1.json#core-fallback)", "core-fallback"),
+                ("verification-boundaries.v1.json#core-fallback,", "core-fallback"),
+                ("(verification-boundaries.v1.json#core-fallback)", "core-fallback"),
+                ('"verification-boundaries.v1.json#core-fallback"', "core-fallback")):
+            with self.subTest(spelling=spelling):
+                m = guard.CITATION.search(spelling)
+                self.assertIsNotNone(m, spelling)
+                self.assertEqual(m.group("key"), expected)
+
+    def test_a_sentence_final_dot_is_captured_and_then_resolved_off_the_registry(self):
+        """`.md` keys mean the character class cannot exclude `.`, so the registry decides - and the
+        citation is still stored exactly as written, because a stored key must match what a reader
+        can see.
+
+        THE SPELLINGS ARE BUILT FROM PARTS, NOT WRITTEN OUT. This file is scanned by the guard it tests,
+        and a literal citation here is a REAL citation in the workspace: the first draft of this file
+        spelled one and the guard reported itself as a new citation with no baseline entry. That is the
+        comment filter working, and it is why the pre-existing keys in this file are built from
+        `guard.REGISTRIES` rather than written.
+        """
+        registry = FLAT_REGISTRY
+        key = _flat_key()
+        plain = guard.CITATION.search(f"the row is `{registry}#{key}`")
+        self.assertEqual(plain.group("key"), key)
+        trailing = guard.CITATION.search(f"the row is {registry}#{key}.")
+        self.assertEqual(trailing.group("key"), f"{key}.",
+                         "the trailing dot IS captured, and resolved off the registry instead")
+        stored = guard.citation_text(trailing.group("basename"), trailing)
+        self.assertEqual(stored, f"{registry}#{key}.",
+                         "the stored key is the spelling in the text, dot and all")
+        self.assertEqual(guard.resolve_key(
+            json.loads((REPO / "scripts" / registry).read_text(encoding="utf-8")),
+            guard.row_key_of(stored), flat=True)["keyText"], key)
+
+    def test_a_bare_hash_is_not_a_citation_form(self):
+        """`#` is a heading, an anchor and a colour, so a bare `#name` must not be read as a citation."""
+        m = guard.CITATION.search("see #core-fallback for the row")
+        self.assertIsNone(m)
+        self.assertEqual(guard.sentence_registry_keys("see #core-fallback"), set())
+
+    def test_a_spelling_that_is_neither_form_refuses_rather_than_defaulting(self):
+        for raw in ("verification-boundaries.v1.json", "just-a-word", "core-fallback", "#alpha"):
+            with self.subTest(raw=raw):
+                if "#" in raw:
+                    # `#alpha` names no registry, which is caught by the registry check and not by the
+                    # form check - it genuinely does claim the key form.
+                    with self.assertRaises(guard.CannotRun):
+                        guard.parse_accept_key(raw)
+                else:
+                    with self.assertRaises(guard.CannotRun):
+                        guard.citation_form(raw)
 
 
 class LiveBaseline(unittest.TestCase):
