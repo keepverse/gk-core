@@ -165,6 +165,30 @@ FIRST_KEY = f"{FIRST_REGISTRY}:1"
 #: this file a citing document - see `test_a_sentence_final_dot_...`.
 FLAT_REGISTRY = next(name for name, _rel, container in guard.REGISTRIES if container is None)
 
+#: The registry and line number the citation-FORM tests build their spellings from. Named indirectly
+#: and held as a number, never spliced into a literal, for the reason in `FIRST_REGISTRY`: this file is
+#: scanned by the guard it tests, so a spelled-out `registry:line` in its TEXT is a real citation.
+#: Keeping the line number in one constant is also what makes Control C legible - changing it is a
+#: single-token edit, and a fixture whose finding MOVED with its line number would be a phantom.
+FORM_REGISTRY = guard.REGISTRIES[0][0]
+FORM_LINE = 802
+
+
+def _key_of(registry: str) -> str:
+    """A real key of `registry`, read from disk, and checked to survive the key spelling.
+
+    Read rather than written out, for the reason in `FIRST_REGISTRY`. The round trip is checked here
+    rather than in each test because a key holding a character the key class excludes would fail every
+    assertion below on a spelling this file never wrote - which is a fixture defect reported as a guard
+    defect, and the worst way for this test to fail.
+    """
+    rel = next(r for n, r, _c in guard.REGISTRIES if n == registry)
+    doc = json.loads((REPO / rel).read_text(encoding="utf-8"))
+    for key in sorted(guard.row_key_index(doc)):
+        if guard.CITATION.search(f"see {registry}#{key} for it") is not None:
+            return key
+    raise AssertionError(f"no key of {registry} round-trips through the key spelling")
+
 
 def _flat_key() -> str:
     """The flat registry's first key that ends in a plain `.md`, read from the real file.
@@ -183,6 +207,10 @@ def _one_citation() -> dict:
 
 
 def _refused_counts() -> dict:
+    return {name: 0 for name, _rel, _c in guard.REGISTRIES}
+
+
+def _coordinate_counts() -> dict:
     return {name: 0 for name, _rel, _c in guard.REGISTRIES}
 
 
@@ -434,7 +462,7 @@ class Refusals(unittest.TestCase):
         guard.BASELINE = p
         # One citation, so `evaluate` does not walk the whole workspace: these tests are about the
         # baseline's shape, and a 20-second workspace walk per assertion buys nothing.
-        guard.collect = lambda ws: (_one_citation(), _refused_counts())
+        guard.collect = lambda ws: (_one_citation(), _refused_counts(), _coordinate_counts())
         try:
             return guard.main([])
         finally:
@@ -474,7 +502,7 @@ class Refusals(unittest.TestCase):
                      newline="")
         original_baseline, original_collect = guard.BASELINE, guard.collect
         guard.BASELINE = p
-        guard.collect = lambda ws: (_one_citation(), _refused_counts())
+        guard.collect = lambda ws: (_one_citation(), _refused_counts(), _coordinate_counts())
         try:
             self.assertEqual(guard.main(["--update"]), 2)
         finally:
@@ -598,7 +626,7 @@ class _AcceptHarness(unittest.TestCase):
         self.write_citer(f"the `alpha` row owns it ({ACCEPT_REGISTRY}:{ACCEPT_LINE})\n")
         self._original = (guard.BASELINE, guard.collect, guard.evaluate)
         guard.BASELINE = self.baseline
-        guard.collect = lambda ws: ({ACCEPT_KEY: ("tasks/x.md", 1)}, _refused_counts())
+        guard.collect = lambda ws: ({ACCEPT_KEY: ("tasks/x.md", 1)}, _refused_counts(), _coordinate_counts())
         self.fake = _fake_core(self.tmp / "fakecore", FIXTURE)
         _original_evaluate = guard.evaluate
         guard.evaluate = lambda core, ws: _original_evaluate(self.fake, ws)
@@ -762,7 +790,7 @@ class AcceptRefusals(_AcceptHarness):
         self.write_citer(f"the `alpha` row owns it ({ACCEPT_REGISTRY}:{ALPHA_PATHS}) and the "
                          f"`beta` row ({baselined})\n")
         guard.collect = lambda ws: ({ACCEPT_KEY: ("tasks/x.md", 1),
-                                    baselined: ("tasks/x.md", 1)}, _refused_counts())
+                                    baselined: ("tasks/x.md", 1)}, _refused_counts(), _coordinate_counts())
         # give `beta` a baseline entry on BOTH axes, so only that rule can refuse it
         payload = self.stored()
         pair = guard.row_identity(FIXTURE)[BETA_PATHS]
@@ -783,7 +811,7 @@ class AcceptRefusals(_AcceptHarness):
                                          guard.row_identity(FIXTURE)[closing]), "",
                          "the fixture must carry a line whose row declares no identity")
         guard.collect = lambda ws: ({f"{ACCEPT_REGISTRY}:{closing}": ("tasks/x.md", 1)},
-                                    _refused_counts())
+                                    _refused_counts(), _coordinate_counts())
         self.remember()
         code, out = self.run_guard("--accept", f"{ACCEPT_REGISTRY}:{closing}",
                                    "--accept-why", "x")
@@ -804,7 +832,7 @@ class AcceptRefusals(_AcceptHarness):
         self.assertIn("scripts/guard-alpha.py",
                       guard.row_identity_values(json.loads(FIXTURE)))
         self.write_citer(f"it is `scripts/guard-alpha.py` that owns it ({ACCEPT_REGISTRY}:20)\n")
-        guard.collect = lambda ws: ({key: ("tasks/x.md", 1)}, _refused_counts())
+        guard.collect = lambda ws: ({key: ("tasks/x.md", 1)}, _refused_counts(), _coordinate_counts())
         self.remember()
         code, out = self.run_guard("--accept", key, "--accept-why", "x")
         self.assertEqual(code, 2)
@@ -821,7 +849,7 @@ class AcceptRefusals(_AcceptHarness):
         """
         key = f"{ACCEPT_REGISTRY}:20"
         self.write_citer(f"it is the `alpha` row ({ACCEPT_REGISTRY}:20)\n")
-        guard.collect = lambda ws: ({key: ("tasks/x.md", 1)}, _refused_counts())
+        guard.collect = lambda ws: ({key: ("tasks/x.md", 1)}, _refused_counts(), _coordinate_counts())
         code, out = self.run_guard("--accept", key, "--accept-why", "read it myself")
         self.assertEqual(code, 0, out)
         self.assertEqual(self.stored()["reviewed"][key]["adjudication"], "unaudited")
@@ -904,7 +932,7 @@ class ReviewedAxisIsValidated(unittest.TestCase):
         p.write_text(json.dumps(payload), encoding="utf-8", newline="")
         original_baseline, original_collect = guard.BASELINE, guard.collect
         guard.BASELINE = p
-        guard.collect = lambda ws: (_one_citation(), _refused_counts())
+        guard.collect = lambda ws: (_one_citation(), _refused_counts(), _coordinate_counts())
         try:
             return guard.main([])
         finally:
@@ -969,7 +997,7 @@ class TheReviewAxisDoesNotWeakenTheRowAxis(_AcceptHarness):
         payload["reviewed"] = {BETA_KEY: _recorded(BETA_KEY, "beta", pair)}
         self.baseline.write_text(json.dumps(payload), encoding="utf-8", newline="")
         self.write_citer(f"the `beta` row owns it ({ACCEPT_REGISTRY}:{BETA_PATHS})\n")
-        guard.collect = lambda ws: ({BETA_KEY: ("tasks/x.md", 1)}, _refused_counts())
+        guard.collect = lambda ws: ({BETA_KEY: ("tasks/x.md", 1)}, _refused_counts(), _coordinate_counts())
 
     def test_a_reviewed_key_is_green_when_nothing_moved(self):
         code, out = self.run_guard()
@@ -1006,7 +1034,7 @@ class TheReviewAxisDoesNotWeakenTheRowAxis(_AcceptHarness):
         to record, so the key it just fingerprinted must still read as unreviewed afterwards.
         """
         fresh = f"{ACCEPT_REGISTRY}:{ALPHA_PATHS}"
-        guard.collect = lambda ws: ({fresh: ("tasks/x.md", 1)}, _refused_counts())
+        guard.collect = lambda ws: ({fresh: ("tasks/x.md", 1)}, _refused_counts(), _coordinate_counts())
         code, out = self.run_guard("--update")
         self.assertEqual(code, 0, out)
         self.assertNotIn(fresh, self.stored().get("reviewed", {}))
@@ -1102,7 +1130,7 @@ class _KeyHarness(unittest.TestCase):
         self.original_collect = guard.collect
         self.original_core = None
         guard.BASELINE = self.baseline
-        guard.collect = lambda ws: ({self.key: ("tasks/x.md", 1)}, _refused_counts())
+        guard.collect = lambda ws: ({self.key: ("tasks/x.md", 1)}, _refused_counts(), _coordinate_counts())
         self.addCleanup(self._restore)
 
     def _restore(self):
@@ -1516,7 +1544,7 @@ class KeyAxisProvenance(unittest.TestCase):
         self.original_baseline, self.original_collect = guard.BASELINE, guard.collect
         self.original_core = pathlib.Path(guard.__file__).resolve().parent.parent
         guard.BASELINE = self.baseline
-        guard.collect = lambda ws: ({self.key: ("tasks/x.md", 1)}, _refused_counts())
+        guard.collect = lambda ws: ({self.key: ("tasks/x.md", 1)}, _refused_counts(), _coordinate_counts())
         self.addCleanup(self._restore)
 
     def _restore(self):
@@ -1680,23 +1708,41 @@ class KeyFormSurface(unittest.TestCase):
         self.assertIn("structurally cannot write the KEY axis", source)
 
     def test_the_line_form_is_not_weakened_by_the_key_form(self):
-        """Both forms parse, both are distinguished, and neither is silently reinterpreted."""
-        line = guard.CITATION.search("see verification-boundaries.v1.json:802 for the row")
+        """Both forms parse, both are distinguished, and neither is silently reinterpreted.
+
+        THE SPELLINGS ARE ASSEMBLED, NOT WRITTEN OUT, for the reason in `FIRST_REGISTRY` - and this
+        method's own draft is the proof of that reason. It spelled one, so the guard read it as a real
+        citation in this workspace and reported the cited row as one whose line had drifted. Nothing
+        in any registry could have cleared it: the fixture's number is arbitrary, so re-pointing it
+        MOVED the finding instead of removing it, which is the signature of a phantom rather than of
+        a claim. The repair belongs here, in the fixture, because a string literal used as a value is
+        counted on purpose - see the module docstring. The number is not written out even in this
+        sentence, because prose is scanned too.
+        """
+        registry, line_no, key = FORM_REGISTRY, FORM_LINE, _key_of(FORM_REGISTRY)
+        line = guard.CITATION.search(f"see {registry}:{line_no} for the row")
         self.assertEqual(guard.citation_form(guard.citation_text(line.group("basename"), line)), "line")
         self.assertEqual(guard.citation_text(line.group("basename"), line),
-                         "verification-boundaries.v1.json:802")
-        keyed = guard.CITATION.search("see verification-boundaries.v1.json#core-fallback for it")
+                         f"{registry}:{line_no}")
+        keyed = guard.CITATION.search(f"see {registry}#{key} for it")
         self.assertEqual(guard.citation_form(guard.citation_text(keyed.group("basename"), keyed)), "key")
-        self.assertEqual(guard.citation_text(keyed.group("basename"), keyed),
-                         "verification-boundaries.v1.json#core-fallback")
+        self.assertEqual(guard.citation_text(keyed.group("basename"), keyed), f"{registry}#{key}")
 
     def test_a_key_wrapped_in_backticks_or_followed_by_punctuation_is_captured_whole(self):
-        for spelling, expected in (
-                ("`verification-boundaries.v1.json#core-fallback`", "core-fallback"),
-                ("verification-boundaries.v1.json#core-fallback)", "core-fallback"),
-                ("verification-boundaries.v1.json#core-fallback,", "core-fallback"),
-                ("(verification-boundaries.v1.json#core-fallback)", "core-fallback"),
-                ('"verification-boundaries.v1.json#core-fallback"', "core-fallback")):
+        """Built from parts, for the reason in `FIRST_REGISTRY`.
+
+        These five spellings were LITERAL until this revision, which is how the file was still a citing
+        document for a row it never claimed anything about: the line form's phantom was reported,
+        because its registry had drifted, while this one stayed silent only because another document
+        happened to cite the same key first. A shadowed phantom is still a phantom - it would surface
+        the day that other citation moved.
+        """
+        registry, key = FORM_REGISTRY, _key_of(FORM_REGISTRY)
+        for spelling, expected in ((f"`{registry}#{key}`", key),
+                                  (f"{registry}#{key})", key),
+                                  (f"{registry}#{key},", key),
+                                  (f"({registry}#{key})", key),
+                                  (f'"{registry}#{key}"', key)):
             with self.subTest(spelling=spelling):
                 m = guard.CITATION.search(spelling)
                 self.assertIsNotNone(m, spelling)
@@ -1732,6 +1778,234 @@ class KeyFormSurface(unittest.TestCase):
         m = guard.CITATION.search("see #core-fallback for the row")
         self.assertIsNone(m)
         self.assertEqual(guard.sentence_registry_keys("see #core-fallback"), set())
+
+
+# ---------------------------------------------------------------------------------------------
+# `path:line:column` is a scanner coordinate, not a citation
+#
+# The repair this covers is the guard reading the `:19` of a coordinate's `1369:19` as nothing at
+# all, keeping `:1369`, and then reporting the registry for not holding at line 1369 whatever the
+# coordinate was about. It produced 13 findings and 0 wrong citations. So the tests below are written
+# as a PAIR at every level - the triple is not a citation, and the same line WITHOUT its column still
+# is - because a rule that cannot be shown to hold both ways is an exemption wearing a rule's clothes.
+# ---------------------------------------------------------------------------------------------
+
+
+class _CoordinateHarness(unittest.TestCase):
+    """A temp workspace, the REAL `collect`, and a baseline that says the cited line is stale.
+
+    `collect` is deliberately NOT stubbed here. Every other harness patches it out, which is right for
+    testing what happens to a citation the guard has been handed and useless for proving what the
+    guard decided a STRING was - so these tests let the real scanner read a document off disk. The
+    baseline records one stale content fingerprint and one stale row for the line under test, which is
+    exactly the state a moved line is in, and it is the state that makes a REAL citation red.
+
+    The fake core lives OUTSIDE the scanned workspace on purpose: `collect` walks everything under the
+    workspace root, and a registry JSON sitting inside it could carry a citation of its own.
+    """
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory(prefix="gras-coordinate-")
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.ws = self.tmp / "ws"
+        (self.ws / "tasks").mkdir(parents=True)
+        self.core = _fake_core(self.tmp / "core", FIXTURE)
+        self.key = f"{ACCEPT_REGISTRY}:{ACCEPT_LINE}"
+        stale = _baseline_with_hole()
+        stale["fingerprints"][self.key] = guard.fingerprint("a line that has since moved")
+        stale["rows"][self.key] = guard.row_fingerprint(("<root>/gone", "<root>/gone"), "gone")
+        self.baseline = self.tmp / "baseline.json"
+        self.baseline.write_text(json.dumps(stale), encoding="utf-8", newline="")
+        self._original_baseline = guard.BASELINE
+        guard.BASELINE = self.baseline
+
+    def tearDown(self):
+        guard.BASELINE = self._original_baseline
+
+    def write(self, text: str) -> None:
+        """Install a citing document and read it back, so a silent no-op write cannot pass as a test."""
+        target = self.ws / "tasks" / "x.md"
+        target.write_text(text, encoding="utf-8", newline="")
+        self.assertEqual(target.read_text(encoding="utf-8"), text, "the citer is not what landed on disk")
+
+    def run_guard(self, *, as_json: bool = True) -> tuple:
+        """Run the REAL CLI and hand back `(exit code, payload)` - parsed, or raw text if not `as_json`.
+
+        Through `main` rather than `evaluate`, because the content and row axes are applied in `main`:
+        `evaluate` resolves what a citation POINTS AT, and the finding about whether it still holds
+        what it promised is made where the baseline is read. `guard.__file__` is moved to the fake core
+        so the registries resolve there instead of in the repository, the same trick `_KeyHarness`
+        uses. `--json` because a finding read back as data cannot be satisfied by a substring that
+        happens to appear in a paragraph of advice - except where the run REFUSES, which is printed to
+        stderr and has no JSON, so those tests ask for the text.
+        """
+        original = guard.__file__
+        guard.__file__ = str(self.core / "scripts" / "guard-registry-append-safety.py")
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+                code = guard.main(["--root", str(self.ws)] + (["--json"] if as_json else []))
+        finally:
+            guard.__file__ = original
+        return code, (json.loads(buf.getvalue()) if as_json else buf.getvalue())
+
+    def codes(self, payload: dict) -> list:
+        return sorted(f["code"] for f in payload["findings"])
+
+    def notes_about(self, payload: dict) -> str:
+        return " ".join(f.get("note", "") for f in payload["findings"])
+
+
+class AScannerCoordinateIsNotACitation(_CoordinateHarness):
+    """THE RULE. `<registry>:<line>:<column>` is a scanner position; `<registry>:<line>` is a promise."""
+
+    def test_a_coordinate_is_read_as_no_citation_at_all(self):
+        """The whole point: nothing is kept, because silently keeping the line is what produced 13
+        findings against documents whose citations were correct all along.
+
+        A workspace whose only spelling is a coordinate holds ZERO citations, and this guard's own
+        answer to that is exit 2 - it refuses rather than reporting a clean run against an empty set.
+        So the refusal IS the assertion: it is the loudest statement the guard can make that the
+        coordinate yielded no citation, and it is checked as the outcome rather than routed around.
+        """
+        self.write(f"- `scripts/{ACCEPT_REGISTRY}:{ACCEPT_LINE}:19` **zomboss** - bucket `code-identifier`\n")
+        code, out = self.run_guard(as_json=False)
+        self.assertEqual(code, 2, out)
+        self.assertIn("ZERO citations found", out)
+
+    def test_the_same_line_without_its_column_is_still_reported(self):
+        """THE NEAR MISS, and the half of the pair that makes the rule a discrimination. Identical
+        document, identical line number, one character less - and the guard reds."""
+        self.write(f"the row is `scripts/{ACCEPT_REGISTRY}:{ACCEPT_LINE}` (see it)\n")
+        code, payload = self.run_guard()
+        self.assertEqual(payload["citations"], 1)
+        self.assertEqual(self.codes(payload), ["S1-CITED-LINE-MOVED", "S5-CITED-ROW-CHANGED"])
+        self.assertIn(self.key, self.notes_about(payload), "both findings must name the citation")
+        self.assertEqual(code, 1)
+
+    def test_both_spellings_in_one_document_split_exactly_along_the_column(self):
+        """The two forms side by side in a single document, so the discrimination cannot be an
+        artefact of which file was scanned."""
+        self.write(f"- `scripts/{ACCEPT_REGISTRY}:{ACCEPT_LINE}:19` zomboss\n"
+                   f"- `scripts/{ACCEPT_REGISTRY}:{ACCEPT_LINE}` the row\n")
+        _code, payload = self.run_guard()
+        self.assertEqual(payload["citations"], 1, "only the bare line became a citation")
+        self.assertEqual(self.codes(payload), ["S1-CITED-LINE-MOVED", "S5-CITED-ROW-CHANGED"])
+        self.assertEqual(payload["coordinatesRefused"][ACCEPT_REGISTRY], 1,
+                         "and exactly the coordinate was counted as one")
+
+    def test_a_prose_colon_after_a_citation_is_not_mistaken_for_a_column(self):
+        """THE OVER-REACH GUARD. `<registry>:<line>: and then the row` is a citation written with a
+        colon, which is ordinary prose; refusing it would lose a real citation to protect a rule."""
+        self.write(f"as `scripts/{ACCEPT_REGISTRY}:{ACCEPT_LINE}: and then the row above it\n")
+        _code, payload = self.run_guard()
+        self.assertEqual(self.codes(payload), ["S1-CITED-LINE-MOVED", "S5-CITED-ROW-CHANGED"],
+                         "a prose colon is not a column, so the citation is still checked")
+        self.assertIn(self.key, self.notes_about(payload))
+        self.assertEqual(payload["coordinatesRefused"][ACCEPT_REGISTRY], 0)
+
+    def test_the_line_number_is_never_truncated_to_a_prefix(self):
+        r"""THE BACKTRACKING TRAP. A naive `(?![:\d])` refuses `:1369:` only after `\d+` has already
+        given back a digit, and the match it then finds is `:136` - so the guard would report the
+        registry for line 136, a worse finding than the one being fixed. Asserted over several digit
+        counts, AND against the control that the prefix spelling is a citation on its own - without
+        that control this test would also pass if the rule simply refused everything."""
+        registry = ACCEPT_REGISTRY
+        for line_no, column in ((1, 9), (8, 1), (136, 9), (1369, 19), (123456, 789)):
+            with self.subTest(line=line_no, column=column):
+                self.assertIsNone(guard.CITATION.search(f"{registry}:{line_no}:{column}"),
+                                  "a coordinate yields no match at any digit count")
+        for prefix in (1, 13, 136):
+            with self.subTest(prefix=prefix):
+                self.assertIsNotNone(guard.CITATION.search(f"{registry}:{prefix}"),
+                                     "the prefix spelling IS a citation, so the refusals above are "
+                                     "about the third component and not about the line number")
+
+    def test_the_coordinate_regex_reads_the_line_and_the_column_it_declined_to_cite(self):
+        """What is refused is still MEASURED, so the refusal can be reported and audited."""
+        m = guard.COORDINATE.search(f"{ACCEPT_REGISTRY}:1369:19")
+        self.assertIsNotNone(m)
+        self.assertEqual((m.group("line"), m.group("column")), ("1369", "19"))
+        self.assertIsNone(guard.COORDINATE.search(f"{ACCEPT_REGISTRY}:1369"),
+                          "a two-component citation is not a coordinate")
+
+    def test_every_checked_registry_is_covered_by_the_coordinate_rule(self):
+        """A CLOSED VOCABULARY, so it is pinned as one: the rule must hold for every registry the
+        guard checks, not only for whichever one the first false positive happened to name."""
+        for name, _rel, _container in guard.REGISTRIES:
+            with self.subTest(registry=name):
+                self.assertIsNone(guard.CITATION.search(f"{name}:7:3"))
+                self.assertIsNotNone(guard.CITATION.search(f"{name}:7"))
+
+    def test_accept_refuses_a_coordinate_by_its_own_name(self):
+        """The refusal must not fall through to a check that blames the wrong thing: `rpartition(":")`
+        leaves the registry name as `<registry>:7`, which is not a registry this guard checks, so the
+        registry check would report an unchecked registry rather than the third component."""
+        registry = ACCEPT_REGISTRY
+        with self.assertRaises(guard.CannotRun) as caught:
+            guard.parse_accept_key(f"{registry}:7:3")
+        self.assertIn("COORDINATE", str(caught.exception))
+        # The near miss, on the same parser: the two-component form passes the shape checks and is
+        # refused later, by `review_records`, for not being cited - never for being a coordinate.
+        guard.parse_accept_key(f"{registry}:7")
+
+    def test_a_coordinate_is_counted_out_loud_on_every_run(self):
+        """An exclusion nobody can see is indistinguishable from one that was never applied. Checked
+        on BOTH surfaces that print it, so a silent one of the two is caught."""
+        proc = subprocess.run([sys.executable, str(SCRIPT), "--report"], cwd=str(REPO),
+                              capture_output=True, text=True, encoding="utf-8",
+                              errors="replace", timeout=900)
+        self.assertIn(proc.returncode, (0, 1), proc.stderr)
+        self.assertIn("path:line:column coordinates refused", proc.stdout,
+                      "the human report must print the count every run")
+        payload = json.loads(subprocess.run(
+            [sys.executable, str(SCRIPT), "--json"], cwd=str(REPO), capture_output=True, text=True,
+            encoding="utf-8", errors="replace", timeout=900).stdout)
+        self.assertEqual(set(payload["coordinatesRefused"]), {n for n, _r, _c in guard.REGISTRIES},
+                         "one entry per checked registry, so a new registry cannot silently go uncounted")
+        for name, count in payload["coordinatesRefused"].items():
+            with self.subTest(registry=name):
+                self.assertIsInstance(count, int)
+                self.assertGreaterEqual(count, 0)
+
+
+class ThisTestFileIsNotACitingDocument(unittest.TestCase):
+    """Cause 2, pinned so the phantom cannot come back by accident.
+
+    The repair was made HERE rather than in the guard, because a string literal used as a value is
+    counted on purpose and the fixture's line number was arbitrary - re-pointing it moved the finding
+    instead of clearing it. That makes this file the one place where a citation would be a claim no
+    edit could satisfy, so the claim is asserted absent rather than left to review.
+    """
+
+    def code_line_citations_in_this_file(self) -> list:
+        path = Path(__file__).resolve()
+        text = path.read_text(encoding="utf-8")
+        cols = guard.comment_columns(path, text)
+        found = []
+        for m in guard.CITATION.finditer(text):
+            line = text.count("\n", 0, m.start()) + 1
+            col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
+            if col >= cols.get(line, guard.NO_COMMENT):
+                continue
+            found.append(guard.citation_text(m.group("basename"), m))
+        return found
+
+    def test_no_line_of_this_file_is_a_citation_the_guard_would_have_to_report(self):
+        """THE WHOLE POINT. Any entry here is a citation this workspace makes of a registry, and the
+        only thing that could ever satisfy one is an edit to a registry - which is the wrong repair for
+        a test fixture."""
+        self.assertEqual(self.code_line_citations_in_this_file(), [],
+                         "build citation spellings from parts in this file; see FIRST_REGISTRY")
+
+    def test_the_fixture_line_number_is_one_editable_constant(self):
+        """Why the finding could MOVE instead of clearing: the number was written into the test body.
+        Held in one constant it is a single-token edit, and - the part that matters - the number no
+        longer reaches this file's TEXT as part of a citation spelling."""
+        self.assertIsInstance(FORM_LINE, int)
+        self.assertNotIn(f":{FORM_LINE}", Path(__file__).resolve().read_text(encoding="utf-8"),
+                         "the fixture's line number must not appear spliced into this file's text")
 
     def test_a_spelling_that_is_neither_form_refuses_rather_than_defaulting(self):
         for raw in ("verification-boundaries.v1.json", "just-a-word", "core-fallback", "#alpha"):

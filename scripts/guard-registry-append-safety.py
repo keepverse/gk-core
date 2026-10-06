@@ -199,6 +199,23 @@ therefore classified by the line it came from before it is accepted, and the num
 printed on every run - so a citation that was excluded is visible instead of silently dropped, which
 is the failure mode of a filter that hides its own effect.
 
+A SCANNER COORDINATE IS NOT A CITATION, AND IT IS COUNTED RATHER THAN DROPPED. A third numeric
+component - `<registry>:<line>:<column>` - is the coordinate a grep-style report, a lint output and an
+editor jump-list emit, and it promises nothing about the row line N holds. `CITATION` reads two
+numeric components or none, so a triple is never turned into a citation, and `COORDINATE` counts it so
+that re-spelling a real citation as a coordinate - the move that would use the rule as a mute button -
+is a changed number on every run rather than a quiet pass.
+
+THE GUARD DOES NOT EXEMPT ITS OWN CONTRACT TEST, AND THE REASON IS STRUCTURAL. It is tempting to read
+the phantom citation this guard finds in its own test file as an argument for skipping that file the
+way `candidate_files` skips this guard's baseline, and the two cases are not alike. The baseline is
+skipped because its CONTENT IS A SET OF CITATION SPELLINGS - scanning it would make the guard cite
+itself - whereas a test file is CODE THAT BUILDS a citation at runtime and carries one incidental
+literal. A string literal used as a value is counted deliberately (see `_python_comment_columns`),
+because the repair for a phantom there is one edit in the citing file and a missed citation is
+invisible. Widening this guard's reach to make a fixture disappear would trade a gating check for an
+allowlist entry; the fixture is repaired where it is written instead.
+
 THE BASELINE IS NOT A CITING DOCUMENT, and that exclusion is load-bearing rather than tidy. The
 baseline stores its keys in the citation spelling, so scanning it would make the guard cite itself:
 every key it had ever recorded would be re-discovered from its own record, which means a key could
@@ -367,9 +384,35 @@ SCANNED_SUFFIXES = {".md", ".py", ".cs", ".ts", ".tsx", ".yml", ".yaml", ".json"
 #: A key citation is ALWAYS spelled in full. A bare `#name` is not a citation form, and must not be
 #: one: `#` is a markdown heading, a GitHub anchor and a hex colour, so a bare form would be read as
 #: whatever the surrounding prose happened to make of it.
+#:
+#: A THIRD NUMERIC COMPONENT IS NOT A CITATION, AND THIS IS A RULE ABOUT THE SHAPE, NOT ABOUT ANY ONE
+#: DOCUMENT. `<registry>:<line>:<column>` is a SCANNER COORDINATE - "the banned string is at line N,
+#: column C of this file", which is what a grep-style report, a lint output and an editor jump-list
+#: all emit - and it is not a promise that line N holds a particular row. Reading one as the other
+#: silently DROPS the column and then reports the registry for not holding, at line N, whatever text
+#: the coordinate's own line happened to be about. That produced 13 findings against
+#: `tasks/ip-censor/report.md` and 0 wrong citations, and it would produce 13 more against any other
+#: report of the same shape, which is why the refusal is written on the form and not on the filename.
+#:
+#: The lookahead is `(?!\d*:\d)` rather than `(?!\d*:)` for two measured reasons. `\d*` before the
+#: colon keeps PROSE COLONS working - `boundaries.v1.json:802: the row above it` is still a citation -
+#: while a second numeric component is not. And because `\d*` can absorb the remaining digits, every
+#: shorter alternative `\d+` could backtrack to is refused too: a bare `(?![:\d])` would match `136` of
+#: `1369:19` and then report the registry for line 136, which is worse than the defect it fixes. The
+#: same triple is still visible, because `COORDINATE` counts and prints it.
 CITATION = re.compile(
     r"(?P<basename>verification-boundaries\.v1\.json|enforcement-registry\.v1\.json"
-    r"|todo-shapes\.v1\.json)(?::(?P<line>\d+)|#(?P<key>[^\s`'\"()\[\]{}<>|,;:]+))"
+    r"|todo-shapes\.v1\.json)"
+    r"(?::(?P<line>\d+)(?!\d*:\d)|#(?P<key>[^\s`'\"()\[\]{}<>|,;:]+))"
+)
+
+#: `<registry>:<line>:<column>`, the scanner coordinate `CITATION` refuses. Counted and printed, not
+#: merely dropped, so that re-spelling a real citation as a coordinate - the move that would use this
+#: rule as a mute button - shows up as a changed count rather than as a quiet pass. A triple inside a
+#: comment is counted once, as a comment, and not also here.
+COORDINATE = re.compile(
+    r"(?P<basename>verification-boundaries\.v1\.json|enforcement-registry\.v1\.json"
+    r"|todo-shapes\.v1\.json):(?P<line>\d+):(?P<column>\d+)"
 )
 
 #: The separator each form uses, and the closed vocabulary of forms. A citation is one or the other;
@@ -1318,6 +1361,19 @@ def parse_accept_key(raw: str) -> str:
             f"--accept {raw!r} spells more than one `#`. A citation is `<registry>:<line>` or "
             f"`<registry>#<key>` and the second form takes no further `#`; anything else is a "
             f"fragment of a larger identifier, not a row this guard can resolve.")
+    coordinate = COORDINATE.fullmatch(raw)
+    if coordinate:
+        # Refused HERE rather than left to fall through, because two of the checks below would each
+        # report it for the wrong reason: `rpartition(":")` leaves `name` as
+        # `verification-boundaries.v1.json:4090`, which is not a registry this guard checks, so the
+        # registry check would blame the registry rather than the third component that caused it.
+        raise CannotRun(
+            f"--accept {raw!r} is a scanner COORDINATE (`<registry>:<line>:<column>`), not a citation. "
+            f"It records that a match was found at line {coordinate.group('line')}, column "
+            f"{coordinate.group('column')} of a scanned file, and promises nothing about the row line "
+            f"{coordinate.group('line')} holds - there is no promise here to review. If a document "
+            f"really does promise what that line holds, the citation is the two-component spelling "
+            f"{coordinate.group('basename')}:{coordinate.group('line')} and that is the form to review.")
     match = CITATION.fullmatch(raw)
     if "#" in raw:
         name = raw.partition("#")[0]
@@ -1802,8 +1858,8 @@ def candidate_files(ws: pathlib.Path) -> "list[pathlib.Path]":
     return list(seen.values())
 
 
-def collect(ws: pathlib.Path) -> "tuple[dict[str, tuple[str, int]], dict[str, int]]":
-    """`citation spelling -> (citing file, citing line)`, plus the count of comment-line matches refused.
+def collect(ws: pathlib.Path) -> "tuple[dict[str, tuple[str, int]], dict[str, int], dict[str, int]]":
+    """`citation spelling -> (citing file, citing line)`, then two per-registry refusal counts.
 
     A citation is spelled in ONE of two forms and the spelling IS the key, so one dict holds both and
     `citation_form` decides which axis each is compared on. Nothing is normalised away: a document that
@@ -1812,12 +1868,16 @@ def collect(ws: pathlib.Path) -> "tuple[dict[str, tuple[str, int]], dict[str, in
     they are meant to be counted separately, because "how much of this workspace still cites by line"
     is the reading this form exists to make visible.
 
-    The second element of the return value is the point of the filter being visible: a citation
-    excluded because it sat in a comment is reported every run, so moving a real citation into a
-    comment to silence the gate shows up as a changed exclusion count rather than as a quiet pass.
+    The counts are the point of the filter being visible: a citation excluded because it sat in a
+    comment, and a `<registry>:<line>:<column>` coordinate excluded because it is a scanner position
+    rather than a citation, are both reported every run. So moving a real citation into a comment, or
+    re-spelling it as a coordinate, shows up as a changed exclusion count rather than as a quiet pass.
+    The two are counted SEPARATELY because they are different mistakes and a reader auditing either
+    one needs to see it alone; a coordinate inside a comment is counted once, as a comment.
     """
     found: dict[str, tuple[str, int]] = {}
     refused: dict[str, int] = {name: 0 for name, _, _ in REGISTRIES}
+    coordinates: dict[str, int] = {name: 0 for name, _, _ in REGISTRIES}
     for p in candidate_files(ws):
         try:
             text = p.read_text(encoding="utf-8", errors="ignore")
@@ -1834,7 +1894,13 @@ def collect(ws: pathlib.Path) -> "tuple[dict[str, tuple[str, int]], dict[str, in
             key = citation_text(name, m)
             if key not in found:
                 found[key] = (str(p.relative_to(ws)).replace("\\", "/"), line)
-    return found, refused
+        for m in COORDINATE.finditer(text):
+            line = text.count("\n", 0, m.start()) + 1
+            col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
+            if col >= cols.get(line, NO_COMMENT):
+                continue
+            coordinates[m.group("basename")] += 1
+    return found, refused, coordinates
 
 
 def citation_text(name: str, match: "re.Match") -> str:
@@ -1932,7 +1998,7 @@ def ambiguous_cited_lines(body: "list[str]", cited: "list[int]") -> "list[int]":
 # ---------------------------------------------------------------------------------------------
 
 def evaluate(core: pathlib.Path, ws: pathlib.Path) -> dict:
-    citations, refused = collect(ws)
+    citations, refused, coordinates = collect(ws)
     geos = [geometry(name, rel, container, core) for name, rel, container in REGISTRIES]
 
     current: dict[str, str | None] = {}
@@ -2018,7 +2084,8 @@ def evaluate(core: pathlib.Path, ws: pathlib.Path) -> dict:
 
     return {"citations": citations, "current": current, "currentRows": current_rows,
             "currentRowFingerprints": current_row_fp, "docs": docs, "keys": key_resolutions,
-            "geometries": geos, "findings": findings, "refused": refused}
+            "geometries": geos, "findings": findings, "refused": refused,
+            "coordinates": coordinates}
 
 
 def main(argv: "list[str] | None" = None) -> int:
@@ -2518,6 +2585,8 @@ def main(argv: "list[str] | None" = None) -> int:
                   f"({g['distinct_lines']} distinct line(s), highest {g['max_cited']}) + "
                   f"{g['keyCitations']} KEY")
             print(f"    comment matches refused: {result['refused'][g['registry']]}")
+            print(f"    path:line:column coordinates refused: {result['coordinates'][g['registry']]}"
+                  f" - a scanner position, not a promise about a row, so no citation is made of it")
             print(f"    cited line text not unique in file: "
                   f"{len(g['ambiguous_lines'])} of {g['distinct_lines']} - these are the citations S1 "
                   f"ALONE could not separate, and every one of them is covered by the row axis: "
@@ -2595,6 +2664,7 @@ def main(argv: "list[str] | None" = None) -> int:
                                                "reviewed one row at a time with a stated reason",
                           "keyResolutions": result["keys"],
                           "commentMatchesRefused": result["refused"],
+                           "coordinatesRefused": result["coordinates"],
                           "citations": len(citations),
                           "findings": findings}, indent=2, ensure_ascii=False))
         return 1 if findings else 0
@@ -2605,6 +2675,7 @@ def main(argv: "list[str] | None" = None) -> int:
               f"({g['distinct_lines']} distinct line(s), highest {g['max_cited']} of {g['lines']}) + "
               f"{g['keyCitations']} KEY; safe append = before line {g['close']} "
               f"({g['container']}); {result['refused'][g['registry']]} comment match(es) refused; "
+              f"{result['coordinates'][g['registry']]} path:line:column coordinate(s) refused; "
               f"{len(g['ambiguous_lines'])}/{g['distinct_lines']} cited line(s) hold text that is not "
               f"unique in the file, so S1 alone cannot separate them - the row axis covers those")
     print(f"  CITATION FORMS: {by_form[FORM_LINE]} by LINE and {by_form[FORM_KEY]} by KEY. Every KEY "
