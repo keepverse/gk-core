@@ -233,6 +233,19 @@
   }
  },
  "reviewedKeys": {
+  "enforcement-registry.v1.json#local-operational-scripts": {
+   "adjudication": "corroborated",
+   "citedFrom": "tasks/reports/ps1-ban-handoff-mega-merge-20260926.md:12",
+   "container": "verificationExemptions",
+   "contentFingerprint": "ea2a574de8f4e3ea",
+   "kind": "array",
+   "recordedOn": "2026-10-06",
+   "registry": "enforcement-registry.v1.json",
+   "rowFingerprint": "3d48809d4c8aa3f4",
+   "rowKey": "local-operational-scripts",
+   "rowToken": "id=local-operational-scripts",
+   "why": "The citing sentence is ps1-ban-handoff-mega-merge-20260926.md:12, which says the registry \"still lists a file this program deleted in 406b32f17\", and the fenced output immediately below it heads the offending table with [local-operational-scripts] and names scripts/pi-web-windows-service.ps1 as the one dangling entry. The resolved row is the verificationExemptions entry id=local-operational-scripts, and it is the same row that held line 235 at the row axis provenance commit 34bf27d03. Read the verdict field with care: the guard scores a key citation corroborated when the key form spells the row key inside the sentence, which is a tautology here - the sentence itself never named local-operational-scripts in prose, and its window stops at the fence, so no cross-check was possible and the row identification rests on the reviewer reading the fenced table header."
+  },
   "verification-boundaries.v1.json#contracts-fixture-seam": {
    "adjudication": "corroborated",
    "citedFrom": "tasks/evidence-fragments/tvb-f28-contract-fixture-seam.md:9",
@@ -440,6 +453,19 @@
    "rowKey": "power-scale-tuning",
    "rowToken": "id=power-scale-tuning",
    "why": "Read: docs/architecture/test-verification-boundary/spec-seam-coverage.md:77 names `power-scale-tuning` among 'the exact-name entries' to be replaced by wildcard forms, adding that it 'today leaves `power-scale.v1`/`v2` unmapped'. power-scale-tuning's path is data/tuning/power-scale.v*.json - the exact-name entry the sentence says it is, and the reason v1/v2 escape the glob."
+  },
+  "verification-boundaries.v1.json#seedsmith-items": {
+   "adjudication": "corroborated",
+   "citedFrom": "tasks/reports/resume-21b-effect-pipeline-triage-20260925.md:176",
+   "container": "boundaries",
+   "contentFingerprint": "cc0e18c4fd5ed0a6",
+   "kind": "array",
+   "recordedOn": "2026-10-06",
+   "registry": "verification-boundaries.v1.json",
+   "rowFingerprint": "b9013c24564c3918",
+   "rowKey": "seedsmith-items",
+   "rowToken": "id=seedsmith-items",
+   "why": "The citing sentence is resume-21b-effect-pipeline-triage-20260925.md:175-176, \"That registry path selects the seed-items corpus/validator checks\". The resolved row carries paths tools/seedsmith/seedsmith/adapters/items/** and project seedsmith, which is the seed-items adapter lane that sentence describes, so the row is the right one. Read the adjudication field with care: the guard scored this corroborated because a KEY citation spells the row key inside its own sentence, which is a tautology rather than evidence. The sentence's own words never named seedsmith-items - it says \"seed-items\" - and its window makes three coordinated claims about this registry, which is a second reason no cross-check was possible. The row identification therefore rests on the reviewer reading the sentence against the resolved row."
   },
   "verification-boundaries.v1.json#server-fallback": {
    "adjudication": "corroborated",
